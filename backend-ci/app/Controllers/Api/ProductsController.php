@@ -5,7 +5,6 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\ProductModel;
 use App\Models\ProductCategoryLinkModel;
-use App\Models\ProductVariantModel;
 use CodeIgniter\API\ResponseTrait;
 
 class ProductsController extends BaseController
@@ -14,13 +13,11 @@ class ProductsController extends BaseController
 
     protected ProductModel $products;
     protected ProductCategoryLinkModel $links;
-    protected ProductVariantModel $variants;
 
     public function __construct()
     {
         $this->products = new ProductModel();
         $this->links    = new ProductCategoryLinkModel();
-        $this->variants = new ProductVariantModel();
     }
 
     /**
@@ -66,19 +63,9 @@ class ProductsController extends BaseController
             foreach ($linkRows as $row) {
                 $map[$row['product_id']][] = (int) $row['category_id'];
             }
-
-            // variants if requested
-            $variantMap = [];
-            if ($this->request->getGet('include_variants')) {
-                $variantRows = $this->variants->whereIn('product_id', $ids)->findAll();
-                foreach ($variantRows as $vr) {
-                    $variantMap[$vr['product_id']][] = $vr;
-                }
-            }
-
             foreach ($data as &$row) {
                 $row['category_ids'] = $map[$row['id']] ?? [];
-                $row['variants'] = $variantMap[$row['id']] ?? [];
+                $row['variants'] = []; // placeholder for FE
             }
         }
 
@@ -106,23 +93,11 @@ class ProductsController extends BaseController
 
         $linkRows = $this->links->select('category_id')->where('product_id', $id)->findAll();
         $product['category_ids'] = array_map(fn($r) => (int) $r['category_id'], $linkRows);
-        $product['variants'] = $this->variants->where('product_id', $id)->findAll();
+        $product['variants'] = []; // placeholder
 
         return $this->respond([
             'success' => true,
             'data' => $product,
-        ]);
-    }
-
-    /**
-     * GET /api/products/{id}/variants
-     */
-    public function variants($id)
-    {
-        $variants = $this->variants->where('product_id', $id)->findAll();
-        return $this->respond([
-            'success' => true,
-            'data' => $variants,
         ]);
     }
 }
