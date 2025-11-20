@@ -79,7 +79,6 @@ class ProductsController extends BaseController
             foreach ($data as &$row) {
                 $row['category_ids'] = $map[$row['id']] ?? [];
                 $row['variants'] = $variantMap[$row['id']] ?? [];
-                $row['variants_v2'] = $row['variants']; // FE compatibility
             }
         }
 
@@ -108,7 +107,6 @@ class ProductsController extends BaseController
         $linkRows = $this->links->select('category_id')->where('product_id', $id)->findAll();
         $product['category_ids'] = array_map(fn($r) => (int) $r['category_id'], $linkRows);
         $product['variants'] = $this->variants->where('product_id', $id)->findAll();
-        $product['variants_v2'] = $product['variants']; // FE compatibility
 
         return $this->respond([
             'success' => true,

@@ -26,7 +26,6 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');
     $routes->get('products/(:num)/variants', 'Api\\ProductsController::variants/$1');
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
-    $routes->get('product-categories/tree', 'Api\\ProductCategoriesController::tree');
     $routes->get('users', 'Api\\UsersController::index');
     $routes->get('users/me', 'Api\\UsersController::me');
     $routes->get('users/roles', 'Api\\UsersController::roles');
