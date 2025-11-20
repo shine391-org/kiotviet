@@ -49,6 +49,64 @@ class UsersController extends BaseController
         ]);
     }
 
+    public function show($id)
+    {
+        $user = $this->users->find($id);
+        if (!$user) {
+            return $this->failNotFound('User not found');
+        }
+        return $this->respond(['success' => true, 'data' => $user]);
+    }
+
+    public function create()
+    {
+        $data = $this->request->getJSON(true);
+        if (empty($data['username']) || empty($data['password'])) {
+            return $this->failValidationErrors('username và password bắt buộc');
+        }
+        $payload = $data;
+        $payload['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        $payload['created_at'] = date('Y-m-d H:i:s');
+        $payload['updated_at'] = date('Y-m-d H:i:s');
+        $this->users->insert($payload);
+        $id = $this->users->getInsertID();
+        return $this->respondCreated(['success' => true, 'data' => ['id' => $id] + $payload]);
+    }
+
+    public function update($id)
+    {
+        $data = $this->request->getJSON(true);
+        if (!$this->users->find($id)) {
+            return $this->failNotFound('User not found');
+        }
+        if (!empty($data['password'])) {
+            $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+        }
+        $data['updated_at'] = date('Y-m-d H:i:s');
+        $this->users->update($id, $data);
+        return $this->respond(['success' => true]);
+    }
+
+    public function delete($id)
+    {
+        if (!$this->users->find($id)) {
+            return $this->failNotFound('User not found');
+        }
+        $this->users->delete($id);
+        return $this->respond(['success' => true]);
+    }
+
+    public function changePassword($id)
+    {
+        $data = $this->request->getJSON(true);
+        if (empty($data['password'])) {
+            return $this->failValidationErrors('password required');
+        }
+        $hash = password_hash($data['password'], PASSWORD_BCRYPT);
+        $this->users->update($id, ['password' => $hash, 'updated_at' => date('Y-m-d H:i:s')]);
+        return $this->respond(['success' => true]);
+    }
+
     public function roles()
     {
         $data = $this->roles->where('deleted_at', null)->findAll();
@@ -57,12 +115,8 @@ class UsersController extends BaseController
 
     public function branches()
     {
-        // Static demo branch
-        return $this->respond([
-            'success' => true,
-            'data' => [
-                ['id' => 1, 'name' => 'Main Branch'],
-            ]
-        ]);
+        $db = \Config\Database::connect();
+        $rows = $db->table('branches')->where('deleted_at', null)->get()->getResultArray();
+        return $this->respond(['success' => true, 'data' => $rows]);
     }
 }

@@ -81,5 +81,34 @@ class DevSeeder extends Seeder
             ['permission_id'=>1,'role_id'=>3],
             ['permission_id'=>3,'role_id'=>3],
         ]);
+
+        // Branches tối thiểu
+        $this->db->table('branches')->ignore(true)->insertBatch([
+            ['id' => 1, 'name' => 'Chi nhánh Hà Nội', 'code' => 'HN01', 'status' => 'active', 'created_at' => $now],
+            ['id' => 2, 'name' => 'Chi nhánh HCM',    'code' => 'HCM01', 'status' => 'active', 'created_at' => $now],
+        ]);
+
+        // Categories mẫu (có parent/child)
+        $this->db->table('product_categories')->ignore(true)->insertBatch([
+            ['id'=> 101, 'product_id'=>0, 'parent_id'=>null, 'level'=>1, 'is_variant_group'=>0, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
+            ['id'=> 102, 'product_id'=>0, 'parent_id'=>null, 'level'=>1, 'is_variant_group'=>0, 'code'=>'VI',  'name'=>'Ví',      'slug'=>'vi',        'sort_order'=>2, 'status'=>'active', 'created_at'=>$now],
+            ['id'=> 103, 'product_id'=>0, 'parent_id'=>101, 'level'=>2, 'is_variant_group'=>0, 'code'=>'TUI-DA','name'=>'Túi da',  'slug'=>'tui-da',   'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
+        ]);
+
+        // Thuộc tính + options mẫu
+        $this->db->table('product_attributes')->ignore(true)->insertBatch([
+            ['id'=> 201, 'name'=>'Màu sắc', 'slug'=>'mau-sac', 'attribute_key'=>'color', 'type'=>'select', 'is_required'=>0, 'is_filterable'=>1, 'sort_order'=>1, 'status'=>'active', 'is_visible'=>1, 'created_at'=>$now],
+            ['id'=> 202, 'name'=>'Kích thước', 'slug'=>'size', 'attribute_key'=>'size', 'type'=>'select', 'is_required'=>0, 'is_filterable'=>1, 'sort_order'=>2, 'status'=>'active', 'is_visible'=>1, 'created_at'=>$now],
+        ]);
+
+        $this->db->table('product_attribute_options')->ignore(true)->insertBatch([
+            ['id'=>301,'attribute_id'=>201,'option_name'=>'Đen','color_code'=>'#000000','sort_order'=>1,'status'=>'active','created_at'=>$now],
+            ['id'=>302,'attribute_id'=>201,'option_name'=>'Nâu','color_code'=>'#5b3a29','sort_order'=>2,'status'=>'active','created_at'=>$now],
+            ['id'=>303,'attribute_id'=>202,'option_name'=>'M','sort_order'=>1,'status'=>'active','created_at'=>$now],
+            ['id'=>304,'attribute_id'=>202,'option_name'=>'L','sort_order'=>2,'status'=>'active','created_at'=>$now],
+        ]);
+
+        // Gọi seeder sản phẩm/biến thể/ảnh mẫu
+        $this->call('ProductSeeder');
     }
 }

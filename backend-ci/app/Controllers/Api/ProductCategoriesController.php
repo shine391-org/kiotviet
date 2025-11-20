@@ -31,6 +31,15 @@ class ProductCategoriesController extends BaseController
         return $this->respond(['success' => true, 'data' => $data]);
     }
 
+    public function show($id)
+    {
+        $row = $this->categories->find($id);
+        if (!$row) {
+            return $this->failNotFound('Category not found');
+        }
+        return $this->respond(['success' => true, 'data' => $row]);
+    }
+
     protected function tree()
     {
         $rows = $this->categories->where('deleted_at', null)
