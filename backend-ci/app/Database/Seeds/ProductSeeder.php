@@ -267,6 +267,29 @@ class ProductSeeder extends Seeder
             ],
         ];
 
+        // Ensure consistent columns for batch insert
+        $defaults = [
+            'barcode' => null,
+            'brand' => null,
+            'unit' => 'Cái',
+            'wholesale_price' => null,
+            'weight' => 0,
+            'dimensions' => null,
+            'description' => null,
+            'content' => null,
+            'meta_title' => null,
+            'meta_description' => null,
+            'meta_keywords' => null,
+            'deleted_at' => null,
+            'is_available_online' => 1,
+            'is_featured' => 0,
+            'images' => null,
+        ];
+
+        $products = array_map(function ($row) use ($defaults) {
+            return $row + $defaults;
+        }, $products);
+
         $categories = [
             ['id' => 1, 'parent_id' => null, 'level' => 1, 'code' => 'CAT_0001', 'name' => 'Túi da handmade', 'slug' => 'tui-da-handmade', 'description' => null, 'image' => null, 'sort_order' => 0, 'status' => 'active', 'created_at' => '2025-10-27 09:31:56', 'updated_at' => '2025-11-18 07:58:01'],
             ['id' => 2, 'parent_id' => null, 'level' => 1, 'code' => 'CAT_0002', 'name' => 'VÍ DA', 'slug' => 'vi-da', 'description' => null, 'image' => null, 'sort_order' => 0, 'status' => 'active', 'created_at' => '2025-10-27 09:31:56', 'updated_at' => '2025-11-18 07:58:01'],
