@@ -1,0 +1,256 @@
+/**
+ * Button Component Styles - CSS Modules
+ * Uses design tokens from variables.css
+ * Version: 1.0
+ * Date: October 30, 2025
+ */
+
+/* ===== BASE BUTTON ===== */
+.button {
+    /* Import design tokens */
+    --btn-transition: var(--transition-base);
+    --btn-radius: var(--radius-lg);
+    
+    /* Base styles */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    
+    font-family: var(--font-family-primary);
+    font-weight: var(--font-medium);
+    line-height: var(--leading-tight);
+    text-align: center;
+    white-space: nowrap;
+    
+    border: 1px solid transparent;
+    border-radius: var(--btn-radius);
+    
+    cursor: pointer;
+    user-select: none;
+    
+    transition: all var(--btn-transition);
+    
+    /* Remove default button styles */
+    background: none;
+    text-decoration: none;
+    
+    /* Focus styles */
+    &:focus-visible {
+      outline: 2px solid var(--color-primary-500);
+      outline-offset: 2px;
+    }
+  }
+  
+  /* ===== SIZES ===== */
+  .sm {
+    height: var(--button-height-sm);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+  
+  .md {
+    height: var(--button-height-md);
+    padding: 0 var(--space-4);
+    font-size: var(--text-base);
+  }
+  
+  .lg {
+    height: var(--button-height-lg);
+    padding: 0 var(--space-6);
+    font-size: var(--text-lg);
+  }
+  
+  /* ===== VARIANTS ===== */
+  
+  /* Primary (KiotViet Blue) */
+  .primary {
+    background: var(--color-primary-500);
+    color: var(--text-inverse);
+    border-color: var(--color-primary-500);
+  }
+  
+  .primary:hover:not(:disabled):not(.loading) {
+    background: var(--color-primary-600);
+    border-color: var(--color-primary-600);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .primary:active:not(:disabled):not(.loading) {
+    background: var(--color-primary-700);
+    border-color: var(--color-primary-700);
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* Secondary (White with border) */
+  .secondary {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-primary);
+  }
+  
+  .secondary:hover:not(:disabled):not(.loading) {
+    background: var(--bg-secondary);
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-600);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  .secondary:active:not(:disabled):not(.loading) {
+    background: var(--bg-tertiary);
+    transform: translateY(0);
+  }
+  
+  /* Ghost (Transparent) */
+  .ghost {
+    background: transparent;
+    color: var(--color-primary-600);
+    border-color: transparent;
+  }
+  
+  .ghost:hover:not(:disabled):not(.loading) {
+    background: var(--color-primary-50);
+    color: var(--color-primary-700);
+  }
+  
+  .ghost:active:not(:disabled):not(.loading) {
+    background: var(--color-primary-100);
+  }
+  
+  /* Danger (Red) */
+  .danger {
+    background: var(--color-danger-500);
+    color: var(--text-inverse);
+    border-color: var(--color-danger-500);
+  }
+  
+  .danger:hover:not(:disabled):not(.loading) {
+    background: var(--color-danger-600);
+    border-color: var(--color-danger-600);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+  
+  .danger:active:not(:disabled):not(.loading) {
+    background: var(--color-danger-700);
+    border-color: var(--color-danger-700);
+    transform: translateY(0);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* ===== STATES ===== */
+  
+  /* Disabled */
+  .disabled,
+  .button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  /* Loading */
+  .loading {
+    cursor: wait;
+    pointer-events: none;
+  }
+  
+  /* Full width */
+  .fullWidth {
+    width: 100%;
+  }
+  
+  /* ===== ICON STYLES ===== */
+  .iconLeft,
+  .iconRight {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .iconLeft {
+    margin-right: calc(var(--space-2) * -1);
+  }
+  
+  .iconRight {
+    margin-left: calc(var(--space-2) * -1);
+  }
+  
+  .sm .iconLeft,
+  .sm .iconRight {
+    font-size: 14px;
+  }
+  
+  .md .iconLeft,
+  .md .iconRight {
+    font-size: 16px;
+  }
+  
+  .lg .iconLeft,
+  .lg .iconRight {
+    font-size: 18px;
+  }
+  
+  /* ===== LOADING SPINNER ===== */
+  .spinner {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .spinnerIcon {
+    width: 16px;
+    height: 16px;
+    animation: spin 1s linear infinite;
+  }
+  
+  .sm .spinnerIcon {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .lg .spinnerIcon {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .spinnerCircle {
+    opacity: 0.25;
+  }
+  
+  .spinnerPath {
+    opacity: 0.75;
+  }
+  
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  
+  /* ===== TEXT ===== */
+  .text {
+    display: inline-block;
+  }
+  
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 768px) {
+    /* Slightly larger touch targets on mobile */
+    .sm {
+      height: 36px;
+    }
+    
+    .md {
+      height: 44px;
+    }
+    
+    .lg {
+      height: 52px;
+    }
+  }  

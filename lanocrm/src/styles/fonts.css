@@ -1,0 +1,96 @@
+/**
+ * LANO CRM - Typography
+ * Fonts: Inter (UI) + Lato (Brand/Headings)
+ * Version: 1.0
+ * Date: October 29, 2025
+ */
+
+/* ===== IMPORT INTER FROM GOOGLE FONTS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* ===== LATO FONT (Placeholder - Replace with actual file later) ===== */
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap');
+
+/* Alternative: Local Lato (uncomment when you have the files) */
+/*
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/fonts/Lato-Regular.woff2') format('woff2'),
+       url('../assets/fonts/Lato-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Lato';
+  src: url('../assets/fonts/Lato-Bold.woff2') format('woff2'),
+       url('../assets/fonts/Lato-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+*/
+
+/* ===== BODY FONT SETTINGS (Non-breaking) ===== */
+/* Chỉ áp dụng nếu body chưa có font-family */
+body:not([style*="font-family"]) {
+    font-family: var(--font-family-primary);
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-normal);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+/* ===== HEADING STYLES ===== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-family-heading);
+  font-weight: var(--font-bold);
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--text-4xl);
+  font-weight: var(--font-extrabold);
+}
+
+h2 {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+}
+
+h3 {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+}
+
+h4 {
+  font-size: var(--text-xl);
+  font-weight: var(--font-semibold);
+}
+
+h5 {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+}
+
+h6 {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+}
+
+/* ===== TEXT UTILITY CLASSES ===== */
+.font-primary {
+  font-family: var(--font-family-primary);
+}
+
+.font-heading {
+  font-family: var(--font-family-heading);
+}
+
+.font-mono {
+  font-family: var(--font-family-mono);
+}

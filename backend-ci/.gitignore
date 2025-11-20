@@ -1,0 +1,67 @@
+# ====================
+# CodeIgniter 3 
+# ====================
+
+# Cache & Logs
+application/cache/*
+!application/cache/index.html
+!application/cache/.htaccess
+
+application/logs/*
+!application/logs/index.html
+!application/logs/.htaccess
+
+# Environment files (QUAN TRỌNG - bảo mật)
+.env
+.env.production
+.env.development
+.env.local
+
+# Database files (QUAN TRỌNG - không push database)
+*.sql
+*.sqlite
+*.db
+lanocrm_shop*.sql
+backup*.sql
+
+# Composer
+vendor/
+composer.lock
+composer.phar
+
+# IDE & Editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Uploads & User-generated content
+uploads/*
+!uploads/index.html
+!uploads/.htaccess
+
+# Sensitive Config (QUAN TRỌNG)
+application/config/database.php
+application/config/config.php
+application/config/jwt.php
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.swp
+*~
+
+# PHP
+*.phar
+.php_cs.cache

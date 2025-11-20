@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: ./dist
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
+    volumes:
+      - ./dist:/var/www/html
+    depends_on:
+      - db
+    environment:
+      # Pass environment variables to the web server
+      # If you need more variables, add them here
+      REACT_APP_API_BASE_URL: /backend-ci/api
+      CI_ENVIRONMENT: production # CodeIgniter environment
+
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password # Change this in production
+      MYSQL_DATABASE: lanocrm_shop
+      MYSQL_USER: lanocrm_user
+      MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./lanocrm_shop_v6.sql:/docker-entrypoint-initdb.d/lanocrm_shop_v6.sql
+
+volumes:
+  db_data:

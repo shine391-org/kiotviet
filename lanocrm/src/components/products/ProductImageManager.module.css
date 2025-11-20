@@ -1,0 +1,378 @@
+/**
+ * Product Image Manager Styles
+ * @file ProductImageManager.module.css
+ * @description Styling for product image management component
+ */
+
+ .container {
+    background: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 12px;
+  }
+  
+  .header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #262626;
+  }
+  
+  .count {
+    font-size: 13px;
+    color: #8c8c8c;
+    background: #fafafa;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  
+  .uploadArea {
+    margin-bottom: 24px;
+  }
+  
+  .uploadArea :global(.ant-btn) {
+    height: 60px;
+    font-size: 14px;
+    border: 2px dashed #d9d9d9;
+    transition: all 0.3s;
+  }
+  
+  .uploadArea :global(.ant-btn:hover) {
+    border-color: #1890ff;
+    color: #1890ff;
+  }
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+  }
+  
+  .imagesList {
+    min-height: 100px;
+  }
+  
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 16px;
+  }
+  
+  /* ✅ NORMAL IMAGE ITEM */
+  .imageItem {
+    border: 2px solid #f0f0f0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    position: relative;
+    cursor: pointer;
+  }
+  
+  .imageItem:hover {
+    border-color: #1890ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.15);
+    transform: translateY(-2px);
+  }
+  
+  /* ✅ PRIMARY IMAGE ITEM - SPECIAL STYLING */
+  .primaryItem {
+    border: 3px solid #faad14 !important;
+    box-shadow: 0 6px 16px rgba(250, 173, 20, 0.25);
+    background: linear-gradient(135deg, #fffbe6 0%, #fafff0 100%);
+  }
+  
+  .primaryItem:hover {
+    border-color: #f7b500 !important;
+    box-shadow: 0 8px 20px rgba(250, 173, 20, 0.35);
+    transform: translateY(-4px);
+  }
+  
+  .primaryItem::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(250, 173, 20, 0.05) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  
+  /* IMAGE PREVIEW */
+  .imagePreview {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    overflow: hidden;
+    background: #f5f5f5;
+  }
+  
+  .imagePreview img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+    background: linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0),
+      linear-gradient(45deg, #f0f0f0 25%, transparent 25%, transparent 75%, #f0f0f0 75%, #f0f0f0);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+    background-color: #fafafa;
+  }
+  
+  .imageItem:hover .imagePreview img {
+    transform: scale(1.08);
+  }
+  
+  /* PRIMARY BADGE */
+  .primaryBadge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    margin: 0 !important;
+    font-size: 11px;
+    font-weight: 700 !important;
+    z-index: 2;
+    padding: 4px 8px !important;
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+  
+  @keyframes badgePulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+  
+  /* IMAGE INFO */
+  .imageInfo {
+    padding: 12px;
+    background: #fff;
+  }
+  
+  .imageName {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #262626;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.4;
+  }
+  
+  .imageSize {
+    margin: 4px 0 0 0;
+    font-size: 11px;
+    color: #8c8c8c;
+  }
+  
+  /* ✅ ACTIONS OVERLAY CONTAINER */
+  .actions {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 10;
+    border-radius: 8px;
+  }
+  
+  /* Show overlay on hover */
+  .imageItem:hover .actions {
+    opacity: 1;
+  }
+  
+  .actions :global(.ant-btn) {
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.1);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: all 0.3s ease;
+  }
+  
+  .actions :global(.ant-btn:hover:not([disabled])) {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+  
+  .actions :global(.ant-btn:active:not([disabled])) {
+    transform: scale(0.95);
+  }
+  
+  .actions :global(.ant-btn[danger]) {
+    color: #ff4d4f;
+    border-color: rgba(255, 77, 79, 0.4);
+  }
+  
+  .actions :global(.ant-btn[danger]:hover:not([disabled])) {
+    color: #ff7875;
+    border-color: rgba(255, 120, 117, 0.8);
+    background: rgba(255, 77, 79, 0.15);
+  }
+  
+  .actions :global(.ant-btn[disabled]) {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  /* Button icons - Primary styled */
+  .primaryItem .actions :global(.ant-btn:not([danger]):not([disabled])) {
+    border-color: rgba(250, 173, 20, 0.5);
+    background: rgba(250, 173, 20, 0.15);
+  }
+  
+  .primaryItem .actions :global(.ant-btn:not([danger]):not([disabled]):hover) {
+    border-color: rgba(250, 173, 20, 0.8);
+    background: rgba(250, 173, 20, 0.25);
+    color: #faad14;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 12px;
+    }
+  
+    .imageItem {
+      border-radius: 6px;
+    }
+  
+    .imageInfo {
+      padding: 10px;
+    }
+  
+    .imageName {
+      font-size: 11px;
+    }
+  
+    .actions :global(.ant-btn) {
+      width: 40px;
+      height: 40px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .grid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+    }
+  
+    .container {
+      padding: 16px;
+    }
+  
+    .actions {
+      gap: 8px;
+    }
+  
+    .actions :global(.ant-btn) {
+      width: 36px;
+      height: 36px;
+    }
+  }
+  
+  /* Animation for smooth transitions */
+  @keyframes imageLoad {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  .imageItem {
+    animation: imageLoad 0.3s ease-out;
+  }
+  
+  /* Scroll smooth behavior */
+  .imagesList {
+    scroll-behavior: smooth;
+  }
+  
+  /* ✅ THÊM: Tabs styling */
+.imageTabs {
+  margin-top: 16px;
+}
+
+.imageTabs :global(.ant-tabs-tab) {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.imageTabs :global(.ant-tabs-tab-active) {
+  color: #1890ff;
+}
+
+.imageTabs :global(.ant-tabs-content) {
+  padding: 24px 0;
+}
+
+/* ✅ THÊM: Upload section trong tab */
+.uploadSection {
+  padding: 16px 0;
+}
+
+.uploadSection .header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.uploadSection .header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.uploadSection .header .count {
+  color: #999;
+  font-size: 14px;
+}

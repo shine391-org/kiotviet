@@ -1,0 +1,171 @@
+/* src/components/products/ProductTable.module.css */
+
+/* Base table styling */
+.tableContainer {
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .tableWrapper {
+    width: 100%;
+  }
+  
+  /* Expanded row styling */
+  .expandedRow {
+    background: #fafafa;
+    padding: 16px;
+    border-top: 1px solid #f0f0f0;
+  }
+  
+  /* Expandable button */
+  .expandIcon {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 8px;
+    cursor: pointer;
+    color: #1890ff;
+    transition: all 0.3s;
+  }
+  
+  .expandIcon:hover {
+    color: #40a9ff;
+  }
+  
+  /* Image cell */
+  .imageCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  /* Price cell */
+  .priceCell {
+    font-weight: 500;
+    color: #f5222d;
+    text-align: right;
+  }
+  
+  /* Stock cell */
+  .stockCell {
+    font-weight: 500;
+    text-align: center;
+  }
+  
+  .stockHigh {
+    color: #52c41a;
+  }
+  
+  .stockMedium {
+    color: #faad14;
+  }
+  
+  .stockLow {
+    color: #f5222d;
+  }
+  
+  /* Actions cell */
+  .actionsCell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .expandedRow {
+      padding: 12px;
+    }
+  }
+  /* ProductTable.module.css hoặc ProductListPage.module.css */
+
+.product-row-highlighted {
+  background-color: #e6f7ff !important;
+  animation: highlight-fade 3s ease-in-out;
+}
+
+@keyframes highlight-fade {
+  0% {
+    background-color: #91d5ff;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ✅ Highlight animation cho variant card */
+.variant-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.variant-card-selected {
+  animation: variantPulse 0.5s ease-out;
+}
+
+@keyframes variantPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(24,144,255,0.15);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 4px 16px rgba(24,144,255,0.3);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 8px rgba(24,144,255,0.15);
+  }
+}
+
+/* ✅ Highlight animation cho product row */
+:global(.product-row-highlighted) {
+  background-color: #e6f7ff !important;
+  animation: productHighlightFade 3s ease-in-out;
+}
+
+@keyframes productHighlightFade {
+  0% {
+    background-color: #91d5ff;
+  }
+  50% {
+    background-color: #bae7ff;
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ✅ Smooth variant highlight (được add bởi JS) */
+:global(.variant-highlight) {
+  animation: variantHighlightFade 2s ease-in-out;
+}
+
+@keyframes variantHighlightFade {
+  0%, 100% { 
+    background-color: transparent; 
+    transform: scale(1);
+  }
+  50% { 
+    background-color: #fff7e6; 
+    transform: scale(1.02);
+    box-shadow: 0 4px 12px rgba(250, 173, 20, 0.3);
+  }
+}
+
+/* ✅ Smooth expand animation */
+:global(.ant-table-expanded-row) > :global(.ant-table-cell) {
+  animation: expandRow 0.3s ease-out;
+}
+
+@keyframes expandRow {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,162 @@
+/* src/styles/ProtectedRoute.css */
+
+.permission-denied-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+  }
+  
+  .permission-denied-content {
+    background: white;
+    padding: 60px 80px;
+    border-radius: 20px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    max-width: 600px;
+    animation: slideIn 0.5s ease-out;
+  }
+  
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .permission-denied-icon {
+    margin-bottom: 30px;
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.05);
+    }
+  }
+  
+  .permission-denied-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #dc2626;
+    font-weight: 700;
+  }
+  
+  .permission-denied-message {
+    font-size: 1.2rem;
+    color: #6b7280;
+    margin-bottom: 30px;
+    line-height: 1.6;
+  }
+  
+  .permission-denied-requirements {
+    background: #f9fafb;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 30px 0;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .permission-label {
+    font-size: 0.95rem;
+    color: #6b7280;
+    margin-bottom: 12px;
+    font-weight: 600;
+  }
+  
+  .permission-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  
+  .permission-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  
+  .permission-denied-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 40px;
+  }
+  
+  .btn-back,
+  .btn-home {
+    padding: 14px 32px;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-back {
+    background: #667eea;
+    color: white;
+  }
+  
+  .btn-back:hover {
+    background: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-home {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .btn-home:hover {
+    background: #e5e7eb;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .permission-denied-content {
+      padding: 40px 30px;
+    }
+  
+    .permission-denied-content h1 {
+      font-size: 2rem;
+    }
+  
+    .permission-denied-message {
+      font-size: 1rem;
+    }
+  
+    .permission-denied-actions {
+      flex-direction: column;
+    }
+  
+    .btn-back,
+    .btn-home {
+      width: 100%;
+      justify-content: center;
+    }
+  }  

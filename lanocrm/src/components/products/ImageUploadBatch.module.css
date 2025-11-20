@@ -1,0 +1,73 @@
+.container {
+    width: 100%;
+    padding: 16px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 2px dashed #d9d9d9;
+  }
+  
+  .previewGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+  
+  .previewCard {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .previewImageWrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%;
+    overflow: hidden;
+    background: #f0f0f0;
+  }
+  
+  .previewImageWrapper img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .previewOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  
+  .previewCard:hover .previewOverlay {
+    opacity: 1;
+  }
+  
+  .previewOverlay button {
+    color: #fff;
+    font-size: 20px;
+  }
+  
+  .fileName {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 11px;
+  }
+  
+  @media (max-width: 768px) {
+    .previewGrid {
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 8px;
+    }
+  }  

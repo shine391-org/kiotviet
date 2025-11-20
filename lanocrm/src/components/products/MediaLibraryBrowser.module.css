@@ -1,0 +1,642 @@
+/* ============================================================ */
+/* MediaLibraryBrowser - COMPLETE PRODUCTION CSS */
+/* ✅ Horizontal layout + Large 220px thumbnails */
+/* ============================================================ */
+
+.media-library-browser {
+    width: 100%;
+    padding: 0;
+    background: #fff;
+  }
+  
+  /* ============================================================ */
+  /* FILTER PANEL */
+  /* ============================================================ */
+  
+  .filter-panel {
+    background: #fafafa;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    border: 1px solid #f0f0f0;
+  }
+  
+  .filter-panel :global(.ant-card-head) {
+    border-bottom: 1px solid #e8e8e8;
+    padding: 12px 16px;
+    background: #fff;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .filter-panel :global(.ant-card-body) {
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .sku-search-input {
+    font-size: 13px;
+    border-radius: 4px;
+  }
+  
+  /* ============================================================ */
+  /* SELECTION ACTIONS */
+  /* ============================================================ */
+  
+  .selection-actions {
+    background: linear-gradient(135deg, #e6f7ff 0%, #f0f5ff 100%);
+    border: 1px solid #91d5ff;
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+  }
+  
+  .selection-actions :global(.ant-row) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE GRID - HORIZONTAL LAYOUT (LARGE THUMBNAILS) */
+  /* ✅ Horizontal single row + large 220px width */
+  /* ============================================================ */
+  
+  .image-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 0;
+    width: 100%;
+  }
+  
+  /* Custom scrollbar */
+  .image-grid::-webkit-scrollbar {
+    height: 10px;
+  }
+  
+  .image-grid::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+  }
+  
+  .image-grid::-webkit-scrollbar-thumb {
+    background: #bfbfbf;
+    border-radius: 4px;
+  }
+  
+  .image-grid::-webkit-scrollbar-thumb:hover {
+    background: #8c8c8c;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE CARD - FIXED CONTAINER */
+  /* ============================================================ */
+  
+  .image-card {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: 1px solid #d9d9d9;
+    border-radius: 6px;
+    background: #fff;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    
+    /* ✅ CRITICAL: Fixed size */
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+  }
+  
+  .image-card:hover {
+    border-color: #1890ff;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.12);
+    transform: translateY(-2px);
+  }
+  
+  .image-card.selected {
+    border-color: #52c41a;
+    background-color: #fafafa;
+    box-shadow: 0 4px 12px rgba(82, 196, 26, 0.12);
+  }
+  
+  .image-card :global(.ant-card) {
+    height: 100% !important;
+    border: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  
+  .image-card :global(.ant-card-body) {
+    padding: 0 !important;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE COVER - FORCE SQUARE CONTAINER */
+  /* ============================================================ */
+  
+  .image-cover {
+    position: relative;
+    width: 100% !important;
+    aspect-ratio: 1 / 1 !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, #f5f5f5 0%, #ececec 100%);
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE THUMBNAIL - CONSTRAINED */
+  /* ============================================================ */
+  
+  .image-thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    transition: transform 0.25s ease;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+  
+  .image-card:hover .image-thumbnail {
+    transform: scale(1.06);
+  }
+  
+  /* ============================================================ */
+  /* ANT-CARD COVER OVERRIDE */
+  /* ============================================================ */
+  
+  .image-card :global(.ant-card-cover) {
+    width: 100% !important;
+    height: 100% !important;
+    flex: 1 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+    overflow: hidden !important;
+    border: none !important;
+    aspect-ratio: 1 / 1 !important;
+  }
+  
+  .image-card :global(.ant-card-cover) img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center !important;
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE OVERLAY - CHECKBOX */
+  /* ============================================================ */
+  
+  .image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 2;
+  }
+  
+  .image-card:hover .image-overlay,
+  .image-card.selected .image-overlay {
+    opacity: 1;
+  }
+  
+  .image-overlay :global(.ant-checkbox) {
+    cursor: pointer;
+    font-size: 22px;
+  }
+  
+  /* ============================================================ */
+  /* PRIMARY BADGE */
+  /* ============================================================ */
+  
+  .primary-badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 3;
+    margin: 0 !important;
+    padding: 2px 6px !important;
+    font-size: 10px;
+    font-weight: 600;
+    background: #ffc53d;
+    color: rgba(0, 0, 0, 0.85);
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    line-height: 1.2;
+  }
+  
+  /* ============================================================ */
+  /* IMAGE METADATA */
+  /* ============================================================ */
+  
+  .image-card :global(.ant-card-meta) {
+    padding: 8px 10px !important;
+    flex-shrink: 0;
+    width: 100%;
+    background: #fff;
+  }
+  
+  .image-card :global(.ant-card-meta-title) {
+    margin: 0 !important;
+    font-size: 12px !important;
+    font-weight: 500;
+    color: #262626;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+  
+  .image-card :global(.ant-card-meta-description) {
+    font-size: 10px !important;
+    color: #8c8c8c;
+    margin: 2px 0 0 0 !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    line-height: 1.3;
+  }
+  
+  .image-filename {
+    font-size: 11px;
+    font-weight: 500;
+    color: #262626;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  /* ============================================================ */
+  /* PAGINATION CONTAINER */
+  /* ============================================================ */
+  
+  .pagination-container {
+    padding: 16px 0;
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .pagination-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  
+  .pagination-info-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #262626;
+  }
+  
+  .pagination-info-selector {
+    width: 130px;
+  }
+  
+  .pagination-container :global(.ant-pagination) {
+    margin: 0;
+    font-size: 13px;
+  }
+  
+  /* ============================================================ */
+  /* RESPONSIVE: DESKTOP (1200px+) */
+  /* ============================================================ */
+  
+  @media (min-width: 1200px) {
+    .image-grid {
+      gap: 16px;
+    }
+  }
+  
+  /* ============================================================ */
+  /* RESPONSIVE: LAPTOP (992px - 1199px) */
+  /* ============================================================ */
+  
+  @media (max-width: 1199px) and (min-width: 992px) {
+    .image-card :global(.ant-card-meta-title) {
+      font-size: 11px;
+    }
+  
+    .image-card :global(.ant-card-meta-description) {
+      font-size: 9px;
+    }
+  }
+  
+  /* ============================================================ */
+  /* RESPONSIVE: TABLET (768px - 991px) */
+  /* ============================================================ */
+  
+  @media (max-width: 991px) and (min-width: 768px) {
+    .filter-panel :global(.ant-card-body) {
+      padding: 10px;
+    }
+  
+    .filter-panel :global(.ant-card-head) {
+      padding: 10px 12px;
+    }
+  
+    .selection-actions {
+      padding: 10px 12px;
+    }
+  
+    .image-card :global(.ant-card-meta) {
+      padding: 6px 8px !important;
+    }
+  
+    .image-card :global(.ant-card-meta-title) {
+      font-size: 10px;
+    }
+  
+    .image-card :global(.ant-card-meta-description) {
+      font-size: 8px;
+    }
+  
+    .primary-badge {
+      padding: 1px 4px !important;
+      font-size: 9px;
+    }
+  
+    .pagination-info-text {
+      font-size: 12px;
+    }
+  
+    .pagination-info-selector {
+      width: 110px;
+    }
+  }
+  
+  /* ============================================================ */
+  /* RESPONSIVE: MOBILE (480px - 767px) */
+  /* ============================================================ */
+  
+  @media (max-width: 767px) and (min-width: 480px) {
+    .media-library-browser {
+      padding: 0 6px;
+    }
+  
+    .image-grid {
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+  
+    .filter-panel {
+      margin-bottom: 12px;
+    }
+  
+    .filter-panel :global(.ant-card-body) {
+      padding: 8px;
+    }
+  
+    .filter-panel :global(.ant-card-head) {
+      padding: 8px 10px;
+      font-size: 12px;
+    }
+  
+    .selection-actions {
+      padding: 8px 10px;
+      margin-bottom: 12px;
+    }
+  
+    .selection-actions :global(.ant-row) {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .image-card :global(.ant-card-meta) {
+      padding: 6px !important;
+    }
+  
+    .image-card :global(.ant-card-meta-title) {
+      font-size: 9px;
+    }
+  
+    .image-card :global(.ant-card-meta-description) {
+      font-size: 8px;
+    }
+  
+    .primary-badge {
+      top: 4px;
+      right: 4px;
+      padding: 1px 3px !important;
+      font-size: 8px;
+    }
+  
+    .pagination-container {
+      padding: 12px 0;
+    }
+  
+    .pagination-info-text {
+      font-size: 11px;
+    }
+  
+    .pagination-info-selector {
+      width: 100%;
+    }
+  }
+  
+  /* ============================================================ */
+  /* RESPONSIVE: SMALL PHONE (< 480px) */
+  /* ============================================================ */
+  
+  @media (max-width: 479px) {
+    .media-library-browser {
+      padding: 0 4px;
+    }
+  
+    .image-grid {
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+  
+    .filter-panel {
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+  
+    .filter-panel :global(.ant-card-body) {
+      padding: 8px;
+    }
+  
+    .filter-panel :global(.ant-card-head) {
+      padding: 8px;
+      font-size: 11px;
+    }
+  
+    .sku-search-input {
+      font-size: 12px;
+    }
+  
+    .selection-actions {
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+  
+    .selection-actions :global(.ant-row) {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 6px;
+    }
+  
+    .selection-actions :global(.ant-btn) {
+      width: 100%;
+      font-size: 12px;
+    }
+  
+    .image-card :global(.ant-card-meta) {
+      padding: 4px 6px !important;
+    }
+  
+    .image-card :global(.ant-card-meta-title) {
+      font-size: 8px;
+    }
+  
+    .image-card :global(.ant-card-meta-description) {
+      font-size: 7px;
+    }
+  
+    .primary-badge {
+      top: 3px;
+      right: 3px;
+      padding: 1px 2px !important;
+      font-size: 7px;
+    }
+  
+    .image-overlay {
+      background: rgba(0, 0, 0, 0.4);
+    }
+  
+    .image-overlay :global(.ant-checkbox) {
+      font-size: 18px;
+    }
+  
+    .pagination-container {
+      padding: 10px 0;
+    }
+  
+    .pagination-info {
+      flex-direction: column;
+      gap: 6px;
+    }
+  
+    .pagination-info-text {
+      font-size: 10px;
+      text-align: center;
+    }
+  
+    .pagination-info-selector {
+      width: 100%;
+    }
+  
+    .pagination-container :global(.ant-pagination-item) {
+      min-width: 22px;
+      height: 22px;
+      line-height: 20px;
+      font-size: 11px;
+    }
+  }
+  
+  /* ============================================================ */
+  /* UTILITY CLASSES */
+  /* ============================================================ */
+  
+  .no-margin {
+    margin: 0 !important;
+  }
+  
+  .no-padding {
+    padding: 0 !important;
+  }
+  
+  /* ============================================================ */
+  /* DARK MODE SUPPORT */
+  /* ============================================================ */
+  
+  @media (prefers-color-scheme: dark) {
+    .media-library-browser {
+      background: transparent;
+    }
+  
+    .filter-panel {
+      background: #262626;
+      border-color: #434343;
+    }
+  
+    .filter-panel :global(.ant-card-head) {
+      background: #1f1f1f;
+      border-color: #434343;
+    }
+  
+    .filter-panel :global(.ant-card-body) {
+      background: #262626;
+    }
+  
+    .selection-actions {
+      background: rgba(24, 144, 255, 0.08);
+      border-color: rgba(24, 144, 255, 0.2);
+    }
+  
+    .image-card {
+      background: #262626;
+      border-color: #434343;
+    }
+  
+    .image-card:hover {
+      border-color: #1890ff;
+    }
+  
+    .image-card.selected {
+      background-color: rgba(82, 196, 26, 0.1);
+      border-color: #52c41a;
+    }
+  
+    .image-card :global(.ant-card-meta) {
+      background: #1f1f1f;
+    }
+  
+    .image-card :global(.ant-card-meta-title) {
+      color: #e8e8e8;
+    }
+  
+    .image-card :global(.ant-card-meta-description) {
+      color: #b0b0b0;
+    }
+  
+    .pagination-container {
+      border-color: #434343;
+    }
+  }  

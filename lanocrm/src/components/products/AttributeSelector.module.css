@@ -1,0 +1,82 @@
+.container {
+    padding: 16px;
+    background-color: #fafafa;
+    border-radius: 8px;
+    border: 1px dashed #d9d9d9;
+  }
+  
+  .loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+  }
+  
+  .addAttribute {
+    margin-bottom: 16px;
+  }
+  
+  .attributesList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .attributeCard {
+    border: 1px solid #e8e8e8;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+  
+  .attributeCard:hover {
+    border-color: #1890ff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  .attributeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  
+  .attributeHeader {
+    flex: 1;
+  }
+  
+  .attributeName {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+  }
+  
+  .attributeInput {
+    width: 100%;
+  }
+  
+  .noMoreAttributes {
+    margin-top: 16px;
+    text-align: center;
+  }
+  
+  /* Empty state */
+  .container :global(.ant-empty) {
+    margin: 24px 0;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .container {
+      padding: 12px;
+    }
+  
+    .attributeRow {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+  
+    .attributeHeader {
+      width: 100%;
+    }
+  }  

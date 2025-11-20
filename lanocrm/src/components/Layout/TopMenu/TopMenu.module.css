@@ -1,0 +1,391 @@
+/**
+ * TopMenu Styles - CSS Modules
+ * KiotViet Horizontal Menu - Responsive with Mobile Hamburger
+ * Desktop: Full horizontal menu
+ * Mobile (< 990px): Hamburger menu on LEFT, dropdown from top
+ * 
+ * ✅ No duplicate classes
+ * ✅ All unique selectors
+ * ✅ Responsive 990px breakpoint
+ */
+
+/* ===== MAIN CONTAINER ===== */
+.topMenu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  background: white;
+  gap: 0;
+  position: relative;
+  padding: 0 16px;
+}
+
+/* ===== MENU LIST ===== */
+.topMenuList {
+  display: flex;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+  align-items: center;
+  height: 100%;
+  width: auto;
+  flex: 1;
+}
+
+/* ===== MENU ITEM ===== */
+.topMenuItem {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+/* ===== MENU LINK - Desktop ===== */
+.topMenuLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  height: 100%;
+  color: #595959;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 14px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-family: inherit;
+  white-space: nowrap;
+  position: relative;
+}
+
+.topMenuLink:hover {
+  color: #1890ff;
+  background: #fafafa;
+}
+
+.topMenuLink.active {
+  color: white;
+  background: #1890ff;
+  border-bottom-color: transparent;
+}
+
+.topMenuLink.hasActiveChild {
+  color: #1890ff;
+  background: #f6f8fc;
+}
+
+/* ===== MENU ICON ===== */
+.topMenuIcon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ===== MENU TEXT ===== */
+.topMenuText {
+  display: inline;
+}
+
+/* ===== DROPDOWN ARROW ===== */
+.topMenuArrow {
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  transition: transform 200ms;
+  margin-left: 4px;
+}
+
+.topMenuArrow.open {
+  transform: rotate(180deg);
+}
+
+/* ===== DROPDOWN CONTAINER ===== */
+.topMenuDropdown {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+/* ===== SUBMENU ===== */
+.topSubmenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+  min-width: 200px;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+}
+
+.topSubmenu.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* ===== SUBMENU ITEM ===== */
+.topSubmenuItem {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* ===== SUBMENU LINK ===== */
+.topSubmenuLink {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  color: #595959;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 150ms;
+  background: none;
+  border: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.topSubmenuLink:hover {
+  background: #f6f8fc;
+  color: #1890ff;
+  padding-left: 20px;
+}
+
+.topSubmenuLink.active {
+  background: #e6f7ff;
+  color: #1890ff;
+  font-weight: 600;
+  border-left: 3px solid #1890ff;
+  padding-left: 13px;
+}
+
+/* ===== HAMBURGER BUTTON - Hidden on desktop ===== */
+.mobileMenuToggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: none;
+  color: #1890ff;
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 150ms;
+  flex-shrink: 0;
+  padding: 0;
+  margin: 0;
+  order: -1;
+}
+
+.mobileMenuToggle:hover {
+  background: #f0f0f0;
+  transform: scale(1.05);
+}
+
+.mobileMenuToggle:active {
+  transform: scale(0.95);
+}
+
+/* ===== OVERLAY - Hidden on desktop ===== */
+.mobileMenuOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99;
+}
+
+/* ===== TABLET: Hide text, keep icons (1024px) ===== */
+@media (max-width: 1024px) {
+  .topMenuText {
+    display: none;
+  }
+
+  .topMenuLink {
+    padding: 0 12px;
+    gap: 4px;
+  }
+
+  .topMenuIcon {
+    font-size: 14px;
+  }
+}
+
+/* ===== MOBILE: Hamburger menu (< 768px) ===== */
+@media (max-width: 768px) {
+  .topMenu {
+    position: sticky;
+    top: 0;
+    z-index: 1001;  /* ← Cao hơn menu list */
+    padding: 0 12px;
+    gap: 12px;
+  }
+
+  .mobileMenuToggle {
+    display: flex;
+    margin-right: auto;
+    margin-left: 0;
+    order: -1;
+  }
+
+  /* ===== MENU KHỐI - Full screen ===== */
+  .topMenuList {
+    display: none;
+    position: fixed;
+    top: 56px;        /* ← Dưới header */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    flex-direction: column;
+    background: #fafafa;
+    width: 100%;
+    height: auto;
+    max-height: calc(100vh - 56px);
+    overflow-y: auto;
+    margin: 0;
+    padding: 12px;
+    gap: 8px;
+    z-index: 1000;    /* ← Cao hơn overlay */
+  }
+
+  .topMenuList.mobileOpen {
+    display: flex;
+  }
+
+  /* ===== MENU ITEM ===== */
+  .topMenuItem {
+    width: 100%;
+    height: auto;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #f0f0f0;
+    padding: 0;
+    margin: 0;
+  }
+
+  .topMenuLink {
+    width: 100%;
+    padding: 12px 16px;
+    border-bottom: none;
+    border-left: none;
+    background: none;
+    color: #595959;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .topMenuLink:hover {
+    background: #f6f8fc;
+  }
+
+  .topMenuLink.active {
+    background: #e6f7ff;
+    color: #1890ff;
+  }
+
+  .topMenuIcon {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .topMenuText {
+    display: inline;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .topMenuArrow {
+    display: flex;
+    font-size: 12px;
+  }
+
+  /* ===== SUBMENU ===== */
+  .topMenuDropdown {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    height: auto;
+  }
+
+  .topSubmenu {
+    position: static;
+    display: none;
+    flex-direction: column;
+    background: white;
+    border-radius: 0 0 8px 8px;
+    border-top: 1px solid #f0f0f0;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    min-width: unset;
+  }
+
+  .topSubmenu.visible {
+    display: flex;
+  }
+
+  .topSubmenuItem {
+    width: 100%;
+  }
+
+  .topSubmenuLink {
+    padding: 12px 16px 12px 48px;
+    font-size: 14px;
+    width: 100%;
+    background: white;
+    color: #595959;
+    border-bottom: 1px solid #f5f5f5;
+  }
+
+  .topSubmenuLink:last-child {
+    border-bottom: none;
+    border-radius: 0 0 8px 8px;
+  }
+
+  .topSubmenuLink:hover {
+    background: #f6f8fc;
+    color: #1890ff;
+    padding-left: 52px;
+  }
+
+  .topSubmenuLink.active {
+    background: #e6f7ff;
+    color: #1890ff;
+    font-weight: 600;
+    border-left: 3px solid #1890ff;
+    padding-left: 45px;
+  }
+
+  /* ===== OVERLAY ===== */
+  .mobileMenuOverlay {
+    display: block;
+    z-index: 999;    /* ← Thấp hơn menu */
+  }
+}

@@ -1,0 +1,77 @@
+/* ============================================
+   MAIN LAYOUT - DESKTOP
+   ============================================ */
+.main-layout {
+  min-height: 100vh;
+  background: #f0f2f5;
+  display: flex;
+  flex-direction: column;
+}
+
+.layout-content {
+  display: flex;
+  flex: 1;
+  min-height: calc(100vh - 64px);
+  position: relative;
+}
+
+.content-area {
+  flex: 1;
+  margin-left: 240px;
+  padding: 24px;
+  background: #f0f2f5;
+  transition: margin-left 0.3s;
+  min-height: calc(100vh - 64px);
+}
+
+.content-area.expanded {
+  margin-left: 80px;
+}
+
+/* ============================================
+   TABLET (768px - 1024px)
+   ============================================ */
+@media (max-width: 1024px) {
+  .content-area {
+    margin-left: 220px;
+    padding: 20px;
+  }
+
+  .content-area.expanded {
+    margin-left: 70px;
+  }
+}
+
+/* ============================================
+   MOBILE (< 767px)
+   ============================================ */
+@media (max-width: 767px) {
+  .content-area {
+    margin-left: 0 !important; /* Không có margin cho sidebar */
+    padding: 16px;
+    width: 100%;
+  }
+  
+  /* Expanded không ảnh hưởng trên mobile */
+  .content-area.expanded {
+    margin-left: 0 !important;
+  }
+}
+
+/* ============================================
+   MOBILE PORTRAIT (< 576px)
+   ============================================ */
+@media (max-width: 576px) {
+  .content-area {
+    padding: 12px;
+  }
+}
+
+/* ============================================
+   LANDSCAPE MODE
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .content-area {
+    padding: 12px;
+  }
+}

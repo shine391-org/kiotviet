@@ -1,0 +1,29 @@
+.modal :global(.ant-modal-body) {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+  
+  .container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .infoBox {
+    padding: 16px;
+    background: #f0f9ff;
+    border: 1px solid #b3e0ff;
+    border-radius: 4px;
+    margin-bottom: 16px;
+  }
+  
+  .infoBox p {
+    margin: 0;
+    line-height: 1.8;
+    color: #0050b3;
+  }
+  
+  .infoBox strong {
+    color: #003a75;
+  }  

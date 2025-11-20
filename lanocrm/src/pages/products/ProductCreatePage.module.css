@@ -1,0 +1,211 @@
+.container {
+    padding: 24px;
+    background: #f5f5f5;
+    min-height: 100vh;
+  }
+  
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  
+  .header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: #262626;
+  }
+  
+  .breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .breadcrumbNav {
+    margin-bottom: 24px;
+    background: #fff;
+    padding: 12px 16px;
+    border-radius: 6px;
+  }
+  
+  .card {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+  }
+  
+  .card :global(.ant-card-body) {
+    padding: 0;
+  }
+  
+  @media (max-width: 768px) {
+    .container {
+      padding: 16px;
+    }
+  
+    .header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 12px;
+    }
+  
+    .header h1 {
+      font-size: 20px;
+    }
+  }
+  /* ✅ THÊM: Summary Card Styling */
+.summaryCard {
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  background: #fff;
+}
+
+.summaryCard :global(.ant-card-body) {
+  padding: 24px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.summaryItem .label {
+  font-size: 12px;
+  color: #8c8c8c;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summaryItem .value {
+  font-size: 14px;
+  color: #262626;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.summaryItem img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ✅ THÊM: Loading Container */
+.loadingContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 8px;
+  margin: 24px 0;
+}
+
+.loadingContainer :global(.ant-spin) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.loadingContainer :global(.ant-spin-text) {
+  color: #262626;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ✅ THÊM: Error Container */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  border: 1px solid #f5f5f5;
+}
+
+.errorContainer h2 {
+  margin: 0 0 12px 0;
+  font-size: 18px;
+  color: #262626;
+  font-weight: 600;
+}
+
+.errorContainer p {
+  margin: 0 0 16px 0;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+/* ✅ THÊM: Responsive - Summary Grid */
+@media (max-width: 1200px) {
+  .summaryItem {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .summaryCard {
+    margin-bottom: 16px;
+  }
+
+  .summaryCard :global(.ant-card-body) {
+    padding: 16px;
+  }
+
+  .summaryItem .label {
+    font-size: 11px;
+  }
+
+  .summaryItem .value {
+    font-size: 13px;
+  }
+
+  .loadingContainer,
+  .errorContainer {
+    min-height: 300px;
+  }
+}
+
+@media (max-width: 480px) {
+  .summaryCard :global(.ant-card-body) {
+    padding: 12px;
+  }
+
+  .summaryItem {
+    gap: 4px;
+  }
+
+  .summaryItem .label {
+    font-size: 10px;
+  }
+
+  .summaryItem .value {
+    font-size: 12px;
+  }
+
+  .loadingContainer {
+    min-height: 250px;
+  }
+
+  .errorContainer {
+    min-height: 250px;
+    padding: 16px;
+  }
+
+  .errorContainer h2 {
+    font-size: 16px;
+  }
+
+  .errorContainer p {
+    font-size: 12px;
+  }
+}
