@@ -31,6 +31,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('users/roles', 'Api\\UsersController::roles');
     $routes->get('users/branches', 'Api\\UsersController::branches');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');
+    $routes->post('variants/(:num)/upload-multiple', 'Api\\ProductVariantsController::uploadMultiple/$1');
 });
 
 // Catch-all for frontend build

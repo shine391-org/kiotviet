@@ -25,4 +25,44 @@ class ProductVariantsController extends BaseController
         }
         return $this->respond(['success' => true, 'data' => $variant]);
     }
+
+    /**
+     * POST /api/variants/{id}/upload-multiple
+     * Lưu file vào writable/uploads/variants và trả về URLs.
+     */
+    public function uploadMultiple($id)
+    {
+        $id = (int) $id;
+        if ($id <= 0) {
+            return $this->failValidationErrors('Invalid variant id');
+        }
+
+        $files = $this->request->getFiles()['files'] ?? [];
+        if (empty($files)) {
+            return $this->failValidationErrors('No files uploaded');
+        }
+
+        $uploadPath = WRITEPATH . 'uploads/variants';
+        if (!is_dir($uploadPath)) {
+            mkdir($uploadPath, 0775, true);
+        }
+
+        $urls = [];
+        foreach ($files as $file) {
+            if (!$file->isValid()) {
+                continue;
+            }
+            $newName = $file->getRandomName();
+            $file->move($uploadPath, $newName);
+            $urls[] = '/uploads/variants/' . $newName;
+        }
+
+        return $this->respond([
+            'success' => true,
+            'data' => [
+                'variant_id' => $id,
+                'files' => $urls,
+            ],
+        ]);
+    }
 }
