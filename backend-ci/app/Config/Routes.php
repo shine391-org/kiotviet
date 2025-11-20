@@ -22,6 +22,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     });
     $routes->post('auth/login', 'Api\\AuthController::login');
     $routes->get('health', 'Api\\HealthController::index');
+    $routes->get('products', 'Api\\ProductsController::index');
+    $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');
 });
 
 // Catch-all for frontend build
