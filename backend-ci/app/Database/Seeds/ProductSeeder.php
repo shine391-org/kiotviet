@@ -312,9 +312,53 @@ class ProductSeeder extends Seeder
             ['product_id' => 10,'category_id' => 1],
         ];
 
+        $variants = [
+            [
+                'product_id' => 1,
+                'code' => 'TDH016-BLACK',
+                'name' => 'TDH016 - Đen',
+                'price' => 7800000,
+                'stock_quantity' => 3,
+                'attributes' => json_encode(['mau' => 'Đen']),
+                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',
+                'created_at' => '2025-10-27 09:31:56',
+            ],
+            [
+                'product_id' => 1,
+                'code' => 'TDH016-BE',
+                'name' => 'TDH016 - Be',
+                'price' => 7800000,
+                'stock_quantity' => 2,
+                'attributes' => json_encode(['mau' => 'Be']),
+                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',
+                'created_at' => '2025-10-27 09:31:56',
+            ],
+            [
+                'product_id' => 5,
+                'code' => 'CLTK033-BROWN',
+                'name' => 'CLTK033 - Nâu',
+                'price' => 6700000,
+                'stock_quantity' => 5,
+                'attributes' => json_encode(['mau' => 'Nâu']),
+                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/09/26/lano/3244329e059a44579ded30fcdc36a8dc.jpeg',
+                'created_at' => '2025-09-26 09:31:56',
+            ],
+            [
+                'product_id' => 5,
+                'code' => 'CLTK033-GRAY',
+                'name' => 'CLTK033 - Xám',
+                'price' => 6700000,
+                'stock_quantity' => 4,
+                'attributes' => json_encode(['mau' => 'Xám']),
+                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/09/26/lano/3244329e059a44579ded30fcdc36a8dc.jpeg',
+                'created_at' => '2025-09-26 09:31:56',
+            ],
+        ];
+
         // insert data
         $this->db->table('product_categories')->ignore(true)->insertBatch($categories);
         $this->db->table('products')->ignore(true)->insertBatch($products);
         $this->db->table('product_category_links')->ignore(true)->insertBatch($links);
+        $this->db->table('product_variants')->ignore(true)->insertBatch($variants);
     }
 }
