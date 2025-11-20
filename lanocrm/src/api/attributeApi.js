@@ -2,7 +2,7 @@
  * Attribute API Service
  * @file src/api/attributeApi.js
  * @description API calls for Product Attributes module
- * @backend https://banhang.tuidanam.org/backend-ci/api
+ * @backend /backend-ci/api (override via VITE_API_BASE_URL)
  */
 
 import axiosInstance from './axios';

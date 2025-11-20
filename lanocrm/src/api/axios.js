@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://banhang.tuidanam.org/backend-ci/api';
-const TOKEN_KEY = process.env.REACT_APP_TOKEN_KEY || 'lano_token';
+// Default to same-origin backend (docker-compose exposes /backend-ci)
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const TOKEN_KEY = import.meta.env.VITE_TOKEN_KEY || 'lano_token';
 
 // Tạo axios instance
 const axiosInstance = axios.create({

@@ -2,7 +2,7 @@
  * Product API Service
  * @file src/api/productApi.js
  * @description API calls for Products module
- * @backend https://banhang.tuidanam.org/backend-ci/api
+ * @backend /backend-ci/api (override via VITE_API_BASE_URL)
  */
 
 import axiosInstance from './axios';

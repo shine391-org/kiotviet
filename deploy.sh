@@ -56,10 +56,10 @@ echo "Htaccess files created."
 # --- Create Dockerfile ---
 echo "Creating Dockerfile..."
 cat > dist/Dockerfile << EOL
-FROM php:7.4-apache
+FROM php:8.4-apache
 
 # Install mysqli extension
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+RUN docker-php-ext-install mysqli pdo pdo_mysql && docker-php-ext-enable mysqli pdo pdo_mysql
 
 # Enable Apache rewrite module
 RUN a2enmod rewrite
@@ -98,7 +98,7 @@ services:
     environment:
       # Pass environment variables to the web server
       # If you need more variables, add them here
-      REACT_APP_API_BASE_URL: /backend-ci/api
+      VITE_API_BASE_URL: /backend-ci/api
       CI_ENVIRONMENT: production # CodeIgniter environment
 
   db:
@@ -110,7 +110,7 @@ services:
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
     volumes:
       - db_data:/var/lib/mysql
-      - ./lanocrm_shop_v6.sql:/docker-entrypoint-initdb.d/lanocrm_shop_v6.sql
+      - ./lanocrm_shop.sql:/docker-entrypoint-initdb.d/lanocrm_shop.sql
 
 volumes:
   db_data:
@@ -119,6 +119,3 @@ EOL
 echo "docker-compose.yml created."
 
 echo "Deployment script complete. You can now run 'docker-compose up --build' to start the application."
-
-
-

@@ -2,7 +2,7 @@
  * Category API Service
  * @file src/api/categoryApi.js
  * @description API calls for Product Categories
- * @backend https://banhang.tuidanam.org/backend-ci/api
+ * @backend /backend-ci/api (override via VITE_API_BASE_URL)
  */
 
 import axiosInstance from './axios';

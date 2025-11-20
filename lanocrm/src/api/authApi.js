@@ -9,14 +9,9 @@ const USER_KEY = 'lano_user';
 const authApi = {
   
   // ==================== LOGIN ====================
-  /**
-   * POST /api/users/login
-   * @param {Object} credentials - { username, password }
-   * @returns {Object} { success, token, user }
-   */
   login: async (credentials) => {
     try {
-      const response = await axiosInstance.post('/users/login', credentials);
+      const response = await axiosInstance.post('/auth/login', credentials);
       console.log('✅ Backend response:', response.data);
       
       // Validate response structure

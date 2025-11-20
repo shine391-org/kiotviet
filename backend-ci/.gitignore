@@ -1,67 +1,126 @@
-# ====================
-# CodeIgniter 3 
-# ====================
+#-------------------------
+# Operating Specific Junk Files
+#-------------------------
 
-# Cache & Logs
-application/cache/*
-!application/cache/index.html
-!application/cache/.htaccess
-
-application/logs/*
-!application/logs/index.html
-!application/logs/.htaccess
-
-# Environment files (QUAN TRỌNG - bảo mật)
-.env
-.env.production
-.env.development
-.env.local
-
-# Database files (QUAN TRỌNG - không push database)
-*.sql
-*.sqlite
-*.db
-lanocrm_shop*.sql
-backup*.sql
-
-# Composer
-vendor/
-composer.lock
-composer.phar
-
-# IDE & Editors
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-*.code-workspace
-
-# OS Files
+# OS X
 .DS_Store
-.DS_Store?
+.AppleDouble
+.LSOverride
+
+# OS X Thumbnails
 ._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
+
+# Windows image file caches
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Uploads & User-generated content
-uploads/*
-!uploads/index.html
-!uploads/.htaccess
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
 
-# Sensitive Config (QUAN TRỌNG)
-application/config/database.php
-application/config/config.php
-application/config/jwt.php
+# Windows Installer files
+*.cab
+*.msi
+*.msm
+*.msp
 
-# Temporary files
-*.tmp
-*.temp
-*.log
-*.swp
+# Windows shortcuts
+*.lnk
+
+# Linux
 *~
 
-# PHP
-*.phar
-.php_cs.cache
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+#-------------------------
+# Environment Files
+#-------------------------
+# These should never be under version control,
+# as it poses a security risk.
+.env
+.vagrant
+Vagrantfile
+
+#-------------------------
+# Temporary Files
+#-------------------------
+writable/cache/*
+!writable/cache/index.html
+
+writable/logs/*
+!writable/logs/index.html
+
+writable/session/*
+!writable/session/index.html
+
+writable/uploads/*
+!writable/uploads/index.html
+
+writable/debugbar/*
+!writable/debugbar/index.html
+
+php_errors.log
+
+#-------------------------
+# User Guide Temp Files
+#-------------------------
+user_guide_src/build/*
+user_guide_src/cilexer/build/*
+user_guide_src/cilexer/dist/*
+user_guide_src/cilexer/pycilexer.egg-info/*
+
+#-------------------------
+# Test Files
+#-------------------------
+tests/coverage*
+
+# Don't save phpunit under version control.
+phpunit
+
+#-------------------------
+# Composer
+#-------------------------
+vendor/
+
+#-------------------------
+# IDE / Development Files
+#-------------------------
+
+# Modules Testing
+_modules/*
+
+# phpenv local config
+.php-version
+
+# Jetbrains editors (PHPStorm, etc)
+.idea/
+*.iml
+
+# NetBeans
+/nbproject/
+/build/
+/nbbuild/
+/dist/
+/nbdist/
+/nbactions.xml
+/nb-configuration.xml
+/.nb-gradle/
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+.phpintel
+/api/
+
+# Visual Studio Code
+.vscode/
+
+/results/
+/phpunit*.xml

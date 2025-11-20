@@ -1,7 +1,13 @@
-FROM php:7.4-apache
+FROM php:8.4-apache
 
 # Install mysqli extension
-RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
+RUN apt-get update \
+ && apt-get install -y git unzip libzip-dev \
+ && docker-php-ext-install mysqli pdo pdo_mysql \
+ && docker-php-ext-enable mysqli pdo pdo_mysql
+
+# Install composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
 # Enable Apache rewrite module
 RUN a2enmod rewrite
