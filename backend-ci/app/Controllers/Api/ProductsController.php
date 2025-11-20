@@ -5,6 +5,7 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\ProductModel;
 use App\Models\ProductCategoryLinkModel;
+use App\Models\ProductVariantV2Model;
 use CodeIgniter\API\ResponseTrait;
 
 class ProductsController extends BaseController
@@ -13,11 +14,13 @@ class ProductsController extends BaseController
 
     protected ProductModel $products;
     protected ProductCategoryLinkModel $links;
+    protected ProductVariantV2Model $variants;
 
     public function __construct()
     {
         $this->products = new ProductModel();
         $this->links    = new ProductCategoryLinkModel();
+        $this->variants = new ProductVariantV2Model();
     }
 
     /**
@@ -53,7 +56,8 @@ class ProductsController extends BaseController
                          ->limit($limit, $offset)
                          ->find();
 
-        // attach category ids
+        $includeVariants = (bool) $this->request->getGet('include_variants');
+        // attach category ids (+ variants if requested)
         $ids = array_column($data, 'id');
         if (!empty($ids)) {
             $linkRows = $this->links->select('product_id, category_id')
@@ -63,9 +67,19 @@ class ProductsController extends BaseController
             foreach ($linkRows as $row) {
                 $map[$row['product_id']][] = (int) $row['category_id'];
             }
+
+            $variantMap = [];
+            if ($includeVariants) {
+                $variantRows = $this->variants->whereIn('product_id', $ids)->findAll();
+                foreach ($variantRows as $vr) {
+                    $variantMap[$vr['product_id']][] = $vr;
+                }
+            }
+
             foreach ($data as &$row) {
                 $row['category_ids'] = $map[$row['id']] ?? [];
-                $row['variants'] = []; // placeholder for FE
+                $row['variants'] = $variantMap[$row['id']] ?? [];
+                $row['variants_v2'] = $row['variants']; // FE compatibility
             }
         }
 
@@ -93,11 +107,24 @@ class ProductsController extends BaseController
 
         $linkRows = $this->links->select('category_id')->where('product_id', $id)->findAll();
         $product['category_ids'] = array_map(fn($r) => (int) $r['category_id'], $linkRows);
-        $product['variants'] = []; // placeholder
+        $product['variants'] = $this->variants->where('product_id', $id)->findAll();
+        $product['variants_v2'] = $product['variants'];
 
         return $this->respond([
             'success' => true,
             'data' => $product,
+        ]);
+    }
+
+    /**
+     * GET /api/products/{id}/variants
+     */
+    public function variants($id)
+    {
+        $variants = $this->variants->where('product_id', $id)->findAll();
+        return $this->respond([
+            'success' => true,
+            'data' => $variants,
         ]);
     }
 }

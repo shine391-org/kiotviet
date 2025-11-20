@@ -24,11 +24,13 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('health', 'Api\\HealthController::index');
     $routes->get('products', 'Api\\ProductsController::index');
     $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');
+    $routes->get('products/(:num)/variants', 'Api\\ProductsController::variants/$1');
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('users', 'Api\\UsersController::index');
     $routes->get('users/me', 'Api\\UsersController::me');
     $routes->get('users/roles', 'Api\\UsersController::roles');
     $routes->get('users/branches', 'Api\\UsersController::branches');
+    $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');
 });
 
 // Catch-all for frontend build
