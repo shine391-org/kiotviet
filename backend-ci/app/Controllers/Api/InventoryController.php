@@ -42,10 +42,24 @@ class InventoryController extends BaseController
     public function alerts() { return $this->wrap(fn () => $this->respond($this->service->alerts($this->request->getGet()))); }
 
     /** Resolve alert. @agent-use: PUT /api/inventory/alerts/{id}/resolve */
-    public function resolveAlert($id) { $user = $this->request->getJSON(true)['resolved_by'] ?? null; return $this->wrap(fn () => $this->respond($this->service->resolveAlert((int) $id, $user ? (int) $user : null))); }
+    public function resolveAlert($id)
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $resolvedBy = $payload['resolved_by'] ?? null;
+        $userId = $resolvedBy ? (int) $resolvedBy : null;
+
+        return $this->wrap(fn () => $this->respond($this->service->resolveAlert((int) $id, $userId)));
+    }
 
     /** Ignore alert. @agent-use: PUT /api/inventory/alerts/{id}/ignore */
-    public function ignoreAlert($id) { $user = $this->request->getJSON(true)['resolved_by'] ?? null; return $this->wrap(fn () => $this->respond($this->service->ignoreAlert((int) $id, $user ? (int) $user : null))); }
+    public function ignoreAlert($id)
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $resolvedBy = $payload['resolved_by'] ?? null;
+        $userId = $resolvedBy ? (int) $resolvedBy : null;
+
+        return $this->wrap(fn () => $this->respond($this->service->ignoreAlert((int) $id, $userId)));
+    }
 
     /** Reserve stock. @agent-use: POST /api/inventory/reserve */
     public function reserveStock() { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respond($this->service->reserveStock($data))); }

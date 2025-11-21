@@ -164,7 +164,7 @@ class InventoryService
     }
 
     private function generateRefCode(string $type): string
-    { return $type . '-' . date('YmdHis') . '-' . random_int(100, 999); }
+    { return $type . '-' . date('YmdHis') . '-' . random_int(10000, 99999); }
 
     private function maybeCreateLowStockAlert(int $productId, ?int $variantId, int $warehouseId): void
     {

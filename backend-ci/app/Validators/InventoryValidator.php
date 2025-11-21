@@ -60,6 +60,23 @@ class InventoryValidator
             'valuation_method' => 'permit_empty|in_list[FIFO,LIFO,AVERAGE]',
         ];
         $data = $this->run($input, $rules);
+
+        // Validate business rules based on movement_type
+        $type = $data['movement_type'];
+        if ($type === 'TRANSFER') {
+            if (empty($data['from_warehouse_id']) || empty($data['to_warehouse_id'])) {
+                throw new InvalidArgumentException('TRANSFER requires both from_warehouse_id and to_warehouse_id');
+            }
+        } elseif ($type === 'IN') {
+            if (empty($data['to_warehouse_id'])) {
+                throw new InvalidArgumentException('IN requires to_warehouse_id');
+            }
+        } elseif ($type === 'OUT') {
+            if (empty($data['from_warehouse_id'])) {
+                throw new InvalidArgumentException('OUT requires from_warehouse_id');
+            }
+        }
+
         $data['unit_cost'] = $data['unit_cost'] ?? 0;
         $data['created_by'] = $data['created_by'] ?? 0;
         $data['valuation_method'] = $data['valuation_method'] ?? 'AVERAGE';

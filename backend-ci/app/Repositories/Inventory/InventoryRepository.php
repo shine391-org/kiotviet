@@ -63,16 +63,19 @@ class InventoryRepository
     public function adjustStock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty): array
     {
         $now = date('Y-m-d H:i:s');
+        $this->db->transStart();
+
         $row = $this->stockRow($productId, $variantId, $warehouseId);
         if ($row) {
-            $newQty = ($row['quantity_on_hand'] ?? 0) + $deltaQty;
-            $this->db->table('inventory_stock')->where('id', $row['id'])->update([
-                'quantity_on_hand' => $newQty,
+            // Use atomic SQL expression to avoid race condition
+            $this->db->table('inventory_stock')->where('id', $row['id'])->set('quantity_on_hand', 'quantity_on_hand + ' . $this->db->escape($deltaQty), false)->set([
                 'last_movement_at' => $now,
                 'updated_at' => $now,
-            ]);
-            $row['quantity_on_hand'] = $newQty;
-            $row['last_movement_at'] = $now;
+            ])->update();
+            // Re-fetch to get the updated value
+            $row = $this->db->table('inventory_stock')->where('id', $row['id'])->get()->getRowArray();
+
+            $this->db->transComplete();
             return $row;
         }
         $payload = [
@@ -87,6 +90,7 @@ class InventoryRepository
         ];
         $this->db->table('inventory_stock')->insert($payload);
         $payload['id'] = $this->db->insertID();
+        $this->db->transComplete();
         return $payload;
     }
 
@@ -139,7 +143,12 @@ class InventoryRepository
     /** Reserve stock (increase quantity_reserved). */
     public function reserveStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
     {
-        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        $this->db->transStart();
+
+        // Use raw SQL with FOR UPDATE to lock the row
+        $sql = "SELECT * FROM inventory_stock WHERE product_id = ? AND warehouse_id = ? AND variant_id = ? FOR UPDATE";
+        $row = $this->db->query($sql, [$productId, $warehouseId, $variantId])->getRowArray();
+
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = ($row['quantity_reserved'] ?? 0) + $qty;
         $available = ($row['quantity_on_hand'] ?? 0) - $newReserved;
@@ -149,13 +158,19 @@ class InventoryRepository
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         $row['quantity_reserved'] = $newReserved;
+        $this->db->transComplete();
         return $row;
     }
 
     /** Release reserved stock. */
     public function releaseStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
     {
-        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        $this->db->transStart();
+
+        // Use raw SQL with FOR UPDATE to lock the row
+        $sql = "SELECT * FROM inventory_stock WHERE product_id = ? AND warehouse_id = ? AND variant_id = ? FOR UPDATE";
+        $row = $this->db->query($sql, [$productId, $warehouseId, $variantId])->getRowArray();
+
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = max(0, ($row['quantity_reserved'] ?? 0) - $qty);
         $this->db->table('inventory_stock')->where('id', $row['id'])->update([
@@ -163,6 +178,7 @@ class InventoryRepository
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         $row['quantity_reserved'] = $newReserved;
+        $this->db->transComplete();
         return $row;
     }
 

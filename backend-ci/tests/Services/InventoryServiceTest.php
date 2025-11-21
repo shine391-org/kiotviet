@@ -205,6 +205,8 @@ class InventoryServiceTest extends CIUnitTestCase
             current_quantity REAL,
             threshold_quantity REAL,
             status TEXT,
+            resolved_by INTEGER,
+            resolved_at TEXT,
             created_at TEXT
         )');
 
