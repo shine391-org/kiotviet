@@ -89,9 +89,28 @@ class InventoryServiceTest extends CIUnitTestCase
         $this->assertSame('OUT_OF_STOCK', $alert['alert_type']);
     }
 
+    public function test_in_movement_creates_valuation(): void
+    {
+        $wh = $this->seedWarehouse('WH-A');
+        $this->service->createMovement([
+            'movement_type' => 'IN',
+            'product_id' => 1,
+            'to_warehouse_id' => $wh,
+            'quantity' => 4,
+            'unit_cost' => 5,
+            'valuation_method' => 'FIFO',
+        ]);
+
+        $row = $this->db->table('db_inventory_valuation')->get()->getRowArray();
+        $this->assertSame('FIFO', $row['valuation_method']);
+        $this->assertEquals(4.0, (float) $row['quantity']);
+        $this->assertEquals(5.0, (float) $row['unit_cost']);
+    }
+
     private function resetSchema(): void
     {
         $this->db->query('DROP TABLE IF EXISTS db_inventory_alerts');
+        $this->db->query('DROP TABLE IF EXISTS db_inventory_valuation');
         $this->db->query('DROP TABLE IF EXISTS db_inventory_movements');
         $this->db->query('DROP TABLE IF EXISTS db_inventory_stock');
         $this->db->query('DROP TABLE IF EXISTS db_warehouses');
@@ -148,6 +167,19 @@ class InventoryServiceTest extends CIUnitTestCase
             current_quantity REAL,
             threshold_quantity REAL,
             status TEXT,
+            created_at TEXT
+        )');
+
+        $this->db->query('CREATE TABLE db_inventory_valuation (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            warehouse_id INTEGER,
+            product_id INTEGER,
+            variant_id INTEGER,
+            valuation_method TEXT,
+            quantity REAL,
+            unit_cost REAL,
+            total_value REAL,
+            movement_id INTEGER,
             created_at TEXT
         )');
     }

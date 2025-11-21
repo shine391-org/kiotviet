@@ -246,8 +246,8 @@ FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)
 - [x] InventoryValidator, InventoryRepository, InventoryService (core movement + warehouse CRUD) implemented following clean architecture.
 - [x] Thin InventoryController endpoints for warehouses and movements.
 - [x] Services registered in `app/Config/Services.php`.
-- [x] Unit tests added for InventoryService (IN/OUT/TRANSFER, low-stock alert) and full PHPUnit suite passing with pcov.
-- [ ] Valuation flows (FIFO/LIFO/Average) + inventory_valuation ops.
+- [x] Unit tests added for InventoryService (IN/OUT/TRANSFER, low-stock alert, valuation) and full PHPUnit suite passing with pcov.
+- [x] Basic valuation entry created on inbound/transfer with chosen method.
 - [ ] Alerts lifecycle (resolve/ignore) & notifications integration.
 - [ ] Stock reservation/release APIs and transformers/docs.
 

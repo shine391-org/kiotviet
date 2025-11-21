@@ -57,10 +57,12 @@ class InventoryValidator
             'reason'        => 'permit_empty|string|max_length[255]',
             'reference_code'=> 'permit_empty|string|max_length[50]',
             'created_by'    => 'permit_empty|integer',
+            'valuation_method' => 'permit_empty|in_list[FIFO,LIFO,AVERAGE]',
         ];
         $data = $this->run($input, $rules);
         $data['unit_cost'] = $data['unit_cost'] ?? 0;
         $data['created_by'] = $data['created_by'] ?? 0;
+        $data['valuation_method'] = $data['valuation_method'] ?? 'AVERAGE';
         return $data;
     }
 

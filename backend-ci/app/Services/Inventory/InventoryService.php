@@ -49,6 +49,10 @@ class InventoryService
     public function movements(array $filters): array
     { return ['success' => true, 'data' => $this->repo->movements($filters)]; }
 
+    /** Valuation listing. @agent-use: GET /api/inventory/valuation @agent-pattern: Simple list */
+    public function valuations(array $filters): array
+    { return ['success' => true, 'data' => $this->repo->valuations($filters)]; }
+
     /** Create movement and update stock. @agent-use: POST /api/inventory/movements @agent-pattern: Movement handling */
     public function createMovement(array $data): array
     {
@@ -87,6 +91,21 @@ class InventoryService
 
             $payload['reference_code'] = $payload['reference_code'] ?? $this->generateRefCode($type);
             $movement = $this->repo->createMovement($payload);
+
+            // Valuation entries on inbound or transfer-in
+            if (in_array($type, ['IN', 'TRANSFER'], true) && ! empty($payload['unit_cost'])) {
+                $targetWarehouse = $payload['to_warehouse_id'] ?? $payload['from_warehouse_id'];
+                $this->repo->createValuation([
+                    'warehouse_id' => $targetWarehouse,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'valuation_method' => $payload['valuation_method'] ?? 'AVERAGE',
+                    'quantity' => $qty,
+                    'unit_cost' => $payload['unit_cost'],
+                    'movement_id' => $movement['id'],
+                    'total_value' => $qty * $payload['unit_cost'],
+                ]);
+            }
 
             $db->transCommit();
         } catch (\Throwable $e) {

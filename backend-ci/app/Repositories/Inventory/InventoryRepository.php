@@ -115,4 +115,23 @@ class InventoryRepository
         $payload = $data + ['created_at' => date('Y-m-d H:i:s')];
         $this->db->table('inventory_alerts')->insert($payload);
     }
+
+    /** Create valuation record. @agent-use: valuation tracking */
+    public function createValuation(array $data): array
+    {
+        $payload = $data + ['created_at' => date('Y-m-d H:i:s')];
+        $this->db->table('inventory_valuation')->insert($payload);
+        $payload['id'] = $this->db->insertID();
+        return $payload;
+    }
+
+    /** List valuation rows by product/warehouse. */
+    public function valuations(array $filters = []): array
+    {
+        $b = $this->db->table('inventory_valuation');
+        if (! empty($filters['product_id'])) { $b->where('product_id', $filters['product_id']); }
+        if (! empty($filters['warehouse_id'])) { $b->where('warehouse_id', $filters['warehouse_id']); }
+        if (! empty($filters['valuation_method'])) { $b->where('valuation_method', $filters['valuation_method']); }
+        return $b->orderBy('created_at', 'DESC')->limit(200)->get()->getResultArray();
+    }
 }

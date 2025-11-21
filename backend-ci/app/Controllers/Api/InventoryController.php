@@ -35,6 +35,9 @@ class InventoryController extends BaseController
     /** Create movement. @agent-use: POST /api/inventory/movements @agent-pattern: Thin create */
     public function createMovement() { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respondCreated($this->service->createMovement($data))); }
 
+    /** Valuation list. @agent-use: GET /api/inventory/valuation @agent-pattern: Delegate list */
+    public function valuations() { return $this->wrap(fn () => $this->respond($this->service->valuations($this->request->getGet()))); }
+
     /** Shared try/catch wrapper. */
     private function wrap(callable $action)
     {

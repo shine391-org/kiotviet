@@ -4,7 +4,7 @@
 - Created InventoryValidator, InventoryRepository, InventoryService with core IN/OUT/TRANSFER/ADJUSTMENT handling and low-stock alert hook.
 - Added thin InventoryController with warehouse CRUD and movement endpoints.
 - Registered inventory services in `backend-ci/app/Config/Services.php`.
-- Added unit tests for InventoryService (IN/OUT/TRANSFER, low stock alert); full PHPUnit suite passing with pcov coverage.
+- Added valuation recording on inbound/transfer and unit tests (IN/OUT/TRANSFER, low-stock alert, valuation); full PHPUnit suite passing with pcov coverage.
 - Installed pcov in API container after rebuild for fast coverage.
 
 ## Files touched
