@@ -4,15 +4,16 @@ namespace App\Services\Inventory;
 
 use App\Repositories\Inventory\InventoryRepository;
 use App\Validators\InventoryValidator;
+use App\Services\Common\NotificationService;
 use InvalidArgumentException;
 use RuntimeException;
 
 /** Inventory business logic. @agent-service: Inventory @agent-pattern: Service orchestrator @agent-reusable: MEDIUM */
 class InventoryService
 {
-    protected InventoryRepository $repo; protected InventoryValidator $validator;
-    public function __construct(?InventoryRepository $repo = null, ?InventoryValidator $validator = null)
-    { $this->repo = $repo ?? new InventoryRepository(); $this->validator = $validator ?? new InventoryValidator(); }
+    protected InventoryRepository $repo; protected InventoryValidator $validator; protected NotificationService $notifier;
+    public function __construct(?InventoryRepository $repo = null, ?InventoryValidator $validator = null, ?NotificationService $notifier = null)
+    { $this->repo = $repo ?? new InventoryRepository(); $this->validator = $validator ?? new InventoryValidator(); $this->notifier = $notifier ?? new NotificationService(); }
 
     /** List warehouses. @agent-use: GET /api/warehouses @agent-pattern: Standard list */
     public function listWarehouses(array $filters): array
@@ -171,7 +172,7 @@ class InventoryService
         if (! $row) { return; }
         $available = ($row['quantity_on_hand'] ?? 0) - ($row['quantity_reserved'] ?? 0);
         if ($row['minimum_stock'] !== null && $available < $row['minimum_stock']) {
-            $this->repo->createAlert([
+            $alert = [
                 'alert_type' => $available <= 0 ? 'OUT_OF_STOCK' : 'LOW_STOCK',
                 'product_id' => $productId,
                 'variant_id' => $variantId,
@@ -179,7 +180,9 @@ class InventoryService
                 'current_quantity' => $available,
                 'threshold_quantity' => $row['minimum_stock'],
                 'status' => 'active',
-            ]);
+            ];
+            $this->repo->createAlert($alert);
+            $this->notifier->sendInventoryAlert($alert);
         }
     }
 }

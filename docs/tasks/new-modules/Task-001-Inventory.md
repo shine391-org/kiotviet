@@ -250,7 +250,8 @@ FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)
 - [x] Basic valuation entry created on inbound/transfer with chosen method.
 - [x] Alerts lifecycle (resolve/ignore) and catalogue endpoints.
 - [x] Stock reservation/release APIs.
-- [ ] Notifications integration & transformers/docs.
+- [x] Notification stub (logs) and InventoryTransformer scaffold.
+- [ ] Integrate transformers in responses & add API docs.
 
 ## 📋 DETAILED REQUIREMENTS
 
