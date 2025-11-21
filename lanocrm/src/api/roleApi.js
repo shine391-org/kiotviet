@@ -112,7 +112,15 @@ const roleApi = {
   getAllPermissions: async () => {
     try {
       const response = await axiosInstance.get('/permissions');
-      return response.data.data; // Trả về grouped permissions
+      const list = response.data.data || [];
+      // Group by module for FE accordion
+      const grouped = list.reduce((acc, p) => {
+        const module = p.module || 'other';
+        if (!acc[module]) acc[module] = [];
+        acc[module].push(p);
+        return acc;
+      }, {});
+      return grouped;
     } catch (error) {
       console.error('Error fetching all permissions:', error);
       throw error;
