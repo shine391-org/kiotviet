@@ -38,6 +38,21 @@ class InventoryController extends BaseController
     /** Valuation list. @agent-use: GET /api/inventory/valuation @agent-pattern: Delegate list */
     public function valuations() { return $this->wrap(fn () => $this->respond($this->service->valuations($this->request->getGet()))); }
 
+    /** Alerts list. @agent-use: GET /api/inventory/alerts */
+    public function alerts() { return $this->wrap(fn () => $this->respond($this->service->alerts($this->request->getGet()))); }
+
+    /** Resolve alert. @agent-use: PUT /api/inventory/alerts/{id}/resolve */
+    public function resolveAlert($id) { $user = $this->request->getJSON(true)['resolved_by'] ?? null; return $this->wrap(fn () => $this->respond($this->service->resolveAlert((int) $id, $user ? (int) $user : null))); }
+
+    /** Ignore alert. @agent-use: PUT /api/inventory/alerts/{id}/ignore */
+    public function ignoreAlert($id) { $user = $this->request->getJSON(true)['resolved_by'] ?? null; return $this->wrap(fn () => $this->respond($this->service->ignoreAlert((int) $id, $user ? (int) $user : null))); }
+
+    /** Reserve stock. @agent-use: POST /api/inventory/reserve */
+    public function reserveStock() { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respond($this->service->reserveStock($data))); }
+
+    /** Release reserved stock. @agent-use: POST /api/inventory/release */
+    public function releaseStock() { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respond($this->service->releaseStock($data))); }
+
     /** Shared try/catch wrapper. */
     private function wrap(callable $action)
     {

@@ -53,6 +53,34 @@ class InventoryService
     public function valuations(array $filters): array
     { return ['success' => true, 'data' => $this->repo->valuations($filters)]; }
 
+    /** List alerts. */
+    public function alerts(array $filters): array
+    { return ['success' => true, 'data' => $this->repo->alerts($filters)]; }
+
+    /** Resolve alert. */
+    public function resolveAlert(int $id, ?int $userId = null): array
+    { $this->repo->updateAlertStatus($id, 'resolved', $userId); return ['success' => true]; }
+
+    /** Ignore alert. */
+    public function ignoreAlert(int $id, ?int $userId = null): array
+    { $this->repo->updateAlertStatus($id, 'ignored', $userId); return ['success' => true]; }
+
+    /** Reserve stock. */
+    public function reserveStock(array $data): array
+    {
+        $payload = $this->validator->validateReservation($data);
+        $row = $this->repo->reserveStock($payload['product_id'], $payload['variant_id'] ?? null, $payload['warehouse_id'], (float) $payload['quantity']);
+        return ['success' => true, 'data' => $row];
+    }
+
+    /** Release reserved stock. */
+    public function releaseStock(array $data): array
+    {
+        $payload = $this->validator->validateReservation($data);
+        $row = $this->repo->releaseStock($payload['product_id'], $payload['variant_id'] ?? null, $payload['warehouse_id'], (float) $payload['quantity']);
+        return ['success' => true, 'data' => $row];
+    }
+
     /** Create movement and update stock. @agent-use: POST /api/inventory/movements @agent-pattern: Movement handling */
     public function createMovement(array $data): array
     {

@@ -248,8 +248,9 @@ FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)
 - [x] Services registered in `app/Config/Services.php`.
 - [x] Unit tests added for InventoryService (IN/OUT/TRANSFER, low-stock alert, valuation) and full PHPUnit suite passing with pcov.
 - [x] Basic valuation entry created on inbound/transfer with chosen method.
-- [ ] Alerts lifecycle (resolve/ignore) & notifications integration.
-- [ ] Stock reservation/release APIs and transformers/docs.
+- [x] Alerts lifecycle (resolve/ignore) and catalogue endpoints.
+- [x] Stock reservation/release APIs.
+- [ ] Notifications integration & transformers/docs.
 
 ## 📋 DETAILED REQUIREMENTS
 

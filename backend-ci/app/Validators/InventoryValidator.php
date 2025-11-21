@@ -66,6 +66,29 @@ class InventoryValidator
         return $data;
     }
 
+    /** Validate reservation/reservation release. */
+    public function validateReservation(array $input): array
+    {
+        $rules = [
+            'product_id' => 'required|integer|greater_than[0]',
+            'variant_id' => 'permit_empty|integer|greater_than_equal_to[0]',
+            'warehouse_id' => 'required|integer|greater_than[0]',
+            'quantity' => 'required|numeric|greater_than[0]',
+            'reference' => 'permit_empty|string|max_length[100]',
+        ];
+        return $this->run($input, $rules);
+    }
+
+    /** Validate alert action (resolve/ignore). */
+    public function validateAlertAction(array $input): array
+    {
+        $rules = [
+            'alert_id' => 'required|integer|greater_than[0]',
+            'resolved_by' => 'permit_empty|integer|greater_than_equal_to[0]',
+        ];
+        return $this->run($input, $rules);
+    }
+
     private function run(array $data, array $rules): array
     {
         if (! $this->v->setRules($rules)->run($data)) {

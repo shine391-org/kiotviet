@@ -107,6 +107,44 @@ class InventoryServiceTest extends CIUnitTestCase
         $this->assertEquals(5.0, (float) $row['unit_cost']);
     }
 
+    public function test_reserve_and_release_stock(): void
+    {
+        $wh = $this->seedWarehouse('WH-A');
+        $this->seedStock(1, null, $wh, 5);
+
+        $reserved = $this->service->reserveStock([
+            'product_id' => 1,
+            'warehouse_id' => $wh,
+            'quantity' => 2,
+        ]);
+        $this->assertEquals(2.0, (float) $reserved['data']['quantity_reserved']);
+
+        $released = $this->service->releaseStock([
+            'product_id' => 1,
+            'warehouse_id' => $wh,
+            'quantity' => 1,
+        ]);
+        $this->assertEquals(1.0, (float) $released['data']['quantity_reserved']);
+    }
+
+    public function test_ignore_alert(): void
+    {
+        $wh = $this->seedWarehouse('WH-A');
+        $this->seedStock(1, null, $wh, 1, 2);
+        $this->service->createMovement([
+            'movement_type' => 'OUT',
+            'product_id' => 1,
+            'from_warehouse_id' => $wh,
+            'quantity' => 1,
+        ]);
+        $alert = $this->db->table('db_inventory_alerts')->get()->getRowArray();
+
+        $this->service->ignoreAlert($alert['id'], 99);
+        $row = $this->db->table('db_inventory_alerts')->where('id', $alert['id'])->get()->getRowArray();
+        $this->assertSame('ignored', $row['status']);
+        $this->assertEquals(99, (int) $row['resolved_by']);
+    }
+
     private function resetSchema(): void
     {
         $this->db->query('DROP TABLE IF EXISTS db_inventory_alerts');

@@ -116,6 +116,56 @@ class InventoryRepository
         $this->db->table('inventory_alerts')->insert($payload);
     }
 
+    /** Update alert status. */
+    public function updateAlertStatus(int $id, string $status, ?int $userId = null): bool
+    {
+        return (bool) $this->db->table('inventory_alerts')->where('id', $id)->update([
+            'status' => $status,
+            'resolved_by' => $userId,
+            'resolved_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    /** List alerts with filters. */
+    public function alerts(array $filters = []): array
+    {
+        $b = $this->db->table('inventory_alerts');
+        if (! empty($filters['status'])) { $b->where('status', $filters['status']); }
+        if (! empty($filters['warehouse_id'])) { $b->where('warehouse_id', $filters['warehouse_id']); }
+        if (! empty($filters['product_id'])) { $b->where('product_id', $filters['product_id']); }
+        return $b->orderBy('created_at', 'DESC')->limit(200)->get()->getResultArray();
+    }
+
+    /** Reserve stock (increase quantity_reserved). */
+    public function reserveStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
+    {
+        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        if (! $row) { throw new \RuntimeException('Stock not found'); }
+        $newReserved = ($row['quantity_reserved'] ?? 0) + $qty;
+        $available = ($row['quantity_on_hand'] ?? 0) - $newReserved;
+        if ($available < 0) { throw new \RuntimeException('Insufficient available stock'); }
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+            'quantity_reserved' => $newReserved,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $row['quantity_reserved'] = $newReserved;
+        return $row;
+    }
+
+    /** Release reserved stock. */
+    public function releaseStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
+    {
+        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        if (! $row) { throw new \RuntimeException('Stock not found'); }
+        $newReserved = max(0, ($row['quantity_reserved'] ?? 0) - $qty);
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+            'quantity_reserved' => $newReserved,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $row['quantity_reserved'] = $newReserved;
+        return $row;
+    }
+
     /** Create valuation record. @agent-use: valuation tracking */
     public function createValuation(array $data): array
     {
