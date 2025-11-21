@@ -13,7 +13,8 @@ class ProductValidator
 
     public function __construct(?Validation $validation = null)
     {
-        $this->v = $validation ?? Services::validation();
+        // Use non-shared instance to avoid cross-test/state bleed
+        $this->v = $validation ?? Services::validation(null, false);
     }
 
     /** Validate list filters. @agent-use: Listing endpoints @agent-pattern: Standard list validation */
