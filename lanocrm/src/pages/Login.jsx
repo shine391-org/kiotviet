@@ -15,13 +15,14 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Prevent navigation khi đang ở login page
+  // NOTE: trước đây dùng flag để tránh redirect; gây lỗi không chuyển trang.
+  // Giữ ref để biết có click login, nhưng redirect sẽ xảy ra khi isAuthenticated true.
   const isLoginAttempted = useRef(false);
 
   useEffect(() => {
-    // Chỉ navigate khi đăng nhập thành công
-    if (isAuthenticated && isLoginAttempted.current) {
-      navigate('/dashboard');
+    // Redirect ngay khi đã đăng nhập (kể cả đã có token từ trước)
+    if (isAuthenticated) {
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
