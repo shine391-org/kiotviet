@@ -5,6 +5,8 @@ namespace App\Controllers\Api;
 use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\RoleModel;
+use App\Models\ModelHasRolesModel;
+use App\Models\PermissionModel;
 use CodeIgniter\API\ResponseTrait;
 
 class UsersController extends BaseController
@@ -13,31 +15,91 @@ class UsersController extends BaseController
 
     protected UserModel $users;
     protected RoleModel $roles;
+    protected ModelHasRolesModel $userRoles;
+    protected PermissionModel $permissions;
 
     public function __construct()
     {
         $this->users = new UserModel();
         $this->roles = new RoleModel();
+        $this->userRoles = new ModelHasRolesModel();
+        $this->permissions = new PermissionModel();
     }
 
     public function me()
     {
-        // For demo, pick first user by token verification already done elsewhere
-        // Here we simply return devadmin as current user
-        $user = $this->users->where('username', 'devadmin')->first();
-        if (!$user) {
-            return $this->failNotFound();
+        // Dev mode: lấy user từ header X-User hoặc query ?username=, fallback admin/devadmin
+        $username = $this->request->getHeaderLine('X-User')
+            ?: ($this->request->getGet('username') ?? null)
+            ?: 'admin';
+
+        $user = $this->users->where('username', $username)->where('deleted_at', null)->first();
+        if (! $user && $username !== 'devadmin') {
+            $user = $this->users->where('username', 'devadmin')->where('deleted_at', null)->first();
         }
+        if (! $user) {
+            return $this->failNotFound('User not found');
+        }
+
+        // Lấy role
+        $roleRow = $this->userRoles
+            ->where('model_id', $user['id'])
+            ->first();
+        $roleName = null;
+        if ($roleRow) {
+            $role = $this->roles->find($roleRow['role_id']);
+            $roleName = $role['name'] ?? null;
+        }
+
+        // Lấy permissions theo role (để FE bật nút chỉnh sửa)
+        $perms = [];
+        if ($roleRow) {
+            $db = \Config\Database::connect();
+            $perms = $db->table('permissions p')
+                ->select('p.id, p.name, p.display_name, p.module, p.module_group')
+                ->join('role_has_permissions rp', 'rp.permission_id = p.id')
+                ->where('rp.role_id', $roleRow['role_id'])
+                ->where('p.deleted_at', null)
+                ->get()->getResultArray();
+            $perms = $this->withAliases($perms);
+        }
+
         return $this->respond([
             'user' => [
-                'id' => (string)$user['id'],
+                'id' => (string) $user['id'],
                 'username' => $user['username'],
                 'full_name' => $user['full_name'],
                 'email' => $user['email'],
                 'branch_id' => (string) ($user['branch_id'] ?? ''),
-                'permissions' => [],
+                'role' => $roleName,
+                'permissions' => $perms,
             ],
         ]);
+    }
+
+    /** Thêm alias quyền để tương thích FE cũ (products.edit, products.manage). */
+    private function withAliases(array $perms): array
+    {
+        $names = array_column($perms, 'name');
+        $aliasMap = [
+            'products.edit' => 'products.update',
+            'products.manage' => 'products.manage_variants',
+        ];
+        foreach ($aliasMap as $alias => $source) {
+            if (!in_array($alias, $names, true) && in_array($source, $names, true)) {
+                foreach ($perms as $p) {
+                    if ($p['name'] === $source) {
+                        $clone = $p;
+                        $clone['name'] = $alias;
+                        $clone['display_name'] = $alias;
+                        $perms[] = $clone;
+                        $names[] = $alias;
+                        break;
+                    }
+                }
+            }
+        }
+        return $perms;
     }
 
     public function index()

@@ -2,6 +2,9 @@
 
 namespace Config;
 
+use App\Repositories\Products\ProductRepository;
+use App\Services\Products\ProductService;
+use App\Validators\ProductValidator;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -19,14 +22,30 @@ use CodeIgniter\Config\BaseService;
  */
 class Services extends BaseService
 {
-    /*
-     * public static function example($getShared = true)
-     * {
-     *     if ($getShared) {
-     *         return static::getSharedInstance('example');
-     *     }
-     *
-     *     return new \CodeIgniter\Example();
-     * }
-     */
+    public static function productRepository(bool $getShared = true): ProductRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productRepository');
+        }
+
+        return new ProductRepository();
+    }
+
+    public static function productValidator(bool $getShared = true): ProductValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productValidator');
+        }
+
+        return new ProductValidator();
+    }
+
+    public static function productService(bool $getShared = true): ProductService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productService');
+        }
+
+        return new ProductService(static::productRepository(false), static::productValidator(false));
+    }
 }

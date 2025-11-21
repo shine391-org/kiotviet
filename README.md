@@ -8,6 +8,12 @@ cd lanocrm && npm install && npm run dev
 ```
 API: http://localhost:8000/api, FE: http://localhost:5173
 
+## Tài khoản mặc định
+- Username: `admin`
+- Password: `123aA@hai`
+- API login: `POST http://localhost:8000/api/auth/login`
+- Legacy FE build (proxy nginx): `POST http://localhost:3000/backend-ci/api/users/login`
+
 ## Seed dữ liệu mẫu
 ```
 docker exec -it meomeo2-api-1 php spark db:seed DevSeeder

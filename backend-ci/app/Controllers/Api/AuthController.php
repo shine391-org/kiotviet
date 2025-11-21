@@ -49,7 +49,6 @@ class AuthController extends BaseController
         }
 
         $roleRow = $this->userRoles
-            ->where('model_type', 'App\\Models\\User')
             ->where('model_id', $user['id'])
             ->first();
         $roleName = null;
@@ -66,7 +65,7 @@ class AuthController extends BaseController
                 ->where('role_has_permissions.role_id', $roleRow['role_id'])
                 ->where('permissions.deleted_at', null)
                 ->findAll();
-            $perms = $permRows;
+            $perms = $this->withAliases($permRows);
         }
 
         $token = $this->jwt->generateToken([
@@ -95,5 +94,32 @@ class AuthController extends BaseController
                 'permissions'=> $perms,
             ],
         ]);
+    }
+
+    /**
+     * Add backward-compat alias permissions for FE (e.g. products.edit -> products.update).
+     */
+    private function withAliases(array $perms): array
+    {
+        $names = array_column($perms, 'name');
+        $aliasMap = [
+            'products.edit' => 'products.update',
+            'products.manage' => 'products.manage_variants',
+        ];
+        foreach ($aliasMap as $alias => $source) {
+            if (!in_array($alias, $names, true) && in_array($source, $names, true)) {
+                foreach ($perms as $p) {
+                    if ($p['name'] === $source) {
+                        $clone = $p;
+                        $clone['name'] = $alias;
+                        $clone['display_name'] = $alias;
+                        $perms[] = $clone;
+                        $names[] = $alias;
+                        break;
+                    }
+                }
+            }
+        }
+        return $perms;
     }
 }

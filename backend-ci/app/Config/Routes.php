@@ -21,6 +21,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
         return service('response')->setStatusCode(200);
     });
     $routes->post('auth/login', 'Api\\AuthController::login');
+    // Backward-compat alias for legacy FE calling /users/login
+    $routes->post('users/login', 'Api\\AuthController::login');
     $routes->get('health', 'Api\\HealthController::index');
     $routes->get('products', 'Api\\ProductsController::index');
     $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');

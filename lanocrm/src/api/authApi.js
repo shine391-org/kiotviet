@@ -9,6 +9,7 @@ const USER_KEY = 'lano_user';
 const authApi = {
   
   // ==================== LOGIN ====================
+  // NOTE: normalizePermissions ensures permissions stored as string names
   login: async (credentials) => {
     try {
       const response = await axiosInstance.post('/auth/login', credentials);
@@ -20,17 +21,21 @@ const authApi = {
       }
       
       const { token, user } = response.data;
-      
+      const normalizedUser = {
+        ...user,
+        permissions: normalizePermissions(user.permissions)
+      };
+
       // ✅ CRITICAL: Save to localStorage
       authApi.saveToken(token);
-      authApi.saveUser(user);
+      authApi.saveUser(normalizedUser);
       
       console.log('✅ Saved to localStorage:', {
         token: authApi.getToken()?.substring(0, 20) + '...',
         user: authApi.getUser(),
       });
       
-      return { success: true, token, user };
+      return { success: true, token, user: normalizedUser };
       
     } catch (error) {
       console.error('❌ Login error:', error.response?.data || error.message);
@@ -55,15 +60,20 @@ const authApi = {
   },
   
   // ==================== REFRESH USER DATA ====================
+  // NOTE: used on refresh; also normalizes permissions
   fetchCurrentUser: async () => {
     try {
       const response = await axiosInstance.get('/users/me');
       const user = response.data.user;
-      
+
       if (user) {
-        authApi.saveUser(user);
+        const normalizedUser = {
+          ...user,
+          permissions: normalizePermissions(user.permissions)
+        };
+        authApi.saveUser(normalizedUser);
         console.log('✅ User data refreshed');
-        return user;
+        return normalizedUser;
       }
       
     } catch (error) {
@@ -88,6 +98,7 @@ const authApi = {
   },
   
   // User management (with permissions)
+  // NOTE: Persist user with normalized permissions (array of strings)
   saveUser: (user) => {
     if (!user || typeof user !== 'object') {
       console.error('❌ saveUser: invalid user data', user);
@@ -99,11 +110,16 @@ const authApi = {
       console.warn('⚠️ saveUser: user missing required fields', user);
     }
     
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    const normalizedUser = {
+      ...user,
+      permissions: normalizePermissions(user.permissions)
+    };
+
+    localStorage.setItem(USER_KEY, JSON.stringify(normalizedUser));
     console.log('✅ User saved:', {
-      id: user.id,
-      username: user.username,
-      permissions_count: user.permissions?.length || 0,
+      id: normalizedUser.id,
+      username: normalizedUser.username,
+      permissions_count: normalizedUser.permissions?.length || 0,
     });
   },
   
@@ -120,7 +136,7 @@ const authApi = {
   // Permissions (computed from user)
   getPermissions: () => {
     const user = authApi.getUser();
-    return user?.permissions || [];
+    return normalizePermissions(user?.permissions || []);
   },
   
   hasPermission: (permissionName) => {
@@ -156,5 +172,12 @@ const authApi = {
     console.groupEnd();
   },
 };
+
+function normalizePermissions(perms) {
+  if (!Array.isArray(perms)) return [];
+  return perms
+    .map((p) => (typeof p === 'string' ? p : p?.name))
+    .filter(Boolean);
+}
 
 export default authApi;

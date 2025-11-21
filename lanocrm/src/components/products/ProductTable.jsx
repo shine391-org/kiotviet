@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, Table, Image, Tag, Space, Button, Divider, Row, Col } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
+import { usePermission } from '../../utils/usePermission'; // permission gate for action buttons
 import styles from './ProductTable.module.css';
 
 const ProductTable = ({ 
@@ -29,6 +30,7 @@ const ProductTable = ({
   deletedVariantsCount,
 }) => {
   const navigate = useNavigate();
+  const { hasPermission } = usePermission();
   //const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   //const [selectedVariant, setSelectedVariant] = useState(null);
   const [lastExpandedProduct, setLastExpandedProduct] = useState(null);
@@ -962,9 +964,12 @@ const ProductTable = ({
       align: 'center',
       render: (_, record) => {
         // Kiểm tra sản phẩm cha hoặc sản phẩm đơn giản
-        const showEditButton =
-          record.has_variants === 1 || record.has_variants === true || 
-          !record.has_variants;
+        // FE gate: only users with edit/update permission see button
+        const hv = record.has_variants;
+        const isVariantProduct = hv === 1 || hv === '1' || hv === true;
+        const isSimpleProduct = hv === 0 || hv === '0' || hv === false || hv === null || hv === undefined;
+        const canEdit = hasPermission('products.edit') || hasPermission('products.update');
+        const showEditButton = (isVariantProduct || isSimpleProduct) && canEdit;
     
         return (
           <Space>
