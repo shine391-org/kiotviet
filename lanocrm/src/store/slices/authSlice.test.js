@@ -270,6 +270,98 @@ describe('authSlice', () => {
             });
         });
 
+        describe('fetchUserPermissions', () => {
+            it('should handle successful permissions fetch', async () => {
+                const mockPermissions = ['users.view', 'users.edit', 'products.view'];
+                authApi.getUserPermissions.mockResolvedValue(mockPermissions);
+
+                await store.dispatch(fetchUserPermissions());
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.permissions).toEqual(mockPermissions);
+                expect(authApi.savePermissions).toHaveBeenCalledWith(mockPermissions);
+            });
+
+            it('should handle permissions fetch failure', async () => {
+                const errorMessage = 'Failed to fetch permissions';
+                authApi.getUserPermissions.mockRejectedValue({
+                    response: {
+                        data: {
+                            message: errorMessage,
+                        },
+                    },
+                });
+
+                await store.dispatch(fetchUserPermissions());
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.error).toBe(errorMessage);
+            });
+
+            it('should handle generic error without response', async () => {
+                authApi.getUserPermissions.mockRejectedValue(new Error('Network error'));
+
+                await store.dispatch(fetchUserPermissions());
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.error).toBe('Không thể lấy danh sách quyền');
+            });
+        });
+
+        describe('changePassword', () => {
+            it('should handle successful password change', async () => {
+                const mockResponse = { success: true, message: 'Password changed' };
+                authApi.changePassword.mockResolvedValue(mockResponse);
+
+                const passwordData = {
+                    oldPassword: 'old123',
+                    newPassword: 'new456',
+                };
+
+                await store.dispatch(changePassword(passwordData));
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.error).toBeNull();
+                expect(authApi.changePassword).toHaveBeenCalledWith(passwordData);
+            });
+
+            it('should handle password change failure', async () => {
+                const errorMessage = 'Old password is incorrect';
+                authApi.changePassword.mockRejectedValue({
+                    response: {
+                        data: {
+                            message: errorMessage,
+                        },
+                    },
+                });
+
+                const passwordData = {
+                    oldPassword: 'wrong',
+                    newPassword: 'new456',
+                };
+
+                await store.dispatch(changePassword(passwordData));
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.error).toBe(errorMessage);
+            });
+
+            it('should handle generic error without response', async () => {
+                authApi.changePassword.mockRejectedValue(new Error('Network error'));
+
+                await store.dispatch(changePassword({ oldPassword: 'old', newPassword: 'new' }));
+                const state = store.getState().auth;
+
+                expect(state.loading).toBe(false);
+                expect(state.error).toBe('Không thể đổi mật khẩu');
+            });
+        });
+
         describe('logoutUser', () => {
             it('should handle successful logout', async () => {
                 authApi.logout.mockResolvedValue();
