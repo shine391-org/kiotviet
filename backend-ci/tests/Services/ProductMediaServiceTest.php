@@ -73,7 +73,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             code TEXT,
             name TEXT,
             created_at TEXT,
@@ -82,7 +82,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             sku TEXT,
             created_at TEXT,
@@ -91,7 +91,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             variant_id INTEGER,
             image_path TEXT,

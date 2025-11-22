@@ -144,7 +144,7 @@ class ProductServiceTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_type TEXT,
             code TEXT,
             barcode TEXT,
@@ -157,14 +157,14 @@ class ProductServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_category_links (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             category_id INTEGER,
             created_at TEXT
         )');
 
         $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             variant_name TEXT,
             variant_signature TEXT,
@@ -184,7 +184,7 @@ class ProductServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             variant_id INTEGER,
             image_path TEXT,
