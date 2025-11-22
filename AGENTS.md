@@ -408,6 +408,7 @@ A task is complete when:
 - [x] **Integration tests written and pass**
 - [x] **Test coverage >= 70%**
 - [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)**
+- [x] **Inline docs added (@agent- annotations)**
 - [x] API endpoints work
 - [x] Task status updated
 - [x] Session log created
