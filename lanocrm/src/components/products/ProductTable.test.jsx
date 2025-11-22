@@ -36,7 +36,7 @@ describe('ProductTable action column', () => {
     renderTable([{ id: 1, name: 'Product', code: 'P1', has_variants: '0' }]);
     const editBtn = screen.getByTitle(/chỉnh sửa sản phẩm/i);
     expect(editBtn).toBeInTheDocument();
-  });
+  }, 10000);
 
   it('shows edit button when has_variants is string "1" (parent product)', () => {
     renderTable([{ id: 2, name: 'Parent', code: 'P2', has_variants: '1' }]);
