@@ -6,17 +6,20 @@ describe('variantSlice', () => {
 
     beforeEach(() => {
         initialState = {
-            variants: [],
-            currentVariant: null,
+            attributes: [],
+            values: [],
             loading: false,
-            error: null
+            error: null,
+            syncStatus: null,
+            usedOptionsMap: {}
         };
     });
 
     it('should return initial state', () => {
         const state = variantReducer(undefined, { type: 'unknown' });
         expect(state).toMatchObject({
-            variants: [],
+            attributes: [],
+            values: [],
             loading: false
         });
     });
