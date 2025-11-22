@@ -17,7 +17,7 @@ class ApiRoutesTest extends TestCase
     {
         // Chuẩn bị SQLite in-memory (group tests) tối thiểu để tránh lỗi prefix db_
         $db = Database::connect('tests');
-        $db->query('CREATE TABLE IF NOT EXISTS db_products (id INTEGER PRIMARY KEY AUTOINCREMENT)');
+        $db->query('CREATE TABLE IF NOT EXISTS db_products (id INTEGER PRIMARY KEY AUTO_INCREMENT)');
 
         // Dùng bộ routes đã nạp (đọc từ /backend-ci/app/Config/Routes.php)
         $routes = Services::routes(true);

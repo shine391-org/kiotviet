@@ -84,7 +84,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_type TEXT,
             code TEXT,
             barcode TEXT,
@@ -97,7 +97,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_id INTEGER,
             variant_name TEXT,
             variant_signature TEXT,

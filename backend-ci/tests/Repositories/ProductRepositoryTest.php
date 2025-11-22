@@ -53,7 +53,7 @@ class ProductRepositoryTest extends CIUnitTestCase
     {
         $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id INTEGER PRIMARY KEY AUTO_INCREMENT,
             product_type TEXT,
             code TEXT,
             barcode TEXT,
