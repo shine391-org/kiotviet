@@ -9,7 +9,13 @@ use InvalidArgumentException;
 /** Attribute module validation @agent-validator: Attribute validation @agent-pattern: Validation first @agent-reusable: HIGH */
 class AttributeValidator
 {
-    protected Validation $v; public function __construct(?Validation $v = null) { $this->v = $v ?? Services::validation(); }
+    protected Validation $v;
+
+    public function __construct(?Validation $v = null)
+    {
+        // Use non-shared instance to avoid cross-test/state bleed between validators
+        $this->v = $v ?? Services::validation(null, false);
+    }
 
     /** Validate list filters. @agent-use: GET /api/attributes @agent-pattern: Standard list validation */
     public function validateList(array $input): array { return $this->run($input, ['search' => 'permit_empty|string|max_length[255]', 'type' => 'permit_empty|string|max_length[50]', 'status' => 'permit_empty|string|max_length[50]']); }
