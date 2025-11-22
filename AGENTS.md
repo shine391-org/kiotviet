@@ -356,38 +356,15 @@ You MUST write tests. No exceptions.
 
 ### Test Patterns (Copy từ đây)
 
-**Xem chi tiết**: `docs/testing/TESTING-PATTERNS.md`
+**👉 BẮT BUỘC: Copy patterns từ file sau:**
+`docs/testing/TESTING-PATTERNS.md`
 
-**Service Test** (60% tests của bạn):
-```php
-class ProductServiceTest extends CIUnitTestCase {
-    /** @test */
-    public function it_creates_product() {
-        // Arrange
-        $data = ['code' => 'P001', 'name' => 'Product'];
-        
-        // Act
-        $result = $this->service->create($data);
-        
-        // Assert
-        $this->assertTrue($result['success']);
-    }
-}
-```
+File này chứa mẫu chuẩn cho:
+- **Service Test** (Unit - SQLite)
+- **Integration Test** (API - MySQL)
+- **Repository Test** (Database)
 
-**Integration Test** (30% tests của bạn):
-```php
-class ProductsApiTest extends FeatureTestCase {
-    /** @test */
-    public function it_creates_via_api() {
-        $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
-        ])->post('/api/products', ['code' => 'P001']);
-        
-        $response->assertStatus(201);
-    }
-}
-```
+**Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
 ### Vấn đề thường gặp
 
