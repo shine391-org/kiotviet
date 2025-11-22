@@ -10,7 +10,13 @@ use InvalidArgumentException;
 class ProductVariantValidator
 {
     protected Validation $v;
-    public function __construct(?Validation $validation = null) { $this->v = $validation ?? Services::validation(); }
+
+    public function __construct(?Validation $validation = null)
+    {
+        // Use a non-shared validator instance to prevent cross-test/state bleed
+        // from other validators that might mutate the shared Validation service.
+        $this->v = $validation ?? Services::validation(null, false);
+    }
 
     /** Validate payload for creating a variant. @agent-use: Create variant request @agent-pattern: Standard create validation */
     public function validateCreate(array $input): array
