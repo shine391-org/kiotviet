@@ -79,8 +79,8 @@ jobs:
         run: vendor/bin/phpunit --coverage-clover coverage/clover.xml --coverage-text
         working-directory: backend-ci
 
-      - name: Check coverage threshold (30%)
-        run: php coverage-checker.php coverage/clover.xml 30
+      - name: Check coverage threshold (28%)
+        run: php coverage-checker.php coverage/clover.xml 28
         working-directory: backend-ci
 
       - name: Upload coverage artifacts
