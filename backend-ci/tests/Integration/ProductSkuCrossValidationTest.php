@@ -14,9 +14,9 @@ use InvalidArgumentException;
  */
 class ProductSkuCrossValidationTest extends CIUnitTestCase
 {
-    private ProductService $productService;
-    private ProductVariantService $variantService;
-    private \CodeIgniter\Database\BaseConnection $db;
+    protected ProductService $productService;
+    protected ProductVariantService $variantService;
+    protected $db;
 
     protected function setUp(): void
     {
@@ -146,4 +146,3 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
         return (int) $this->db->insertID();
     }
 }
-
