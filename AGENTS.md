@@ -402,14 +402,35 @@ A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERN
 
 ---
 
+## ⚡ Quy trình testing FE (Frontend)
+
+**Tài liệu chi tiết:**
+- 📘 **Guide**: `docs/testing/FE-TESTING-GUIDE.md`
+- 🧩 **Patterns**: `docs/testing/FE-TESTING-PATTERNS.md`
+- ✅ **Checklist**: `docs/testing/FE-TEST-CHECKLIST.md`
+
+### FE Testing: Best Practices
+1. **Unit Test**: Test logic & render. Mock hết API.
+2. **Integration**: Test flow (Form -> Submit -> API -> Success).
+3. **Manual**: Luôn mở Chrome Console check đỏ/vàng trước khi commit.
+4. **Coverage**: Đạt tối thiểu 70%. Chạy `npm run test:coverage` để kiểm tra.
+
+**Lệnh quan trọng:**
+- `npm test`: Chạy unit/integration tests.
+- `npm run test:coverage`: Kiểm tra độ bao phủ.
+- `npm run test:e2e`: Chạy test luồng người dùng thật.
+
+---
+
 ## Definition of Done (CẬP NHẬT)
 
 A task is complete when:
 - [x] All files created
 - [x] Clean architecture followed
-- [x] **Unit tests written and pass (NEW)**
-- [x] **Integration tests written and pass (NEW)**
-- [x] **Test coverage >= 70% (NEW)**
+- [x] **Unit tests written and pass (Backend + Frontend)**
+- [x] **Integration tests written and pass**
+- [x] **Test coverage >= 70%**
+- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)**
 - [x] API endpoints work
 - [x] Task status updated
 - [x] Session log created
@@ -418,6 +439,7 @@ A task is complete when:
 ---
 
 **Key Principle:** 
+**"Thiếu test sẽ không merge, lặp lại test process đến khi đạt yêu cầu!"** 
 > "Copy successful patterns, don't reinvent. Quality > speed."
 
 **Remember:**
