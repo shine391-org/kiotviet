@@ -370,7 +370,7 @@ File này chứa mẫu chuẩn cho:
 
 **Q: PHPUnit pass nhưng dev server fail?**
 A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
-`docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+`docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
 
 **Q: Tests pass riêng lẻ, fail khi chạy cùng?**
 A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`

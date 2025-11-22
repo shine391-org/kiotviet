@@ -1,6 +1,6 @@
 # Testing Patterns
 
-**COPY THESE PATTERNS TO START FAST**
+## COPY THESE PATTERNS TO START FAST
 
 ## Pattern 1: Service Test (Unit - SQLite)
 **Use for**: Business logic, calculations, data transformation.

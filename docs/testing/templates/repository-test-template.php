@@ -3,6 +3,7 @@ namespace Tests\Repositories;
 
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
+use App\Repositories\{RepositoryName};
 
 /**
  * {RepositoryName} unit tests

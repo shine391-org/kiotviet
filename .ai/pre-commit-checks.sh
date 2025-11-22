@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pre-commit Checks v2.2 - Balanced & Safe
-# 5 Checks: Scope + Tests + Backward Compat + Quality + Migrations
+# 6 Checks: Scope + Tests + Backward Compat + Quality + Migrations + Integration Tests
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "🔍 Pre-commit Safety Checks v2.2"
@@ -183,23 +183,35 @@ echo "[6/6] Running Integration Tests (MySQL)..."
 echo "This tests with real MySQL database..."
 
 # Check if db-test is running
-if ! docker ps | grep -q "db-test"; then
+if ! docker ps 2>/dev/null | grep -q "db-test"; then
     echo "⚠️  Warning: db-test container not running"
     echo "Run: docker-compose up -d db-test"
     echo "Skipping integration tests..."
+elif [ "$SKIP_TESTS" = "true" ]; then
+    echo "   ⚠️  INTEGRATION TESTS SKIPPED (SKIP_TESTS=true)"
+    WARNINGS=$((WARNINGS + 1))
 else
     # Run migrations on test db
-    docker exec meomeo2-api-1 php spark migrate --all --env tests
+    echo "   Running migrations on test database..."
+    docker exec meomeo2-api-1 php spark migrate --all --env tests 2>/dev/null
+    MIGRATION_STATUS=$?
     
-    # Run integration tests
-    docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
-    
-    if [ $? -ne 0 ]; then
-        echo "❌ Integration tests FAILED"
-        echo "Fix integration tests before committing!"
+    if [ $MIGRATION_STATUS -ne 0 ]; then
+        echo "   ❌ Migration failed for test DB"
         ERRORS=$((ERRORS + 1))
     else
-        echo "✅ Integration tests PASSED"
+        # Run integration tests
+        echo "   Running integration tests..."
+        TEST_OUTPUT=$(docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml --colors=never 2>&1)
+        
+        if echo "$TEST_OUTPUT" | grep -q "OK"; then
+            TESTS=$(echo "$TEST_OUTPUT" | grep -oP 'Tests: \K\d+' || echo "?")
+            echo "   ✅ Integration tests PASSED ($TESTS tests)"
+        else
+            echo "   ❌ Integration tests FAILED"
+            echo "$TEST_OUTPUT" | grep -A 5 "FAILURES\|ERRORS" | head -10
+            ERRORS=$((ERRORS + 1))
+        fi
     fi
 fi
 

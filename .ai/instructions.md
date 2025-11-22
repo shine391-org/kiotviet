@@ -270,19 +270,56 @@ text
 - ❌ Sửa files ngoài scope
 - ❌ Commit khi tests fail
 
-HÃY:
 - ✅ Tuân thủ clean architecture
-- ✅ Single## WORKFLOW (CẬP NHẬT)
+- ✅ Single Responsibility Principle
+
+## WORKFLOW (CẬP NHẬT)
 
 1. ĐỌC tài liệu: AGENTS.md + task file
 2. **VIẾT TESTS TRƯỚC (TDD)**: `docs/testing/TESTING-PATTERNS.md`
 3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
 4. **CHẠY TESTS**: 
    - Unit: `vendor/bin/phpunit`
-   - Integration: `vendor/bin/phpunit -c phpunit.integration.xml`
+   - Integration: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
 5. TỰ KIỂM TRA: `bash .ai/pre-commit-checks.sh`
 6. COMMIT chỉ khi tests pass
 7. TẠO session log với test checklist
+
+---
+
+## COVERAGE MEASUREMENT
+
+### Đo lường Coverage
+
+**Tool:** PHPUnit built-in với Xdebug hoặc PCOV
+
+**Commands:**
+```bash
+# Generate HTML coverage report
+vendor/bin/phpunit --coverage-html coverage/
+
+# Generate Clover XML (for CI)
+vendor/bin/phpunit --coverage-clover coverage.xml
+
+# View coverage summary in terminal
+vendor/bin/phpunit --coverage-text
+```
+
+**Yêu cầu:**
+- **Coverage >= 70%** là **HARD REQUIREMENT**
+- Đo coverage cho cả Unit và Integration tests
+- Pre-commit script sẽ kiểm tra coverage tự động (nếu được cấu hình)
+
+**Setup Xdebug (nếu chưa có):**
+```bash
+# In Docker container
+docker exec meomeo2-api-1 pecl install xdebug
+docker exec meomeo2-api-1 docker-php-ext-enable xdebug
+```
+
+**Xem chi tiết:** `docs/testing/TESTING-GUIDE.md`
+
+---
 
 ## DEFINITION OF DONE (CẬP NHẬT)
 

@@ -3,6 +3,7 @@ namespace Tests\Services;
 
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
+use App\Services\{ServiceName};
 
 /**
  * {ServiceName} unit tests
