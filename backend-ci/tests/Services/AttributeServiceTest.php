@@ -18,7 +18,8 @@ class AttributeServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->db = Database::connect('tests');
         $this->resetSchema();
-        $this->service = new AttributeService();
+        $repo = new \App\Repositories\Attributes\AttributeRepository(null, 'tests'); // Pass 'tests' group
+        $this->service = new AttributeService($repo); // Pass the configured repository
     }
 
     public function test_list_filters_by_type_and_status(): void
@@ -132,6 +133,26 @@ class AttributeServiceTest extends CIUnitTestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $this->service->create([]);
+    }
+
+    public function test_create_attribute_with_only_name_sets_defaults(): void
+    {
+        $result = $this->service->create(['name' => 'New Attribute']);
+
+        $this->assertTrue($result['success']);
+        $id = $result['data']['id'];
+
+        $row = $this->db->table('db_product_attributes')->where('id', $id)->get()->getRowArray();
+
+        $this->assertNotNull($row);
+        $this->assertSame('select', $row['type']);
+        $this->assertSame('0', (string)$row['is_required']);
+        $this->assertSame('1', (string)$row['is_filterable']);
+        $this->assertSame('1', (string)$row['is_visible']);
+        $this->assertSame('0', (string)$row['sort_order']);
+        $this->assertSame('active', $row['status']);
+        $this->assertNotEmpty($row['slug']);
+        $this->assertNotEmpty($row['attribute_key']);
     }
 
     private function resetSchema(): void

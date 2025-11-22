@@ -31,9 +31,22 @@ class AttributeService
     {
         helper('text');
         $validated = $this->validator->validateAttributeCreate($data);
-        $validated['slug'] = $validated['slug'] ?? url_title($validated['name'], '-', true);
-        $validated['attribute_key'] = $validated['attribute_key'] ?? uniqid('attr_', true);
-        $attr = $this->repo->create($validated);
+
+        $defaults = [
+            'type' => 'select',
+            'is_required' => 0,
+            'is_filterable' => 1,
+            'is_visible' => 1,
+            'sort_order' => 0,
+            'status' => 'active',
+            'slug' => url_title($validated['name'], '-', true),
+            'attribute_key' => uniqid('attr_', true),
+        ];
+
+        // Merge validated data with defaults. Validated data takes precedence.
+        $payload = array_merge($defaults, $validated);
+
+        $attr = $this->repo->create($payload);
         return ['success' => true, 'data' => $attr];
     }
 

@@ -21,7 +21,7 @@ class ProductVariantService
 
     /** Create variant belonging to product. @agent-use: POST /api/products/{productId}/variants @agent-pattern: Standard create */
     public function create(int $productId, array $data): array
-    { $this->requireProduct($productId); $payload = $this->validator->validateCreate($data + ['product_id' => $productId]); $variant = $this->repo->create($payload); return ['success' => true, 'data' => $variant]; }
+    { $this->requireProduct($productId); $payload = $this->validator->validateCreate(['product_id' => $productId] + $data); $variant = $this->repo->create($payload); return ['success' => true, 'data' => $variant]; }
 
     /** Update variant. @agent-use: PUT /api/variants/{id} @agent-pattern: Standard update */
     public function update(int $id, array $data): array

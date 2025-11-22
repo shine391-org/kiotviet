@@ -8,7 +8,10 @@ use CodeIgniter\Database\BaseConnection;
 class AttributeRepository
 {
     protected BaseConnection $db;
-    public function __construct(?BaseConnection $db = null) { $this->db = $db ?? \Config\Database::connect(); }
+    public function __construct(?BaseConnection $db = null, string $group = 'default')
+    {
+        $this->db = $db ?? \Config\Database::connect($group);
+    }
 
     /** List attributes with filters. @agent-use: Attribute listing @agent-pattern: Standard query */
     public function findAll(array $filters): array

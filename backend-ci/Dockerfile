@@ -22,7 +22,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 
 # Install PHP dependencies first for better layer cache
 COPY backend-ci/composer.* ./
-RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+RUN composer install --prefer-dist --no-interaction --optimize-autoloader
 
 # Copy application source
 COPY backend-ci/ ./
