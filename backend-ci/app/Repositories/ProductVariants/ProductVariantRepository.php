@@ -11,6 +11,20 @@ class ProductVariantRepository
     protected ProductVariantV2Model $variants; protected BaseConnection $db;
     public function __construct(?ProductVariantV2Model $model = null, ?BaseConnection $db = null) { $this->variants = $model ?? new ProductVariantV2Model(); $this->db = $db ?? \Config\Database::connect(); }
 
+    /** Check duplicate SKU inside variants. @agent-use: SKU uniqueness @agent-pattern: Exists check */
+    public function skuExists(string $sku, ?int $excludeId = null): bool
+    {
+        $builder = $this->variants->where('sku', $sku)->where('deleted_at', null);
+        if ($excludeId) { $builder->where('id !=', $excludeId); }
+        return $builder->countAllResults() > 0;
+    }
+
+    /** Cross-check variant SKU against product codes. @agent-use: Cross-table validation @agent-pattern: Prevent product/variant collision */
+    public function skuExistsInProducts(string $sku): bool
+    {
+        return $this->db->table('products')->where('code', $sku)->where('deleted_at', null)->countAllResults() > 0;
+    }
+
     /** Find variant by id (soft-deleted aware). @agent-use: Fetch variant @agent-pattern: Find by id */
     public function findById(int $id, bool $withDeleted = false): ?array
     {

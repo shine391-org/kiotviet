@@ -18,7 +18,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->db = Database::connect('tests');
         $this->resetSchema();
-        $this->productRepo = new ProductRepository(null, 'tests'); // Initialize ProductRepository with 'tests' group
+        $this->productRepo = new ProductRepository(null, null, null, $this->db);
         $this->service = new ProductVariantService(null, null, $this->productRepo);
     }
 
@@ -53,6 +53,28 @@ class ProductVariantServiceTest extends CIUnitTestCase
         // Assert that the created variant is indeed associated with productIdA (from the route)
         $this->assertNotNull($createdVariant);
         $this->assertSame((string)$productIdA, (string)$createdVariant['product_id'], 'Product ID from route should take precedence');
+    }
+
+    public function test_create_variant_fails_when_sku_matches_product_code(): void
+    {
+        $productId = $this->seedProduct(['code' => 'CP100', 'name' => 'Product']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SKU đã tồn tại trong danh sách sản phẩm');
+
+        $this->service->create($productId, ['sku' => 'CP100']);
+    }
+
+    public function test_update_variant_blocks_duplicate_sku(): void
+    {
+        $productId = $this->seedProduct(['code' => 'CP200', 'name' => 'Product']);
+        $firstVariantId = $this->seedVariant($productId, 'SKU-ONE');
+        $secondVariantId = $this->seedVariant($productId, 'SKU-TWO');
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('SKU đã tồn tại trong danh sách phiên bản');
+
+        $this->service->update($secondVariantId, ['sku' => 'SKU-ONE']);
     }
 
     // Helper methods (copied and adapted from ProductServiceTest for consistency)
@@ -110,6 +132,26 @@ class ProductVariantServiceTest extends CIUnitTestCase
         ], $data);
 
         $this->db->table('db_products')->insert($payload);
+        return (int) $this->db->insertID();
+    }
+
+    private function seedVariant(int $productId, string $sku): int
+    {
+        $this->db->table('db_product_variants_v2')->insert([
+            'product_id' => $productId,
+            'variant_name' => $sku,
+            'variant_signature' => $sku,
+            'sku' => $sku,
+            'barcode' => null,
+            'price' => 10,
+            'cost_price' => 5,
+            'stock_quantity' => 1,
+            'status' => 'active',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+            'deleted_at' => null,
+        ]);
+
         return (int) $this->db->insertID();
     }
 }

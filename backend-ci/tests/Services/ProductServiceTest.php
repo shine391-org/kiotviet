@@ -3,6 +3,7 @@
 namespace Tests\Services;
 
 use App\Services\Products\ProductService;
+use App\Services\ProductVariants\ProductVariantService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
 use InvalidArgumentException;
@@ -86,6 +87,41 @@ class ProductServiceTest extends CIUnitTestCase
         $id = $this->seedProduct(['code' => 'UP2', 'name' => 'No change']);
         $this->expectException(InvalidArgumentException::class);
         $this->service->update($id, []);
+    }
+
+    public function test_create_product_fails_when_code_matches_variant_sku(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PX1', 'name' => 'Base product']);
+        $this->seedVariant($productId, 'CONFLICT');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Mã sản phẩm đã tồn tại trong danh sách phiên bản');
+
+        $this->service->create(['code' => 'CONFLICT', 'name' => 'Clashing product']);
+    }
+
+    public function test_check_code_detects_variant_collision(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PX2', 'name' => 'Product']);
+        $this->seedVariant($productId, 'SKU-123');
+
+        $result = $this->service->checkCode('SKU-123');
+
+        $this->assertTrue($result['exists']);
+        $this->assertFalse($result['exists_in_products']);
+        $this->assertTrue($result['exists_in_variants']);
+        $this->assertStringContainsString('phiên bản', $result['message']);
+    }
+
+    public function test_variant_creation_rejects_sku_matching_product_code(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PX3', 'name' => 'Prod']);
+        $variantService = new ProductVariantService();
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('SKU đã tồn tại trong danh sách sản phẩm');
+
+        $variantService->create($productId, ['sku' => 'PX3']);
     }
 
     public function test_list_with_invalid_filters(): void

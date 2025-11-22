@@ -51,7 +51,6 @@ class ProductService
     public function create(array $data): array
     {
         $validated = $this->validator->validateCreate($data);
-        if ($this->repo->codeExists($validated['code'])) { throw new InvalidArgumentException('Code already exists'); }
         $product = $this->repo->create($validated);
         return ['success' => true, 'data' => $product];
     }
@@ -59,8 +58,7 @@ class ProductService
     /** Update product. @agent-use: PUT /api/products/{id} @agent-pattern: Standard update */
     public function update(int $id, array $data): array
     {
-        $this->requireProduct($id); $validated = $this->validator->validateUpdate($data);
-        if (! empty($validated['code']) && $this->repo->codeExists($validated['code'], $id)) { throw new InvalidArgumentException('Code already exists'); }
+        $this->requireProduct($id); $validated = $this->validator->validateUpdate($id, $data);
         $this->repo->update($id, $validated);
         return ['success' => true];
     }
@@ -74,8 +72,20 @@ class ProductService
     /** Check code uniqueness. @agent-use: POST /api/products/check-code @agent-pattern: Exists check */
     public function checkCode(string $code, ?int $excludeId = null): array
     {
-        if (! $code) { throw new InvalidArgumentException('code is required'); }
-        return ['success' => true, 'exists' => $this->repo->codeExists($code, $excludeId)];
+        $trimmed = trim($code); if ($trimmed === '') { throw new InvalidArgumentException('code is required'); }
+
+        $existsInProducts = $this->repo->codeExists($trimmed, $excludeId);
+        $existsInVariants = $this->repo->codeExistsInVariants($trimmed);
+
+        return [
+            'success' => true,
+            'exists' => $existsInProducts || $existsInVariants,
+            'exists_in_products' => $existsInProducts,
+            'exists_in_variants' => $existsInVariants,
+            'message' => $existsInProducts
+                ? 'Mã sản phẩm đã tồn tại trong danh sách sản phẩm'
+                : ($existsInVariants ? 'Mã sản phẩm đã tồn tại trong danh sách phiên bản' : 'Mã có thể sử dụng'),
+        ];
     }
 
     /** List product images. @agent-use: GET /api/products/{id}/images @agent-pattern: Media listing */

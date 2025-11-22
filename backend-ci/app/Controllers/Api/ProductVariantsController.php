@@ -18,10 +18,10 @@ class ProductVariantsController extends BaseController
     public function show($id) { return $this->wrap(fn () => $this->respond($this->service->show((int) $id))); }
 
     /** Create variant for product. @agent-use: POST /api/products/{productId}/variants @agent-pattern: Thin create */
-    public function create($productId) { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respondCreated($this->service->create((int) $productId, $data))); }
+    public function create($productId) { $data = $this->safeInput(); return $this->wrap(fn () => $this->respondCreated($this->service->create((int) $productId, $data))); }
 
     /** Update variant. @agent-use: PUT /api/variants/{id} @agent-pattern: Thin update */
-    public function update($id) { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $data))); }
+    public function update($id) { $data = $this->safeInput(); return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $data))); }
 
     /** Delete variant (soft). @agent-use: DELETE /api/variants/{id} @agent-pattern: Thin delete */
     public function delete($id) { return $this->wrap(fn () => $this->respond($this->service->delete((int) $id))); }
@@ -57,5 +57,17 @@ class ProductVariantsController extends BaseController
         catch (\InvalidArgumentException $e) { return $this->failValidationErrors($e->getMessage()); }
         catch (\RuntimeException $e) { return $this->failNotFound($e->getMessage()); }
         catch (\Throwable $e) { return $this->failServerError($e->getMessage()); }
+    }
+
+    /** Safely fetch body as JSON or form data to avoid parse errors. */
+    private function safeInput(): array
+    {
+        try {
+            $json = $this->request->getJSON(true);
+            if (is_array($json)) { return $json; }
+        } catch (\Throwable $e) {}
+
+        $raw = $this->request->getRawInput();
+        return is_array($raw) ? $raw : [];
     }
 }

@@ -2,6 +2,8 @@
 
 namespace App\Validators;
 
+use App\Repositories\ProductVariants\ProductVariantRepository;
+use App\Repositories\Products\ProductRepository;
 use CodeIgniter\Validation\Validation;
 use Config\Services;
 use InvalidArgumentException;
@@ -9,12 +11,14 @@ use InvalidArgumentException;
 /** Product input validation. @agent-validator: Product input validation @agent-pattern: Validation first @agent-reusable: HIGH */
 class ProductValidator
 {
-    protected Validation $v;
+    protected Validation $v; protected ProductRepository $productRepo; protected ProductVariantRepository $variantRepo;
 
-    public function __construct(?Validation $validation = null)
+    public function __construct(?Validation $validation = null, ?ProductRepository $productRepo = null, ?ProductVariantRepository $variantRepo = null)
     {
         // Use non-shared instance to avoid cross-test/state bleed
         $this->v = $validation ?? Services::validation(null, false);
+        $this->productRepo = $productRepo ?? new ProductRepository();
+        $this->variantRepo = $variantRepo ?? new ProductVariantRepository();
     }
 
     /** Validate list filters. @agent-use: Listing endpoints @agent-pattern: Standard list validation */
@@ -34,17 +38,18 @@ class ProductValidator
     public function validateCreate(array $input): array
     {
         $rules = ['code' => 'required|string|max_length[100]', 'name' => 'required|string|max_length[255]', 'product_type' => 'permit_empty|string|max_length[50]', 'barcode' => 'permit_empty|string|max_length[100]', 'status' => 'permit_empty|string|max_length[50]', 'has_variants' => 'permit_empty|in_list[0,1,true,false]', 'purchase_price' => 'permit_empty|numeric', 'selling_price' => 'permit_empty|numeric', 'wholesale_price' => 'permit_empty|numeric', 'stock_quantity' => 'permit_empty|numeric', 'alert_stock' => 'permit_empty|numeric'];
-        return $this->normalizeBooleans($this->run($input, $rules), ['has_variants']);
+        $validated = $this->normalizeBooleans($this->run($input, $rules), ['has_variants']);
+        $this->assertCodeUnique($validated['code']);
+        return $validated;
     }
 
     /** Validate product update payload. @agent-use: Update product request @agent-pattern: Standard update validation */
-    public function validateUpdate(array $input): array
+    public function validateUpdate(int $id, array $input): array
     {
         $rules = ['code' => 'permit_empty|string|max_length[100]', 'name' => 'permit_empty|string|max_length[255]', 'product_type' => 'permit_empty|string|max_length[50]', 'barcode' => 'permit_empty|string|max_length[100]', 'status' => 'permit_empty|string|max_length[50]', 'has_variants' => 'permit_empty|in_list[0,1,true,false]', 'purchase_price' => 'permit_empty|numeric', 'selling_price' => 'permit_empty|numeric', 'wholesale_price' => 'permit_empty|numeric', 'stock_quantity' => 'permit_empty|numeric', 'alert_stock' => 'permit_empty|numeric'];
         $validated = $this->normalizeBooleans($this->run($input, $rules), ['has_variants']);
-        if (empty($validated)) {
-            throw new InvalidArgumentException('No fields to update');
-        }
+        if (empty($validated)) { throw new InvalidArgumentException('No fields to update'); }
+        if (! empty($validated['code'])) { $this->assertCodeUnique($validated['code'], $id); }
         return $validated;
     }
 
@@ -58,5 +63,20 @@ class ProductValidator
     {
         foreach ($fields as $field) { if (array_key_exists($field, $data)) { $data[$field] = filter_var($data[$field], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE); } }
         return $data;
+    }
+
+    /** Ensure code unique across products and variants. @agent-use: Cross-table code validation @agent-pattern: Prevent SKU/code collision */
+    private function assertCodeUnique(string $code, ?int $excludeId = null): void
+    {
+        $trimmed = trim($code);
+        if ($trimmed === '') { return; }
+
+        if ($this->productRepo->codeExists($trimmed, $excludeId)) {
+            throw new InvalidArgumentException('Mã sản phẩm đã tồn tại trong danh sách sản phẩm');
+        }
+
+        if ($this->variantRepo->skuExists($trimmed)) {
+            throw new InvalidArgumentException('Mã sản phẩm đã tồn tại trong danh sách phiên bản');
+        }
     }
 }

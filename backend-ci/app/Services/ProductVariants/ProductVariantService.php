@@ -25,7 +25,7 @@ class ProductVariantService
 
     /** Update variant. @agent-use: PUT /api/variants/{id} @agent-pattern: Standard update */
     public function update(int $id, array $data): array
-    { $this->requireVariant($id); $validated = $this->validator->validateUpdate($data); $this->repo->update($id, $validated); return ['success' => true]; }
+    { $this->requireVariant($id); $validated = $this->validator->validateUpdate($id, $data); $this->repo->update($id, $validated); return ['success' => true]; }
 
     /** Soft delete variant. @agent-use: DELETE /api/variants/{id} @agent-pattern: Soft delete */
     public function delete(int $id): array { $this->requireVariant($id); $this->repo->delete($id); return ['success' => true]; }

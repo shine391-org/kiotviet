@@ -11,7 +11,14 @@ use CodeIgniter\Database\BaseConnection;
 class ProductRepository
 {
     protected ProductModel $products; protected ProductCategoryLinkModel $links; protected ProductVariantV2Model $variants; protected BaseConnection $db;
-    public function __construct() { $this->products = new ProductModel(); $this->links = new ProductCategoryLinkModel(); $this->variants = new ProductVariantV2Model(); $this->db = \Config\Database::connect(); }
+
+    public function __construct(?ProductModel $products = null, ?ProductCategoryLinkModel $links = null, ?ProductVariantV2Model $variants = null, ?BaseConnection $db = null)
+    {
+        $this->products = $products ?? new ProductModel();
+        $this->links = $links ?? new ProductCategoryLinkModel();
+        $this->variants = $variants ?? new ProductVariantV2Model();
+        $this->db = $db ?? \Config\Database::connect();
+    }
 
     /** List products with filters + pagination. @agent-use: Product listing @agent-pattern: Standard query pattern */
     public function findAll(array $filters): array { $b = $this->applyFilters($filters); $limit = $filters['limit'] ?? 20; $offset = (($filters['page'] ?? 1) - 1) * $limit; return $b->orderBy('created_at', 'DESC')->limit($limit, $offset)->get()->getResultArray(); }
@@ -31,8 +38,19 @@ class ProductRepository
     /** Soft delete. @agent-use: Delete flow @agent-pattern: Soft delete aware */
     public function delete(int $id): bool { return (bool) $this->products->delete($id); }
 
-    /** Check duplicate code. @agent-use: Code uniqueness @agent-pattern: Exists check */
-    public function codeExists(string $code, ?int $excludeId = null): bool { $b = $this->products->where('code', $code)->where('deleted_at', null); if ($excludeId) { $b->where('id !=', $excludeId); } return $b->countAllResults() > 0; }
+    /** Check duplicate code inside products only. @agent-use: Code uniqueness @agent-pattern: Exists check */
+    public function codeExists(string $code, ?int $excludeId = null): bool
+    {
+        $b = $this->products->where('code', $code)->where('deleted_at', null);
+        if ($excludeId) { $b->where('id !=', $excludeId); }
+        return $b->countAllResults() > 0;
+    }
+
+    /** Cross-check product code against variant SKUs. @agent-use: Cross-table validation @agent-pattern: Prevent product/variant collision */
+    public function codeExistsInVariants(string $code): bool
+    {
+        return $this->variants->where('sku', $code)->where('deleted_at', null)->countAllResults() > 0;
+    }
 
     /** Map product => category ids. @agent-use: Attach categories @agent-pattern: Batch fetch */
     public function categoryMap(array $productIds): array { if (empty($productIds)) { return []; } $rows = $this->links->select('product_id, category_id')->whereIn('product_id', $productIds)->findAll(); $map = []; foreach ($rows as $row) { $map[$row['product_id']][] = (int) $row['category_id']; } return $map; }

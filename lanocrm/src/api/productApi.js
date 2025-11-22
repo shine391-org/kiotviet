@@ -202,25 +202,22 @@ export const createProduct = async (data) => {
 };*/
 export const createProduct = async (data) => {
   try {
-    const requiredFields = ['code', 'name', 'category_id', 'product_type', 'unit', 'selling_price'];
-    const missingFields = requiredFields.filter(field => {
-      const value = data[field];
-      if (field === 'category_id') {
-        return !value || !Array.isArray(value) || value.length === 0;
-      }
-      return !value;
-    });
-    
+    // Chỉ bắt buộc code, name; các field còn lại để BE validate
+    const requiredFields = ['code', 'name'];
+    const missingFields = requiredFields.filter(f => data[f] === undefined || data[f] === null || data[f] === '');
     if (missingFields.length > 0) {
       throw new Error(`Thiếu trường bắt buộc: ${missingFields.join(', ')}`);
     }
 
-    // ✅ Parse category_id sang array integer
     const submitData = {
       ...data,
       category_id: Array.isArray(data.category_id)
-        ? data.category_id.map(id => parseInt(id, 10))
-        : [parseInt(data.category_id, 10)]
+        ? data.category_id.map(id => parseInt(id, 10)).filter(Boolean)
+        : data.category_id ? [parseInt(data.category_id, 10)] : [],
+      selling_price: data.selling_price ?? 0,
+      purchase_price: data.purchase_price ?? 0,
+      wholesale_price: data.wholesale_price ?? 0,
+      stock_quantity: data.stock_quantity ?? 0,
     };
 
     const response = await axiosInstance.post(ENDPOINTS.BASE, submitData);
