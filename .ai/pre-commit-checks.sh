@@ -176,6 +176,34 @@ else
 fi
 
 # ============================================
+# Check 6: Integration Tests (MySQL)
+# ============================================
+echo ""
+echo "[6/6] Running Integration Tests (MySQL)..."
+echo "This tests with real MySQL database..."
+
+# Check if db-test is running
+if ! docker ps | grep -q "db-test"; then
+    echo "⚠️  Warning: db-test container not running"
+    echo "Run: docker-compose up -d db-test"
+    echo "Skipping integration tests..."
+else
+    # Run migrations on test db
+    docker exec meomeo2-api-1 php spark migrate --all --env tests
+    
+    # Run integration tests
+    docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+    
+    if [ $? -ne 0 ]; then
+        echo "❌ Integration tests FAILED"
+        echo "Fix integration tests before committing!"
+        ERRORS=$((ERRORS + 1))
+    else
+        echo "✅ Integration tests PASSED"
+    fi
+fi
+
+# ============================================
 # Summary
 # ============================================
 echo ""

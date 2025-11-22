@@ -329,14 +329,87 @@ public function list() {
 
 ---
 
-## ✅ Definition of Done
+
+## 🧪 Testing (BẮT BUỘC)
+
+### Test-Driven Development
+You MUST write tests. No exceptions.
+
+**Order:**
+1. Write test first (RED)
+2. Implement code (GREEN)
+3. Refactor (REFACTOR)
+
+### Test Types
+
+**Unit Tests** (SQLite - Fast)
+- Service logic
+- Repository queries
+- Validators
+- Run: `vendor/bin/phpunit`
+
+**Integration Tests** (MySQL - Real)
+- API endpoints
+- Database operations
+- Authentication flows
+- Run: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+
+### Test Patterns (Copy từ đây)
+
+**Xem chi tiết**: `docs/testing/TESTING-PATTERNS.md`
+
+**Service Test** (60% tests của bạn):
+```php
+class ProductServiceTest extends CIUnitTestCase {
+    /** @test */
+    public function it_creates_product() {
+        // Arrange
+        $data = ['code' => 'P001', 'name' => 'Product'];
+        
+        // Act
+        $result = $this->service->create($data);
+        
+        // Assert
+        $this->assertTrue($result['success']);
+    }
+}
+```
+
+**Integration Test** (30% tests của bạn):
+```php
+class ProductsApiTest extends FeatureTestCase {
+    /** @test */
+    public function it_creates_via_api() {
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $this->token
+        ])->post('/api/products', ['code' => 'P001']);
+        
+        $response->assertStatus(201);
+    }
+}
+```
+
+### Vấn đề thường gặp
+
+**Q: PHPUnit pass nhưng dev server fail?**
+A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
+`docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+
+**Q: Tests pass riêng lẻ, fail khi chạy cùng?**
+A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+
+**Đọc thêm**: `docs/testing/TESTING-GUIDE.md`
+
+---
+
+## Definition of Done (CẬP NHẬT)
 
 A task is complete when:
 - [x] All files created
 - [x] Clean architecture followed
-- [x] File sizes < limits
-- [x] Inline docs added
-- [x] Tests written and passing
+- [x] **Unit tests written and pass (NEW)**
+- [x] **Integration tests written and pass (NEW)**
+- [x] **Test coverage >= 70% (NEW)**
 - [x] API endpoints work
 - [x] Task status updated
 - [x] Session log created

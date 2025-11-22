@@ -272,22 +272,29 @@ text
 
 HÃY:
 - ✅ Tuân thủ clean architecture
-- ✅ Single Responsibility
-- ✅ Thêm inline docs
-- ✅ Viết tests (TDD)
-- ✅ Copy patterns từ AGENTS.md
-- ✅ Chạy safety checks trước commit
+- ✅ Single## WORKFLOW (CẬP NHẬT)
 
----
+1. ĐỌC tài liệu: AGENTS.md + task file
+2. **VIẾT TESTS TRƯỚC (TDD)**: `docs/testing/TESTING-PATTERNS.md`
+3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
+4. **CHẠY TESTS**: 
+   - Unit: `vendor/bin/phpunit`
+   - Integration: `vendor/bin/phpunit -c phpunit.integration.xml`
+5. TỰ KIỂM TRA: `bash .ai/pre-commit-checks.sh`
+6. COMMIT chỉ khi tests pass
+7. TẠO session log với test checklist
 
-## DEFINITION OF DONE
+## DEFINITION OF DONE (CẬP NHẬT)
 
 Task hoàn thành khi:
 - [ ] Files tạo/sửa đúng scope
 - [ ] Tuân thủ Single Responsibility
 - [ ] Separation of Concerns đúng
+- [ ] **Unit tests viết và pass (NEW)**
+- [ ] **Integration tests viết và pass (NEW)**
+- [ ] **Coverage >= 70% (NEW)**
+- [ ] **Test checklist hoàn thành (NEW)**
 - [ ] Inline docs đầy đủ
-- [ ] Tests viết và pass
 - [ ] API endpoints test OK
 - [ ] Safety checks pass
 - [ ] Session log tạo
