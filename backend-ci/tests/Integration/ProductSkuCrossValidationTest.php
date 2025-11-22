@@ -7,6 +7,7 @@ use App\Services\ProductVariants\ProductVariantService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\ProductSchemaTrait;
 
 /**
  * End-to-end style validation tests for code/SKU cross-checks.
@@ -14,6 +15,8 @@ use InvalidArgumentException;
  */
 class ProductSkuCrossValidationTest extends CIUnitTestCase
 {
+    use ProductSchemaTrait;
+
     protected ProductService $productService;
     protected ProductVariantService $variantService;
     protected $db;
@@ -72,44 +75,6 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
         $this->assertTrue($result['exists_in_variants']);
     }
 
-    private function resetSchema(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-
-        $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT,
-            name TEXT,
-            product_type TEXT,
-            barcode TEXT,
-            status TEXT,
-            selling_price REAL,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )');
-
-        $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_id INTEGER,
-            variant_name TEXT,
-            variant_signature TEXT,
-            sku TEXT,
-            barcode TEXT,
-            price REAL,
-            cost_price REAL,
-            stock_quantity REAL,
-            min_stock REAL,
-            max_stock REAL,
-            image_url TEXT,
-            attributes TEXT,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )');
-    }
 
     private function seedProduct(array $data): int
     {
