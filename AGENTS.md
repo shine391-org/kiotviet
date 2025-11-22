@@ -406,12 +406,15 @@ A task is complete when:
 - [x] Clean architecture followed
 - [x] **Unit tests written and pass (Backend + Frontend)**
 - [x] **Integration tests written and pass**
-- [x] **Test coverage >= 70%**
-- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)**
+- [x] **Test coverage >= 70%** _(Automatically enforced in CI)_
+- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)** _(Automatically validated in CI)_
 - [x] **Inline docs added (@agent- annotations)**
 - [x] API endpoints work
 - [x] Task status updated
 - [x] Session log created
+
+> [!NOTE]
+> **Automated Enforcement**: Coverage thresholds and FE checklist completion are automatically enforced in CI/CD pipeline. PRs will fail if coverage < 70% or checklist is incomplete.
 
 
 ---

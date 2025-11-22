@@ -1,0 +1,157 @@
+name: CI - Tests & Coverage
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  backend-tests:
+    name: Backend Tests & Coverage
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: lanocrm_test
+          MYSQL_USER: lanocrm_user
+          MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, json, mysqli, xdebug
+          coverage: xdebug
+
+      - name: Get Composer Cache Directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+        working-directory: backend-ci
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v3
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-progress --no-suggest
+        working-directory: backend-ci
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot --silent; do
+            echo 'Waiting for MySQL...'
+            sleep 2
+          done
+
+      - name: Run database migrations
+        run: php spark migrate --all
+        working-directory: backend-ci
+        env:
+          CI: true
+          database.tests.hostname: 127.0.0.1
+          database.tests.database: lanocrm_test
+          database.tests.username: lanocrm_user
+          database.tests.password: KP7n4RjcDbedSE2W8GgA
+          database.tests.DBDriver: MySQLi
+
+      - name: Run PHPUnit tests with coverage
+        run: vendor/bin/phpunit --coverage-clover coverage/clover.xml --coverage-text
+        working-directory: backend-ci
+
+      - name: Check coverage threshold (70%)
+        run: php backend-ci/coverage-checker.php backend-ci/coverage/clover.xml 70
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: backend-coverage
+          path: backend-ci/coverage/
+
+  frontend-tests:
+    name: Frontend Tests & Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: lanocrm/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: lanocrm
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        working-directory: lanocrm
+        env:
+          CI: true
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: frontend-coverage
+          path: lanocrm/coverage/
+
+  checklist-validation:
+    name: Validate FE Test Checklist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate checklist completion
+        run: bash scripts/validate-checklist.sh
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, checklist-validation]
+    if: always()
+
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 CI Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "Backend Tests:    ${{ needs.backend-tests.result }}"
+          echo "Frontend Tests:   ${{ needs.frontend-tests.result }}"
+          echo "Checklist:        ${{ needs.checklist-validation.result }}"
+          echo ""
+          
+          if [ "${{ needs.backend-tests.result }}" != "success" ] || \
+             [ "${{ needs.frontend-tests.result }}" != "success" ] || \
+             [ "${{ needs.checklist-validation.result }}" != "success" ]; then
+            echo "❌ CI FAILED - Please fix the issues above"
+            exit 1
+          fi
+          
+          echo "✅ All checks passed!"
