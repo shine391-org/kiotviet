@@ -65,11 +65,19 @@ class ProductMediaService
     public function byDate(array $filters): array
     {
         $validated = $this->dateValidator->validateFilters($filters);
-        $data = $this->repo->listByDate($validated);
+        $result = $this->repo->listByDate($validated);
+        $data = $result['data'] ?? [];
+        $total = $result['total'] ?? 0;
 
         return [
             'success' => true,
             'data' => $this->transformer->transformList($data, $validated['entity_id']),
+            'pagination' => [
+                'total' => $total,
+                'limit' => $validated['limit'],
+                'offset' => $validated['offset'],
+                'pages' => $validated['limit'] ? (int) ceil($total / $validated['limit']) : 1,
+            ],
         ];
     }
 

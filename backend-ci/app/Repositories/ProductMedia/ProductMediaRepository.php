@@ -57,7 +57,14 @@ class ProductMediaRepository
             $this->applyMonthFilter($builder, (int) $filters['month']);
         }
 
-        return $builder->orderBy('pi.created_at', 'DESC')->get()->getResultArray();
+        $total = $builder->countAllResults(false);
+
+        $data = $builder->orderBy('pi.created_at', 'DESC')
+            ->limit($filters['limit'], $filters['offset'])
+            ->get()
+            ->getResultArray();
+
+        return ['data' => $data, 'total' => $total];
     }
 
     /**
@@ -76,12 +83,14 @@ class ProductMediaRepository
                 ->orLike('p.code', $filters['sku'])
             ->groupEnd();
 
+        $total = $builder->countAllResults(false);
+
         $data = $builder->orderBy('pi.created_at', 'DESC')
-            ->limit($filters['limit'])
+            ->limit($filters['limit'], $filters['offset'])
             ->get()
             ->getResultArray();
 
-        return ['data' => $data, 'total' => count($data)];
+        return ['data' => $data, 'total' => $total];
     }
 
     private function baseSelect()

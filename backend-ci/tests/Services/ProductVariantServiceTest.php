@@ -68,7 +68,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
     public function test_update_variant_blocks_duplicate_sku(): void
     {
         $productId = $this->seedProduct(['code' => 'CP200', 'name' => 'Product']);
-        $firstVariantId = $this->seedVariant($productId, 'SKU-ONE');
+        $this->seedVariant($productId, 'SKU-ONE');
         $secondVariantId = $this->seedVariant($productId, 'SKU-TWO');
 
         $this->expectException(\InvalidArgumentException::class);
