@@ -37,6 +37,18 @@ services:
     ports:
       - "3307:3306" # Different port to avoid conflict
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOSTS: db,db-test
+      PMA_USER: lanocrm_user
+      PMA_PASSWORD: KP7n4RjcDbedSE2W8GgA
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+      - db-test
+
 volumes:
   db_data:
   test_db_data: # New volume for test data
