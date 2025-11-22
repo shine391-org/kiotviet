@@ -162,7 +162,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
 
         $this->db->query('CREATE TABLE db_product_attributes (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT,
             slug TEXT,
             attribute_key TEXT,
@@ -178,7 +178,7 @@ class AttributeServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_attribute_options (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             attribute_id INTEGER,
             option_name TEXT,
             option_value TEXT,
@@ -192,7 +192,7 @@ class AttributeServiceTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_attribute_values (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id INTEGER,
             variant_id INTEGER,
             attribute_id INTEGER,

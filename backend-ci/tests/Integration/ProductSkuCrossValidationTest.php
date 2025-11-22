@@ -78,7 +78,7 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT,
             name TEXT,
             product_type TEXT,
@@ -91,7 +91,7 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
         )');
 
         $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id INTEGER,
             variant_name TEXT,
             variant_signature TEXT,
