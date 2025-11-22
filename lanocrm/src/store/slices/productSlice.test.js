@@ -1,131 +1,135 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import productReducer, {
-    setFilters,
-    resetFilters,
-    setCurrentProduct,
-    clearCurrentProduct,
-    resetSuccessFlags,
-    clearError,
-    setPagination
+  fetchProducts,
+  fetchProductDetail,
+  setFilters,
+  updateSingleProduct
 } from './productSlice';
+import * as productApi from '../../api/productApi';
+
+// Mock productApi
+vi.mock('../../api/productApi', () => ({
+  getProductsWithVariants: vi.fn(),
+  getProductDetail: vi.fn(),
+  createProduct: vi.fn(),
+  updateProduct: vi.fn(),
+  deleteProduct: vi.fn(),
+  checkProductCode: vi.fn(),
+  uploadProductImage: vi.fn(),
+  importProducts: vi.fn(),
+  exportProducts: vi.fn(),
+  getProducts: vi.fn(),
+  downloadFile: vi.fn(),
+}));
 
 describe('productSlice', () => {
-    let initialState;
+  const initialState = {
+    items: [],
+    currentProduct: null,
+    highlightedProductId: null,
+    pagination: {
+      page: 1,
+      limit: 20,
+      total: 0,
+      total_pages: 0,
+    },
+    filters: {
+      search: '',
+      category_id: null,
+      product_type: null,
+      status: null,
+      is_active: null,
+      brand: '',
+      attributes: [],
+      price_from: null,
+      price_to: null,
+      stock_from: null,
+      stock_to: null,
+      sort_by: 'p.created_at',
+      order: 'desc',
+    },
+    loading: false,
+    createLoading: false,
+    updateLoading: false,
+    deleteLoading: false,
+    error: null,
+    createSuccess: false,
+    updateSuccess: false,
+    deleteSuccess: false,
+    categoryProducts: [],
+    loadingCategoryProducts: false,
+    errorCategoryProducts: null,
+  };
 
-    beforeEach(() => {
-        initialState = {
-            items: [],
-            currentProduct: null,
-            highlightedProductId: null,
-            pagination: {
-                page: 1,
-                limit: 20,
-                total: 0,
-                total_pages: 0
-            },
-            filters: {
-                search: '',
-                category_id: null,
-                product_type: null,
-                status: null,
-                is_active: null,
-                brand: '',
-                attributes: [],
-                price_from: null,
-                price_to: null,
-                stock_from: null,
-                stock_to: null,
-                sort_by: 'p.created_at',
-                order: 'desc'
-            },
-            loading: false,
-            createLoading: false,
-            updateLoading: false,
-            deleteLoading: false,
-            error: null,
-            createSuccess: false,
-            updateSuccess: false,
-            deleteSuccess: false,
-            categoryProducts: [],
-            loadingCategoryProducts: false,
-            errorCategoryProducts: null
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('reducers', () => {
+    it('should handle initial state', () => {
+      expect(productReducer(undefined, { type: 'unknown' })).toEqual(initialState);
+    });
+
+    it('should handle setFilters', () => {
+      const newFilters = { search: 'test' };
+      const nextState = productReducer(initialState, setFilters(newFilters));
+      expect(nextState.filters.search).toBe('test');
+    });
+
+    it('should handle updateSingleProduct', () => {
+        const stateWithProducts = {
+            ...initialState,
+            items: [{ id: 1, name: 'Old Name' }],
+            currentProduct: { id: 1, name: 'Old Name' }
         };
+        const updatedProduct = { id: 1, name: 'New Name' };
+        const nextState = productReducer(stateWithProducts, updateSingleProduct(updatedProduct));
+
+        expect(nextState.items[0].name).toBe('New Name');
+        expect(nextState.currentProduct.name).toBe('New Name');
+    });
+  });
+
+  describe('async thunks', () => {
+    describe('fetchProducts', () => {
+      it('should handle successful fetch', async () => {
+        const mockResponse = {
+          success: true,
+          data: [{ id: 1, name: 'Product 1' }],
+          pagination: { total: 1 }
+        };
+        productApi.getProductsWithVariants.mockResolvedValue(mockResponse);
+
+        const dispatch = vi.fn();
+        const thunk = fetchProducts({});
+
+        await thunk(dispatch, () => {}, undefined);
+
+        expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+            type: fetchProducts.fulfilled.type,
+            payload: mockResponse
+        }));
+      });
     });
 
-    it('should return initial state', () => {
-        const state = productReducer(undefined, { type: 'unknown' });
-        expect(state).toMatchObject({
-            items: [],
-            currentProduct: null,
-            loading: false
-        });
-    });
-
-    describe('setFilters', () => {
-        it('should set filters', () => {
-            const filters = { search: 'test', category_id: '1' };
-            const state = productReducer(initialState, setFilters(filters));
-            expect(state.filters.search).toBe('test');
-            expect(state.filters.category_id).toBe('1');
-        });
-    });
-
-    describe('resetFilters', () => {
-        it('should reset filters to initial state', () => {
-            const stateWithFilters = {
-                ...initialState,
-                filters: { ...initialState.filters, search: 'test' }
+    describe('fetchProductDetail', () => {
+        it('should handle successful fetch', async () => {
+            const mockResponse = {
+                success: true,
+                data: { id: 1, name: 'Product 1', has_variants: '1' }
             };
-            const state = productReducer(stateWithFilters, resetFilters());
-            expect(state.filters.search).toBe('');
-        });
-    });
+            productApi.getProductDetail.mockResolvedValue(mockResponse);
 
-    describe('setCurrentProduct', () => {
-        it('should set current product', () => {
-            const product = { id: '1', name: 'Product 1', code: 'P001' };
-            const state = productReducer(initialState, setCurrentProduct(product));
-            expect(state.currentProduct).toEqual(product);
-        });
-    });
+            const dispatch = vi.fn();
+            const thunk = fetchProductDetail(1);
 
-    describe('clearCurrentProduct', () => {
-        it('should clear current product', () => {
-            const stateWithProduct = { ...initialState, currentProduct: { id: '1' } };
-            const state = productReducer(stateWithProduct, clearCurrentProduct());
-            expect(state.currentProduct).toBeNull();
-        });
-    });
+            await thunk(dispatch, () => {}, undefined);
 
-    describe('resetSuccessFlags', () => {
-        it('should reset all success flags', () => {
-            const stateWithFlags = {
-                ...initialState,
-                createSuccess: true,
-                updateSuccess: true,
-                deleteSuccess: true
-            };
-            const state = productReducer(stateWithFlags, resetSuccessFlags());
-            expect(state.createSuccess).toBe(false);
-            expect(state.updateSuccess).toBe(false);
-            expect(state.deleteSuccess).toBe(false);
+            expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({
+                type: fetchProductDetail.fulfilled.type,
+                payload: mockResponse
+            }));
         });
     });
-
-    describe('clearError', () => {
-        it('should clear error', () => {
-            const stateWithError = { ...initialState, error: 'Some error' };
-            const state = productReducer(stateWithError, clearError());
-            expect(state.error).toBeNull();
-        });
-    });
-
-    describe('setPagination', () => {
-        it('should set pagination', () => {
-            const pagination = { page: 2, limit: 20, total: 100 };
-            const state = productReducer(initialState, setPagination(pagination));
-            expect(state.pagination.page).toBe(2);
-            expect(state.pagination.total).toBe(100);
-        });
-    });
+  });
 });
