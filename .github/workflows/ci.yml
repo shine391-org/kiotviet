@@ -51,7 +51,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --prefer-dist --no-progress --no-suggest
+        run: composer install --prefer-dist --no-progress
         working-directory: backend-ci
 
       - name: Wait for MySQL
@@ -61,23 +61,28 @@ jobs:
             sleep 2
           done
 
+      - name: Create .env file for CI
+        run: |
+          cp env.example .env
+          echo "CI=true" >> .env
+          echo "database.tests.hostname=127.0.0.1" >> .env
+          echo "database.tests.database=lanocrm_test" >> .env
+          echo "database.tests.username=lanocrm_user" >> .env
+          echo "database.tests.password=KP7n4RjcDbedSE2W8GgA" >> .env
+          echo "database.tests.DBDriver=MySQLi" >> .env
+        working-directory: backend-ci
+
       - name: Run database migrations
         run: php spark migrate --all
         working-directory: backend-ci
-        env:
-          CI: true
-          database.tests.hostname: 127.0.0.1
-          database.tests.database: lanocrm_test
-          database.tests.username: lanocrm_user
-          database.tests.password: KP7n4RjcDbedSE2W8GgA
-          database.tests.DBDriver: MySQLi
 
       - name: Run PHPUnit tests with coverage
         run: vendor/bin/phpunit --coverage-clover coverage/clover.xml --coverage-text
         working-directory: backend-ci
 
       - name: Check coverage threshold (70%)
-        run: php backend-ci/coverage-checker.php backend-ci/coverage/clover.xml 70
+        run: php coverage-checker.php coverage/clover.xml 70
+        working-directory: backend-ci
 
       - name: Upload coverage artifacts
         uses: actions/upload-artifact@v3
