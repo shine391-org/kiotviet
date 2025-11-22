@@ -414,6 +414,7 @@ A task is complete when:
 - [x] Task status updated
 - [x] Session log created
 
+
 ---
 
 **Key Principle:** 

@@ -116,7 +116,7 @@ echo "[4/5] Checking code quality..."
 STAGED_PHP=$(git diff --cached --name-only 2>/dev/null | grep "\.php$" || echo "")
 
 if [ -z "$STAGED_PHP" ]; then
-    echo "   �� No PHP files changed"
+    echo "    No PHP files changed"
 else
     QUALITY_ISSUES=0
     while IFS= read -r file; do

@@ -54,7 +54,7 @@ We follow the standard Test Pyramid to ensure a balanced and efficient testing s
 **Example**:
 ```bash
 # Run integration tests
-docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml
+docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
 ```
 
 ### ISSUE 2: Tests pass individually but fail together
