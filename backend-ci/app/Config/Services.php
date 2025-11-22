@@ -3,8 +3,11 @@
 namespace Config;
 
 use App\Repositories\Products\ProductRepository;
+use App\Repositories\Attributes\AttributeRepository;
 use App\Services\Products\ProductService;
+use App\Services\Attributes\AttributeService;
 use App\Validators\ProductValidator;
+use App\Validators\AttributeValidator;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -47,5 +50,66 @@ class Services extends BaseService
         }
 
         return new ProductService(static::productRepository(false), static::productValidator(false));
+    }
+
+    public static function productVariantRepository(bool $getShared = true): \App\Repositories\ProductVariants\ProductVariantRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productVariantRepository');
+        }
+
+        return new \App\Repositories\ProductVariants\ProductVariantRepository();
+    }
+
+    public static function productVariantValidator(bool $getShared = true): \App\Validators\ProductVariantValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productVariantValidator');
+        }
+
+        return new \App\Validators\ProductVariantValidator();
+    }
+
+    public static function productVariantService(bool $getShared = true): \App\Services\ProductVariants\ProductVariantService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productVariantService');
+        }
+
+        return new \App\Services\ProductVariants\ProductVariantService(
+            static::productVariantRepository(false),
+            static::productVariantValidator(false),
+            static::productRepository(false)
+        );
+    }
+
+    public static function attributeRepository(bool $getShared = true): AttributeRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('attributeRepository');
+        }
+
+        return new AttributeRepository();
+    }
+
+    public static function attributeValidator(bool $getShared = true): AttributeValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('attributeValidator');
+        }
+
+        return new AttributeValidator();
+    }
+
+    public static function attributeService(bool $getShared = true): AttributeService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('attributeService');
+        }
+
+        return new AttributeService(
+            static::attributeRepository(false),
+            static::attributeValidator(false)
+        );
     }
 }
