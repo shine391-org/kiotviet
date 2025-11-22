@@ -13,6 +13,9 @@ use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\AttributeValidator;
+use App\Repositories\Inventory\InventoryRepository;
+use App\Services\Inventory\InventoryService;
+use App\Validators\InventoryValidator;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -165,6 +168,36 @@ class Services extends BaseService
             static::productMediaValidator(false),
             static::productMediaDateValidator(false),
             static::productMediaSearchValidator(false)
+        );
+    }
+
+    public static function inventoryRepository(bool $getShared = true): InventoryRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryRepository');
+        }
+
+        return new InventoryRepository();
+    }
+
+    public static function inventoryValidator(bool $getShared = true): InventoryValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryValidator');
+        }
+
+        return new InventoryValidator();
+    }
+
+    public static function inventoryService(bool $getShared = true): InventoryService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryService');
+        }
+
+        return new InventoryService(
+            static::inventoryRepository(false),
+            static::inventoryValidator(false)
         );
     }
 }
