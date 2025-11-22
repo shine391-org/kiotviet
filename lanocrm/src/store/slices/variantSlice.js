@@ -31,6 +31,7 @@ export const syncVariantAttributes = createAsyncThunk(
 const initialState = {
   attributes: [],    // Danh sách attributes và options của biến thể
   values: [],        // Giá trị đã gán cho biến thể
+  variants: [],      // Danh sách biến thể
   loading: false,
   error: null,
   syncStatus: null,  // 'success' | 'failed' | null
