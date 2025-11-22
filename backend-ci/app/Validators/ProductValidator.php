@@ -53,6 +53,13 @@ class ProductValidator
         return $validated;
     }
 
+    /** Validate list of image ids. @agent-use: Attach images request @agent-pattern: Array of ids validation */
+    public function validateImageIds(array $imageIds): array
+    {
+        if (empty($imageIds)) { throw new InvalidArgumentException('image_ids required'); }
+        return array_values(array_map(static fn ($id) => (int) $id, $imageIds));
+    }
+
     private function run(array $data, array $rules, array $messages = []): array
     {
         if (! $this->v->setRules($rules, $messages)->run($data)) { throw new InvalidArgumentException(implode('; ', array_filter($this->v->getErrors())) ?: 'Invalid data'); }

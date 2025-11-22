@@ -113,8 +113,26 @@ class ProductService
     /** Attach uploaded images to product. @agent-use: POST /api/products/{id}/images/attach-multiple @agent-pattern: Bulk attach */
     public function attachImages(int $productId, array $imageIds): array
     {
-        $this->requireProduct($productId); if (empty($imageIds)) { throw new InvalidArgumentException('image_ids required'); }
-        $count = $this->repo->attachImages($productId, $imageIds); return ['success' => true, 'attached_count' => $count, 'message' => 'Gắn ảnh thành công'];
+        $this->requireProduct($productId);
+        $ids = $this->validator->validateImageIds($imageIds);
+        $result = $this->repo->attachImages($productId, $ids);
+
+        $attachedCount = count($result['attached_ids']);
+        $skippedCount = count($result['skipped_ids']);
+        $missingCount = count($result['missing_ids']);
+        $message = sprintf('Đã thêm %d ảnh, %d ảnh bị bỏ qua (đã tồn tại)', $attachedCount, $skippedCount);
+        if ($missingCount > 0) { $message .= sprintf(', %d ảnh không tìm thấy', $missingCount); }
+
+        return [
+            'success' => true,
+            'attached_count' => $attachedCount,
+            'skipped_count' => $skippedCount,
+            'missing_count' => $missingCount,
+            'attached_ids' => $result['attached_ids'],
+            'skipped_ids' => $result['skipped_ids'],
+            'missing_ids' => $result['missing_ids'],
+            'message' => $message,
+        ];
     }
 
     /** Set primary image. @agent-use: PUT /api/products/images/{id}/set-primary @agent-pattern: Primary toggle */

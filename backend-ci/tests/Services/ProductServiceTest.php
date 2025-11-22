@@ -138,6 +138,7 @@ class ProductServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
+        $this->db->query('DROP TABLE IF EXISTS db_product_images');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
         $this->db->query('DROP TABLE IF EXISTS db_products');
@@ -180,6 +181,20 @@ class ProductServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
+        )');
+
+        $this->db->query('CREATE TABLE db_product_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            product_id INTEGER,
+            variant_id INTEGER,
+            image_path TEXT,
+            image_url TEXT,
+            is_primary INTEGER,
+            sort_order INTEGER,
+            file_name TEXT,
+            deleted_at TEXT,
+            created_at TEXT,
+            updated_at TEXT
         )');
     }
 
@@ -226,5 +241,45 @@ class ProductServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
             'deleted_at' => null,
         ]);
+    }
+
+    private function seedImage(array $data = []): int
+    {
+        $payload = array_merge([
+            'product_id' => null,
+            'variant_id' => null,
+            'image_path' => '/uploads/test.jpg',
+            'image_url' => '/uploads/test.jpg',
+            'is_primary' => 0,
+            'sort_order' => 0,
+            'file_name' => 'test.jpg',
+            'deleted_at' => null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ], $data);
+
+        $this->db->table('db_product_images')->insert($payload);
+        return (int) $this->db->insertID();
+    }
+
+    public function test_attach_images_skips_duplicates_and_reports(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PATT', 'name' => 'Prod for attach']);
+        $existingId = $this->seedImage(['product_id' => $productId]);
+        $newId = $this->seedImage(['product_id' => null]);
+
+        $result = $this->service->attachImages($productId, [$existingId, $newId, 9999]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(1, $result['attached_count']);
+        $this->assertSame(1, $result['skipped_count']);
+        $this->assertSame(1, $result['missing_count']);
+        $this->assertContains($newId, $result['attached_ids']);
+        $this->assertContains($existingId, $result['skipped_ids']);
+        $this->assertContains(9999, $result['missing_ids']);
+
+        $row = $this->db->table('db_product_images')->where('id', $newId)->get()->getRowArray();
+        $this->assertSame($productId, (int) $row['product_id']);
+        $this->assertNull($row['deleted_at']);
     }
 }

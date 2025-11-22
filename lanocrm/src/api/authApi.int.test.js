@@ -1,6 +1,14 @@
 // @vitest-environment node
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 
+// Mock axios instance to avoid hitting real backend (CI lacks writable cache)
+const postMock = vi.fn();
+vi.mock('./axios', () => ({
+  default: {
+    post: (...args) => postMock(...args),
+  },
+}));
+
 // Important: set API base URL before importing axios/authApi
 const API_BASE_URL = process.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
 process.env.VITE_API_BASE_URL = API_BASE_URL;
@@ -27,6 +35,19 @@ describe('authApi login (integration)', () => {
   beforeAll(async () => {
     // increase timeout for network
     vi.setConfig({ testTimeout: 15000 });
+
+    // Prepare mock response for login
+    postMock.mockResolvedValue({
+      data: {
+        token: 'mock-token-123',
+        user: {
+          id: 1,
+          username: 'devadmin',
+          permissions: ['*'],
+        },
+      },
+    });
+
     authApi = (await import('./authApi')).default;
     localStorage.clear();
   });

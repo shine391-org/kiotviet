@@ -835,7 +835,7 @@ export const getMediaLibrary = async (
  * @param {number} offset - Offset for pagination (default: 0)
  * @returns {Promise<Object>} { success, data, total, pagination, message }
  */
-export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
+export const getMediaByDate = async (year, month, limit = 12, offset = 0, entityId = null) => {
   try {
     console.log('🔵 getMediaByDate called:', { year, month, limit, offset });
 
@@ -860,6 +860,7 @@ export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
         month: validatedMonth,
         limit: validatedLimit,
         offset: validatedOffset,
+        entity_id: entityId,
       },
     });
 
@@ -922,7 +923,7 @@ export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
  * @param {number} limit - Items per page (default: 20)
  * @returns {Promise<Object>} { success, data, total, message }
  */
-export const searchMediaBySku = async (sku, limit = 20) => {
+export const searchMediaBySku = async (sku, limit = 20, offset = 0, entityId = null) => {
   try {
     console.log('🔵 searchMediaBySku called:', { sku, limit });
 
@@ -943,12 +944,15 @@ export const searchMediaBySku = async (sku, limit = 20) => {
     }
 
     const validatedLimit = Math.max(1, Math.min(100, parseInt(limit) || 20));
+    const validatedOffset = Math.max(0, parseInt(offset) || 0);
 
     // ✅ FIX: Use GET (backend expects GET)
     const response = await axiosInstance.get(ENDPOINTS.MEDIA_SEARCH_SKU, {
       params: {
         sku: trimmedSku,
         limit: validatedLimit,
+        offset: validatedOffset,
+        entity_id: entityId,
       },
     });
 

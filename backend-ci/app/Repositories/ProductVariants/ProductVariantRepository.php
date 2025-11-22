@@ -57,12 +57,64 @@ class ProductVariantRepository
         return $builder->findAll();
     }
 
-    /** Attach existing product images to variant. @agent-use: Attach images @agent-pattern: Bulk update */
-    public function attachImages(int $variantId, array $imageIds): int
+    /**
+     * Attach existing product images to variant with duplicate guard.
+     *
+     * @agent-use: Attach images to variant
+     * @agent-pattern: Bulk update with skip list
+     * @return array{attached_ids: int[], skipped_ids: int[], missing_ids: int[]}
+     */
+    public function attachImages(int $variantId, array $imageIds): array
     {
-        if (empty($imageIds)) { return 0; }
-        $this->db->table('product_images')->whereIn('id', $imageIds)->update(['variant_id' => $variantId]);
-        return count($imageIds);
+        if (empty($imageIds)) {
+            return ['attached_ids' => [], 'skipped_ids' => [], 'missing_ids' => []];
+        }
+
+        $variant = $this->findById($variantId);
+        if (! $variant) {
+            return ['attached_ids' => [], 'skipped_ids' => [], 'missing_ids' => $imageIds];
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $imageIds)));
+        $rows = $this->db->table('product_images')
+            ->select('id, variant_id, product_id, deleted_at')
+            ->whereIn('id', $ids)
+            ->get()
+            ->getResultArray();
+
+        $foundIds = array_map('intval', array_column($rows, 'id'));
+        $missingIds = array_values(array_diff($ids, $foundIds));
+
+        $alreadyAttached = [];
+        $attachable = [];
+        foreach ($rows as $row) {
+            $rowId = (int) $row['id'];
+            $currentVariant = isset($row['variant_id']) ? (int) $row['variant_id'] : null;
+            $isActive = ($row['deleted_at'] ?? null) === null;
+
+            if ($currentVariant === $variantId && $isActive) {
+                $alreadyAttached[] = $rowId;
+            } else {
+                $attachable[] = $rowId;
+            }
+        }
+
+        if ($attachable) {
+            $this->db->table('product_images')
+                ->whereIn('id', $attachable)
+                ->update([
+                    'variant_id' => $variantId,
+                    'product_id' => $variant['product_id'] ?? null,
+                    'deleted_at' => null,
+                    'updated_at' => $this->now(),
+                ]);
+        }
+
+        return [
+            'attached_ids' => $attachable,
+            'skipped_ids' => $alreadyAttached,
+            'missing_ids' => $missingIds,
+        ];
     }
 
     /** Get attribute values of variant with attribute meta. @agent-use: Attribute listing @agent-pattern: Join fetch */

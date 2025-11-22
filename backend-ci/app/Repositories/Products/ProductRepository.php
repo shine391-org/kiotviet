@@ -72,8 +72,59 @@ class ProductRepository
         $this->db->table('product_images')->insertBatch($rows); return $rows;
     }
 
-    /** Attach existing images to product. @agent-use: Attach images @agent-pattern: Bulk update */
-    public function attachImages(int $productId, array $imageIds): int { if (empty($imageIds)) { return 0; } $this->db->table('product_images')->whereIn('id', $imageIds)->update(['product_id' => $productId, 'deleted_at' => null]); return count($imageIds); }
+    /**
+     * Attach existing images to product with duplicate guard.
+     *
+     * @agent-use: Attach images
+     * @agent-pattern: Bulk update with skip list
+     * @return array{attached_ids: int[], skipped_ids: int[], missing_ids: int[]}
+     */
+    public function attachImages(int $productId, array $imageIds): array
+    {
+        if (empty($imageIds)) {
+            return ['attached_ids' => [], 'skipped_ids' => [], 'missing_ids' => []];
+        }
+
+        $ids = array_values(array_unique(array_map('intval', $imageIds)));
+        $rows = $this->db->table('product_images')
+            ->select('id, product_id, deleted_at')
+            ->whereIn('id', $ids)
+            ->get()
+            ->getResultArray();
+
+        $foundIds = array_map('intval', array_column($rows, 'id'));
+        $missingIds = array_values(array_diff($ids, $foundIds));
+
+        $alreadyAttached = [];
+        $attachable = [];
+        foreach ($rows as $row) {
+            $rowId = (int) $row['id'];
+            $currentProduct = isset($row['product_id']) ? (int) $row['product_id'] : null;
+            $isActive = ($row['deleted_at'] ?? null) === null;
+
+            if ($currentProduct === $productId && $isActive) {
+                $alreadyAttached[] = $rowId;
+            } else {
+                $attachable[] = $rowId;
+            }
+        }
+
+        if ($attachable) {
+            $this->db->table('product_images')
+                ->whereIn('id', $attachable)
+                ->update([
+                    'product_id' => $productId,
+                    'deleted_at' => null,
+                    'updated_at' => $this->now(),
+                ]);
+        }
+
+        return [
+            'attached_ids' => $attachable,
+            'skipped_ids' => $alreadyAttached,
+            'missing_ids' => $missingIds,
+        ];
+    }
 
     /** Set primary image. @agent-use: Primary image @agent-pattern: Two-step update */
     public function setPrimaryImage(int $imageId): ?array { $image = $this->db->table('product_images')->where('id', $imageId)->get()->getRowArray(); if (! $image) { return null; } $this->db->table('product_images')->where('product_id', $image['product_id'])->update(['is_primary' => 0]); $this->db->table('product_images')->where('id', $imageId)->update(['is_primary' => 1]); return $image; }
