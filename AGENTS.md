@@ -42,20 +42,20 @@ Request → Controller → Service → Repository → Model → DB
 - ✅ Controller delegates to Service
 - ✅ Service contains business logic
 - ✅ Repository handles database
-- ✅ Each file < 7KB (max 200 lines)
+- ✅ Keep files focused and maintainable
 
 ---
 
-### Rule 2: File Size Limits
+### Rule 2: File Size Guidelines
 
-| Layer | Max Size | Max Lines |
-|-------|----------|-----------|
-| Controller | 3KB | 100 |
-| Service | 7KB | 200 |
-| Repository | 5KB | 150 |
-| Validator | 2KB | 60 |
+| Layer | Target Size | Acceptable Max | Notes |
+|-------|-------------|----------------|-------|
+| Controller | 3KB (100 lines) | 5KB (150 lines) | Routing only |
+| Service | 7KB (200 lines) | 12KB (350 lines) | Business logic |
+| Repository | 5KB (150 lines) | 10KB (300 lines) | DB queries |
+| Validator | 2KB (60 lines) | 4KB (120 lines) | Validation rules |
 
-**If file > limit:** Split into multiple services/repositories.
+**Guidelines not hard limits:** If file exceeds acceptable max, consider splitting into multiple services/repositories. Focus on single responsibility over strict size limits.
 
 ## 📝 Code Patterns (Copy These)
 
@@ -272,12 +272,43 @@ Every important method:
  * @agent-pattern: Pattern to copy
  */
 
-### Step 5: Write Tests
+### Step 5: Write Tests (MANDATORY)
+
+**You MUST write both unit and integration tests:**
+
+**1. Unit Tests (Required for Services/Repositories):**
+- Test all public methods
+- Test validation errors
+- Test edge cases
+- Target: 70%+ coverage
+- Uses: SQLite in-memory (fast)
+
 # Create test file
 tests/Services/ProductServiceTest.php
 
-# Run tests
+# Run unit tests
 docker exec meomeo2-api-1 vendor/bin/phpunit
+
+# Run specific test file
+docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/ProductServiceTest.php
+
+# Check coverage
+docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
+
+**2. Integration Tests (Required for API endpoints):**
+- Test HTTP responses (200, 400, 401, etc.)
+- Test database writes/reads
+- Test authentication/authorization
+- Uses: MySQL (real database)
+
+# Run integration tests with MySQL
+docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+
+# Run specific integration test
+docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml tests/Integration/Api/ProductsApiTest.php
+
+**Test Order:** Write unit tests first, then integration tests.
+**Both must pass before commit.**
 
 ### Step 6: Update Task Status
 # In task file, change:

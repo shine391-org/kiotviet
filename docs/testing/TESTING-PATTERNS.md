@@ -126,6 +126,31 @@ class ProductServiceTest extends CIUnitTestCase
 **Use for**: API Endpoints, Database constraints, Auth flow.
 **Location**: `tests/Integration/Api/`
 
+### Setup MySQL Test Database (One-time)
+
+**1. Ensure test database container is running:**
+```bash
+docker-compose up -d db-test
+```
+
+**2. Configure `phpunit.integration.xml` (or `phpunit.integration.mysql.xml`):**
+```xml
+<php>
+    <env name="database.tests.DBDriver" value="MySQLi"/>
+    <env name="database.tests.hostname" value="db-test"/>
+    <env name="database.tests.database" value="test_db"/>
+    <env name="database.tests.username" value="root"/>
+    <env name="database.tests.password" value="your_password"/>
+</php>
+```
+
+**3. Run migrations on test database (if needed):**
+```bash
+docker exec meomeo2-api-1 php spark migrate --all -e testing
+```
+
+### Integration Test Pattern
+
 ```php
 <?php
 namespace Tests\Integration\Api;
