@@ -54,6 +54,7 @@ const TopMenu = () => {
         { key: 'products_list', name: 'Danh sách sản phẩm', route: '/products' },
         { key: 'categories', name: 'Danh mục', route: '/product-categories' },
         { key: 'Attributes', name: 'Thuộc tính', route: '/products/Attributes' },
+        { key: 'price_lists', name: 'Bảng giá', route: '/price-lists' },
       ],
     },
     {
@@ -168,6 +169,11 @@ const TopMenu = () => {
               label: sub.name,
               path: sub.route || `/${moduleKey}/${sub.key}`,
             })) || [];
+
+      // Ensure price lists item always present under Hàng hoá/products
+      if (moduleKey === 'products' && !subItems.some((s) => s.key === 'price_lists')) {
+        subItems.unshift({ key: 'price_lists', label: 'Bảng giá', path: '/price-lists' });
+      }
 
       return {
         key: moduleKey,
