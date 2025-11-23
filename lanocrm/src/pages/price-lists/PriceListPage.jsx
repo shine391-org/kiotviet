@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Card, Button, Input, Table, Tag, Space, Select, Popconfirm, Badge, App, Tooltip } from 'antd';
+import { Card, Button, Input, Table, Tag, Space, Select, Popconfirm, Badge, App, Tooltip, Row, Col, Form, InputNumber, Divider } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { fetchPriceLists, deletePriceList, resetPriceListState } from '../../store/slices/priceListSlice';
@@ -19,7 +19,16 @@ const PriceListPage = () => {
   const navigate = useNavigate();
   const { items, loading, pagination } = useSelector(state => state.priceList);
 
-  const [filters, setFilters] = useState({ page: 1, limit: 20, search: '', status: null });
+  const [filters, setFilters] = useState({
+    page: 1,
+    limit: 20,
+    search: '',
+    status: null,
+    stock: null,
+    price_condition: null,
+    price_compare: null,
+    price_value: null,
+  });
 
   useEffect(() => {
     dispatch(fetchPriceLists(filters));
@@ -97,49 +106,116 @@ const PriceListPage = () => {
     },
   ], [navigate, filters]);
 
+  const resetFilters = () => {
+    const base = {
+      page: 1,
+      limit: 20,
+      search: '',
+      status: null,
+      stock: null,
+      price_condition: null,
+      price_compare: null,
+      price_value: null,
+    };
+    setFilters(base);
+    dispatch(fetchPriceLists(base));
+  };
+
   return (
-    <Card
-      title="Bảng giá"
-      extra={(
-        <Space>
-          <Input
-            placeholder="Tìm kiếm..."
-            allowClear
-            prefix={<SearchOutlined />}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
-            style={{ width: 220 }}
+    <Card title="Bảng giá">
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={8} lg={6}>
+          <Card size="small" title="Bộ lọc" bordered={false} style={{ background: '#fafafa' }}>
+            <Space direction="vertical" style={{ width: '100%' }} size="middle">
+              <Input
+                placeholder="Tìm kiếm..."
+                allowClear
+                prefix={<SearchOutlined />}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+              />
+
+              <Select
+                placeholder="Trạng thái"
+                allowClear
+                onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
+                options={[
+                  { label: 'Đang áp dụng', value: 'active' },
+                  { label: 'Sắp áp dụng', value: 'upcoming' },
+                  { label: 'Hết hạn', value: 'expired' },
+                  { label: 'Tắt', value: 'inactive' },
+                ]}
+              />
+
+              <Select
+                placeholder="Tồn kho"
+                allowClear
+                onChange={(value) => setFilters({ ...filters, stock: value, page: 1 })}
+                options={[
+                  { label: 'Tất cả', value: null },
+                  { label: 'Còn hàng', value: 'in_stock' },
+                  { label: 'Hết hàng', value: 'out_of_stock' },
+                ]}
+              />
+
+              <Divider style={{ margin: '8px 0' }}>Giá bán</Divider>
+              <Form
+                layout="vertical"
+                onFinish={(values) => setFilters({ ...filters, ...values, page: 1 })}
+                initialValues={filters}
+              >
+                <Form.Item name="price_condition" label="Điều kiện">
+                  <Select
+                    placeholder="Chọn điều kiện"
+                    options={[
+                      { label: 'Lớn hơn', value: 'gt' },
+                      { label: 'Nhỏ hơn', value: 'lt' },
+                      { label: 'Bằng', value: 'eq' },
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item name="price_compare" label="Giá so sánh">
+                  <Select
+                    placeholder="Chọn giá so sánh"
+                    options={[
+                      { label: 'Giá gốc (SP)', value: 'base' },
+                      { label: 'Giá bảng giá', value: 'price_list' },
+                      { label: 'Giá sau giảm', value: 'final' },
+                    ]}
+                  />
+                </Form.Item>
+                <Form.Item name="price_value" label="Giá trị (đ)">
+                  <InputNumber style={{ width: '100%' }} min={0} step={1000} placeholder="Nhập giá" />
+                </Form.Item>
+                <Space>
+                  <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>Áp dụng</Button>
+                  <Button onClick={resetFilters}>Reset</Button>
+                </Space>
+              </Form>
+            </Space>
+          </Card>
+        </Col>
+
+        <Col xs={24} md={16} lg={18}>
+          <Space style={{ marginBottom: 12 }}>
+            <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchPriceLists(filters))}>Làm mới</Button>
+            <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/price-lists/create')}>
+              Tạo bảng giá
+            </Button>
+          </Space>
+          <Table
+            rowKey="id"
+            loading={loading}
+            dataSource={items}
+            columns={columns}
+            pagination={{
+              current: pagination.page,
+              pageSize: pagination.limit,
+              total: pagination.total,
+              onChange: (page, pageSize) => setFilters({ ...filters, page, limit: pageSize }),
+            }}
           />
-          <Select
-            placeholder="Trạng thái"
-            allowClear
-            style={{ width: 150 }}
-            onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
-            options={[
-              { label: 'Đang áp dụng', value: 'active' },
-              { label: 'Sắp áp dụng', value: 'upcoming' },
-              { label: 'Hết hạn', value: 'expired' },
-              { label: 'Tắt', value: 'inactive' },
-            ]}
-          />
-          <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchPriceLists(filters))}>Làm mới</Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/price-lists/create')}>
-            Tạo bảng giá
-          </Button>
-        </Space>
-      )}
-    >
-      <Table
-        rowKey="id"
-        loading={loading}
-        dataSource={items}
-        columns={columns}
-        pagination={{
-          current: pagination.page,
-          pageSize: pagination.limit,
-          total: pagination.total,
-          onChange: (page, pageSize) => setFilters({ ...filters, page, limit: pageSize }),
-        }}
-      />
+        </Col>
+      </Row>
     </Card>
   );
 };
