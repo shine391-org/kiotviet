@@ -81,6 +81,47 @@ class PriceCalculatorService
         ];
     }
 
+    /**
+     * Get price using a specific price list id (bypass priority/group selection).
+     *
+     * @agent-use: Product price preview by price list
+     * @agent-pattern: Direct list application
+     */
+    public function getProductPriceByListId(int $priceListId, int $productId, ?int $variantId = null, int $quantity = 1): array
+    {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('quantity must be greater than 0');
+        }
+
+        $product = $this->products->findById($productId);
+        if (! $product) { throw new RuntimeException('Product not found'); }
+
+        $basePrice = $variantId ? $this->variantPrice($variantId, $productId) : (float) ($product['selling_price'] ?? 0);
+
+        $list = $this->priceLists->findById($priceListId);
+        $today = date('Y-m-d');
+        if (! $list || empty($list['is_active']) || ($list['start_date'] && $list['start_date'] > $today) || ($list['end_date'] && $list['end_date'] < $today)) {
+            return $this->buildResponse($basePrice, $basePrice, null, $quantity);
+        }
+
+        $item = $this->items->findItem($priceListId, $productId, $variantId);
+        if (! $item) {
+            return $this->buildResponse($basePrice, $basePrice, $list, $quantity, applied: false);
+        }
+
+        if (! empty($list['formula'])) {
+            $baseForFormula = $this->resolveBaseForFormula($list, $productId, $variantId, $basePrice);
+            $final = $this->formula->calculateFromFormula($list['formula'], $baseForFormula);
+            if (! empty($list['rounding_rule']) && $list['rounding_rule'] !== 'none') {
+                $final = $this->formula->applyRounding($final, $list['rounding_rule']);
+            }
+        } else {
+            $final = $this->applyPricing($basePrice, $item);
+        }
+
+        return $this->buildResponse($basePrice, $final, $list, $quantity);
+    }
+
     private function variantPrice(int $variantId, int $productId): float
     {
         $variant = $this->variants->findById($variantId);
@@ -107,5 +148,19 @@ class PriceCalculatorService
             }
         }
         return $fallbackBase;
+    }
+
+    private function buildResponse(float $basePrice, float $finalPrice, ?array $list, int $quantity, bool $applied = true): array
+    {
+        return [
+            'success' => true,
+            'base_price' => $basePrice,
+            'final_price' => round($finalPrice, 2),
+            'applied_price_list_id' => $applied && $list ? ($list['id'] ?? null) : null,
+            'applied_price_list_name' => $applied && $list ? ($list['name'] ?? null) : null,
+            'price_list_type' => $applied && $list ? ($list['type'] ?? null) : null,
+            'quantity' => $quantity,
+            'line_total' => round($finalPrice * $quantity, 2),
+        ];
     }
 }

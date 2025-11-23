@@ -25,12 +25,23 @@ class ProductValidator
     public function validateListFilters(array $input): array
     {
         $data = array_merge(['page' => 1, 'limit' => 20, 'include_variants' => false], $input);
-        $rules = ['page' => 'permit_empty|integer|greater_than_equal_to[1]', 'limit' => 'permit_empty|integer|greater_than_equal_to[1]|less_than_equal_to[200]', 'search' => 'permit_empty|string|max_length[255]', 'status' => 'permit_empty|string|max_length[50]', 'product_type' => 'permit_empty|string|max_length[50]', 'include_variants' => 'permit_empty'];
+        $rules = [
+            'page' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'limit' => 'permit_empty|integer|greater_than_equal_to[1]|less_than_equal_to[200]',
+            'search' => 'permit_empty|string|max_length[255]',
+            'status' => 'permit_empty|string|max_length[50]',
+            'product_type' => 'permit_empty|string|max_length[50]',
+            'include_variants' => 'permit_empty',
+            'price_list_id' => 'permit_empty|integer|greater_than[0]',
+        ];
         // Cast boolean-ish flag before validate to tránh lỗi in_list khi mặc định false
         $data['include_variants'] = filter_var($data['include_variants'] ?? false, FILTER_VALIDATE_BOOLEAN);
         $v = $this->run($data, $rules, []);
         $v['page'] = (int) ($v['page'] ?? 1); $v['limit'] = (int) ($v['limit'] ?? 20);
         $v['include_variants'] = (bool) ($v['include_variants'] ?? false);
+        if (isset($v['price_list_id'])) {
+            $v['price_list_id'] = (int) $v['price_list_id'];
+        }
         return $v;
     }
 

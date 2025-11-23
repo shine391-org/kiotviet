@@ -65,7 +65,11 @@ class Services extends BaseService
             return static::getSharedInstance('productService');
         }
 
-        return new ProductService(static::productRepository(false), static::productValidator(false));
+        return new ProductService(
+            static::productRepository(false),
+            static::productValidator(false),
+            static::priceCalculatorService(false)
+        );
     }
 
     public static function productVariantRepository(bool $getShared = true): \App\Repositories\ProductVariants\ProductVariantRepository

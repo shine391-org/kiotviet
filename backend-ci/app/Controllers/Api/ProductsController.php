@@ -18,10 +18,20 @@ class ProductsController extends BaseController
     public function index() { return $this->wrap(fn () => $this->respond($this->service->list($this->request->getGet()))); }
 
     /** Show product. @agent-use: GET /api/products/{id} @agent-pattern: Thin get by id */
-    public function show($id = null) { return $this->wrap(fn () => $this->respond($this->service->get((int) $id))); }
+    public function show($id = null)
+    {
+        $priceListId = $this->request->getGet('price_list_id');
+        $priceListId = $priceListId !== null ? (int) $priceListId : null;
+        return $this->wrap(fn () => $this->respond($this->service->get((int) $id, true, true, $priceListId)));
+    }
 
     /** Detail with variants. @agent-use: GET /api/products/{id}/detail-with-variants @agent-pattern: Delegate to service */
-    public function detailWithVariants($id) { return $this->wrap(fn () => $this->respond($this->service->get((int) $id, true, false))); }
+    public function detailWithVariants($id)
+    {
+        $priceListId = $this->request->getGet('price_list_id');
+        $priceListId = $priceListId !== null ? (int) $priceListId : null;
+        return $this->wrap(fn () => $this->respond($this->service->get((int) $id, true, false, $priceListId)));
+    }
 
     /** List variants. @agent-use: GET /api/products/{id}/variants @agent-pattern: Delegate to service */
     public function variants($id) { return $this->wrap(fn () => $this->respond($this->service->variants((int) $id))); }

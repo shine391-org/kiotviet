@@ -11,7 +11,7 @@
     cacheDirectory="build/.phpunit.cache">
     <testsuites>
         <testsuite name="IntegrationMySQL">
-            <directory>./tests/Integration/Orders</directory>
+            <directory>./tests/Integration</directory>
         </testsuite>
     </testsuites>
     <php>
