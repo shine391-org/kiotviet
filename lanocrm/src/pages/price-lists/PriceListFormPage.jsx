@@ -60,8 +60,8 @@ const PriceListFormPage = () => {
         auto_update: current.auto_update ?? false,
         formula: current.formula ?? '',
         date_range: [
-          current.start_date ? dayjs(current.start_date) : null,
-          current.end_date ? dayjs(current.end_date) : null,
+          current.start_date ? dayjs(current.start_date) : undefined,
+          current.end_date ? dayjs(current.end_date) : undefined,
         ],
       });
     }
@@ -109,8 +109,8 @@ const PriceListFormPage = () => {
       type: values.type || 'custom',
       description: values.description,
       apply_to_groups: values.apply_to_groups || [],
-      start_date: values.date_range?.[0] ? values.date_range[0].format('YYYY-MM-DD') : null,
-      end_date: values.date_range?.[1] ? values.date_range[1].format('YYYY-MM-DD') : null,
+      start_date: values.date_range?.[0] ? values.date_range[0].format('YYYY-MM-DD') : undefined,
+      end_date: values.date_range?.[1] ? values.date_range[1].format('YYYY-MM-DD') : undefined,
       priority: values.priority ?? 0,
       is_active: values.is_active ?? true,
       base_price_list_id: values.base_price_list_id || null,
