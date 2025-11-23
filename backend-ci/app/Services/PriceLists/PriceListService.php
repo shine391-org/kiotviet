@@ -146,20 +146,20 @@ class PriceListService
         $items = $this->items->itemsRaw($priceListId);
         if (empty($items)) { return 0; }
 
-        $updated = 0;
+        $rows = [];
         foreach ($items as $item) {
             $basePrice = $this->resolveBasePrice($priceList, $item['product_id'], $item['variant_id'] ?? null);
             $newPrice = $this->calculateFinalPrice($priceList, $basePrice, $item);
-            $this->items->replaceItems($priceListId, [[
+            $rows[] = [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],
                 'price' => $newPrice,
                 'discount_percent' => $item['discount_percent'] ?? 0,
                 'discount_amount' => $item['discount_amount'] ?? 0,
-            ]]);
-            $updated++;
+            ];
         }
-        return $updated;
+        $this->items->replaceItems($priceListId, $rows);
+        return count($rows);
     }
 
     private function resolveBasePrice(array $priceList, int $productId, ?int $variantId): float

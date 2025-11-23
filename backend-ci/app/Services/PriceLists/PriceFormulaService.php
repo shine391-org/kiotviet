@@ -26,6 +26,7 @@ class PriceFormulaService
         if ($f === '') { return false; }
         // Allow digits, dot, operators, space, and the word base
         $stripped = str_ireplace('base', '', $f);
+        if (trim($stripped) === '') { return true; }
         if (! preg_match('/^[0-9+\-*\s\/\.]+$/', $stripped)) {
             throw new InvalidArgumentException('Công thức chứa ký tự không hợp lệ');
         }

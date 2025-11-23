@@ -279,6 +279,14 @@ Body: { items: [{ product_id, price, discount_percent }] }
 - Tự động cập nhật: `auto_update=true` + `base_price_list_id` → khi bảng giá gốc đổi thì các bảng phụ thuộc được tính lại (hỗ trợ chuỗi A→B→C).
 - Không cho circular reference; công thức âm sẽ cắt về 0; thiếu base thì fallback giá sản phẩm.
 
+### Hướng dẫn FE nhập công thức
+- Form Price List thêm toggle "Dùng công thức" → hiển thị các field: `formula` (textarea), `base_price_list_id` (select), `rounding_rule` (select), `auto_update` (checkbox).
+- Placeholder formula: `base * 0.9` và tooltip giải thích `base` = giá gốc / giá từ bảng giá gốc.
+- Rounding select: `none`, `hundred`, `thousand`, `ten_thousand` kèm mô tả ví dụ ngay bên phải.
+- Khi chọn `auto_update=true` bắt buộc chọn `base_price_list_id`; UI hiển thị cảnh báo đỏ nếu thiếu.
+- Khi submit form, FE gọi `POST/PUT /api/price-lists` với các field mới; hiển thị error message trả về từ backend (validation công thức, circular reference).
+- Trong trang danh sách, hiển thị badge "Auto-update" và tooltip hiển thị base list + rounding rule.
+
 ---
 
 ## 📝 Session Log Template

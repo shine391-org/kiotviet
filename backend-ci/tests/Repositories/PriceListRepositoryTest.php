@@ -51,6 +51,70 @@ class PriceListRepositoryTest extends CIUnitTestCase
     }
 
     /** @test */
+    public function it_handles_large_bulk_insert()
+    {
+        $list = $this->seedList('BigBulk', 'custom');
+        $count = 1000;
+        $rows = [];
+        for ($i = 1; $i <= $count; $i++) {
+            $rows[] = ['product_id' => $i, 'price' => 10000 + $i];
+        }
+        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
+        $repo->replaceItems($list, $rows);
+        $this->assertEquals($count, $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+    }
+
+    /** @test */
+    public function it_imports_50_lists_with_1000_items_each()
+    {
+        $itemsPerList = 1000;
+        $lists = 50;
+
+        $this->seedProductsBulk($itemsPerList);
+
+        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
+        $totalInserted = 0;
+
+        for ($i = 1; $i <= $lists; $i++) {
+            $listId = $this->seedList('Perf-' . $i, 'custom');
+            $rows = [];
+            for ($p = 1; $p <= $itemsPerList; $p++) {
+                $rows[] = ['product_id' => $p, 'price' => 10000 + $p];
+            }
+            $repo->replaceItems($listId, $rows);
+            $totalInserted += $itemsPerList;
+        }
+
+        $this->assertEquals($totalInserted, $this->db->table('db_price_list_items')->countAllResults());
+    }
+
+    /** @test */
+    public function it_imports_items_from_csv_and_json()
+    {
+        $list = $this->seedList('Import', 'custom');
+        $this->seedProductsBulk(5);
+
+        $csv = "product_id,price\n1,101\n2,202\n";
+        $csvItems = [];
+        foreach (explode("\n", trim($csv)) as $index => $line) {
+            if ($index === 0) { continue; }
+            $parts = str_getcsv($line);
+            $csvItems[] = ['product_id' => (int) $parts[0], 'price' => (float) $parts[1]];
+        }
+
+        $json = '[{"product_id":3,"price":303},{"product_id":4,"price":404},{"product_id":5,"price":505}]';
+        $jsonItems = json_decode($json, true);
+
+        $rows = array_merge($csvItems, $jsonItems);
+
+        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
+        $repo->replaceItems($list, $rows);
+
+        $this->assertEquals(count($rows), $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+        $this->assertEquals(505, (float) $this->db->table('db_price_list_items')->where('product_id', 5)->get()->getRow('price'));
+    }
+
+    /** @test */
     public function it_soft_deletes_preserve_row()
     {
         $list = $this->seedList('Soft', 'custom');
@@ -74,5 +138,21 @@ class PriceListRepositoryTest extends CIUnitTestCase
         $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode($payload['apply_to_groups']) : null;
         $this->db->table('db_price_lists')->insert($payload);
         return (int) $this->db->insertID();
+    }
+
+    private function seedProductsBulk(int $count): void
+    {
+        $existing = $this->db->table('db_products')->countAllResults();
+        if ($existing >= $count) { return; }
+        for ($i = 1; $i <= $count; $i++) {
+            $this->db->table('db_products')->insert([
+                'id' => $i,
+                'code' => 'P' . $i,
+                'name' => 'Product ' . $i,
+                'selling_price' => 100 + $i,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
     }
 }
