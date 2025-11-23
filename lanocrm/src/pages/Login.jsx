@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { loginUser, clearError } from '../store/slices/authSlice';
@@ -15,10 +15,6 @@ const Login = () => {
   const [remember, setRemember] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // NOTE: trước đây dùng flag để tránh redirect; gây lỗi không chuyển trang.
-  // Giữ ref để biết có click login, nhưng redirect sẽ xảy ra khi isAuthenticated true.
-  const isLoginAttempted = useRef(false);
-
   useEffect(() => {
     // Redirect ngay khi đã đăng nhập (kể cả đã có token từ trước)
     if (isAuthenticated) {
@@ -51,8 +47,6 @@ const Login = () => {
     if (!username || !password) {
       return;
     }
-
-    isLoginAttempted.current = true;
 
     // Dispatch action - KHÔNG reset state
     await dispatch(loginUser({
