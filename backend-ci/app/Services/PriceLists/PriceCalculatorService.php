@@ -37,7 +37,7 @@ class PriceCalculatorService
      * @agent-use: Order pricing
      * @agent-pattern: Highest priority list wins
      */
-    public function getProductPrice(int $productId, ?int $variantId, ?int $customerGroupId, int $quantity = 1, ?string $orderDate = null): array
+    public function getProductPrice(int $productId, ?int $variantId, ?int $customerGroupId, float $quantity = 1.0, ?string $orderDate = null): array
     {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('quantity must be greater than 0');
@@ -87,7 +87,7 @@ class PriceCalculatorService
      * @agent-use: Product price preview by price list
      * @agent-pattern: Direct list application
      */
-    public function getProductPriceByListId(int $priceListId, int $productId, ?int $variantId = null, int $quantity = 1): array
+    public function getProductPriceByListId(int $priceListId, int $productId, ?int $variantId = null, float $quantity = 1.0): array
     {
         if ($quantity <= 0) {
             throw new \InvalidArgumentException('quantity must be greater than 0');
@@ -150,7 +150,7 @@ class PriceCalculatorService
         return $fallbackBase;
     }
 
-    private function buildResponse(float $basePrice, float $finalPrice, ?array $list, int $quantity, bool $applied = true): array
+    private function buildResponse(float $basePrice, float $finalPrice, ?array $list, float $quantity, bool $applied = true): array
     {
         return [
             'success' => true,

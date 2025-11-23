@@ -35,7 +35,7 @@ class OrderService
         $subtotal = 0; $total = 0; $firstPriceListId = null; $firstPriceListName = null;
         foreach ($validated['items'] as $item) {
             $this->assertStockAvailable($item['product_id'], $item['variant_id'], $item['quantity']);
-            $calc = $this->pricing->getProductPrice($item['product_id'], $item['variant_id'], $groupId, (int) $item['quantity'], $validated['order_date']);
+            $calc = $this->pricing->getProductPrice($item['product_id'], $item['variant_id'], $groupId, $item['quantity'], $validated['order_date']);
             $items[] = [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],
