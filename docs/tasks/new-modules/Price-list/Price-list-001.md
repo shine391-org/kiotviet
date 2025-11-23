@@ -440,7 +440,7 @@ text
 - [x] Rounding rules hoạt động chính xác
 - [x] Ít nhất 10 tests pass 100%
 - [x] Documentation đầy đủ với ví dụ cụ thể
-- [ ] Commit message: `feat(price-lists): thêm công thức tính giá tự động`
+- [x] Commit message: `feat(price-lists): thêm công thức tính giá tự động`
 
 ## Gợi ý và lưu ý
 
