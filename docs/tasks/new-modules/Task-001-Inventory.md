@@ -3,7 +3,7 @@
 **Type:** New Module Development
 **Priority:** 🔴 CRITICAL
 **Effort:** 5 days
-**Status:** 📋 PENDING
+**Status:** 🚧 IN PROGRESS (foundation layer scaffolding + basic movements)
 **Dependencies:** REFACTOR-001 (ProductService - completed)
 **Assigned:** AI Agent
 
@@ -195,7 +195,6 @@ FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)
 ---
 
 ## 🏗️ ARCHITECTURE
-
 ### Files to CREATE:
 
 **1. Models (Passive, schema only):**
@@ -242,6 +241,17 @@ FOREIGN KEY (warehouse_id) REFERENCES warehouses(id)
 - `tests/Repositories/Inventory/StockRepositoryTest.php`
 
 ---
+
+## ✅ Progress (2025-11-21)
+- [x] InventoryValidator, InventoryRepository, InventoryService (core movement + warehouse CRUD) implemented following clean architecture.
+- [x] Thin InventoryController endpoints for warehouses and movements.
+- [x] Services registered in `app/Config/Services.php`.
+- [x] Unit tests added for InventoryService (IN/OUT/TRANSFER, low-stock alert, valuation) and full PHPUnit suite passing with pcov.
+- [x] Basic valuation entry created on inbound/transfer with chosen method.
+- [x] Alerts lifecycle (resolve/ignore) and catalogue endpoints.
+- [x] Stock reservation/release APIs.
+- [x] Notification stub (logs) and InventoryTransformer scaffold.
+- [ ] Integrate transformers in responses & add API docs.
 
 ## 📋 DETAILED REQUIREMENTS
 
@@ -655,7 +665,7 @@ foreach ($data['items'] as $item) {
 ---
 
 **Created:** 2025-11-21
-**Status:** 📋 PENDING
+**Status:** 🚧 IN PROGRESS
 **Estimated Start:** After REFACTOR-002, 003 (or now if skipping)
 **Estimated Completion:** 5 days
 **Priority:** 🔴 CRITICAL (blocks Orders, POS, Finance modules)
