@@ -142,6 +142,7 @@ class PriceListRepository
             $decoded = is_array($row['apply_to_groups'])
                 ? $row['apply_to_groups']
                 : (json_decode((string) $row['apply_to_groups'], true) ?: []);
+            if (! is_array($decoded)) { $decoded = []; }
             $row['apply_to_groups'] = array_values(array_map('intval', $decoded));
         }
         $row['auto_update'] = isset($row['auto_update']) ? (bool) $row['auto_update'] : false;

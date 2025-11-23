@@ -8,12 +8,44 @@ trait PriceListSchemaTrait
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
 
+        if (strtolower($this->db->DBDriver) !== 'sqlite3') {
+            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        }
+
         $this->db->query('DROP TABLE IF EXISTS db_order_items');
         $this->db->query('DROP TABLE IF EXISTS db_orders');
         $this->db->query('DROP TABLE IF EXISTS db_price_list_items');
         $this->db->query('DROP TABLE IF EXISTS price_list_items');
         $this->db->query('DROP TABLE IF EXISTS db_price_lists');
         $this->db->query('DROP TABLE IF EXISTS price_lists');
+        $this->db->query('DROP TABLE IF EXISTS db_product_images');
+        $this->db->query('DROP TABLE IF EXISTS product_images');
+        $this->db->query('DROP TABLE IF EXISTS inventory_movement_items');
+        $this->db->query('DROP TABLE IF EXISTS invoice_items');
+        $this->db->query('DROP TABLE IF EXISTS invoices');
+        $this->db->query('DROP TABLE IF EXISTS db_invoice_items');
+        $this->db->query('DROP TABLE IF EXISTS db_invoices');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS inventory_stock');
+        $this->db->query('DROP TABLE IF EXISTS db_inventory_stock');
+        $this->db->query('DROP TABLE IF EXISTS stock');
+        $this->db->query('DROP TABLE IF EXISTS db_stock');
+        $this->db->query('DROP TABLE IF EXISTS inventory_movements');
+        $this->db->query('DROP TABLE IF EXISTS db_inventory_movements');
+        $this->db->query('DROP TABLE IF EXISTS db_inventory_movement_items');
+        $this->db->query('DROP TABLE IF EXISTS product_branch_stock');
+        $this->db->query('DROP TABLE IF EXISTS db_product_branch_stock');
+        $this->db->query('DROP TABLE IF EXISTS product_stock_by_branch');
+        $this->db->query('DROP TABLE IF EXISTS db_product_stock_by_branch');
+        $this->db->query('DROP TABLE IF EXISTS stock_transactions');
+        $this->db->query('DROP TABLE IF EXISTS db_stock_transactions');
+        $this->db->query('DROP TABLE IF EXISTS stock_transactions_v2');
+        $this->db->query('DROP TABLE IF EXISTS db_stock_transactions_v2');
+        $this->db->query('DROP TABLE IF EXISTS product_categories');
+        $this->db->query('DROP TABLE IF EXISTS db_product_categories');
+        $this->db->query('DROP TABLE IF EXISTS product_category_links');
+        $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
@@ -61,6 +93,24 @@ trait PriceListSchemaTrait
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE db_product_images (
+             id INTEGER PRIMARY KEY {$auto},
+             product_id INTEGER,
+             variant_id INTEGER,
+             image_path TEXT,
+             created_at TEXT,
+             updated_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_images (
+             id INTEGER PRIMARY KEY {$auto},
+             product_id INTEGER,
+             variant_id INTEGER,
+             image_path TEXT,
+             created_at TEXT,
+             updated_at TEXT
         )");
 
         // price lists
@@ -156,5 +206,10 @@ trait PriceListSchemaTrait
             created_at TEXT,
             updated_at TEXT
         )");
+
+        if (strtolower($this->db->DBDriver) !== 'sqlite3') {
+            // keep FK checks off for test schema
+            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        }
     }
 }
