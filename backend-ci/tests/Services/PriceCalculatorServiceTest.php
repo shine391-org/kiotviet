@@ -77,6 +77,14 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
     }
 
     /** @test */
+    public function it_rejects_negative_quantity()
+    {
+        $pid = $this->seedProduct(100);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->getProductPrice($pid, null, null, -1);
+    }
+
+    /** @test */
     public function it_rejects_variant_not_belonging_to_product()
     {
         $p1 = $this->seedProduct(100);

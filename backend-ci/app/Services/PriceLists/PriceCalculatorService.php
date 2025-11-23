@@ -15,17 +15,20 @@ class PriceCalculatorService
     protected PriceListItemRepository $items;
     protected ProductRepository $products;
     protected ProductVariantRepository $variants;
+    protected PriceFormulaService $formula;
 
     public function __construct(
         ?PriceListRepository $priceLists = null,
         ?PriceListItemRepository $items = null,
         ?ProductRepository $products = null,
-        ?ProductVariantRepository $variants = null
+        ?ProductVariantRepository $variants = null,
+        ?PriceFormulaService $formula = null
     ) {
         $this->priceLists = $priceLists ?? new PriceListRepository();
         $this->items = $items ?? new PriceListItemRepository();
         $this->products = $products ?? new ProductRepository();
         $this->variants = $variants ?? new ProductVariantRepository();
+        $this->formula = $formula ?? new PriceFormulaService();
     }
 
     /**
@@ -52,7 +55,16 @@ class PriceCalculatorService
             $item = $this->items->findItem((int) $list['id'], $productId, $variantId);
             if ($item) {
                 $applied = $list;
-                $final = $this->applyPricing($basePrice, $item);
+                // If list has formula, compute from formula; else apply discount.
+                if (! empty($list['formula'])) {
+                    $baseForFormula = $this->resolveBaseForFormula($list, $productId, $variantId, $basePrice);
+                    $final = $this->formula->calculateFromFormula($list['formula'], $baseForFormula);
+                    if (! empty($list['rounding_rule']) && $list['rounding_rule'] !== 'none') {
+                        $final = $this->formula->applyRounding($final, $list['rounding_rule']);
+                    }
+                } else {
+                    $final = $this->applyPricing($basePrice, $item);
+                }
                 break;
             }
         }
@@ -84,5 +96,16 @@ class PriceCalculatorService
         $price -= $price * ((float) ($item['discount_percent'] ?? 0) / 100);
         $price -= (float) ($item['discount_amount'] ?? 0);
         return max(0, $price);
+    }
+
+    private function resolveBaseForFormula(array $list, int $productId, ?int $variantId, float $fallbackBase): float
+    {
+        if (! empty($list['base_price_list_id'])) {
+            $baseItem = $this->items->findItem((int) $list['base_price_list_id'], $productId, $variantId);
+            if ($baseItem && isset($baseItem['price'])) {
+                return (float) $baseItem['price'];
+            }
+        }
+        return $fallbackBase;
     }
 }

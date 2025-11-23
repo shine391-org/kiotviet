@@ -14,15 +14,18 @@ class PriceListService
     protected PriceListRepository $repo;
     protected PriceListItemRepository $items;
     protected PriceListValidator $validator;
+    protected PriceFormulaService $formula;
 
     public function __construct(
         ?PriceListRepository $repo = null,
         ?PriceListItemRepository $items = null,
-        ?PriceListValidator $validator = null
+        ?PriceListValidator $validator = null,
+        ?PriceFormulaService $formula = null
     ) {
         $this->repo = $repo ?? new PriceListRepository();
         $this->items = $items ?? new PriceListItemRepository();
         $this->validator = $validator ?? new PriceListValidator();
+        $this->formula = $formula ?? new PriceFormulaService();
     }
 
     /** List price lists with computed status. */
@@ -99,13 +102,93 @@ class PriceListService
         $this->requirePriceList($priceListId);
         $validated = $this->validator->validateItems($items);
         $result = $this->items->replaceItems($priceListId, $validated);
-        return ['success' => true, 'inserted' => $result['inserted']];
+        $updated = $this->triggerAutoUpdate($priceListId);
+        return [
+            'success' => true,
+            'inserted' => $result['inserted'],
+            'dependents_updated' => count($updated),
+            'updated_list_ids' => $updated,
+        ];
     }
 
     /** Expose applicable lists to other services. */
     public function applicable(?int $groupId, string $date): array
     {
         return $this->repo->applicablePriceLists($groupId, $date);
+    }
+
+    /** Trigger auto-update for dependent price lists. */
+    public function triggerAutoUpdate(int $priceListId): array
+    {
+        $dependents = $this->repo->dependentLists($priceListId);
+        if (empty($dependents)) { return []; }
+
+        $updated = [];
+        foreach ($dependents as $dependent) {
+            if (! ($dependent['auto_update'] ?? false)) { continue; }
+            $this->recalculateItems((int) $dependent['id']);
+            $updated[] = (int) $dependent['id'];
+            $nested = $this->triggerAutoUpdate((int) $dependent['id']);
+            $updated = array_merge($updated, $nested);
+        }
+        return array_values(array_unique($updated));
+    }
+
+    /** Recalculate all items of a price list using its formula/base. */
+    public function recalculateItems(int $priceListId): int
+    {
+        $priceList = $this->requirePriceList($priceListId);
+        $items = $this->items->itemsRaw($priceListId);
+        if (empty($items)) { return 0; }
+
+        $updated = 0;
+        foreach ($items as $item) {
+            $basePrice = $this->resolveBasePrice($priceList, $item['product_id'], $item['variant_id'] ?? null);
+            $newPrice = $this->calculateFinalPrice($priceList, $basePrice, $item);
+            $this->items->replaceItems($priceListId, [[
+                'product_id' => $item['product_id'],
+                'variant_id' => $item['variant_id'],
+                'price' => $newPrice,
+                'discount_percent' => $item['discount_percent'] ?? 0,
+                'discount_amount' => $item['discount_amount'] ?? 0,
+            ]]);
+            $updated++;
+        }
+        return $updated;
+    }
+
+    private function resolveBasePrice(array $priceList, int $productId, ?int $variantId): float
+    {
+        if (! empty($priceList['base_price_list_id'])) {
+            $item = $this->items->findItem((int) $priceList['base_price_list_id'], $productId, $variantId);
+            if ($item && isset($item['price'])) {
+                return (float) $item['price'];
+            }
+        }
+        // fallback to product selling price
+        $productRepo = new \App\Repositories\Products\ProductRepository();
+        $product = $productRepo->findById($productId);
+        return (float) ($product['selling_price'] ?? 0);
+    }
+
+    private function calculateFinalPrice(array $priceList, float $basePrice, array $item): float
+    {
+        if (! empty($priceList['formula'])) {
+            $price = $this->formula->calculateFromFormula($priceList['formula'], $basePrice);
+            if (! empty($priceList['rounding_rule']) && $priceList['rounding_rule'] !== 'none') {
+                $price = $this->formula->applyRounding($price, $priceList['rounding_rule']);
+            }
+            return $price;
+        }
+        return $this->applyDiscounts($basePrice, $item);
+    }
+
+    private function applyDiscounts(float $base, array $item): float
+    {
+        $price = (isset($item['price']) && (float) $item['price'] > 0) ? (float) $item['price'] : $base;
+        $price -= $price * ((float) ($item['discount_percent'] ?? 0) / 100);
+        $price -= (float) ($item['discount_amount'] ?? 0);
+        return max(0, $price);
     }
 
     private function requirePriceList(int $id): array

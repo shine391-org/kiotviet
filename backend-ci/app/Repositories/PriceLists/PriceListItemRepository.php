@@ -23,6 +23,12 @@ class PriceListItemRepository
         return $this->items->where('price_list_id', $priceListId)->orderBy('product_id', 'ASC')->findAll();
     }
 
+    /** Raw items (builder) used for recalculation. */
+    public function itemsRaw(int $priceListId): array
+    {
+        return $this->db->table('price_list_items')->where('price_list_id', $priceListId)->get()->getResultArray();
+    }
+
     /** Replace all items for a price list. */
     public function replaceItems(int $priceListId, array $items): array
     {

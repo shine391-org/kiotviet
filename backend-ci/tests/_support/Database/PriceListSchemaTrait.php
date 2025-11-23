@@ -49,6 +49,10 @@ trait PriceListSchemaTrait
             end_date TEXT,
             priority INTEGER DEFAULT 0,
             is_active INTEGER DEFAULT 1,
+            formula TEXT,
+            base_price_list_id INTEGER,
+            auto_update INTEGER DEFAULT 0,
+            rounding_rule TEXT DEFAULT 'none',
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT

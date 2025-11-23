@@ -129,6 +129,13 @@ class PriceListRepository
         return $b;
     }
 
+    public function dependentLists(int $priceListId): array
+    {
+        return $this->lists->where('deleted_at', null)
+            ->where('base_price_list_id', $priceListId)
+            ->findAll();
+    }
+
     private function hydrate(array $row): array
     {
         if (isset($row['apply_to_groups'])) {
@@ -137,6 +144,7 @@ class PriceListRepository
                 : (json_decode((string) $row['apply_to_groups'], true) ?: []);
             $row['apply_to_groups'] = array_values(array_map('intval', $decoded));
         }
+        $row['auto_update'] = isset($row['auto_update']) ? (bool) $row['auto_update'] : false;
         return $row;
     }
 
@@ -145,6 +153,9 @@ class PriceListRepository
         if (isset($data['apply_to_groups'])) {
             $groups = array_values(array_filter(array_map('intval', (array) $data['apply_to_groups'])));
             $data['apply_to_groups'] = $groups ? json_encode($groups) : null;
+        }
+        if (array_key_exists('auto_update', $data)) {
+            $data['auto_update'] = $data['auto_update'] ? 1 : 0;
         }
         return $data;
     }

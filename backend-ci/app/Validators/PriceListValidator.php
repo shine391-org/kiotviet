@@ -117,6 +117,16 @@ class PriceListValidator
         }
         if (isset($data['priority'])) { $data['priority'] = (int) $data['priority']; }
         if (isset($data['is_active'])) { $data['is_active'] = (bool) filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN); }
+        if (isset($data['auto_update'])) { $data['auto_update'] = (bool) filter_var($data['auto_update'], FILTER_VALIDATE_BOOLEAN); }
+        if (! empty($data['auto_update']) && empty($data['base_price_list_id'])) {
+            throw new InvalidArgumentException('auto_update requires base_price_list_id');
+        }
+
+        if (! empty($data['formula'])) {
+            $formulaService = new \App\Services\PriceLists\PriceFormulaService();
+            $formulaService->validateFormula($data['formula']);
+        }
+
         $start = $data['start_date'] ?? null; $end = $data['end_date'] ?? null;
         if ($start && $end && $start > $end) { throw new InvalidArgumentException('start_date must be before end_date'); }
         if ($isCreate && empty($data['priority'])) { $data['priority'] = 0; }
