@@ -187,6 +187,18 @@ class InventoryServiceTest extends CIUnitTestCase
         $this->assertEquals(99, (int) $row['resolved_by']);
     }
 
+    public function test_ignore_alert_throws_when_missing(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->service->ignoreAlert(999, null);
+    }
+
+    public function test_resolve_alert_throws_when_missing(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->service->resolveAlert(999, null);
+    }
+
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';

@@ -60,11 +60,19 @@ class InventoryService
 
     /** Resolve alert. */
     public function resolveAlert(int $id, ?int $userId = null): array
-    { $this->repo->updateAlertStatus($id, 'resolved', $userId); return ['success' => true]; }
+    {
+        $this->requireAlert($id);
+        $this->repo->updateAlertStatus($id, 'resolved', $userId);
+        return ['success' => true];
+    }
 
     /** Ignore alert. */
     public function ignoreAlert(int $id, ?int $userId = null): array
-    { $this->repo->updateAlertStatus($id, 'ignored', $userId); return ['success' => true]; }
+    {
+        $this->requireAlert($id);
+        $this->repo->updateAlertStatus($id, 'ignored', $userId);
+        return ['success' => true];
+    }
 
     /** Reserve stock. */
     public function reserveStock(array $data): array
@@ -184,5 +192,12 @@ class InventoryService
             $this->repo->createAlert($alert);
             $this->notifier->sendInventoryAlert($alert);
         }
+    }
+
+    private function requireAlert(int $id): array
+    {
+        $alert = $this->repo->alertById($id);
+        if (! $alert) { throw new RuntimeException('Alert not found'); }
+        return $alert;
     }
 }

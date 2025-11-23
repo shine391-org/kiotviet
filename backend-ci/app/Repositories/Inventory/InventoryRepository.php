@@ -120,14 +120,22 @@ class InventoryRepository
         $this->db->table('inventory_alerts')->insert($payload);
     }
 
+    /** Find alert by id. */
+    public function alertById(int $id): ?array
+    {
+        $row = $this->db->table('inventory_alerts')->where('id', $id)->get()->getRowArray();
+        return $row ?: null;
+    }
+
     /** Update alert status. */
     public function updateAlertStatus(int $id, string $status, ?int $userId = null): bool
     {
-        return (bool) $this->db->table('inventory_alerts')->where('id', $id)->update([
+        $this->db->table('inventory_alerts')->where('id', $id)->update([
             'status' => $status,
             'resolved_by' => $userId,
             'resolved_at' => date('Y-m-d H:i:s'),
         ]);
+        return $this->db->affectedRows() > 0;
     }
 
     /** List alerts with filters. */
