@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { BrowserRouter } from 'react-router-dom';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
-import 'antd/dist/reset.css'; // 🆕 Ant Design styles
+// No CSS import needed - Ant Design 6.x uses CSS-in-JS
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // 🆕 Toast styles
 import store from './store';
