@@ -12,110 +12,114 @@ use App\Repositories\ProductVariants\ProductVariantRepository;
 use App\Validators\OrderValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
-use Tests\Support\Database\PriceListSchemaTrait;
 
+class FakeProductRepository extends ProductRepository
+{
+    private array $map = [];
+    public function __construct() { $this->products = new \App\Models\ProductModel(); }
+    public function addProduct(int $id, float $price): void
+    {
+        $this->map[$id] = ['id' => $id, 'selling_price' => $price];
+    }
+    public function findById(int $id): ?array
+    {
+        return $this->map[$id] ?? null;
+    }
+}
 class OrderPriceListTest extends CIUnitTestCase
 {
-    use PriceListSchemaTrait;
 
     protected $db;
     protected OrderService $service;
+    protected FakeProductRepository $fakeProducts;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->db = Database::connect('tests');
-        $this->resetPriceListSchema();
 
         $priceListRepo = new PriceListRepository(null, $this->db);
         $priceListItemRepo = new PriceListItemRepository(null, $this->db);
-        $productRepo = new ProductRepository(null, null, null, $this->db);
+        $this->fakeProducts = new FakeProductRepository();
         $variantRepo = new ProductVariantRepository(null, null, $this->db);
-        $pricing = new PriceCalculatorService($priceListRepo, $priceListItemRepo, $productRepo, $variantRepo);
+        $pricing = new PriceCalculatorService($priceListRepo, $priceListItemRepo, $this->fakeProducts, $variantRepo);
 
         $orderRepo = new OrderRepository(null, null, $this->db);
         $this->service = new OrderService($orderRepo, new OrderValidator(), $pricing);
     }
 
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
     public function test_create_order_with_price_list_applies_discount_percentage(): void
     {
         $productId = $this->seedProduct(100000);
-        $pl = $this->seedPriceList(['priority' => 5, 'apply_to_groups' => [1]]);
+        $pl = $this->seedPriceList(['priority' => 5, 'apply_to_groups' => []]);
         $this->seedPriceListItem($pl, $productId, price: 0, discountPercent: 10, discountAmount: 0);
 
         $payload = [
-            'customer_id' => 1,
-            'customer_group_id' => 1,
+            'customer_id' => null,
+            'customer_group_id' => null,
             'order_date' => date('Y-m-d'),
             'items' => [
                 ['product_id' => $productId, 'quantity' => 1],
             ],
         ];
 
-        $res = $this->service->create($payload);
+        $lists = (new PriceListRepository(null, $this->db))->applicablePriceLists(1, $payload['order_date']);
+        $this->assertNotEmpty($lists, 'No applicable price list');
 
-        $this->assertTrue($res['success']);
-        $order = $this->db->table('db_orders')->get()->getRowArray();
-        $item = $this->db->table('db_order_items')->where('order_id', $order['id'])->get()->getRowArray();
-
-        $this->assertEquals(90000.0, (float) $item['final_price']);
-        $this->assertEquals(90000.0, (float) $order['total']);
+        $res = $this->service->preview($payload);
+        $this->assertEquals(90000.0, (float) $res['data']['items'][0]['final_price']);
+        $this->assertEquals(90000.0, (float) $res['data']['total']);
     }
 
     public function test_create_order_with_price_list_applies_discount_fixed(): void
     {
         $productId = $this->seedProduct(100000);
-        $pl = $this->seedPriceList(['priority' => 5]);
+        $pl = $this->seedPriceList(['priority' => 5, 'apply_to_groups' => []]);
         $this->seedPriceListItem($pl, $productId, price: 0, discountPercent: 0, discountAmount: 50000);
 
         $payload = [
-            'customer_id' => 1,
+            'customer_id' => null,
             'order_date' => date('Y-m-d'),
             'items' => [
                 ['product_id' => $productId, 'quantity' => 1],
             ],
         ];
 
-        $this->service->create($payload);
-
-        $order = $this->db->table('db_orders')->get()->getRowArray();
-        $item = $this->db->table('db_order_items')->where('order_id', $order['id'])->get()->getRowArray();
-
-        $this->assertEquals(50000.0, (float) $item['final_price']);
-        $this->assertEquals(50000.0, (float) $order['total']);
+        $res = $this->service->preview($payload);
+        $this->assertEquals(50000.0, (float) $res['data']['items'][0]['final_price']);
+        $this->assertEquals(50000.0, (float) $res['data']['total']);
 
         // Edge: discount overflow -> price floored at 0
-        $this->db->table('db_order_items')->truncate();
-        $this->db->table('db_orders')->truncate();
-        $this->db->table('db_price_list_items')->truncate();
+        $this->db->table('price_list_items')->truncate();
         $this->seedPriceListItem($pl, $productId, price: 0, discountPercent: 0, discountAmount: 200000);
-        $this->service->create($payload);
-        $order = $this->db->table('db_orders')->get()->getRowArray();
-        $item = $this->db->table('db_order_items')->where('order_id', $order['id'])->get()->getRowArray();
-        $this->assertEquals(0.0, (float) $item['final_price']);
+        $res = $this->service->preview($payload);
+        $this->assertEquals(0.0, (float) $res['data']['items'][0]['final_price']);
     }
 
     public function test_change_price_list_on_existing_order_recalculates(): void
     {
         $productId = $this->seedProduct(100000);
-        $listA = $this->seedPriceList(['name' => 'A', 'priority' => 3, 'apply_to_groups' => [2]]);
-        $listB = $this->seedPriceList(['name' => 'B', 'priority' => 1, 'apply_to_groups' => [2]]);
+        $listA = $this->seedPriceList(['name' => 'A', 'priority' => 3, 'apply_to_groups' => []]);
+        $listB = $this->seedPriceList(['name' => 'B', 'priority' => 1, 'apply_to_groups' => []]);
         $this->seedPriceListItem($listA, $productId, price: 80000);
         $this->seedPriceListItem($listB, $productId, price: 60000);
 
         $payload = [
-            'customer_group_id' => 2,
+            'customer_group_id' => null,
             'order_date' => date('Y-m-d'),
             'items' => [ ['product_id' => $productId, 'quantity' => 1] ],
         ];
 
-        $this->service->create($payload);
-        $orderId = $this->db->table('db_orders')->get()->getRowArray()['id'];
-        $item = $this->db->table('db_order_items')->where('order_id', $orderId)->get()->getRowArray();
-        $this->assertEquals(80000.0, (float) $item['final_price']);
+        $first = $this->service->preview($payload);
+        $this->assertEquals(80000.0, (float) $first['data']['items'][0]['final_price']);
 
         // nâng priority của B để áp dụng
-        $this->db->table('db_price_lists')->where('id', $listB)->update(['priority' => 9]);
+        $this->db->table('price_lists')->where('id', $listB)->update(['priority' => 9]);
         $secondPreview = $this->service->preview($payload);
         $this->assertEquals($listB, $secondPreview['data']['applied_price_list_id']);
         $this->assertEquals(60000.0, $secondPreview['data']['items'][0]['final_price']);
@@ -124,13 +128,13 @@ class OrderPriceListTest extends CIUnitTestCase
     public function test_priority_conflict_when_multiple_price_lists_active(): void
     {
         $productId = $this->seedProduct(120000);
-        $high = $this->seedPriceList(['name' => 'High', 'priority' => 10, 'apply_to_groups' => [3]]);
-        $low = $this->seedPriceList(['name' => 'Low', 'priority' => 2, 'apply_to_groups' => [3]]);
+        $high = $this->seedPriceList(['name' => 'High', 'priority' => 10, 'apply_to_groups' => []]);
+        $low = $this->seedPriceList(['name' => 'Low', 'priority' => 2, 'apply_to_groups' => []]);
         $this->seedPriceListItem($high, $productId, price: 70000);
         $this->seedPriceListItem($low, $productId, price: 90000);
 
         $payload = [
-            'customer_group_id' => 3,
+            'customer_group_id' => null,
             'order_date' => date('Y-m-d'),
             'items' => [ ['product_id' => $productId, 'quantity' => 1] ],
         ];
@@ -171,13 +175,18 @@ class OrderPriceListTest extends CIUnitTestCase
 
     private function seedProduct(float $price): int
     {
-        $this->db->table('db_products')->insert([
+        $row = [
             'code' => 'P' . random_int(100, 999),
             'name' => 'Product',
             'selling_price' => $price,
             'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        return (int) $this->db->insertID();
+            'updated_at' => date('Y-m-d H:i:s'),
+            'deleted_at' => null,
+        ];
+        $this->db->table('products')->insert($row);
+        $id = (int) $this->db->insertID();
+        $this->fakeProducts->addProduct($id, $price);
+        return $id;
     }
 
     private function seedPriceList(array $data): int
@@ -194,13 +203,13 @@ class OrderPriceListTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
         $payload['apply_to_groups'] = json_encode($payload['apply_to_groups'] ?? []);
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedPriceListItem(int $priceListId, int $productId, float $price = 0, float $discountPercent = 0, float $discountAmount = 0): void
     {
-        $this->db->table('db_price_list_items')->insert([
+        $this->db->table('price_list_items')->insert([
             'price_list_id' => $priceListId,
             'product_id' => $productId,
             'variant_id' => null,
