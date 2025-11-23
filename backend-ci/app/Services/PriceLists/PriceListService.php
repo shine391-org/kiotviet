@@ -65,6 +65,7 @@ class PriceListService
         if ($this->repo->nameExists($validated['name'])) {
             throw new InvalidArgumentException('Price list name already exists');
         }
+        $this->assertNoCircular(null, $validated['base_price_list_id'] ?? null);
         $row = $this->repo->create($validated);
         $row['status'] = $this->status($row);
         return ['success' => true, 'data' => $row];
@@ -78,6 +79,7 @@ class PriceListService
         if (! empty($validated['name']) && $this->repo->nameExists($validated['name'], $id)) {
             throw new InvalidArgumentException('Price list name already exists');
         }
+        $this->assertNoCircular($id, $validated['base_price_list_id'] ?? null);
         $this->repo->update($id, $validated);
         return ['success' => true];
     }
@@ -215,5 +217,22 @@ class PriceListService
         $page = $filters['page'] ?? 1;
         $totalPages = (int) ceil($total / ($limit ?: 1));
         return ['page' => $page, 'limit' => $limit, 'total' => $total, 'total_pages' => $totalPages];
+    }
+
+    /** Detect circular reference: current -> base -> ... -> current */
+    private function assertNoCircular(?int $currentId, ?int $baseId): void
+    {
+        if (! $currentId || ! $baseId) { return; }
+        $visited = [];
+        $check = $baseId;
+        while ($check !== null) {
+            if ($check === $currentId) {
+                throw new InvalidArgumentException('Circular price list reference detected');
+            }
+            if (in_array($check, $visited, true)) { break; }
+            $visited[] = $check;
+            $row = $this->repo->findById($check);
+            $check = $row['base_price_list_id'] ?? null;
+        }
     }
 }

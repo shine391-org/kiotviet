@@ -44,6 +44,10 @@ class PriceListValidator
             'end_date' => 'permit_empty|valid_date',
             'priority' => 'permit_empty|integer',
             'is_active' => 'permit_empty|in_list[0,1,true,false]',
+            'rounding_rule' => 'permit_empty|in_list[none,thousand,ten_thousand,hundred]',
+            'auto_update' => 'permit_empty|in_list[0,1,true,false]',
+            'base_price_list_id' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'formula' => 'permit_empty|string',
         ];
         $v = $this->run($input, $rules);
         return $this->postProcess($v, true);
@@ -61,6 +65,10 @@ class PriceListValidator
             'end_date' => 'permit_empty|valid_date',
             'priority' => 'permit_empty|integer',
             'is_active' => 'permit_empty|in_list[0,1,true,false]',
+            'rounding_rule' => 'permit_empty|in_list[none,thousand,ten_thousand,hundred]',
+            'auto_update' => 'permit_empty|in_list[0,1,true,false]',
+            'base_price_list_id' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'formula' => 'permit_empty|string',
         ];
         $v = $this->run($input, $rules);
         if (empty($v)) { throw new InvalidArgumentException('No fields to update'); }

@@ -131,4 +131,14 @@ class PriceListServiceTest extends CIUnitTestCase
         $row = $this->db->table('db_price_lists')->where('id', $id)->get()->getRowArray();
         $this->assertEquals(0, (int) $row['is_active']);
     }
+
+    /** @test */
+    public function it_detects_circular_reference()
+    {
+        $a = $this->service->create(['name' => 'A']);
+        $b = $this->service->create(['name' => 'B', 'base_price_list_id' => $a['data']['id']]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->update($a['data']['id'], ['base_price_list_id' => $b['data']['id']]);
+    }
 }
