@@ -189,14 +189,15 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
+        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
         $this->db->query('DROP TABLE IF EXISTS db_inventory_alerts');
         $this->db->query('DROP TABLE IF EXISTS db_inventory_valuation');
         $this->db->query('DROP TABLE IF EXISTS db_inventory_movements');
         $this->db->query('DROP TABLE IF EXISTS db_inventory_stock');
         $this->db->query('DROP TABLE IF EXISTS db_warehouses');
 
-        $this->db->query('CREATE TABLE db_warehouses (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_warehouses (
+            id INTEGER PRIMARY KEY {$auto},
             code TEXT,
             name TEXT,
             address TEXT,
@@ -207,10 +208,10 @@ class InventoryServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_inventory_stock (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_inventory_stock (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
             warehouse_id INTEGER,
@@ -221,10 +222,10 @@ class InventoryServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_inventory_movements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_inventory_movements (
+            id INTEGER PRIMARY KEY {$auto},
             reference_code TEXT,
             movement_type TEXT,
             product_id INTEGER,
@@ -236,10 +237,10 @@ class InventoryServiceTest extends CIUnitTestCase
             reason TEXT,
             created_by INTEGER,
             created_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_inventory_alerts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_inventory_alerts (
+            id INTEGER PRIMARY KEY {$auto},
             alert_type TEXT,
             product_id INTEGER,
             variant_id INTEGER,
@@ -250,10 +251,10 @@ class InventoryServiceTest extends CIUnitTestCase
             resolved_by INTEGER,
             resolved_at TEXT,
             created_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_inventory_valuation (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_inventory_valuation (
+            id INTEGER PRIMARY KEY {$auto},
             warehouse_id INTEGER,
             product_id INTEGER,
             variant_id INTEGER,
@@ -263,7 +264,7 @@ class InventoryServiceTest extends CIUnitTestCase
             total_value REAL,
             movement_id INTEGER,
             created_at TEXT
-        )');
+        )");
     }
 
     private function seedWarehouse(string $code): int

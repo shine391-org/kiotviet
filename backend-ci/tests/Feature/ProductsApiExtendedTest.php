@@ -21,14 +21,15 @@ class ProductsApiExtendedTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
+        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('DROP TABLE IF EXISTS db_product_images');
         $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
         $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
 
-        $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_products (
+            id INTEGER PRIMARY KEY {$auto},
             product_type TEXT,
             code TEXT,
             barcode TEXT,
@@ -38,10 +39,10 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_variants_v2 (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_name TEXT,
             variant_signature TEXT,
@@ -58,10 +59,10 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_images (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
             image_url TEXT,
@@ -70,10 +71,10 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_attributes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
             name TEXT,
             type TEXT,
             code TEXT,
@@ -112,10 +113,10 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             help_text TEXT,
             icon TEXT,
             tooltip TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_attribute_values (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
             attribute_id INTEGER,
@@ -124,7 +125,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
     }
 
     private function seedProduct(array $data): int

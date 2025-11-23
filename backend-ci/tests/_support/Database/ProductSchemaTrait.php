@@ -7,6 +7,7 @@ trait ProductSchemaTrait
     protected function resetSchema(): void
     {
         // Assumes $this->db is initialized and connected to the test database
+        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
 
         $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
         $this->db->query('DROP TABLE IF EXISTS db_product_images');
@@ -14,15 +15,15 @@ trait ProductSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
-        $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            product_type TEXT DEFAULT "goods",
+        $this->db->query("CREATE TABLE db_products (
+            id INTEGER PRIMARY KEY {$auto},
+            product_type TEXT DEFAULT 'goods',
             code TEXT,
             barcode TEXT,
             name TEXT,
             slug TEXT,
             brand TEXT,
-            unit TEXT DEFAULT "Cái",
+            unit TEXT DEFAULT 'Cái',
             purchase_price REAL DEFAULT 0,
             selling_price REAL DEFAULT 0,
             wholesale_price REAL,
@@ -38,17 +39,17 @@ trait ProductSchemaTrait
             is_active INTEGER DEFAULT 1,
             is_available_online INTEGER DEFAULT 1,
             is_featured INTEGER DEFAULT 0,
-            status TEXT DEFAULT "active",
+            status TEXT DEFAULT 'active',
             meta_title TEXT,
             meta_description TEXT,
             meta_keywords TEXT,
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_variants_v2 (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_name TEXT,
             variant_signature TEXT,
@@ -65,17 +66,17 @@ trait ProductSchemaTrait
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_category_links (
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_category_links (
+             id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              category_id INTEGER,
              created_at TEXT
-        )');
+        )");
 
-         $this->db->query('CREATE TABLE db_product_images (
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
+         $this->db->query("CREATE TABLE db_product_images (
+             id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              variant_id INTEGER,
              image_path TEXT,
@@ -86,10 +87,10 @@ trait ProductSchemaTrait
              created_at TEXT,
              updated_at TEXT,
              deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_attribute_values (
-             id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attribute_values (
+             id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              variant_id INTEGER,
              attribute_id INTEGER,
@@ -98,6 +99,6 @@ trait ProductSchemaTrait
              created_at TEXT,
              updated_at TEXT,
              deleted_at TEXT
-        )');
+        )");
     }
 }

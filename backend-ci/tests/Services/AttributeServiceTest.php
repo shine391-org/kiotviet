@@ -157,12 +157,13 @@ class AttributeServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
+        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
         $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
         $this->db->query('DROP TABLE IF EXISTS db_product_attribute_options');
         $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
 
-        $this->db->query('CREATE TABLE db_product_attributes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
             name TEXT,
             slug TEXT,
             attribute_key TEXT,
@@ -175,10 +176,10 @@ class AttributeServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_attribute_options (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attribute_options (
+            id INTEGER PRIMARY KEY {$auto},
             attribute_id INTEGER,
             option_name TEXT,
             option_value TEXT,
@@ -189,10 +190,10 @@ class AttributeServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_attribute_values (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
             attribute_id INTEGER,
@@ -201,7 +202,7 @@ class AttributeServiceTest extends CIUnitTestCase
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
-        )');
+        )");
     }
 
     private function seedAttribute(array $data): int

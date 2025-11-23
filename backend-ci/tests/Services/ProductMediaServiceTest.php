@@ -21,25 +21,26 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
+        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
         $this->db->query('DROP TABLE IF EXISTS db_product_images');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
-        $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_products (
+            id INTEGER PRIMARY KEY {$auto},
             code TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_variants_v2 (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             sku TEXT,
             deleted_at TEXT
-        )');
+        )");
 
-        $this->db->query('CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+        $this->db->query("CREATE TABLE db_product_images (
+            id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
             image_url TEXT,
@@ -47,7 +48,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
             deleted_at TEXT,
             is_primary INTEGER,
             sort_order INTEGER
-        )');
+        )");
     }
 
     public function test_library_returns_images(): void
