@@ -3,21 +3,30 @@ import { test, expect, APIRequestContext } from '@playwright/test';
 const apiBase = process.env.API_BASE || 'http://localhost:8000/api';
 
 async function createPriceList(request: APIRequestContext, name: string) {
-  const res = await request.post(`${apiBase}/price-lists`, {
-    data: {
-      name,
-      type: 'custom',
-      priority: 2,
-      is_active: 1,
-      start_date: new Date().toISOString().slice(0, 10),
-    },
-  });
-  if (!res.ok()) {
-    const body = await res.text();
-    throw new Error(`Create price list failed: ${res.status()} - ${body}`);
+  const payload = {
+    name,
+    type: 'custom',
+    priority: 2,
+    is_active: 1,
+    start_date: new Date().toISOString().slice(0, 10),
+  };
+
+  let attempt = 0;
+  while (attempt < 3) {
+    const res = await request.post(`${apiBase}/price-lists`, { data: payload });
+    if (res.ok()) {
+      const body = await res.json();
+      return body.data.id as number;
+    }
+    const body = await res.json();
+    if (body?.messages?.error?.includes('already exists')) {
+      payload.name = `${name}-${Math.floor(Math.random() * 1000)}`;
+      attempt++;
+      continue;
+    }
+    throw new Error(`Create price list failed: ${res.status()} - ${JSON.stringify(body)}`);
   }
-  const body = await res.json();
-  return body.data.id as number;
+  throw new Error('Create price list failed after retries');
 }
 
 async function deletePriceList(request: APIRequestContext, id: number) {
