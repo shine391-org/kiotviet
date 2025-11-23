@@ -17,3 +17,21 @@ if (typeof window !== 'undefined' && !window.matchMedia) {
     dispatchEvent: () => false,
   });
 }
+
+// Polyfill ResizeObserver for jsdom tests (used by rc-resize-observer in Ant Design)
+if (typeof window !== 'undefined' && !window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    constructor(callback) {
+      this.callback = callback;
+    }
+    observe() {
+      // no-op in test environment
+    }
+    unobserve() {
+      // no-op in test environment
+    }
+    disconnect() {
+      // no-op in test environment
+    }
+  };
+}

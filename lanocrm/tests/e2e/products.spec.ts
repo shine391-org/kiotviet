@@ -14,6 +14,7 @@ test.describe('Product List Page', () => {
     const mockToken = 'mock-token-123';
 
     await page.addInitScript(({ user, token }) => {
+      window.__E2E_TEST__ = true;
       localStorage.setItem('lano_user', JSON.stringify(user));
       localStorage.setItem('lano_token', token);
     }, { user: mockUser, token: mockToken });
@@ -56,6 +57,28 @@ test.describe('Product List Page', () => {
             total_pages: 1
           }
         })
+      });
+    });
+
+    // Mock product categories (v2 endpoints)
+    await page.route('**/api/product-categories*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          success: true,
+          data: [],
+          pagination: { total: 0, page: 1, limit: 20 }
+        })
+      });
+    });
+
+    // Mock attributes (used by filters)
+    await page.route('**/api/attributes*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] })
       });
     });
 
@@ -156,6 +179,22 @@ test.describe('Product List Page', () => {
                 })
             });
         }
+    });
+
+    await page.route('**/api/product-categories*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [], pagination: { total: 0, page: 1, limit: 20 } })
+      });
+    });
+
+    await page.route('**/api/attributes*', async route => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: [] })
+      });
     });
 
     // Mock category tree
