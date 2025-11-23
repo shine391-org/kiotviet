@@ -27,6 +27,12 @@ const TopMenu = () => {
   const isUserClick = useRef(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);  // ← Add
 
+  const canSeePriceLists = (permissions) => {
+    const has = (name) => permissions?.some((p) => p.name === name || p === name);
+    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+    return isAdmin || has('price_lists.view') || has('products.view');
+  };
+
 
   const groupIconMap = {
     products: <ShoppingOutlined />,
@@ -157,7 +163,7 @@ const TopMenu = () => {
       const icon = groupIconMap[moduleKey] || <AppstoreOutlined />;
       const moduleDetails = fullModulesList.find((m) => m.key === moduleKey);
 
-      const subItems =
+      let subItems =
         moduleDetails?.submodules && Array.isArray(moduleDetails.submodules)
           ? moduleDetails.submodules.map((sub) => ({
               key: sub.key,
@@ -170,9 +176,11 @@ const TopMenu = () => {
               path: sub.route || `/${moduleKey}/${sub.key}`,
             })) || [];
 
-      // Ensure price lists item always present under Hàng hoá/products
-      if (moduleKey === 'products' && !subItems.some((s) => s.key === 'price_lists')) {
-        subItems.unshift({ key: 'price_lists', label: 'Bảng giá', path: '/price-lists' });
+      // Ensure price lists item only when permitted
+      if (moduleKey === 'products' && canSeePriceLists(user?.permissions || [])) {
+        if (!subItems.some((s) => s.key === 'price_lists')) {
+          subItems.unshift({ key: 'price_lists', label: 'Bảng giá', path: '/price-lists' });
+        }
       }
 
       return {

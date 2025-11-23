@@ -21,6 +21,12 @@ const Sidebar = ({ collapsed, onClose }) => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [dynamicMenu, setDynamicMenu] = useState([]);
 
+  const canSeePriceLists = (permissions) => {
+    const hasPermission = (name) => permissions?.some((p) => p.name === name || p === name);
+    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+    return isAdmin || hasPermission('price_lists.view') || hasPermission('products.view');
+  };
+
   // Icon mapping for module groups
   const groupIconMap = {
     'merchandise': <ShoppingOutlined />,
@@ -99,19 +105,9 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // BUILD DYNAMIC MENU FROM USER PERMISSIONS
   const buildDynamicMenu = (permissions) => {
-    // Fallback: chưa có permissions => hiển thị tối thiểu Hàng hóa + Bảng giá
-    if (!permissions || permissions.length === 0) {
-      return [
-        {
-          key: 'merchandise',
-          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
-          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
-          children: [
-            { key: 'products', label: moduleDisplayNames['products'], path: moduleRoutes['products'] },
-            { key: 'price_lists', label: moduleDisplayNames['price_lists'], path: moduleRoutes['price_lists'] },
-          ],
-        },
-      ];
+    // Nếu không có quyền và không phải admin -> không hiện menu
+    if ((!permissions || permissions.length === 0) && !canSeePriceLists([])) {
+      return [];
     }
     let groups = {};
 
@@ -159,27 +155,7 @@ const Sidebar = ({ collapsed, onClose }) => {
     const hasProductView = permissions.some(
       (p) => p.module === 'products' && p.name.endsWith('.view')
     );
-    // Nếu không có quyền products.view vẫn cố gắng hiển thị bảng giá tối thiểu
-    if (!hasProductView) {
-      const updated = { ...groups };
-      if (!updated['merchandise']) {
-        updated['merchandise'] = {
-          key: 'merchandise',
-          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
-          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
-          children: [],
-        };
-      }
-      const exists = updated['merchandise'].children.some((c) => c.key === 'price_lists');
-      if (!exists) {
-        updated['merchandise'].children.unshift({
-          key: 'price_lists',
-          label: moduleDisplayNames['price_lists'],
-          path: moduleRoutes['price_lists'],
-        });
-      }
-      return updated;
-    }
+    if (!hasProductView && !canSeePriceLists(permissions)) { return groups; }
 
     const updated = { ...groups };
     if (!updated['merchandise']) {
