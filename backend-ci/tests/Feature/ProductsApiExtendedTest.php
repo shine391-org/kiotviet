@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use CodeIgniter\Test\FeatureTestTrait;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
+use Tests\Support\AuthTestTrait;
 
 class ProductsApiExtendedTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
+    use AuthTestTrait;
 
     protected $db;
 
@@ -17,6 +19,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
         parent::setUp();
         $this->db = Database::connect('tests');
         $this->resetSchema();
+        $this->setUpAuthToken();
     }
 
     private function resetSchema(): void
@@ -149,7 +152,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_detailWithVariants(): void
     {
         $id = $this->seedProduct(['code' => 'PV1', 'name' => 'ProdV']);
-        $response = $this->get("api/products/{$id}/detail-with-variants");
+        $response = $this->withHeaders($this->authHeaders())->get("api/products/{$id}/detail-with-variants");
         $response->assertStatus(200);
         $response->assertJSONPath('data.code', 'PV1');
         $response->assertJSONFragment(['success' => true]);
@@ -158,7 +161,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_variants_list(): void
     {
         $id = $this->seedProduct(['code' => 'PV2']);
-        $response = $this->get("api/products/{$id}/variants");
+        $response = $this->withHeaders($this->authHeaders())->get("api/products/{$id}/variants");
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
@@ -166,14 +169,16 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_checkCode_exists(): void
     {
         $this->seedProduct(['code' => 'DUP']);
-        $response = $this->withBodyFormat('json')->post("api/products/check-code", ['code' => 'DUP']);
+        $response = $this->withHeaders($this->authHeaders())
+                         ->withBodyFormat('json')->post("api/products/check-code", ['code' => 'DUP']);
         $response->assertStatus(200);
         $response->assertJSONPath('exists', true);
     }
 
     public function test_checkCode_not_exists(): void
     {
-        $response = $this->withBodyFormat('json')->post("api/products/check-code", ['code' => 'NEW']);
+        $response = $this->withHeaders($this->authHeaders())
+                         ->withBodyFormat('json')->post("api/products/check-code", ['code' => 'NEW']);
         $response->assertStatus(200);
         $response->assertJSONPath('exists', false);
     }
@@ -181,7 +186,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_images(): void
     {
         $id = $this->seedProduct(['code' => 'PIMG']);
-        $response = $this->get("api/products/{$id}/images");
+        $response = $this->withHeaders($this->authHeaders())->get("api/products/{$id}/images");
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
@@ -189,7 +194,8 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_attachImages(): void
     {
         $id = $this->seedProduct(['code' => 'PIMG2']);
-        $response = $this->withBodyFormat('json')
+        $response = $this->withHeaders($this->authHeaders())
+                         ->withBodyFormat('json')
                          ->post("api/products/{$id}/images/attach-multiple", ['image_ids' => [999]]);
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
@@ -198,7 +204,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_analytics(): void
     {
         $id = $this->seedProduct(['code' => 'PANA']);
-        $response = $this->get("api/products/{$id}/analytics");
+        $response = $this->withHeaders($this->authHeaders())->get("api/products/{$id}/analytics");
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
@@ -206,7 +212,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_productAttributeValues(): void
     {
         $id = $this->seedProduct(['code' => 'PATTR']);
-        $response = $this->get("api/products/{$id}/attribute-values");
+        $response = $this->withHeaders($this->authHeaders())->get("api/products/{$id}/attribute-values");
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
@@ -214,7 +220,8 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     public function test_updateProductAttributeValues(): void
     {
          $id = $this->seedProduct(['code' => 'PATTR2']);
-         $response = $this->withBodyFormat('json')
+         $response = $this->withHeaders($this->authHeaders())
+                          ->withBodyFormat('json')
                           ->post("api/products/{$id}/attribute-values", ['attribute_values' => []]);
          $response->assertStatus(200);
          $response->assertJSONFragment(['success' => true]);

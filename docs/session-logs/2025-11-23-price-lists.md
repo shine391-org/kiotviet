@@ -3,16 +3,22 @@
 ## Tasks completed
 - PRICE-001: Price list tables, CRUD API, items bulk upsert.
 - PRICE-002: Price calculator + order preview/apply pricing, minimal order persistence.
+- UI: Thêm bộ lọc gọn (nhóm hàng/tồn kho/giá bán) cho trang Bảng giá; đảm bảo menu “Bảng giá” hiển thị theo quyền (admin hoặc price_lists.view/products.view).
+- E2E: Playwright live tests (admin login → điều hướng Bảng giá; tạo bảng giá/áp dụng giá thật; screenshot cập nhật).
+- Integration MySQL: 5 test case apply price list cho order (discount %, discount fixed + edge 0, recalc khi đổi list, priority conflict, date range).
 
-## Files touched
-- Backend: migrations `2025-11-23-000004_CreatePriceListTables.php`, `2025-11-23-000005_CreateOrderTables.php`; models, repositories, validators, services, controllers, routes, services registration.
-- Frontend: API client `priceListApi.js`, Redux slice `priceListSlice.js`, pages `PriceListPage.jsx`, `PriceListFormPage.jsx`, routing + sidebar wiring, tests for API/slice.
-- Docs: checklist in `docs/tasks/new-modules/Price-list.md` updated.
+## Files touched (mới)
+- Backend tests: `tests/Integration/Orders/OrderPriceListTest.php` (MySQL), `phpunit.integration.mysql.xml`.
+- Backend support: `tests/_support/Database/PriceListSchemaTrait.php` (schema reset tweaks), `app/Repositories/PriceLists/PriceListRepository.php` (hydrate apply_to_groups an toàn).
+- Frontend: `src/pages/price-lists/PriceListPage.jsx` (filter panel), `src/components/Layout/Sidebar.jsx`, `src/components/Layout/TopMenu/TopMenu.jsx`.
+- E2E: `tests/e2e/price-lists-live.spec.ts`, `tests/e2e/price-lists-nav-login.spec.ts`.
+- Assets: `screenshots/price-lists-menu-latest.png`, `screenshots/price-lists-filters.png`.
 
 ## Testing
-- Frontend: `npm test` (vitest) ✅ passed.
-- Backend: phpunit not run (php CLI missing in environment). Pricing-related unit tests added (`backend-ci/tests/Services/*Price*Test.php`) ready for execution.
+- Backend integration (MySQL): `phpunit -c phpunit.integration.mysql.xml` ✅ (5 tests, 15 assertions).
+- Backend unit/feature (SQLite): `phpunit` ✅ (128 tests, 351 assertions).
+- Frontend E2E (Playwright, live API): `npx playwright test tests/e2e/price-lists-live.spec.ts` và `tests/e2e/price-lists-nav-login.spec.ts` ✅.
 
 ## Notes / Issues
-- Activity logging not implemented; awaiting logger facility.
-- Navigation entry added under Hàng hóa when user has products.view permission.
+- Activity logging vẫn chưa làm.
+- MySQL DB test đã có sẵn data; chỉ tạo/clear price_lists, price_list_items trong test.***

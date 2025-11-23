@@ -6,12 +6,14 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
 use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\AuthTestTrait;
 
 /** @agent-test: Price lists API @agent-pattern: Feature test (SQLite) */
 class PriceListsApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
     use PriceListSchemaTrait;
+    use AuthTestTrait;
 
     protected $db;
 
@@ -21,6 +23,7 @@ class PriceListsApiTest extends CIUnitTestCase
         $this->db = Database::connect('tests');
         $this->resetPriceListSchema();
         $this->seedProduct(1, 100000);
+        $this->setUpAuthToken();
     }
 
     public function test_create_price_list_success(): void
@@ -33,6 +36,7 @@ class PriceListsApiTest extends CIUnitTestCase
         ];
 
         $res = $this->withBody(json_encode($payload), 'application/json')
+            ->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
             ->post('api/price-lists');
 
         $res->assertStatus(201);
@@ -47,7 +51,8 @@ class PriceListsApiTest extends CIUnitTestCase
     public function test_create_price_list_rejects_invalid_dates(): void
     {
         $payload = ['name' => 'Sai', 'start_date' => '2025-12-31', 'end_date' => '2025-01-01'];
-        $res = $this->withBody(json_encode($payload), 'application/json')->post('api/price-lists');
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')->post('api/price-lists');
         $res->assertStatus(400);
     }
 
@@ -60,13 +65,14 @@ class PriceListsApiTest extends CIUnitTestCase
             ['product_id' => 1, 'variant_id' => null, 'price' => 75000, 'discount_percent' => 5],
         ];
 
-        $post = $this->withBody(json_encode(['items' => $items]), 'application/json')
+        $post = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode(['items' => $items]), 'application/json')
             ->post("/api/price-lists/{$listId}/items");
         $this->assertInstanceOf(\CodeIgniter\Test\TestResponse::class, $post);
         $post->assertStatus(200);
         $post->assertJSONFragment(['success' => true]);
 
-        $res = $this->get("/api/price-lists/{$listId}/items");
+        $res = $this->withHeaders($this->authHeaders())->get("/api/price-lists/{$listId}/items");
         $this->assertInstanceOf(\CodeIgniter\Test\TestResponse::class, $res);
         $res->assertStatus(200);
         $res->assertJSONPath('data.0.product_id', 1);
@@ -79,12 +85,12 @@ class PriceListsApiTest extends CIUnitTestCase
         $this->insertPriceList(['name' => 'Active', 'start_date' => $today, 'end_date' => null, 'is_active' => 1]);
         $this->insertPriceList(['name' => 'Expired', 'start_date' => '2024-01-01', 'end_date' => '2024-01-31', 'is_active' => 1]);
 
-        $active = $this->get('/api/price-lists?status=active');
+        $active = $this->withHeaders($this->authHeaders())->get('/api/price-lists?status=active');
         $this->assertInstanceOf(\CodeIgniter\Test\TestResponse::class, $active);
         $active->assertStatus(200);
         $active->assertJSONFragment(['success' => true]);
 
-        $expired = $this->get('/api/price-lists?status=expired');
+        $expired = $this->withHeaders($this->authHeaders())->get('/api/price-lists?status=expired');
         $this->assertInstanceOf(\CodeIgniter\Test\TestResponse::class, $expired);
         $expired->assertStatus(200);
         $expired->assertJSONFragment(['success' => true]);

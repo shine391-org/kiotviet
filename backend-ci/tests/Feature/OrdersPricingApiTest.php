@@ -6,12 +6,14 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
 use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\AuthTestTrait;
 
 /** @agent-test: Orders pricing API @agent-pattern: Feature test (SQLite) */
 class OrdersPricingApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
     use PriceListSchemaTrait;
+    use AuthTestTrait;
 
     protected $db;
 
@@ -23,6 +25,7 @@ class OrdersPricingApiTest extends CIUnitTestCase
         $this->seedProduct(1, 100000);
         $listId = $this->seedPriceList(['name' => 'VIP', 'priority' => 5, 'apply_to_groups' => [2]]);
         $this->seedItem($listId, 1, null, 80000, 0, 0);
+        $this->setUpAuthToken();
     }
 
     public function test_calculate_preview_applies_price_list(): void
@@ -36,7 +39,8 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ],
         ];
 
-        $res = $this->withBody(json_encode($payload), 'application/json')
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
         $res->assertStatus(200);
@@ -55,7 +59,8 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ],
         ];
 
-        $res = $this->withBody(json_encode($payload), 'application/json')
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders');
 
         $res->assertStatus(201);
@@ -83,7 +88,8 @@ class OrdersPricingApiTest extends CIUnitTestCase
             'items' => [['product_id' => 2, 'quantity' => 1]],
         ];
 
-        $res = $this->withBody(json_encode($payload), 'application/json')
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
         $res->assertStatus(200);
@@ -108,7 +114,8 @@ class OrdersPricingApiTest extends CIUnitTestCase
             'items' => [['product_id' => 3, 'quantity' => 1]],
         ];
 
-        $res = $this->withBody(json_encode($payload), 'application/json')
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
         $res->assertStatus(200);
@@ -133,7 +140,8 @@ class OrdersPricingApiTest extends CIUnitTestCase
             'items' => [['product_id' => 4, 'quantity' => 1]],
         ];
 
-        $res = $this->withBody(json_encode($payload), 'application/json')
+        $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
         $res->assertStatus(200);

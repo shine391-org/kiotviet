@@ -5,10 +5,12 @@ namespace Tests\Feature;
 use CodeIgniter\Test\FeatureTestTrait;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
+use Tests\Support\AuthTestTrait;
 
 class ProductsApiE2ETest extends CIUnitTestCase
 {
     use FeatureTestTrait;
+    use AuthTestTrait;
 
     protected $db;
 
@@ -18,11 +20,12 @@ class ProductsApiE2ETest extends CIUnitTestCase
         $this->db = Database::connect('tests');
         $this->resetSchema();
         $this->seedProduct(1, ['code' => 'AO01', 'name' => 'Áo thun', 'status' => 'active']);
+        $this->setUpAuthToken();
     }
 
     public function test_get_products_list(): void
     {
-        $response = $this->get('api/products');
+        $response = $this->withHeaders($this->authHeaders())->get('api/products');
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
         $response->assertJSONPath('pagination.page', 1);
@@ -31,14 +34,14 @@ class ProductsApiE2ETest extends CIUnitTestCase
 
     public function test_get_products_list_search(): void
     {
-        $response = $this->get('api/products?search=ao');
+        $response = $this->withHeaders($this->authHeaders())->get('api/products?search=ao');
         $response->assertStatus(200);
         $response->assertJSONPath('data.0.code', 'AO01');
     }
 
     public function test_get_product_detail(): void
     {
-        $response = $this->get('api/products/1');
+        $response = $this->withHeaders($this->authHeaders())->get('api/products/1');
         $response->assertStatus(200);
         $response->assertJSONPath('data.id', 1);
         $response->assertJSONPath('data.code', 'AO01');
@@ -47,7 +50,8 @@ class ProductsApiE2ETest extends CIUnitTestCase
     public function test_post_create_product(): void
     {
         $payload = ['code' => 'AO02', 'name' => 'Áo polo'];
-        $response = $this->withBody(json_encode($payload), 'application/json')->post('api/products');
+        $response = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode($payload), 'application/json')->post('api/products');
         $response->assertStatus(201);
         $response->assertJSONFragment(['success' => true]);
         $response->assertJSONPath('data.code', 'AO02');
@@ -55,14 +59,15 @@ class ProductsApiE2ETest extends CIUnitTestCase
 
     public function test_put_update_product(): void
     {
-        $response = $this->withBody(json_encode(['name' => 'Áo updated']), 'application/json')->put('api/products/1');
+        $response = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
+            ->withBody(json_encode(['name' => 'Áo updated']), 'application/json')->put('api/products/1');
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
 
     public function test_delete_product(): void
     {
-        $response = $this->delete('api/products/1');
+        $response = $this->withHeaders($this->authHeaders())->delete('api/products/1');
         $response->assertStatus(200);
         $response->assertJSONFragment(['success' => true]);
     }
