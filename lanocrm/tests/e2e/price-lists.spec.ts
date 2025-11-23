@@ -17,11 +17,19 @@ test.describe('Price lists module', () => {
 
     // Inject auth before any script runs
     await page.addInitScript(({ token, user }) => {
+      window.__E2E_TEST__ = true;
       localStorage.setItem('lano_token', token);
       localStorage.setItem('lano_user', JSON.stringify(user));
     }, {
       token: 'mock-token',
-      user: { id: 1, username: 'admin', permissions: ['products.view', 'products.create', 'products.edit'] },
+      user: {
+        id: 1,
+        username: 'admin',
+        permissions: [
+          'products.view', 'products.create', 'products.edit',
+          'price_lists.view', 'price_lists.create', 'price_lists.edit'
+        ]
+      },
     });
 
     // Inline fetch stub to ensure deterministic data even if route misses

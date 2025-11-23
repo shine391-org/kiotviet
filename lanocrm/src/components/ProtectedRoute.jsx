@@ -17,9 +17,14 @@ const ProtectedRoute = ({
 }) => {
   const location = useLocation();
   const { isAuthenticated, user, permissions } = useSelector(state => state.auth);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('lano_token') : null;
+  const localUserStr = typeof window !== 'undefined' ? localStorage.getItem('lano_user') : null;
+  const localUser = localUserStr ? (() => { try { return JSON.parse(localUserStr); } catch { return null; } })() : null;
+  const hasLocalAuth = !!token && !!localUser;
+  const effectivePermissions = (permissions && permissions.length) ? permissions : (localUser?.permissions || []);
 
   // ========== CHECK AUTHENTICATION ==========
-  if (requireAuth && !isAuthenticated) {
+  if (requireAuth && !(isAuthenticated || hasLocalAuth)) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
@@ -41,8 +46,8 @@ const ProtectedRoute = ({
    * hoặc array of objects [{name: 'users.view'}]
    */
   const hasPermission = (perm) => {
-    if (!permissions || !Array.isArray(permissions)) return false;
-    return permissions.some(p => {
+    if (!effectivePermissions || !Array.isArray(effectivePermissions)) return false;
+    return effectivePermissions.some(p => {
       // Support cả string và object format
       const permName = typeof p === 'string' ? p : p.name;
       return permName === perm;

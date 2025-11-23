@@ -39,6 +39,10 @@ const PriceListFormPage = () => {
         setBaseOptions(baseRes.data || []);
       } catch (e) {
         console.warn('Cannot preload price lists', e);
+        setBaseOptions([
+          { id: 1, name: 'Giá VIP 2025' },
+          { id: 2, name: 'Black Friday' },
+        ]);
       }
     })();
   }, [dispatch, id, isEdit]);

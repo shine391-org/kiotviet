@@ -22,7 +22,7 @@ import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
 import ProductEditPage from './pages/products/ProductEditPage';
 import VariantEditPage from './pages/products/VariantEditPage';
-import PriceListPage from './pages/price-lists/PriceListPage';
+import PriceListListPage from './pages/price-lists/PriceListListPage';
 import PriceListFormPage from './pages/price-lists/PriceListFormPage';
 
 // ✅ THÊM: ATTRIBUTE PAGES
@@ -172,32 +172,6 @@ function App() {
                       }
                     />
 
-                    {/* Price Lists */}
-                    <Route
-                      path="/price-lists"
-                      element={
-                        <ProtectedRoute requiredPermission="products.view">
-                          <PriceListPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/price-lists/create"
-                      element={
-                        <ProtectedRoute requiredPermission="products.create">
-                          <PriceListFormPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/price-lists/edit/:id"
-                      element={
-                        <ProtectedRoute requiredPermission="products.edit">
-                          <PriceListFormPage />
-                        </ProtectedRoute>
-                      }
-                    />
-
                     {/* 🆕 Edit Variant */}
                     <Route
                       path="/products/variants/edit/:variantId"
@@ -206,6 +180,20 @@ function App() {
                           <VariantEditPage />
                         </ProtectedRoute>
                       }
+                    />
+
+                    {/* 🆕 Price Lists */}
+                    <Route
+                      path="/price-lists"
+                      element={<PriceListListPage />}
+                    />
+                    <Route
+                      path="/price-lists/create"
+                      element={<PriceListFormPage />}
+                    />
+                    <Route
+                      path="/price-lists/edit/:id"
+                      element={<PriceListFormPage />}
                     />
 
                     {/* ========== ✅ Categories product ROUTES ========== */}
