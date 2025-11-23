@@ -83,12 +83,10 @@ const Sidebar = ({ collapsed, onClose }) => {
     'system': 'Hệ thống',
   };
 
-  // BUILD DYNAMIC MENU từ user permissions
+  // BUILD DYNAMIC MENU từ user permissions (fallback hiển thị cơ bản)
   useEffect(() => {
-    if (user && user.permissions) {
-      const menu = buildDynamicMenu(user.permissions);
-      setDynamicMenu(menu);
-    }
+    const menu = buildDynamicMenu(user?.permissions || []);
+    setDynamicMenu(menu);
   }, [user]);
 
   // AUTO-EXPAND SUBMENU khi URL match
@@ -101,6 +99,20 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // BUILD DYNAMIC MENU FROM USER PERMISSIONS
   const buildDynamicMenu = (permissions) => {
+    // Fallback: chưa có permissions => hiển thị tối thiểu Hàng hóa + Bảng giá
+    if (!permissions || permissions.length === 0) {
+      return [
+        {
+          key: 'merchandise',
+          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
+          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
+          children: [
+            { key: 'products', label: moduleDisplayNames['products'], path: moduleRoutes['products'] },
+            { key: 'price_lists', label: moduleDisplayNames['price_lists'], path: moduleRoutes['price_lists'] },
+          ],
+        },
+      ];
+    }
     let groups = {};
 
     permissions.forEach(permission => {
@@ -147,8 +159,26 @@ const Sidebar = ({ collapsed, onClose }) => {
     const hasProductView = permissions.some(
       (p) => p.module === 'products' && p.name.endsWith('.view')
     );
+    // Nếu không có quyền products.view vẫn cố gắng hiển thị bảng giá tối thiểu
     if (!hasProductView) {
-      return groups;
+      const updated = { ...groups };
+      if (!updated['merchandise']) {
+        updated['merchandise'] = {
+          key: 'merchandise',
+          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
+          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
+          children: [],
+        };
+      }
+      const exists = updated['merchandise'].children.some((c) => c.key === 'price_lists');
+      if (!exists) {
+        updated['merchandise'].children.unshift({
+          key: 'price_lists',
+          label: moduleDisplayNames['price_lists'],
+          path: moduleRoutes['price_lists'],
+        });
+      }
+      return updated;
     }
 
     const updated = { ...groups };
