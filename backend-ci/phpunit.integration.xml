@@ -20,7 +20,6 @@
     <logging>
         <testdoxHtml outputFile="build/logs/integration-testdox.html"/>
         <junit outputFile="build/logs/integration-logfile.xml"/>
-        <clover outputFile="coverage/clover.xml"/>
     </logging>
     
     <php>
