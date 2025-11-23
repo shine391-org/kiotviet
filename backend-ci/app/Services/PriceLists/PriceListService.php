@@ -39,14 +39,6 @@ class PriceListService
         $rows = $this->repo->findAll($validated);
         $total = $this->repo->count($validated);
         foreach ($rows as &$row) { $row['status'] = $this->status($row); }
-        if ($validated['apply_to_group_id'] ?? null) {
-            $gid = (int) $validated['apply_to_group_id'];
-            $rows = array_values(array_filter($rows, static function ($row) use ($gid) {
-                $groups = $row['apply_to_groups'] ?? [];
-                return empty($groups) || in_array($gid, $groups, true);
-            }));
-            $total = count($rows);
-        }
         return [
             'success' => true,
             'data' => $rows,

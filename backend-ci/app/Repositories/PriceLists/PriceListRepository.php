@@ -103,6 +103,14 @@ class PriceListRepository
         $b = $this->lists->builder()->where('deleted_at', null);
         if (! empty($filters['search'])) { $b->like('name', $filters['search']); }
         if (! empty($filters['type'])) { $b->where('type', $filters['type']); }
+        if (! empty($filters['apply_to_group_id'])) {
+            $gid = (int) $filters['apply_to_group_id'];
+            // apply_to_groups is JSON array; match null (apply to all) or contains gid
+            $b->groupStart()
+                ->where('apply_to_groups', null)
+                ->orWhere('JSON_CONTAINS(apply_to_groups, ?)', [json_encode($gid)])
+                ->groupEnd();
+        }
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {
             $b->where('is_active', $filters['is_active'] ? 1 : 0);
         }

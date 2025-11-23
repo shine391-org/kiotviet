@@ -81,12 +81,15 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
     private function truncateTables(): void
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-        foreach (['price_list_items', 'price_lists', 'product_variants_v2', 'products'] as $table) {
-            if ($this->db->tableExists($table)) {
-                $this->db->table($table)->truncate();
+        try {
+            foreach (['price_list_items', 'price_lists', 'product_variants_v2', 'products'] as $table) {
+                if ($this->db->tableExists($table)) {
+                    $this->db->table($table)->truncate();
+                }
             }
+        } finally {
+            $this->db->query('SET FOREIGN_KEY_CHECKS=1');
         }
-        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function ensureAuxTables(): void
