@@ -27,10 +27,18 @@ class ProductsController extends BaseController
     public function variants($id) { return $this->wrap(fn () => $this->respond($this->service->variants((int) $id))); }
 
     /** Create product. @agent-use: POST /api/products @agent-pattern: Thin create */
-    public function create() { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respondCreated($this->service->create($data))); }
+    public function create()
+    {
+        $data = $this->safeInput();
+        return $this->wrap(fn () => $this->respondCreated($this->service->create($data)));
+    }
 
     /** Update product. @agent-use: PUT /api/products/{id} @agent-pattern: Thin update */
-    public function update($id) { $data = $this->request->getJSON(true) ?? []; return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $data))); }
+    public function update($id)
+    {
+        $data = $this->safeInput();
+        return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $data)));
+    }
 
     /** Delete product. @agent-use: DELETE /api/products/{id} @agent-pattern: Thin delete */
     public function delete($id) { return $this->wrap(fn () => $this->respond($this->service->delete((int) $id))); }
@@ -84,5 +92,19 @@ class ProductsController extends BaseController
         catch (\InvalidArgumentException $e) { return $this->failValidationErrors($e->getMessage()); }
         catch (\RuntimeException $e) { return $this->failNotFound($e->getMessage()); }
         catch (\Throwable $e) { return $this->failServerError($e->getMessage()); }
+    }
+
+    /** Safely fetch request body supporting JSON or form-data, without throwing parse errors. */
+    private function safeInput(): array
+    {
+        try {
+            $json = $this->request->getJSON(true);
+            if (is_array($json)) { return $json; }
+        } catch (\Throwable $e) {
+            // swallow and fallback below
+        }
+
+        $raw = $this->request->getRawInput();
+        return is_array($raw) ? $raw : [];
     }
 }

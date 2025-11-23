@@ -2,12 +2,20 @@
 
 namespace Config;
 
-use App\Repositories\Products\ProductRepository;
 use App\Repositories\Attributes\AttributeRepository;
+use App\Repositories\ProductMedia\ProductMediaRepository;
+use App\Repositories\Products\ProductRepository;
 use App\Services\Products\ProductService;
+use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
+use App\Validators\ProductMediaDateValidator;
+use App\Validators\ProductMediaSearchValidator;
+use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\AttributeValidator;
+use App\Repositories\Inventory\InventoryRepository;
+use App\Services\Inventory\InventoryService;
+use App\Validators\InventoryValidator;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -110,6 +118,86 @@ class Services extends BaseService
         return new AttributeService(
             static::attributeRepository(false),
             static::attributeValidator(false)
+        );
+    }
+
+    public static function productMediaRepository(bool $getShared = true): ProductMediaRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productMediaRepository');
+        }
+
+        return new ProductMediaRepository();
+    }
+
+    public static function productMediaValidator(bool $getShared = true): ProductMediaValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productMediaValidator');
+        }
+
+        return new ProductMediaValidator();
+    }
+
+    public static function productMediaDateValidator(bool $getShared = true): ProductMediaDateValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productMediaDateValidator');
+        }
+
+        return new ProductMediaDateValidator();
+    }
+
+    public static function productMediaSearchValidator(bool $getShared = true): ProductMediaSearchValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productMediaSearchValidator');
+        }
+
+        return new ProductMediaSearchValidator();
+    }
+
+    public static function productMediaService(bool $getShared = true): ProductMediaService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productMediaService');
+        }
+
+        return new ProductMediaService(
+            static::productMediaRepository(false),
+            static::productMediaValidator(false),
+            static::productMediaDateValidator(false),
+            static::productMediaSearchValidator(false)
+        );
+    }
+
+    public static function inventoryRepository(bool $getShared = true): InventoryRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryRepository');
+        }
+
+        return new InventoryRepository();
+    }
+
+    public static function inventoryValidator(bool $getShared = true): InventoryValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryValidator');
+        }
+
+        return new InventoryValidator();
+    }
+
+    public static function inventoryService(bool $getShared = true): InventoryService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('inventoryService');
+        }
+
+        return new InventoryService(
+            static::inventoryRepository(false),
+            static::inventoryValidator(false)
         );
     }
 }

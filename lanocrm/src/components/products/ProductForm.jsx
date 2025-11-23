@@ -18,6 +18,7 @@ import { productSchema } from '../../utils/validators';
 import * as productApi from '../../api/productApi';
 import { fetchCategoryTree } from '../../store/slices/categorySlice';
 import { fetchProducts } from '../../store/slices/productSlice';
+import { handleApiError } from '../../utils/apiErrorHandler';
 
 /**
  * ProductForm Component
@@ -185,8 +186,7 @@ const [hasVariants, setHasVariants] = useState(0);
         }
       }
     } catch (error) {
-      messageApi.error('Failed to load product data');
-      console.error('Load product error:', error);
+      handleApiError(error, { messageApi, defaultMessage: 'Failed to load product data' });
     } finally {
       setLoading(false);
     }
@@ -195,6 +195,13 @@ const [hasVariants, setHasVariants] = useState(0);
   // Handle form submit
   const handleSubmit = async (values) => {
     try {
+      // FE guard: giá bán phải > 0 để tránh 400 từ BE
+      const sellingPrice = Number(values.selling_price ?? 0);
+      if (Number.isNaN(sellingPrice) || sellingPrice <= 0) {
+        messageApi.error('Giá bán phải lớn hơn 0');
+        return;
+      }
+
       //console.log('🔥 HANDLE SUBMIT CALLED!', values); 
       // Upload image if selected
       let imageUrl = imagePreview;
@@ -355,7 +362,7 @@ const [hasVariants, setHasVariants] = useState(0);
   
     } catch (error) {
       console.error('💥 CATCH ERROR:', error);
-      messageApi.error(error.message || 'Có lỗi xảy ra', 3);
+      handleApiError(error, { messageApi, defaultMessage: 'Có lỗi xảy ra khi lưu sản phẩm' });
     }
   };  
 

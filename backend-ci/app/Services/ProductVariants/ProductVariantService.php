@@ -25,7 +25,7 @@ class ProductVariantService
 
     /** Update variant. @agent-use: PUT /api/variants/{id} @agent-pattern: Standard update */
     public function update(int $id, array $data): array
-    { $this->requireVariant($id); $validated = $this->validator->validateUpdate($data); $this->repo->update($id, $validated); return ['success' => true]; }
+    { $this->requireVariant($id); $validated = $this->validator->validateUpdate($id, $data); $this->repo->update($id, $validated); return ['success' => true]; }
 
     /** Soft delete variant. @agent-use: DELETE /api/variants/{id} @agent-pattern: Soft delete */
     public function delete(int $id): array { $this->requireVariant($id); $this->repo->delete($id); return ['success' => true]; }
@@ -40,7 +40,30 @@ class ProductVariantService
 
     /** Attach uploaded images to variant. @agent-use: POST /api/variants/{id}/images/attach-multiple @agent-pattern: Bulk attach */
     public function attachImages(int $variantId, array $imageIds): array
-    { $this->requireVariant($variantId); $ids = $this->validator->validateImageIds($imageIds); $count = $this->repo->attachImages($variantId, $ids); return ['success' => true, 'attached_count' => $count, 'message' => 'Attached images to variant']; }
+    {
+        $variant = $this->requireVariant($variantId);
+        $ids = $this->validator->validateImageIds($imageIds);
+        $result = $this->repo->attachImages($variantId, $ids);
+
+        $attached = count($result['attached_ids']);
+        $skipped = count($result['skipped_ids']);
+        $missing = count($result['missing_ids']);
+        $message = sprintf('Đã thêm %d ảnh, bỏ qua %d ảnh', $attached, $skipped);
+        if ($missing > 0) { $message .= sprintf(', %d ảnh không tìm thấy', $missing); }
+
+        return [
+            'success' => true,
+            'attached_count' => $attached,
+            'skipped_count' => $skipped,
+            'missing_count' => $missing,
+            'attached_ids' => $result['attached_ids'],
+            'skipped_ids' => $result['skipped_ids'],
+            'missing_ids' => $result['missing_ids'],
+            'variant_id' => $variantId,
+            'product_id' => $variant['product_id'] ?? null,
+            'message' => $message,
+        ];
+    }
 
     /** Attribute values of variant. @agent-use: GET /api/variants/{id}/attribute-values @agent-pattern: Read attributes */
     public function attributeValues(int $variantId): array

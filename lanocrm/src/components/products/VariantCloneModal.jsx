@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, InputNumber, Row, Col, Button, App } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import * as productApi from '../../api/productApi';
+import { handleApiError } from '../../utils/apiErrorHandler';
 
 const VariantCloneModal = ({ open, sourceVariant, onCancel }) => {
   const [form] = Form.useForm();
@@ -45,7 +46,7 @@ const VariantCloneModal = ({ open, sourceVariant, onCancel }) => {
         message.error(response.message || 'Tạo biến thể thất bại');
       }
     } catch (error) {
-      message.error(error.message || 'Có lỗi xảy ra khi tạo biến thể');
+      handleApiError(error, { messageApi: message, defaultMessage: 'Có lỗi xảy ra khi tạo biến thể' });
     } finally {
       setSubmitting(false);
     }

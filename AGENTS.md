@@ -329,21 +329,98 @@ public function list() {
 
 ---
 
-## ✅ Definition of Done
+
+## 🧪 Testing (BẮT BUỘC)
+
+### Test-Driven Development
+You MUST write tests. No exceptions.
+
+**Order:**
+1. Write test first (RED)
+2. Implement code (GREEN)
+3. Refactor (REFACTOR)
+
+### Test Types
+
+**Unit Tests** (SQLite - Fast)
+- Service logic
+- Repository queries
+- Validators
+- Run: `vendor/bin/phpunit`
+
+**Integration Tests** (MySQL - Real)
+- API endpoints
+- Database operations
+- Authentication flows
+- Run: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+
+### Test Patterns (Copy từ đây)
+
+**👉 BẮT BUỘC: Copy patterns từ file sau:**
+`docs/testing/TESTING-PATTERNS.md`
+
+File này chứa mẫu chuẩn cho:
+- **Service Test** (Unit - SQLite)
+- **Integration Test** (API - MySQL)
+- **Repository Test** (Database)
+
+**Không tự bịa test pattern!** Hãy copy và sửa đổi.
+
+### Vấn đề thường gặp
+
+**Q: PHPUnit pass nhưng dev server fail?**
+A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
+`docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+
+**Q: Tests pass riêng lẻ, fail khi chạy cùng?**
+A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+
+**Đọc thêm**: `docs/testing/TESTING-GUIDE.md`
+
+---
+
+## ⚡ Quy trình testing FE (Frontend)
+
+**Tài liệu chi tiết:**
+- 📘 **Guide**: `docs/testing/FE-TESTING-GUIDE.md`
+- 🧩 **Patterns**: `docs/testing/FE-TESTING-PATTERNS.md`
+- ✅ **Checklist**: `docs/testing/FE-TEST-CHECKLIST.md`
+
+### FE Testing: Best Practices
+1. **Unit Test**: Test logic & render. Mock hết API.
+2. **Integration**: Test flow (Form -> Submit -> API -> Success).
+3. **Manual**: Luôn mở Chrome Console check đỏ/vàng trước khi commit.
+4. **Coverage**: Đạt tối thiểu 70%. Chạy `npm run test:coverage` để kiểm tra.
+
+**Lệnh quan trọng:**
+- `npm test`: Chạy unit/integration tests.
+- `npm run test:coverage`: Kiểm tra độ bao phủ.
+- `npm run test:e2e`: Chạy test luồng người dùng thật.
+
+---
+
+## Definition of Done (CẬP NHẬT)
 
 A task is complete when:
 - [x] All files created
 - [x] Clean architecture followed
-- [x] File sizes < limits
-- [x] Inline docs added
-- [x] Tests written and passing
+- [x] **Unit tests written and pass (Backend + Frontend)**
+- [x] **Integration tests written and pass**
+- [x] **Test coverage >= 70%** _(Automatically enforced in CI)_
+- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)** _(Automatically validated in CI)_
+- [x] **Inline docs added (@agent- annotations)**
 - [x] API endpoints work
 - [x] Task status updated
 - [x] Session log created
 
+> [!NOTE]
+> **Automated Enforcement**: Coverage thresholds and FE checklist completion are automatically enforced in CI/CD pipeline. PRs will fail if coverage < 70% or checklist is incomplete.
+
+
 ---
 
 **Key Principle:** 
+**"Thiếu test sẽ không merge, lặp lại test process đến khi đạt yêu cầu!"** 
 > "Copy successful patterns, don't reinvent. Quality > speed."
 
 **Remember:**

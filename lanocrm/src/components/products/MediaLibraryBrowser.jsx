@@ -59,10 +59,11 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
   const handleApiOk = (response) => {
     const counts = {
       attached_count: response.attached_count ?? 0,
-      restored_count: response.restored_count ?? 0,
-      duplicate_count: response.duplicate_count ?? 0,
-      total_success: response.total_success ?? 0,
-      message: response.message || '',
+      skipped_count: response.skipped_count ?? response.duplicate_count ?? 0,
+      missing_count: response.missing_count ?? 0,
+      message:
+        response.message ||
+        `Đã thêm ${response.attached_count ?? 0} ảnh, bỏ qua ${response.skipped_count ?? 0} ảnh`,
     };
     setAttachResult({ ...counts });
     setAttachResultVisible(true);
@@ -112,14 +113,14 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
           setLoading(false);
           return;
         }
-        response = await productApi.getMediaByDate(selectedYear, selectedMonth, pagination.pageSize, offset);
+        response = await productApi.getMediaByDate(selectedYear, selectedMonth, pagination.pageSize, offset, entityId);
       } else if (filterMode === 'sku') {
         if (!searchSku || searchSku.trim().length < 2) {
           message.warning('Nhập mã sản phẩm (tối thiểu 2 ký tự)');
           setLoading(false);
           return;
         }
-        response = await productApi.searchMediaBySku(searchSku, pagination.pageSize, offset);
+        response = await productApi.searchMediaBySku(searchSku, pagination.pageSize, offset, entityId);
       } else {
         response = await productApi.getMediaLibrary(pagination.pageSize, offset, { entity_id: entityId });
       }
@@ -137,7 +138,16 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
         setLoading(false);
         return;
       }
-      setImages(response.data);
+      // mark attached flag fallback for UI indicator
+      const normalized = (response.data || []).map((img) => ({
+        ...img,
+        is_attached:
+          img.is_attached ??
+          ((productId && img.product_id === productId) ||
+            (variantId && (img.variant_id === variantId || img.variant_product_id === variantId))),
+      }));
+
+      setImages(normalized);
       setPagination((prev) => ({ ...prev, total: response.total || 0 }));
     } catch (error) {
       message.error(error.message || 'Lỗi tải ảnh từ thư viện');
@@ -165,22 +175,43 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
     return () => clearTimeout(timer);
   }, [loadImages]);
 
-  const handleImageToggle = useCallback((imageId) => {
-    setSelectedImages((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(imageId)) newSet.delete(imageId);
-      else newSet.add(imageId);
-      return newSet;
-    });
-  }, []);
+  const isAttached = useCallback(
+    (img) => {
+      if (img.is_attached === true || img.is_attached === 1) return true;
+      if (productId && img.product_id === productId) return true;
+      if (variantId && img.variant_id === variantId) return true;
+      if (variantId && img.product_id === productId) return true;
+      if (variantId && img.variant_product_id === productId) return true;
+      return false;
+    },
+    [productId, variantId]
+  );
+
+  const handleImageToggle = useCallback(
+    (image) => {
+      if (isAttached(image)) {
+        message.info('Ảnh này đã gắn vào sản phẩm');
+        return;
+      }
+      const imageId = image.id;
+      setSelectedImages((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(imageId)) newSet.delete(imageId);
+        else newSet.add(imageId);
+        return newSet;
+      });
+    },
+    [isAttached]
+  );
 
   const handleSelectAll = useCallback(() => {
-    if (selectedImages.size === images.length && images.length > 0) {
+    const selectable = images.filter((img) => !isAttached(img));
+    if (selectedImages.size === selectable.length && selectable.length > 0) {
       setSelectedImages(new Set());
     } else {
-      setSelectedImages(new Set(images.map((img) => img.id)));
+      setSelectedImages(new Set(selectable.map((img) => img.id)));
     }
-  }, [images, selectedImages]);
+  }, [images, selectedImages, isAttached]);
 
   const handleClearSelection = useCallback(() => {
     setSelectedImages(new Set());
@@ -217,7 +248,7 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
         setFilterMode('all');
         setSearchSku('');
         setPagination((prev) => ({ ...prev, current: 1 }));
-        await loadImages();
+        await loadImages(); // refresh list state to reflect attached flags immediately
       } else {
         message.error(response.message || 'Lỗi gắn ảnh');
       }
@@ -404,6 +435,7 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
                   <div
                     key={image.id}
                     style={{ flex: '0 0 auto', width: '100%', display: 'flex', flexDirection: 'column', position: 'relative' }}
+                    className={isAttached(image) ? styles['attached'] : ''}
                   >
                     <div style={{ position: 'absolute', top: 6, right: 6, zIndex: 10 }}>
                       <Button
@@ -430,18 +462,28 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
                     <Card
                       hoverable
                       className={`${styles['image-card']} ${selectedImages.has(image.id) ? styles['selected'] : ''}`}
-                      onClick={() => handleImageToggle(image.id)}
+                      onClick={() => handleImageToggle(image)}
                       cover={
                         <div className={styles['image-cover']}>
-                          <img src={image.image_url} alt="Product" className={styles['image-thumbnail']} />
+                          <img
+                            src={image.image_url}
+                            alt="Product"
+                            className={`${styles['image-thumbnail']} ${isAttached(image) ? styles['imageAttached'] : ''}`}
+                          />
                           <div className={styles['image-overlay']}>
                             <Checkbox
                               checked={selectedImages.has(image.id)}
+                              disabled={isAttached(image)}
                               onClick={(e) => e.stopPropagation()}
-                              onChange={() => handleImageToggle(image.id)}
+                              onChange={() => handleImageToggle(image)}
                               style={{ fontSize: 20 }}
                             />
                           </div>
+                          {isAttached(image) && (
+                            <Tag color="blue" className={styles['attachedBadge']} style={{ position: 'absolute', left: 8, top: 8, zIndex: 3 }}>
+                              ĐÃ GẮN
+                            </Tag>
+                          )}
                           {image.is_primary === 1 && (
                             <Tag color="gold" className={styles['primary-badge']} style={{ position: 'absolute', top: 8, right: 8, zIndex: 3 }}>
                               ⭐ Chính

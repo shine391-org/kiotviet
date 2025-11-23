@@ -1,9 +1,9 @@
 #!/bin/bash
-# Pre-commit Checks v2.2 - Balanced & Safe
-# 5 Checks: Scope + Tests + Backward Compat + Quality + Migrations
+# Pre-commit Checks v2.3 - Balanced & Safe
+# 7 Checks: Scope + Tests + Backward Compat + Quality + Migrations + Integration Tests + Coverage
 
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "🔍 Pre-commit Safety Checks v2.2"
+echo "🔍 Pre-commit Safety Checks v2.3"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 WARNINGS=0
@@ -116,7 +116,7 @@ echo "[4/5] Checking code quality..."
 STAGED_PHP=$(git diff --cached --name-only 2>/dev/null | grep "\.php$" || echo "")
 
 if [ -z "$STAGED_PHP" ]; then
-    echo "   �� No PHP files changed"
+    echo "    No PHP files changed"
 else
     QUALITY_ISSUES=0
     while IFS= read -r file; do
@@ -173,6 +173,100 @@ if [ -n "$CHANGED_MODELS" ]; then
     fi
 else
     echo "   ✅ No model changes"
+fi
+
+# ============================================
+# Check 6: Integration Tests (MySQL)
+# ============================================
+echo ""
+echo "[6/6] Running Integration Tests (MySQL)..."
+echo "This tests with real MySQL database..."
+
+# Check if db-test is running
+if ! docker ps 2>/dev/null | grep -q "db-test"; then
+    echo "⚠️  Warning: db-test container not running"
+    echo "Run: docker-compose up -d db-test"
+    echo "Skipping integration tests..."
+elif [ "$SKIP_TESTS" = "true" ]; then
+    echo "   ⚠️  INTEGRATION TESTS SKIPPED (SKIP_TESTS=true)"
+    WARNINGS=$((WARNINGS + 1))
+else
+    # Run migrations on test db
+    echo "   Running migrations on test database..."
+    docker exec meomeo2-api-1 php spark migrate --all --env tests 2>/dev/null
+    MIGRATION_STATUS=$?
+    
+    if [ $MIGRATION_STATUS -ne 0 ]; then
+        echo "   ❌ Migration failed for test DB"
+        ERRORS=$((ERRORS + 1))
+    else
+        # Run integration tests
+        echo "   Running integration tests..."
+        TEST_OUTPUT=$(docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml --colors=never 2>&1)
+        
+        if echo "$TEST_OUTPUT" | grep -q "OK"; then
+            TESTS=$(echo "$TEST_OUTPUT" | grep -oP 'Tests: \K\d+' || echo "?")
+            echo "   ✅ Integration tests PASSED ($TESTS tests)"
+        else
+            echo "   ❌ Integration tests FAILED"
+            echo "$TEST_OUTPUT" | grep -A 5 "FAILURES\|ERRORS" | head -10
+            ERRORS=$((ERRORS + 1))
+        fi
+    fi
+fi
+
+# ============================================
+# Check 7: Code Coverage (PHPUnit)
+# ============================================
+echo ""
+echo "[7/7] 📊 Code Coverage Check..."
+
+if [ "$SKIP_TESTS" = "true" ]; then
+    echo "   ⏭️  Skipped (SKIP_TESTS=true)"
+else
+    # Check if Docker container is running
+    if ! docker ps 2>/dev/null | grep -q meomeo2-api-1; then
+        echo "   ⚠️  Docker container not running - skipping coverage check"
+        WARNINGS=$((WARNINGS + 1))
+    else
+        echo "   Running PHPUnit with coverage..."
+        
+        # Run PHPUnit with coverage-text output
+        COVERAGE_OUTPUT=$(docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text --colors=never 2>&1)
+        
+        # Extract coverage percentage from output
+        # PHPUnit outputs: "Lines: XX.XX%"
+        COVERAGE_PERCENT=$(echo "$COVERAGE_OUTPUT" | grep -oP 'Lines:\s+\K[0-9.]+(?=%)' | head -1)
+        
+        if [ -z "$COVERAGE_PERCENT" ]; then
+            echo "   ⚠️  Could not determine coverage percentage"
+            WARNINGS=$((WARNINGS + 1))
+        else
+            # Compare coverage with threshold (70%)
+            THRESHOLD=70
+            
+            # Use bc for floating point comparison
+            if command -v bc >/dev/null 2>&1; then
+                IS_BELOW=$(echo "$COVERAGE_PERCENT < $THRESHOLD" | bc -l)
+            else
+                # Fallback to integer comparison if bc not available
+                COVERAGE_INT=${COVERAGE_PERCENT%.*}
+                if [ "$COVERAGE_INT" -lt "$THRESHOLD" ]; then
+                    IS_BELOW=1
+                else
+                    IS_BELOW=0
+                fi
+            fi
+            
+            if [ "$IS_BELOW" -eq 1 ]; then
+                echo "   ❌ Coverage: ${COVERAGE_PERCENT}% (threshold: ${THRESHOLD}%)"
+                echo "   Run: docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-html coverage/"
+                ERRORS=$((ERRORS + 1))
+            else
+                echo "   ✅ Coverage: ${COVERAGE_PERCENT}% (threshold: ${THRESHOLD}%)"
+            fi
+        fi
+    fi
 fi
 
 # ============================================
