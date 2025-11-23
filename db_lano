@@ -53,6 +53,101 @@ INSERT INTO `activity_logs` VALUES (1,NULL,'login','auth','auth',1,NULL,NULL,'1.
 UNLOCK TABLES;
 
 --
+-- Price list & order pricing (added for PRICE-001/002)
+--
+
+DROP TABLE IF EXISTS `price_list_items`;
+DROP TABLE IF EXISTS `price_lists`;
+DROP TABLE IF EXISTS `order_items`;
+DROP TABLE IF EXISTS `orders`;
+
+CREATE TABLE `price_lists` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL COMMENT 'Tên bảng giá',
+  `type` enum('base','wholesale','retail','vip','custom') DEFAULT 'custom',
+  `description` text DEFAULT NULL,
+  `apply_to_groups` json DEFAULT NULL COMMENT 'Array customer_group_id áp dụng',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `priority` int DEFAULT 0 COMMENT 'Độ ưu tiên',
+  `is_active` tinyint(1) DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_active` (`is_active`,`deleted_at`),
+  KEY `idx_dates` (`start_date`,`end_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `price_list_items` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `price_list_id` bigint(20) unsigned NOT NULL,
+  `product_id` bigint(20) unsigned NOT NULL,
+  `variant_id` bigint(20) unsigned DEFAULT NULL COMMENT 'NULL = áp dụng cho all variants',
+  `price` decimal(12,2) NOT NULL COMMENT 'Giá override',
+  `discount_percent` decimal(5,2) DEFAULT 0 COMMENT 'Giảm giá %',
+  `discount_amount` decimal(12,2) DEFAULT 0 COMMENT 'Giảm giá cố định',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_price_item` (`price_list_id`,`product_id`,`variant_id`),
+  KEY `idx_product` (`product_id`),
+  CONSTRAINT `fk_price_items_list` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_price_items_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `orders` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint(20) unsigned DEFAULT NULL,
+  `customer_group_id` bigint(20) unsigned DEFAULT NULL,
+  `order_date` date DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'draft',
+  `subtotal` decimal(14,2) DEFAULT 0,
+  `discount_total` decimal(14,2) DEFAULT 0,
+  `total` decimal(14,2) DEFAULT 0,
+  `applied_price_list_id` bigint(20) unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_customer` (`customer_id`,`customer_group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `order_items` (
+  `id` bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint(20) unsigned NOT NULL,
+  `product_id` bigint(20) unsigned NOT NULL,
+  `variant_id` bigint(20) unsigned DEFAULT NULL,
+  `quantity` decimal(12,3) DEFAULT 1,
+  `base_price` decimal(12,2) DEFAULT 0,
+  `final_price` decimal(12,2) DEFAULT 0,
+  `price_list_id` bigint(20) unsigned DEFAULT NULL,
+  `price_list_name` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_order_product` (`order_id`,`product_id`),
+  CONSTRAINT `fk_order_items_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO `price_lists` (`id`,`name`,`type`,`description`,`apply_to_groups`,`start_date`,`end_date`,`priority`,`is_active`,`created_at`,`updated_at`,`deleted_at`) VALUES
+(1,'Giá VIP 2025','vip','Ưu đãi hội viên VIP',JSON_ARRAY(2),'2025-01-01','2025-12-31',5,1,'2025-11-23 00:00:00','2025-11-23 00:00:00',NULL),
+(2,'Black Friday','custom','Giảm giá 24-30/11',JSON_ARRAY(),'2025-11-24','2025-11-30',9,1,'2025-11-23 00:00:00','2025-11-23 00:00:00',NULL);
+
+INSERT INTO `price_list_items` (`id`,`price_list_id`,`product_id`,`variant_id`,`price`,`discount_percent`,`discount_amount`,`created_at`,`updated_at`) VALUES
+(1,1,1,NULL,180000,10,0,'2025-11-23 00:00:00','2025-11-23 00:00:00'),
+(2,1,2,NULL,250000,5,0,'2025-11-23 00:00:00','2025-11-23 00:00:00'),
+(3,2,1,NULL,150000,0,0,'2025-11-23 00:00:00','2025-11-23 00:00:00');
+
+INSERT INTO `orders` (`id`,`customer_id`,`customer_group_id`,`order_date`,`status`,`subtotal`,`discount_total`,`total`,`applied_price_list_id`,`created_at`,`updated_at`,`deleted_at`) VALUES
+(1,1,2,'2025-11-23','confirmed',360000,30000,330000,1,'2025-11-23 00:00:00','2025-11-23 00:00:00',NULL);
+
+INSERT INTO `order_items` (`id`,`order_id`,`product_id`,`variant_id`,`quantity`,`base_price`,`final_price`,`price_list_id`,`price_list_name`,`created_at`,`updated_at`) VALUES
+(1,1,1,NULL,2,200000,180000,1,'Giá VIP 2025','2025-11-23 00:00:00','2025-11-23 00:00:00'),
+(2,1,2,NULL,1,250000,237500,1,'Giá VIP 2025','2025-11-23 00:00:00','2025-11-23 00:00:00');
+
+--
 -- Table structure for table `branches`
 --
 

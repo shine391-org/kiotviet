@@ -22,6 +22,8 @@ import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
 import ProductEditPage from './pages/products/ProductEditPage';
 import VariantEditPage from './pages/products/VariantEditPage';
+import PriceListPage from './pages/price-lists/PriceListPage';
+import PriceListFormPage from './pages/price-lists/PriceListFormPage';
 
 // ✅ THÊM: ATTRIBUTE PAGES
 import AttributeListPage from './pages/products/AttributeListPage';
@@ -166,6 +168,32 @@ function App() {
                       element={
                         <ProtectedRoute requiredPermission="products.edit">
                           <ProductEditPage />
+                        </ProtectedRoute>
+                      }
+                    />
+
+                    {/* Price Lists */}
+                    <Route
+                      path="/price-lists"
+                      element={
+                        <ProtectedRoute requiredPermission="products.view">
+                          <PriceListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/price-lists/create"
+                      element={
+                        <ProtectedRoute requiredPermission="products.create">
+                          <PriceListFormPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/price-lists/edit/:id"
+                      element={
+                        <ProtectedRoute requiredPermission="products.edit">
+                          <PriceListFormPage />
                         </ProtectedRoute>
                       }
                     />

@@ -5,13 +5,21 @@ namespace Config;
 use App\Repositories\Attributes\AttributeRepository;
 use App\Repositories\ProductMedia\ProductMediaRepository;
 use App\Repositories\Products\ProductRepository;
+use App\Repositories\PriceLists\PriceListItemRepository;
+use App\Repositories\PriceLists\PriceListRepository;
+use App\Repositories\Orders\OrderRepository;
 use App\Services\Products\ProductService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
+use App\Services\PriceLists\PriceCalculatorService;
+use App\Services\PriceLists\PriceListService;
+use App\Services\Orders\OrderService;
 use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
+use App\Validators\PriceListValidator;
+use App\Validators\OrderValidator;
 use App\Validators\AttributeValidator;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Inventory\InventoryService;
@@ -198,6 +206,63 @@ class Services extends BaseService
         return new InventoryService(
             static::inventoryRepository(false),
             static::inventoryValidator(false)
+        );
+    }
+
+    public static function priceListRepository(bool $getShared = true): PriceListRepository
+    {
+        return $getShared ? static::getSharedInstance('priceListRepository') : new PriceListRepository();
+    }
+
+    public static function priceListItemRepository(bool $getShared = true): PriceListItemRepository
+    {
+        return $getShared ? static::getSharedInstance('priceListItemRepository') : new PriceListItemRepository();
+    }
+
+    public static function priceListValidator(bool $getShared = true): PriceListValidator
+    {
+        return $getShared ? static::getSharedInstance('priceListValidator') : new PriceListValidator();
+    }
+
+    public static function priceListService(bool $getShared = true): PriceListService
+    {
+        if ($getShared) { return static::getSharedInstance('priceListService'); }
+
+        return new PriceListService(
+            static::priceListRepository(false),
+            static::priceListItemRepository(false),
+            static::priceListValidator(false)
+        );
+    }
+
+    public static function priceCalculatorService(bool $getShared = true): PriceCalculatorService
+    {
+        return $getShared ? static::getSharedInstance('priceCalculatorService') : new PriceCalculatorService(
+            static::priceListRepository(false),
+            static::priceListItemRepository(false),
+            static::productRepository(false),
+            static::productVariantRepository(false)
+        );
+    }
+
+    public static function orderRepository(bool $getShared = true): OrderRepository
+    {
+        return $getShared ? static::getSharedInstance('orderRepository') : new OrderRepository();
+    }
+
+    public static function orderValidator(bool $getShared = true): OrderValidator
+    {
+        return $getShared ? static::getSharedInstance('orderValidator') : new OrderValidator();
+    }
+
+    public static function orderService(bool $getShared = true): OrderService
+    {
+        if ($getShared) { return static::getSharedInstance('orderService'); }
+
+        return new OrderService(
+            static::orderRepository(false),
+            static::orderValidator(false),
+            static::priceCalculatorService(false)
         );
     }
 }

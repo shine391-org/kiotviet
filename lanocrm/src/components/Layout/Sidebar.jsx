@@ -34,6 +34,7 @@ const Sidebar = ({ collapsed, onClose }) => {
   const moduleDisplayNames = {
     'products': 'Hàng hóa',
     'product_categories': 'Danh mục SP',
+    'price_lists': 'Bảng giá',
     'purchase_orders': 'Đơn mua hàng',
     'inventory': 'Kho hàng',
     'cash': 'Sổ quỹ',
@@ -56,6 +57,7 @@ const Sidebar = ({ collapsed, onClose }) => {
   const moduleRoutes = {
     'products': '/products',
     'product_categories': '/product-categories',
+    'price_lists': '/price-lists',
     'purchase_orders': '/purchase-orders',
     'inventory': '/inventory',
     'cash': '/cash',
@@ -100,7 +102,7 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // BUILD DYNAMIC MENU FROM USER PERMISSIONS
   const buildDynamicMenu = (permissions) => {
-    const groups = {};
+    let groups = {};
 
     permissions.forEach(permission => {
       const module = permission.module;
@@ -136,8 +138,38 @@ const Sidebar = ({ collapsed, onClose }) => {
       }
     });
 
+    groups = ensurePriceListMenu(groups, permissions);
+
     return Object.values(groups);
   };
+
+    // Ensure price lists appear with merchandise group when user can view products
+    const ensurePriceListMenu = (groups, permissions) => {
+      const hasProductView = permissions.some(
+        p => p.module === 'products' && p.name.endsWith('.view')
+      );
+      if (!hasProductView) { return groups; }
+
+      const updated = { ...groups };
+      if (!updated['merchandise']) {
+        updated['merchandise'] = {
+          key: 'merchandise',
+          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
+          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
+          children: [],
+        };
+      }
+
+      const exists = updated['merchandise'].children.some(c => c.key === 'price_lists');
+      if (!exists) {
+        updated['merchandise'].children.push({
+          key: 'price_lists',
+          label: moduleDisplayNames['price_lists'],
+          path: moduleRoutes['price_lists'],
+        });
+      }
+      return updated;
+    };
 
   const findCurrentGroup = (menuGroups, pathname) => {
     for (const group of menuGroups) {
