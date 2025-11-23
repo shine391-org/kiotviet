@@ -38,6 +38,55 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
     }
 
     /** @test */
+    public function it_falls_back_to_base_when_no_list_applies()
+    {
+        $pid = $this->seedProduct(120);
+        $price = $this->service->getProductPrice($pid, null, null);
+        $this->assertSame(120.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_ignores_expired_price_list()
+    {
+        $pid = $this->seedProduct(150);
+        $expired = $this->seedPriceList(['name' => 'Expired', 'end_date' => date('Y-m-d', strtotime('-1 day'))]);
+        $this->seedItem($expired, $pid, null, 50);
+
+        $price = $this->service->getProductPrice($pid, null, null);
+        $this->assertSame(150.0, $price['final_price']); // base price used
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_returns_zero_when_discounts_overflow()
+    {
+        $pid = $this->seedProduct(100);
+        $list = $this->seedPriceList(['name' => 'Overflow']);
+        $this->seedItem($list, $pid, null, 100, 50, 60); // 100 -50% -60 = -10 -> max(0)
+
+        $price = $this->service->getProductPrice($pid, null, null);
+        $this->assertSame(0.0, $price['final_price']);
+    }
+
+    /** @test */
+    public function it_rejects_invalid_product()
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->service->getProductPrice(999, null, null);
+    }
+
+    /** @test */
+    public function it_rejects_variant_not_belonging_to_product()
+    {
+        $p1 = $this->seedProduct(100);
+        $p2 = $this->seedProduct(200);
+        $v2 = $this->seedVariant($p2, 50);
+        $this->expectException(\RuntimeException::class);
+        $this->service->getProductPrice($p1, $v2, null);
+    }
+
+    /** @test */
     public function it_prefers_variant_specific_item()
     {
         $pid = $this->seedProduct(100);

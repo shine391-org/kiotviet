@@ -83,4 +83,52 @@ class PriceListServiceTest extends CIUnitTestCase
         $this->assertEquals('upcoming', $upcoming['data']['status']);
         $this->assertEquals('expired', $expired['data']['status']);
     }
+
+    /** @test */
+    public function it_updates_price_list()
+    {
+        $created = $this->service->create(['name' => 'UpdateMe', 'priority' => 1]);
+        $id = $created['data']['id'];
+
+        $result = $this->service->update($id, ['priority' => 10, 'type' => 'vip']);
+        $this->assertTrue($result['success']);
+        $row = $this->db->table('db_price_lists')->where('id', $id)->get()->getRowArray();
+        $this->assertEquals(10, (int) $row['priority']);
+        $this->assertEquals('vip', $row['type']);
+    }
+
+    /** @test */
+    public function it_deletes_price_list_and_items()
+    {
+        $created = $this->service->create(['name' => 'Cascade']);
+        $id = $created['data']['id'];
+        $this->service->upsertItems($id, [['product_id' => 1, 'price' => 50]]);
+
+        $this->service->delete($id);
+        // Soft delete: row remains with deleted_at
+        $this->assertEquals(1, $this->db->table('db_price_lists')->where('id', $id)->countAllResults());
+        $this->assertEquals(0, $this->db->table('db_price_list_items')->where('price_list_id', $id)->countAllResults());
+    }
+
+    /** @test */
+    public function it_filters_by_type()
+    {
+        $this->service->create(['name' => 'Retail', 'type' => 'retail']);
+        $this->service->create(['name' => 'VIP', 'type' => 'vip']);
+
+        $result = $this->service->list(['type' => 'vip', 'limit' => 10]);
+        $this->assertCount(1, $result['data']);
+        $this->assertEquals('vip', $result['data'][0]['type']);
+    }
+
+    /** @test */
+    public function it_toggles_active_flag()
+    {
+        $created = $this->service->create(['name' => 'Toggle', 'is_active' => 1]);
+        $id = $created['data']['id'];
+
+        $this->service->update($id, ['is_active' => 0]);
+        $row = $this->db->table('db_price_lists')->where('id', $id)->get()->getRowArray();
+        $this->assertEquals(0, (int) $row['is_active']);
+    }
 }

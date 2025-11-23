@@ -41,6 +41,13 @@ class PriceListRepository
         return $row ? $this->hydrate($row) : null;
     }
 
+    public function nameExists(string $name, ?int $excludeId = null): bool
+    {
+        $b = $this->lists->where('name', $name)->where('deleted_at', null);
+        if ($excludeId) { $b->where('id !=', $excludeId); }
+        return $b->countAllResults() > 0;
+    }
+
     /** Create price list row. */
     public function create(array $data): array
     {

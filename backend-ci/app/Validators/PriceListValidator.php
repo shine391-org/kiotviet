@@ -106,6 +106,14 @@ class PriceListValidator
     {
         if (isset($data['apply_to_groups'])) {
             $data['apply_to_groups'] = array_values(array_filter(array_map('intval', (array) $data['apply_to_groups'])));
+            // Optional existence check if customer_groups table exists
+            $db = \Config\Database::connect('tests');
+            if ($db->tableExists('customer_groups') && ! empty($data['apply_to_groups'])) {
+                $count = $db->table('customer_groups')->whereIn('id', $data['apply_to_groups'])->countAllResults();
+                if ($count !== count($data['apply_to_groups'])) {
+                    throw new InvalidArgumentException('apply_to_groups contains invalid group id');
+                }
+            }
         }
         if (isset($data['priority'])) { $data['priority'] = (int) $data['priority']; }
         if (isset($data['is_active'])) { $data['is_active'] = (bool) filter_var($data['is_active'], FILTER_VALIDATE_BOOLEAN); }

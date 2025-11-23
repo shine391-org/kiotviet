@@ -211,12 +211,16 @@ class Services extends BaseService
 
     public static function priceListRepository(bool $getShared = true): PriceListRepository
     {
-        return $getShared ? static::getSharedInstance('priceListRepository') : new PriceListRepository();
+        if ($getShared) { return static::getSharedInstance('priceListRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PriceListRepository(null, $db);
     }
 
     public static function priceListItemRepository(bool $getShared = true): PriceListItemRepository
     {
-        return $getShared ? static::getSharedInstance('priceListItemRepository') : new PriceListItemRepository();
+        if ($getShared) { return static::getSharedInstance('priceListItemRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PriceListItemRepository(null, $db);
     }
 
     public static function priceListValidator(bool $getShared = true): PriceListValidator
@@ -226,7 +230,7 @@ class Services extends BaseService
 
     public static function priceListService(bool $getShared = true): PriceListService
     {
-        if ($getShared) { return static::getSharedInstance('priceListService'); }
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('priceListService'); }
 
         return new PriceListService(
             static::priceListRepository(false),
@@ -237,7 +241,9 @@ class Services extends BaseService
 
     public static function priceCalculatorService(bool $getShared = true): PriceCalculatorService
     {
-        return $getShared ? static::getSharedInstance('priceCalculatorService') : new PriceCalculatorService(
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('priceCalculatorService'); }
+
+        return new PriceCalculatorService(
             static::priceListRepository(false),
             static::priceListItemRepository(false),
             static::productRepository(false),
@@ -247,7 +253,9 @@ class Services extends BaseService
 
     public static function orderRepository(bool $getShared = true): OrderRepository
     {
-        return $getShared ? static::getSharedInstance('orderRepository') : new OrderRepository();
+        if ($getShared) { return static::getSharedInstance('orderRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderRepository(null, null, $db);
     }
 
     public static function orderValidator(bool $getShared = true): OrderValidator
@@ -257,7 +265,7 @@ class Services extends BaseService
 
     public static function orderService(bool $getShared = true): OrderService
     {
-        if ($getShared) { return static::getSharedInstance('orderService'); }
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderService'); }
 
         return new OrderService(
             static::orderRepository(false),

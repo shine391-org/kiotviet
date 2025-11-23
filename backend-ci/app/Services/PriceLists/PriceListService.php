@@ -59,6 +59,9 @@ class PriceListService
     public function create(array $data): array
     {
         $validated = $this->validator->validateCreate($data);
+        if ($this->repo->nameExists($validated['name'])) {
+            throw new InvalidArgumentException('Price list name already exists');
+        }
         $row = $this->repo->create($validated);
         $row['status'] = $this->status($row);
         return ['success' => true, 'data' => $row];
@@ -69,6 +72,9 @@ class PriceListService
     {
         $this->requirePriceList($id);
         $validated = $this->validator->validateUpdate($data);
+        if (! empty($validated['name']) && $this->repo->nameExists($validated['name'], $id)) {
+            throw new InvalidArgumentException('Price list name already exists');
+        }
         $this->repo->update($id, $validated);
         return ['success' => true];
     }

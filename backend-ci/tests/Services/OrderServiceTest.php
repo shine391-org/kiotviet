@@ -64,6 +64,39 @@ class OrderServiceTest extends CIUnitTestCase
         $this->assertEquals($listId, (int) $items[0]['price_list_id']);
     }
 
+    /** @test */
+    public function it_creates_order_with_multiple_products_and_mixed_pricing()
+    {
+        $p1 = $this->seedProduct(100);
+        $p2 = $this->seedProduct(50);
+        $listId = $this->seedPriceList(['name' => 'OnlyP1', 'priority' => 3]);
+        $this->seedItem($listId, $p1, null, 80);
+
+        $create = $this->service->create([
+            'customer_id' => 3,
+            'order_date' => date('Y-m-d'),
+            'items' => [
+                ['product_id' => $p1, 'quantity' => 2], // priced by list -> 80 *2
+                ['product_id' => $p2, 'quantity' => 1], // base 50
+            ],
+        ]);
+
+        $this->assertTrue($create['success']);
+        $this->assertEquals(210.0, (float) $create['data']['total']); // 160 + 50
+    }
+
+    /** @test */
+    public function it_rejects_zero_quantity()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $p1 = $this->seedProduct(100);
+        $this->service->create([
+            'items' => [
+                ['product_id' => $p1, 'quantity' => 0],
+            ],
+        ]);
+    }
+
     private function seedProduct(float $price): int
     {
         $this->db->table('db_products')->insert([

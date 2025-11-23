@@ -34,6 +34,7 @@ class OrderService
         $items = [];
         $subtotal = 0; $total = 0; $firstPriceListId = null; $firstPriceListName = null;
         foreach ($validated['items'] as $item) {
+            $this->assertStockAvailable($item['product_id'], $item['variant_id'], $item['quantity']);
             $calc = $this->pricing->getProductPrice($item['product_id'], $item['variant_id'], $groupId, (int) $item['quantity'], $validated['order_date']);
             $items[] = [
                 'product_id' => $item['product_id'],
@@ -113,6 +114,25 @@ class OrderService
         $db = Database::connect();
         if (! $db->tableExists('customers')) { return null; }
         $row = $db->table('customers')->select('customer_group_id')->where('id', $customerId)->get()->getRowArray();
+        if (! $row) {
+            throw new \InvalidArgumentException('Customer not found');
+        }
         return $row['customer_group_id'] ?? null;
+    }
+
+    private function assertStockAvailable(int $productId, ?int $variantId, float $qty): void
+    {
+        $db = Database::connect();
+        if (! $db->tableExists('inventory_stock')) { return; }
+        $row = $db->table('inventory_stock')
+            ->select('quantity_on_hand, quantity_reserved')
+            ->where('product_id', $productId)
+            ->where('variant_id', $variantId)
+            ->get()->getRowArray();
+        if (! $row) { return; } // no stock record, allow
+        $available = (float) ($row['quantity_on_hand'] ?? 0) - (float) ($row['quantity_reserved'] ?? 0);
+        if ($available < $qty) {
+            throw new \RuntimeException('Insufficient stock for product');
+        }
     }
 }

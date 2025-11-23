@@ -36,6 +36,10 @@ class PriceCalculatorService
      */
     public function getProductPrice(int $productId, ?int $variantId, ?int $customerGroupId, int $quantity = 1, ?string $orderDate = null): array
     {
+        if ($quantity <= 0) {
+            throw new \InvalidArgumentException('quantity must be greater than 0');
+        }
+
         $date = $orderDate ?: date('Y-m-d');
         $product = $this->products->findById($productId);
         if (! $product) { throw new RuntimeException('Product not found'); }

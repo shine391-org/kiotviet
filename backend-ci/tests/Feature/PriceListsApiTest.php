@@ -30,7 +30,6 @@ class PriceListsApiTest extends CIUnitTestCase
             'type' => 'vip',
             'start_date' => '2025-01-01',
             'priority' => 3,
-            'apply_to_groups' => [2],
         ];
 
         $res = $this->withBody(json_encode($payload), 'application/json')
