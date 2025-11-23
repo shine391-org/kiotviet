@@ -35,6 +35,12 @@ class PriceListValidator
     /** Validate create payload. */
     public function validateCreate(array $input): array
     {
+        if (isset($input['is_active']) && is_bool($input['is_active'])) {
+            $input['is_active'] = $input['is_active'] ? '1' : '0';
+        }
+        if (isset($input['auto_update']) && is_bool($input['auto_update'])) {
+            $input['auto_update'] = $input['auto_update'] ? '1' : '0';
+        }
         $rules = [
             'name' => 'required|string|max_length[255]',
             'type' => 'permit_empty|in_list[base,wholesale,retail,vip,custom]',
@@ -56,6 +62,12 @@ class PriceListValidator
     /** Validate update payload. */
     public function validateUpdate(array $input): array
     {
+        if (isset($input['is_active']) && is_bool($input['is_active'])) {
+            $input['is_active'] = $input['is_active'] ? '1' : '0';
+        }
+        if (isset($input['auto_update']) && is_bool($input['auto_update'])) {
+            $input['auto_update'] = $input['auto_update'] ? '1' : '0';
+        }
         $rules = [
             'name' => 'permit_empty|string|max_length[255]',
             'type' => 'permit_empty|in_list[base,wholesale,retail,vip,custom]',
