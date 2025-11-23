@@ -14,7 +14,7 @@ class VerifyImageManager extends BaseCommand
     protected $name = 'verify:image_manager';
     protected $description = 'Manual end-to-end verification for Image Manager on real DB (no mocks).';
 
-    public function run(array $params)
+    public function run(array $params): int
     {
         $productId = 1984; // hardcoded test product
         $db = Database::connect();
@@ -44,7 +44,7 @@ class VerifyImageManager extends BaseCommand
             ->getResultArray();
         if (count($unassigned) < 2) {
             CLI::write('FAIL: Need at least 2 available images (variant_id is null)', 'red');
-            return;
+            return 1;
         }
         $newId1 = (int) $unassigned[0]['id'];
         $newId2 = (int) $unassigned[1]['id'];
@@ -57,7 +57,7 @@ class VerifyImageManager extends BaseCommand
             ->getRowArray();
         if (! $existing) {
             CLI::write('FAIL: No existing image attached to product for duplicate test', 'red');
-            return;
+            return 1;
         }
         $existingId = (int) $existing['id'];
 
@@ -106,6 +106,8 @@ class VerifyImageManager extends BaseCommand
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         CLI::write('Cleanup done. Final count for product ' . $productId . ': ' . $this->countImages($db, $productId));
+
+        return 0;
     }
 
     private function countImages($db, int $productId): int
