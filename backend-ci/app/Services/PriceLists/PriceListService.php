@@ -128,18 +128,35 @@ class PriceListService
     /** Trigger auto-update for dependent price lists. */
     public function triggerAutoUpdate(int $priceListId): array
     {
+        $visited = [];
+        return $this->triggerAutoUpdateRecursive($priceListId, $visited);
+    }
+
+    /** Depth-first auto-update with cycle guard. */
+    private function triggerAutoUpdateRecursive(int $priceListId, array &$visited): array
+    {
+        if (in_array($priceListId, $visited, true)) {
+            return [];
+        }
+        $visited[] = $priceListId;
+
         $dependents = $this->repo->dependentLists($priceListId);
         if (empty($dependents)) { return []; }
 
         $updated = [];
         foreach ($dependents as $dependent) {
+            $dependentId = (int) $dependent['id'];
+            if (in_array($dependentId, $visited, true)) { continue; }
             if (! ($dependent['auto_update'] ?? false)) { continue; }
-            $itemCount = $this->recalculateItems((int) $dependent['id']);
-            $updated[] = (int) $dependent['id'];
-            $nested = $this->triggerAutoUpdate((int) $dependent['id']);
+
+            $itemCount = $this->recalculateItems($dependentId);
+            $updated[] = $dependentId;
+            $this->logAutoUpdate($priceListId, $dependentId, $itemCount);
+
+            $nested = $this->triggerAutoUpdateRecursive($dependentId, $visited);
             $updated = array_merge($updated, $nested);
-            $this->logAutoUpdate($priceListId, (int) $dependent['id'], $itemCount);
         }
+
         return array_values(array_unique($updated));
     }
 

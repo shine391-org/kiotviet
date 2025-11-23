@@ -108,6 +108,11 @@ const PriceListFormPage = () => {
       return;
     }
 
+    if (!isEdit && !priceListId) {
+      message.error(actionResult?.payload || 'Tạo bảng giá thất bại');
+      return;
+    }
+
     if (priceListId && items.length) {
       const saveResult = await dispatch(savePriceListItems({ id: priceListId, items }));
       if (saveResult.error) {

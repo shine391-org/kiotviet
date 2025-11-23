@@ -346,7 +346,11 @@ const handleUploadPreview = async () => {
     });
     
     const result = await response.json();
-    setImportPreview(result.data);
+    // Lưu cả file_path để confirm-import sử dụng
+    setImportPreview({
+        ...result.data,
+        file_path: result.file_path,
+    });
 };
 
 const handleConfirmImport = async () => {
