@@ -2,10 +2,51 @@
 
 namespace Tests\Services;
 
+use App\Repositories\Inventory\InventoryRepository;
+use App\Services\Common\NotificationService;
 use App\Services\Inventory\InventoryService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
 use RuntimeException;
+
+class TestInventoryRepository extends InventoryRepository
+{
+    public function __construct($db)
+    {
+        parent::__construct($db);
+    }
+
+    public function reserveStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
+    {
+        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        if (! $row) { throw new RuntimeException('Stock not found'); }
+
+        $newReserved = ($row['quantity_reserved'] ?? 0) + $qty;
+        $available = ($row['quantity_on_hand'] ?? 0) - $newReserved;
+        if ($available < 0) { throw new RuntimeException('Insufficient available stock'); }
+
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+            'quantity_reserved' => $newReserved,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $row['quantity_reserved'] = $newReserved;
+        return $row;
+    }
+
+    public function releaseStock(int $productId, ?int $variantId, int $warehouseId, float $qty): array
+    {
+        $row = $this->stockRow($productId, $variantId, $warehouseId);
+        if (! $row) { throw new RuntimeException('Stock not found'); }
+
+        $newReserved = max(0, ($row['quantity_reserved'] ?? 0) - $qty);
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+            'quantity_reserved' => $newReserved,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $row['quantity_reserved'] = $newReserved;
+        return $row;
+    }
+}
 
 class InventoryServiceTest extends CIUnitTestCase
 {
@@ -17,7 +58,8 @@ class InventoryServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->db = Database::connect('tests');
         $this->resetSchema();
-        $this->service = new InventoryService();
+        $repo = new TestInventoryRepository($this->db);
+        $this->service = new InventoryService($repo, null, new NotificationService());
     }
 
     public function test_in_movement_increases_stock(): void
