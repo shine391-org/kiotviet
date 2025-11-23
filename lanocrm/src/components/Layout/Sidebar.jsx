@@ -32,25 +32,24 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // Module display names (Vietnamese)
   const moduleDisplayNames = {
-    'products': 'Hàng hóa',
-    'product_categories': 'Danh mục SP',
-    'price_lists': 'Bảng giá',
-    'purchase_orders': 'Đơn mua hàng',
-    'inventory': 'Kho hàng',
-    'cash': 'Sổ quỹ',
-    'partners': 'Đối tác',
-    'customers': 'Khách hàng',
-    'customer_groups': 'Nhóm KH',
-    'products': 'Danh sách sản phẩm',  // ← CHỈ THÊM DÒNG NÀY
-    'orders': 'Đơn hàng',
-    'shipments': 'Vận chuyển',
-    'returns': 'Trả hàng',
-    'invoices': 'Hóa đơn',
-    'reports': 'Báo cáo',
-    'users': 'Người dùng',
-    'roles': 'Vai trò',
-    'branches': 'Chi nhánh',
-    'settings': 'Cài đặt',
+    products: 'Danh sách sản phẩm',
+    product_categories: 'Danh mục SP',
+    price_lists: 'Bảng giá',
+    purchase_orders: 'Đơn mua hàng',
+    inventory: 'Kho hàng',
+    cash: 'Sổ quỹ',
+    partners: 'Đối tác',
+    customers: 'Khách hàng',
+    customer_groups: 'Nhóm KH',
+    orders: 'Đơn hàng',
+    shipments: 'Vận chuyển',
+    returns: 'Trả hàng',
+    invoices: 'Hóa đơn',
+    reports: 'Báo cáo',
+    users: 'Người dùng',
+    roles: 'Vai trò',
+    branches: 'Chi nhánh',
+    settings: 'Cài đặt',
   };
 
   // Module routes
@@ -143,33 +142,35 @@ const Sidebar = ({ collapsed, onClose }) => {
     return Object.values(groups);
   };
 
-    // Ensure price lists appear with merchandise group when user can view products
-    const ensurePriceListMenu = (groups, permissions) => {
-      const hasProductView = permissions.some(
-        p => p.module === 'products' && p.name.endsWith('.view')
-      );
-      if (!hasProductView) { return groups; }
+  // Ensure price lists appear under Hàng hóa when user có quyền xem sản phẩm
+  const ensurePriceListMenu = (groups, permissions) => {
+    const hasProductView = permissions.some(
+      (p) => p.module === 'products' && p.name.endsWith('.view')
+    );
+    if (!hasProductView) {
+      return groups;
+    }
 
-      const updated = { ...groups };
-      if (!updated['merchandise']) {
-        updated['merchandise'] = {
-          key: 'merchandise',
-          label: groupDisplayNames['merchandise'] || 'Hàng hóa',
-          icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
-          children: [],
-        };
-      }
+    const updated = { ...groups };
+    if (!updated['merchandise']) {
+      updated['merchandise'] = {
+        key: 'merchandise',
+        label: groupDisplayNames['merchandise'] || 'Hàng hóa',
+        icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
+        children: [],
+      };
+    }
 
-      const exists = updated['merchandise'].children.some(c => c.key === 'price_lists');
-      if (!exists) {
-        updated['merchandise'].children.push({
-          key: 'price_lists',
-          label: moduleDisplayNames['price_lists'],
-          path: moduleRoutes['price_lists'],
-        });
-      }
-      return updated;
-    };
+    const exists = updated['merchandise'].children.some((c) => c.key === 'price_lists');
+    if (!exists) {
+      updated['merchandise'].children.unshift({
+        key: 'price_lists',
+        label: moduleDisplayNames['price_lists'],
+        path: moduleRoutes['price_lists'],
+      });
+    }
+    return updated;
+  };
 
   const findCurrentGroup = (menuGroups, pathname) => {
     for (const group of menuGroups) {
