@@ -10,21 +10,12 @@
     failOnRisky="true"
     failOnWarning="true"
     cacheDirectory="build/.phpunit.cache">
-    <coverage
-        includeUncoveredFiles="true"
-        pathCoverage="false"
-        ignoreDeprecatedCodeUnits="true"
-        disableCodeCoverageIgnore="true">
-        <report>
-            <clover outputFile="build/logs/clover.xml"/>
-            <html outputDirectory="build/logs/html"/>
-            <php outputFile="build/logs/coverage.serialized"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false"/>
-        </report>
-    </coverage>
+    <!-- Code coverage outputs are disabled in local/unit runs to avoid
+         warnings when no coverage driver (xdebug/pcov) is installed. -->
     <testsuites>
         <testsuite name="App">
             <directory>./tests</directory>
+            <exclude>./tests/Integration</exclude>
         </testsuite>
     </testsuites>
     <logging>

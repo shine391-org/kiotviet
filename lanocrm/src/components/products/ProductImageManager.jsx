@@ -159,25 +159,28 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
   const handleImagesAttached = async (imageIds) => {
     try {
       console.log('🔗 Attaching images:', imageIds);
-      
-      // ✅ FIX: Filter out duplicates (images already attached)
-      const existingImageIds = images.map(img => img.id);
-      const newImageIds = imageIds.filter(id => !existingImageIds.includes(id));
-      
-      if (newImageIds.length === 0) {
+
+      // Filter out duplicates on FE for quick UX, BE still guards duplicates
+      const existingIds = images.map((img) => img.id);
+      const targetIds = imageIds.filter((id) => !existingIds.includes(id));
+
+      if (targetIds.length === 0) {
         message.warning('⚠️ Tất cả ảnh đã được gắn rồi');
         return;
       }
-      
-      const response = await productApi.attachMultipleImages(entityId, newImageIds);
-      
+
+      const response = isVariant
+        ? await productApi.attachMultipleImagesToVariant(variantId, targetIds)
+        : await productApi.attachMultipleImages(productId, targetIds);
+
       if (response.success) {
-        message.success(`✅ Đã gắn ${response.attached_count || newImageIds.length} ảnh thành công`);
-        
-        // ✅ FIX: Reload images after attach
-        await loadImages();
-        
-        // Switch back to upload tab
+        const attached = response.attached_count ?? targetIds.length;
+        const skipped = response.skipped_count ?? 0;
+        const msg = `Đã thêm ${attached} ảnh, bỏ qua ${skipped} ảnh đã tồn tại${response.missing_count ? `, ${response.missing_count} ảnh không tìm thấy` : ''}`;
+        message.success(msg);
+
+        await loadImages();               // refresh "My Files"
+        setMediaLibraryKey((prev) => prev + 1); // refresh library flags
         setActiveTab('upload');
       } else {
         message.error(response.message || 'Lỗi gắn ảnh');

@@ -51,7 +51,6 @@ class ProductService
     public function create(array $data): array
     {
         $validated = $this->validator->validateCreate($data);
-        if ($this->repo->codeExists($validated['code'])) { throw new InvalidArgumentException('Code already exists'); }
         $product = $this->repo->create($validated);
         return ['success' => true, 'data' => $product];
     }
@@ -59,8 +58,7 @@ class ProductService
     /** Update product. @agent-use: PUT /api/products/{id} @agent-pattern: Standard update */
     public function update(int $id, array $data): array
     {
-        $this->requireProduct($id); $validated = $this->validator->validateUpdate($data);
-        if (! empty($validated['code']) && $this->repo->codeExists($validated['code'], $id)) { throw new InvalidArgumentException('Code already exists'); }
+        $this->requireProduct($id); $validated = $this->validator->validateUpdate($id, $data);
         $this->repo->update($id, $validated);
         return ['success' => true];
     }
@@ -74,8 +72,20 @@ class ProductService
     /** Check code uniqueness. @agent-use: POST /api/products/check-code @agent-pattern: Exists check */
     public function checkCode(string $code, ?int $excludeId = null): array
     {
-        if (! $code) { throw new InvalidArgumentException('code is required'); }
-        return ['success' => true, 'exists' => $this->repo->codeExists($code, $excludeId)];
+        $trimmed = trim($code); if ($trimmed === '') { throw new InvalidArgumentException('code is required'); }
+
+        $existsInProducts = $this->repo->codeExists($trimmed, $excludeId);
+        $existsInVariants = $this->repo->codeExistsInVariants($trimmed);
+
+        return [
+            'success' => true,
+            'exists' => $existsInProducts || $existsInVariants,
+            'exists_in_products' => $existsInProducts,
+            'exists_in_variants' => $existsInVariants,
+            'message' => $existsInProducts
+                ? 'Mã sản phẩm đã tồn tại trong danh sách sản phẩm'
+                : ($existsInVariants ? 'Mã sản phẩm đã tồn tại trong danh sách phiên bản' : 'Mã có thể sử dụng'),
+        ];
     }
 
     /** List product images. @agent-use: GET /api/products/{id}/images @agent-pattern: Media listing */
@@ -103,8 +113,26 @@ class ProductService
     /** Attach uploaded images to product. @agent-use: POST /api/products/{id}/images/attach-multiple @agent-pattern: Bulk attach */
     public function attachImages(int $productId, array $imageIds): array
     {
-        $this->requireProduct($productId); if (empty($imageIds)) { throw new InvalidArgumentException('image_ids required'); }
-        $count = $this->repo->attachImages($productId, $imageIds); return ['success' => true, 'attached_count' => $count, 'message' => 'Gắn ảnh thành công'];
+        $this->requireProduct($productId);
+        $ids = $this->validator->validateImageIds($imageIds);
+        $result = $this->repo->attachImages($productId, $ids);
+
+        $attachedCount = count($result['attached_ids']);
+        $skippedCount = count($result['skipped_ids']);
+        $missingCount = count($result['missing_ids']);
+        $message = sprintf('Đã thêm %d ảnh, %d ảnh bị bỏ qua (đã tồn tại)', $attachedCount, $skippedCount);
+        if ($missingCount > 0) { $message .= sprintf(', %d ảnh không tìm thấy', $missingCount); }
+
+        return [
+            'success' => true,
+            'attached_count' => $attachedCount,
+            'skipped_count' => $skippedCount,
+            'missing_count' => $missingCount,
+            'attached_ids' => $result['attached_ids'],
+            'skipped_ids' => $result['skipped_ids'],
+            'missing_ids' => $result['missing_ids'],
+            'message' => $message,
+        ];
     }
 
     /** Set primary image. @agent-use: PUT /api/products/images/{id}/set-primary @agent-pattern: Primary toggle */

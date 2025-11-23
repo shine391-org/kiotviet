@@ -23,13 +23,13 @@ const ENDPOINTS = {
   PRODUCT_UPLOAD: '/products/upload',
   PRODUCT_SET_PRIMARY: (id) => `/products/images/${id}/set-primary`,
   PRODUCT_DELETE_IMAGE: (id) => `/products/images/${id}`,
-  
+
   // ✅ MEDIA LIBRARY ENDPOINTS (NEW)
   MEDIA_LIBRARY: '/products/media/library',
   MEDIA_BY_DATE: '/products/media/by-date',
   MEDIA_SEARCH_SKU: '/products/media/search-sku',
   IMAGES_ATTACH_MULTIPLE: (id) => `/products/${id}/images/attach-multiple`,
-  
+
   // Categories
   CATEGORIES: '/product-categories',
   CATEGORY_DETAIL: (id) => `/product-categories/${id}`,
@@ -38,7 +38,7 @@ const ENDPOINTS = {
   VARIANTS: (productId) => `/products/${productId}/variants`,
   VARIANT_DETAIL: (id) => `/variants/${id}`,
   VARIANT_IMAGES_ATTACH_MULTIPLE: (variantId) => `/variants/${variantId}/images/attach-multiple`,
-  
+
   // Import/Export
   PRODUCTS_IMPORT: '/products/import',
   PRODUCTS_EXPORT: '/products/export',
@@ -65,7 +65,7 @@ const ENDPOINTS = {
  */
 export const getProducts = async (params = {}) => {
   try {
-    const response = await axiosInstance.get(ENDPOINTS.BASE, { 
+    const response = await axiosInstance.get(ENDPOINTS.BASE, {
       params: {
         ...params,
         // Ensure pagination params
@@ -134,17 +134,17 @@ export const getProductWithVariants = async (productId) => {
       console.log('✅ Product already has variants in response');
       return productResponse;
     }
-    
+
     // ✅ If not, fetch variants separately (only if has_variants = true)
     if (product.has_variants) {
       console.log('🔵 Fetching variants separately for product', productId);
       const variantsResponse = await getVariantsByProduct(productId);
-      
+
       if (variantsResponse.success && variantsResponse.data.variants) {
         product.variants = variantsResponse.data.variants;
       }
     }
-    
+
     return {
       success: true,
       data: product,
@@ -202,25 +202,22 @@ export const createProduct = async (data) => {
 };*/
 export const createProduct = async (data) => {
   try {
-    const requiredFields = ['code', 'name', 'category_id', 'product_type', 'unit', 'selling_price'];
-    const missingFields = requiredFields.filter(field => {
-      const value = data[field];
-      if (field === 'category_id') {
-        return !value || !Array.isArray(value) || value.length === 0;
-      }
-      return !value;
-    });
-    
+    // Chỉ bắt buộc code, name; các field còn lại để BE validate
+    const requiredFields = ['code', 'name'];
+    const missingFields = requiredFields.filter(f => data[f] === undefined || data[f] === null || data[f] === '');
     if (missingFields.length > 0) {
       throw new Error(`Thiếu trường bắt buộc: ${missingFields.join(', ')}`);
     }
 
-    // ✅ Parse category_id sang array integer
     const submitData = {
       ...data,
       category_id: Array.isArray(data.category_id)
-        ? data.category_id.map(id => parseInt(id, 10))
-        : [parseInt(data.category_id, 10)]
+        ? data.category_id.map(id => parseInt(id, 10)).filter(Boolean)
+        : data.category_id ? [parseInt(data.category_id, 10)] : [],
+      selling_price: data.selling_price ?? 0,
+      purchase_price: data.purchase_price ?? 0,
+      wholesale_price: data.wholesale_price ?? 0,
+      stock_quantity: data.stock_quantity ?? 0,
     };
 
     const response = await axiosInstance.post(ENDPOINTS.BASE, submitData);
@@ -294,7 +291,7 @@ export const checkProductCode = async (code, excludeId = null) => {
   try {
     const params = { code };
     if (excludeId) params.exclude_id = excludeId;
-    
+
     const response = await axiosInstance.post(ENDPOINTS.CHECK_CODE, params);
     return response.data;
   } catch (error) {
@@ -355,9 +352,9 @@ export const uploadProductImage = async (file, productId) => {
  */
 export const uploadMultipleProductImages = async (files, productId) => {
   try {
-    console.log('🔵 uploadMultipleProductImages called:', { 
-      fileCount: files.length, 
-      productId 
+    console.log('🔵 uploadMultipleProductImages called:', {
+      fileCount: files.length,
+      productId
     });
 
     // Validate inputs
@@ -386,7 +383,7 @@ export const uploadMultipleProductImages = async (files, productId) => {
     // Build FormData
     const formData = new FormData();
     formData.append('product_id', id);
-    
+
     // Append multiple files with same field name 'files[]'
     files.forEach((file) => {
       formData.append('files[]', file);
@@ -413,8 +410,8 @@ export const uploadMultipleProductImages = async (files, productId) => {
   } catch (error) {
     console.error('❌ uploadMultipleProductImages Error:', error);
     throw new Error(
-      error.message || 
-      error.response?.data?.message || 
+      error.message ||
+      error.response?.data?.message ||
       'Failed to upload images'
     );
   }
@@ -451,14 +448,14 @@ export const setPrimaryImage = async (imageId) => {
 export const deleteProductImage = async (imageId, hardDelete = false) => {
   try {
     const params = hardDelete ? { hard: 1 } : {};
-    
+
     console.log('🗑️ deleteProductImage:', { imageId, hardDelete, params });
-    
+
     const response = await axiosInstance.delete(
       `/products/images/${imageId}`,
       { params }
     );
-    
+
     console.log('✅ Delete response:', response.data);
     return response.data;
   } catch (error) {
@@ -469,7 +466,7 @@ export const deleteProductImage = async (imageId, hardDelete = false) => {
       message: error.message,
       data: error.response?.data
     });
-    
+
     // ✅ FIX: Rethrow with status for better handling
     throw {
       status: error.response?.status || 500,
@@ -488,7 +485,7 @@ export const importProducts = async (file) => {
   try {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const response = await axiosInstance.post(
       ENDPOINTS.IMPORT,
       formData,
@@ -566,7 +563,7 @@ export const downloadFile = (blob, filename = 'products.xlsx') => {
  */
 export const getProductsWithVariants = async (params = {}) => {
   try {
-    const response = await axiosInstance.get(ENDPOINTS.BASE, { 
+    const response = await axiosInstance.get(ENDPOINTS.BASE, {
       params: {
         ...params,
         include_variants: true, // Always include variants
@@ -620,17 +617,17 @@ export const getVariant = async (variantId) => {
     if (isNaN(id) || id <= 0) {
       throw new Error(`Invalid variant ID: ${variantId}`);
     }
-    
+
     console.log(`Fetching variant ${id} from /variants/${id}`);
-    
+
     const response = await axiosInstance.get(`/variants/${id}`);
-    
+
     //console.log('getVariant response:', response.data);
-    
+
     return response.data;
   } catch (error) {
     console.error('getVariant Error:', error);
-    
+
     // Return error object so frontend can handle it
     if (error.response?.status === 404) {
       return {
@@ -639,7 +636,7 @@ export const getVariant = async (variantId) => {
         data: null
       };
     }
-    
+
     throw error;
   }
 };
@@ -665,7 +662,7 @@ export const createVariant = async (productId, data) => {
   try {
     // Use FormData for multipart submission
     const formData = new FormData();
-    
+
     Object.keys(data).forEach(key => {
       if (data[key] !== undefined && data[key] !== null) {
         if (key === 'attributes' && typeof data[key] === 'object') {
@@ -767,7 +764,7 @@ export const getMediaLibrary = async (
     // ✅ Validate inputs
     limit = Math.max(1, Math.min(100, parseInt(limit) || 12));
     offset = Math.max(0, parseInt(offset) || 0);
-    
+
     console.log('🔵 getMediaLibrary called:', { limit, offset, filters });
 
     const params = {
@@ -821,8 +818,8 @@ export const getMediaLibrary = async (
 
     throw new Error(
       error.message ||
-        error.response?.data?.message ||
-        'Lỗi tải thư viện ảnh'
+      error.response?.data?.message ||
+      'Lỗi tải thư viện ảnh'
     );
   }
 };
@@ -838,7 +835,7 @@ export const getMediaLibrary = async (
  * @param {number} offset - Offset for pagination (default: 0)
  * @returns {Promise<Object>} { success, data, total, pagination, message }
  */
-export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
+export const getMediaByDate = async (year, month, limit = 12, offset = 0, entityId = null) => {
   try {
     console.log('🔵 getMediaByDate called:', { year, month, limit, offset });
 
@@ -863,6 +860,7 @@ export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
         month: validatedMonth,
         limit: validatedLimit,
         offset: validatedOffset,
+        entity_id: entityId,
       },
     });
 
@@ -925,7 +923,7 @@ export const getMediaByDate = async (year, month, limit = 12, offset = 0) => {
  * @param {number} limit - Items per page (default: 20)
  * @returns {Promise<Object>} { success, data, total, message }
  */
-export const searchMediaBySku = async (sku, limit = 20) => {
+export const searchMediaBySku = async (sku, limit = 20, offset = 0, entityId = null) => {
   try {
     console.log('🔵 searchMediaBySku called:', { sku, limit });
 
@@ -946,12 +944,15 @@ export const searchMediaBySku = async (sku, limit = 20) => {
     }
 
     const validatedLimit = Math.max(1, Math.min(100, parseInt(limit) || 20));
+    const validatedOffset = Math.max(0, parseInt(offset) || 0);
 
     // ✅ FIX: Use GET (backend expects GET)
     const response = await axiosInstance.get(ENDPOINTS.MEDIA_SEARCH_SKU, {
       params: {
         sku: trimmedSku,
         limit: validatedLimit,
+        offset: validatedOffset,
+        entity_id: entityId,
       },
     });
 
@@ -1020,10 +1021,16 @@ export const attachMultipleImages = async (productId, imageIds = []) => {
 
     console.log('🟢 attachMultipleImages success:', response.data);
 
+    // ✅ FIX: Forward ALL fields from backend including skipped_count, missing_count
     return {
       success: response.data.success !== false,
       message: response.data.message || `Đã gắn ${validatedIds.length} ảnh thành công`,
-      attached_count: response.data.attached_count || validatedIds.length,
+      attached_count: response.data.attached_count || 0,
+      skipped_count: response.data.skipped_count || 0,
+      missing_count: response.data.missing_count || 0,
+      attached_ids: response.data.attached_ids || [],
+      skipped_ids: response.data.skipped_ids || [],
+      missing_ids: response.data.missing_ids || [],
       product_id: id,
       data: response.data.data || [],
     };
@@ -1113,14 +1120,18 @@ export const attachMultipleImagesToVariant = async (variantId, imageIds = []) =>
       throw new Error(response.data?.message || 'Gắn ảnh thất bại');
     }
 
+    // ✅ FIX: Forward ALL fields from backend including skipped_count, missing_count
     return {
       success: response.data.success !== false,
       message: response.data.message || `Đã gắn ${validatedIds.length} ảnh thành công`,
       attached_count: response.data.attached_count ?? 0,
-      restored_count: response.data.restored_count ?? 0,
-      duplicate_count: response.data.duplicate_count ?? 0,
-      total_success: response.data.total_success ?? 0,
+      skipped_count: response.data.skipped_count ?? 0,
+      missing_count: response.data.missing_count ?? 0,
+      attached_ids: response.data.attached_ids || [],
+      skipped_ids: response.data.skipped_ids || [],
+      missing_ids: response.data.missing_ids || [],
       variant_id: id,
+      product_id: response.data.product_id || null,
       data: response.data.data || [],
     };
   } catch (error) {

@@ -7,6 +7,7 @@ import * as productApi from '../../api/productApi';
 import ProductImageManager from '../../components/products/ProductImageManager';
 import VariantAttributeManager from '../../components/products/VariantAttributeManager';
 import styles from './VariantEditPage.module.css';
+import { handleApiError } from '../../utils/apiErrorHandler';
 
 
 const VariantEditPage = () => {
@@ -86,7 +87,7 @@ const VariantEditPage = () => {
       }
     } catch (error) {
       console.error('Load variant error:', error);
-      message.error(error.message || 'Không thể tải dữ liệu biến thể');
+      handleApiError(error, { defaultMessage: 'Không thể tải dữ liệu biến thể' });
       navigate('/products');
     } finally {
       setLoading(false);
@@ -150,11 +151,7 @@ const VariantEditPage = () => {
         message.error(response.message || 'Không thể cập nhật biến thể');
       }
     } catch (error) {
-      if (error.status === 409) {
-        message.error(error.message || 'Biến thể với bộ thuộc tính này đã tồn tại');
-      } else {
-        message.error(error.message || 'Có lỗi xảy ra');
-      }
+      handleApiError(error, { defaultMessage: 'Có lỗi xảy ra khi cập nhật biến thể' });
     } finally {
       setSubmitting(false);
     }

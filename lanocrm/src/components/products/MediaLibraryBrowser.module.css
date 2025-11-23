@@ -229,10 +229,22 @@
     opacity: 1;
   }
   
-  .image-overlay :global(.ant-checkbox) {
-    cursor: pointer;
-    font-size: 22px;
-  }
+.image-overlay :global(.ant-checkbox) {
+  cursor: pointer;
+  font-size: 22px;
+}
+
+/* Attached state */
+.attached {
+  opacity: 0.7;
+}
+.imageAttached {
+  filter: grayscale(35%);
+  opacity: 0.65;
+}
+.attachedBadge {
+  font-weight: 600;
+}
   
   /* ============================================================ */
   /* PRIMARY BADGE */

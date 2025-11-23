@@ -11,6 +11,8 @@ services:
       - backend-ci/.env
     depends_on:
       - db
+    volumes:
+      - ./backend-ci:/var/www/html
 
   db:
     image: mysql:8.4
@@ -22,5 +24,31 @@ services:
     volumes:
       - db_data:/var/lib/mysql
 
+  # MySQL test database (separate from dev)
+  db-test:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: lanocrm_test
+      MYSQL_USER: lanocrm_user
+      MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+    volumes:
+      - test_db_data:/var/lib/mysql
+    ports:
+      - "3307:3306" # Different port to avoid conflict
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOSTS: db,db-test
+      PMA_USER: lanocrm_user
+      PMA_PASSWORD: KP7n4RjcDbedSE2W8GgA
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+      - db-test
+
 volumes:
   db_data:
+  test_db_data: # New volume for test data
