@@ -43,6 +43,7 @@ describe('roleSlice', () => {
                 type: 'role/fetchRoles/fulfilled',
                 payload: { data: roles }
             });
+            expect(state.roles).toEqual(roles);
             expect(state.loading).toBe(false);
         });
 
