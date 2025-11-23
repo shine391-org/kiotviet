@@ -7,6 +7,16 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer, { loginUser } from '../store/slices/authSlice';
 import { BrowserRouter } from 'react-router-dom';
 
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
 // Mock authApi to prevent issues with initial state
 vi.mock('../api/authApi', () => ({
   default: {
@@ -22,7 +32,7 @@ vi.mock('../store/slices/authSlice', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
-    loginUser: vi.fn(() => ({ type: 'auth/login/pending' })), // Mock thunk
+    loginUser: vi.fn((payload) => () => Promise.resolve({ type: 'auth/login/fulfilled', payload })), // Mock thunk promise
     clearError: vi.fn(() => ({ type: 'auth/clearError' })),
   };
 });
@@ -62,6 +72,7 @@ const renderWithProviders = (
 describe('Login Page', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockNavigate.mockClear();
   });
 
   it('renders login form', () => {
@@ -119,5 +130,22 @@ describe('Login Page', () => {
          }
      });
      expect(screen.getByText('❌ Invalid credentials')).toBeInTheDocument();
+  });
+
+  it('redirects to dashboard when already authenticated', () => {
+    renderWithProviders(<Login />, {
+      preloadedState: {
+        auth: {
+          user: { name: 'Dev' },
+          token: 't',
+          permissions: [],
+          isAuthenticated: true,
+          loading: false,
+          error: null,
+        },
+      },
+    });
+
+    expect(mockNavigate).toHaveBeenCalledWith('/dashboard', { replace: true });
   });
 });

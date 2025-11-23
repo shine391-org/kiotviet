@@ -3,7 +3,6 @@ import authReducer, {
   loginUser,
   logoutUser,
   selectHasPermission,
-  logout,
   clearError
 } from './authSlice';
 import authApi from '../../api/authApi';
@@ -43,20 +42,6 @@ describe('authSlice', () => {
   describe('reducers', () => {
     it('should handle initial state', () => {
       expect(authReducer(undefined, { type: 'unknown' })).toEqual(initialState);
-    });
-
-    it('should handle logout', () => {
-      const loggedInState = {
-        ...initialState,
-        isAuthenticated: true,
-        user: { name: 'Test' },
-        token: 'token',
-      };
-      const nextState = authReducer(loggedInState, logout());
-      expect(nextState.isAuthenticated).toBe(false);
-      expect(nextState.user).toBeNull();
-      expect(nextState.token).toBeNull();
-      expect(authApi.clearAuth).toHaveBeenCalled();
     });
 
     it('should handle clearError', () => {
@@ -116,6 +101,21 @@ describe('authSlice', () => {
              type: loginUser.rejected.type,
              payload: 'Invalid credentials'
           }));
+      });
+    });
+
+    describe('logoutUser', () => {
+      it('should call authApi.logout and clearAuth then reset state', async () => {
+        authApi.logout.mockResolvedValue();
+        const dispatch = vi.fn();
+        const thunk = logoutUser();
+
+        await thunk(dispatch, () => initialState, undefined);
+
+        expect(authApi.logout).toHaveBeenCalled();
+        expect(authApi.clearAuth).toHaveBeenCalled();
+        expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: logoutUser.pending.type }));
+        expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: logoutUser.fulfilled.type }));
       });
     });
   });

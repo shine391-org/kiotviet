@@ -88,9 +88,11 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authApi.logout();
+      authApi.clearAuth();
       return null;
     } catch (error) {
       // Vẫn logout dù API fail (đã clear localStorage trong authApi.logout)
+      authApi.clearAuth();
       return rejectWithValue(error.message || 'Đăng xuất thất bại');
     }
   }
@@ -143,7 +145,6 @@ const authSlice = createSlice({
      * Logout (local only - không gọi API)
      */
     logout: (state) => {
-      authApi.clearAuth();
       state.user = null;
       state.token = null;
       state.permissions = [];
@@ -162,7 +163,6 @@ const authSlice = createSlice({
      * Clear auth state (force logout)
      */
     clearAuth: (state) => {
-      authApi.clearAuth();
       state.user = null;
       state.token = null;
       state.permissions = [];
