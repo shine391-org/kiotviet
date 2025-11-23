@@ -88,6 +88,8 @@ class PriceListService
     public function delete(int $id): array
     {
         $this->requirePriceList($id);
+        // Hard delete items to avoid orphan pricing rows
+        $this->items->replaceItems($id, []);
         return ['success' => $this->repo->delete($id)];
     }
 
@@ -128,10 +130,11 @@ class PriceListService
         $updated = [];
         foreach ($dependents as $dependent) {
             if (! ($dependent['auto_update'] ?? false)) { continue; }
-            $this->recalculateItems((int) $dependent['id']);
+            $itemCount = $this->recalculateItems((int) $dependent['id']);
             $updated[] = (int) $dependent['id'];
             $nested = $this->triggerAutoUpdate((int) $dependent['id']);
             $updated = array_merge($updated, $nested);
+            $this->logAutoUpdate($priceListId, (int) $dependent['id'], $itemCount);
         }
         return array_values(array_unique($updated));
     }
@@ -234,5 +237,11 @@ class PriceListService
             $row = $this->repo->findById($check);
             $check = $row['base_price_list_id'] ?? null;
         }
+    }
+
+    private function logAutoUpdate(int $sourceId, int $updatedId, int $items): void
+    {
+        $msg = sprintf('[Auto-update] Base list #%d -> updated list #%d (%d items recalculated)', $sourceId, $updatedId, $items);
+        log_message('info', $msg);
     }
 }
