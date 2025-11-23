@@ -118,6 +118,132 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
         $this->assertEquals(175.0, $price['final_price']); // 200 -10% -5
     }
 
+    /** @test */
+    public function it_gets_price_by_specific_list_id()
+    {
+        $pid = $this->seedProduct(100);
+        $list = $this->seedPriceList(['name' => 'SpecificList', 'priority' => 1]);
+        $this->seedItem($list, $pid, null, 80);
+
+        $price = $this->service->getProductPriceByListId($list, $pid);
+        $this->assertEquals(80.0, $price['final_price']);
+        $this->assertEquals($list, $price['applied_price_list_id']);
+        $this->assertEquals('SpecificList', $price['applied_price_list_name']);
+    }
+
+    /** @test */
+    public function it_returns_base_price_when_list_not_found_by_id()
+    {
+        $pid = $this->seedProduct(150);
+        
+        $price = $this->service->getProductPriceByListId(999, $pid);
+        $this->assertEquals(150.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_returns_base_price_when_list_inactive_by_id()
+    {
+        $pid = $this->seedProduct(120);
+        $inactiveList = $this->seedPriceList(['name' => 'Inactive', 'is_active' => 0]);
+        $this->seedItem($inactiveList, $pid, null, 80);
+
+        $price = $this->service->getProductPriceByListId($inactiveList, $pid);
+        $this->assertEquals(120.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_returns_base_price_when_list_not_started_by_id()
+    {
+        $pid = $this->seedProduct(120);
+        $futureList = $this->seedPriceList(['name' => 'Future', 'start_date' => date('Y-m-d', strtotime('+1 day'))]);
+        $this->seedItem($futureList, $pid, null, 80);
+
+        $price = $this->service->getProductPriceByListId($futureList, $pid);
+        $this->assertEquals(120.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_returns_base_price_when_list_expired_by_id()
+    {
+        $pid = $this->seedProduct(120);
+        $expiredList = $this->seedPriceList(['name' => 'Expired', 'end_date' => date('Y-m-d', strtotime('-1 day'))]);
+        $this->seedItem($expiredList, $pid, null, 80);
+
+        $price = $this->service->getProductPriceByListId($expiredList, $pid);
+        $this->assertEquals(120.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_returns_base_price_when_no_item_for_list_by_id()
+    {
+        $pid = $this->seedProduct(100);
+        $list = $this->seedPriceList(['name' => 'EmptyList']);
+        // Don't seed any item
+
+        $price = $this->service->getProductPriceByListId($list, $pid);
+        $this->assertEquals(100.0, $price['final_price']);
+        $this->assertNull($price['applied_price_list_id']);
+    }
+
+    /** @test */
+    public function it_calculates_line_total_with_quantity_by_list_id()
+    {
+        $pid = $this->seedProduct(50);
+        $list = $this->seedPriceList(['name' => 'QuantityList']);
+        $this->seedItem($list, $pid, null, 40);
+
+        $price = $this->service->getProductPriceByListId($list, $pid, null, 3.5);
+        $this->assertEquals(40.0, $price['final_price']);
+        $this->assertEquals(140.0, $price['line_total']); // 40 * 3.5
+        $this->assertEquals(3.5, $price['quantity']);
+    }
+
+    /** @test */
+    public function it_rejects_invalid_product_by_list_id()
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Product not found');
+        $this->service->getProductPriceByListId(1, 999);
+    }
+
+    /** @test */
+    public function it_rejects_negative_quantity_by_list_id()
+    {
+        $pid = $this->seedProduct(100);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('quantity must be greater than 0');
+        $this->service->getProductPriceByListId(1, $pid, null, -1);
+    }
+
+    /** @test */
+    public function it_handles_variant_price_by_list_id()
+    {
+        $pid = $this->seedProduct(100);
+        $vid = $this->seedVariant($pid, 120);
+        $list = $this->seedPriceList(['name' => 'VariantList']);
+        $this->seedItem($list, $pid, $vid, 90);
+
+        $price = $this->service->getProductPriceByListId($list, $pid, $vid);
+        $this->assertEquals(90.0, $price['final_price']);
+        $this->assertEquals(120.0, $price['base_price']); // variant base price
+    }
+
+    /** @test */
+    public function it_rejects_variant_not_belonging_to_product_by_list_id()
+    {
+        $p1 = $this->seedProduct(100);
+        $p2 = $this->seedProduct(200);
+        $v2 = $this->seedVariant($p2, 50);
+        
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Variant not found for product');
+        $this->service->getProductPriceByListId(1, $p1, $v2);
+    }
+
     private function seedProduct(float $price): int
     {
         $this->db->table('db_products')->insert([
