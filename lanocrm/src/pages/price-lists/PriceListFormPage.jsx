@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { PlusOutlined, SaveOutlined, ArrowLeftOutlined, DeleteOutlined } from '@ant-design/icons';
 import { createPriceList, fetchPriceList, fetchPriceListItems, savePriceListItems, updatePriceList } from '../../store/slices/priceListSlice';
 import * as productApi from '../../api/productApi';
+import priceListApi from '../../api/priceListApi';
 
 const PriceListFormPage = () => {
   const { id } = useParams();
@@ -17,6 +18,7 @@ const PriceListFormPage = () => {
   const [form] = Form.useForm();
   const [items, setItems] = useState([]);
   const [products, setProducts] = useState([]);
+  const [baseOptions, setBaseOptions] = useState([]);
 
   useEffect(() => {
     if (isEdit) {
@@ -31,6 +33,13 @@ const PriceListFormPage = () => {
       } catch (e) {
         console.warn('Cannot preload products', e);
       }
+
+      try {
+        const baseRes = await priceListApi.getPriceLists({ limit: 100 });
+        setBaseOptions(baseRes.data || []);
+      } catch (e) {
+        console.warn('Cannot preload price lists', e);
+      }
     })();
   }, [dispatch, id, isEdit]);
 
@@ -43,6 +52,9 @@ const PriceListFormPage = () => {
         apply_to_groups: current.apply_to_groups || [],
         priority: current.priority ?? 0,
         is_active: current.is_active ?? true,
+        base_price_list_id: current.base_price_list_id ?? null,
+        auto_update: current.auto_update ?? false,
+        formula: current.formula ?? '',
         date_range: [
           current.start_date ? dayjs(current.start_date) : null,
           current.end_date ? dayjs(current.end_date) : null,
@@ -60,6 +72,12 @@ const PriceListFormPage = () => {
   const productOptions = useMemo(() => (
     products.map(p => ({ value: p.id, label: `${p.code} - ${p.name}`, variants: p.variants || [] }))
   ), [products]);
+
+  const baseListOptions = useMemo(() => (
+    baseOptions
+      .filter(pl => !isEdit || pl.id !== Number(id))
+      .map(pl => ({ value: pl.id, label: `${pl.name} (#${pl.id})` }))
+  ), [baseOptions, id, isEdit]);
 
   const variantOptions = (productId) => {
     const prod = products.find(p => p.id === productId);
@@ -91,6 +109,9 @@ const PriceListFormPage = () => {
       end_date: values.date_range?.[1] ? values.date_range[1].format('YYYY-MM-DD') : null,
       priority: values.priority ?? 0,
       is_active: values.is_active ?? true,
+      base_price_list_id: values.base_price_list_id || null,
+      auto_update: values.auto_update ?? false,
+      formula: values.formula || null,
     };
 
     let priceListId = id;
@@ -204,7 +225,7 @@ const PriceListFormPage = () => {
       title={isEdit ? `Chỉnh sửa bảng giá #${id}` : 'Tạo bảng giá'}
       extra={<Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/price-lists')}>Danh sách</Button>}
     >
-      <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ is_active: true, priority: 0 }}>
+      <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ is_active: true, priority: 0, auto_update: false }}>
         <Space align="start" size="large" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Form.Item label="Tên bảng giá" name="name" rules={[{ required: true, message: 'Nhập tên bảng giá' }]} style={{ minWidth: 260, flex: 1 }}>
             <Input placeholder="Giá sỉ, Giá VIP..." />
@@ -226,6 +247,22 @@ const PriceListFormPage = () => {
           </Form.Item>
           <Form.Item label="Kích hoạt" name="is_active" valuePropName="checked">
             <Switch />
+          </Form.Item>
+        </Space>
+
+        <Space align="start" size="large" style={{ width: '100%', flexWrap: 'wrap' }}>
+          <Form.Item label="Bảng giá gốc" name="base_price_list_id" style={{ minWidth: 260, flex: 1 }}>
+            <Select
+              allowClear
+              placeholder="Chọn bảng giá gốc (tuỳ chọn)"
+              options={baseListOptions}
+            />
+          </Form.Item>
+          <Form.Item label="Tự động cập nhật" name="auto_update" valuePropName="checked">
+            <Switch />
+          </Form.Item>
+          <Form.Item label="Công thức giá" name="formula" style={{ minWidth: 260, flex: 1 }}>
+            <Input placeholder="Ví dụ: base * 1.05 + 5000 (để trống nếu không dùng)" />
           </Form.Item>
         </Space>
 
