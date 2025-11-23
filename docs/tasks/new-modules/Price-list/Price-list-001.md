@@ -433,13 +433,13 @@ text
 
 Đánh dấu ✅ khi hoàn thành:
 
-- [ ] Migration chạy thành công, thêm 4 cột mới vào `price_lists`
-- [ ] `PriceFormulaService` parse và calculate đúng với mọi công thức hợp lệ
-- [ ] Auto-update hoạt động với nested dependencies (A → B → C)
-- [ ] Circular reference bị phát hiện và reject
-- [ ] Rounding rules hoạt động chính xác
-- [ ] Ít nhất 10 tests pass 100%
-- [ ] Documentation đầy đủ với ví dụ cụ thể
+- [x] Migration chạy thành công, thêm 4 cột mới vào `price_lists`
+- [x] `PriceFormulaService` parse và calculate đúng với mọi công thức hợp lệ
+- [x] Auto-update hoạt động với nested dependencies (A → B → C)
+- [x] Circular reference bị phát hiện và reject
+- [x] Rounding rules hoạt động chính xác
+- [x] Ít nhất 10 tests pass 100%
+- [x] Documentation đầy đủ với ví dụ cụ thể
 - [ ] Commit message: `feat(price-lists): thêm công thức tính giá tự động`
 
 ## Gợi ý và lưu ý

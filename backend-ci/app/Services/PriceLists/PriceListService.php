@@ -4,6 +4,7 @@ namespace App\Services\PriceLists;
 
 use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
+use App\Repositories\Products\ProductRepository;
 use App\Validators\PriceListValidator;
 use InvalidArgumentException;
 use RuntimeException;
@@ -15,17 +16,20 @@ class PriceListService
     protected PriceListItemRepository $items;
     protected PriceListValidator $validator;
     protected PriceFormulaService $formula;
+    protected ProductRepository $products;
 
     public function __construct(
         ?PriceListRepository $repo = null,
         ?PriceListItemRepository $items = null,
         ?PriceListValidator $validator = null,
-        ?PriceFormulaService $formula = null
+        ?PriceFormulaService $formula = null,
+        ?ProductRepository $products = null
     ) {
         $this->repo = $repo ?? new PriceListRepository();
         $this->items = $items ?? new PriceListItemRepository();
         $this->validator = $validator ?? new PriceListValidator();
         $this->formula = $formula ?? new PriceFormulaService();
+        $this->products = $products ?? new ProductRepository();
     }
 
     /** List price lists with computed status. */
@@ -171,8 +175,7 @@ class PriceListService
             }
         }
         // fallback to product selling price
-        $productRepo = new \App\Repositories\Products\ProductRepository();
-        $product = $productRepo->findById($productId);
+        $product = $this->products->findById($productId);
         return (float) ($product['selling_price'] ?? 0);
     }
 

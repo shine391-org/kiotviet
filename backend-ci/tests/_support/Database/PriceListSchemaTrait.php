@@ -11,9 +11,13 @@ trait PriceListSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS db_order_items');
         $this->db->query('DROP TABLE IF EXISTS db_orders');
         $this->db->query('DROP TABLE IF EXISTS db_price_list_items');
+        $this->db->query('DROP TABLE IF EXISTS price_list_items');
         $this->db->query('DROP TABLE IF EXISTS db_price_lists');
+        $this->db->query('DROP TABLE IF EXISTS price_lists');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
+        $this->db->query('DROP TABLE IF EXISTS products');
 
         // products
         $this->db->query("CREATE TABLE db_products (
@@ -27,8 +31,29 @@ trait PriceListSchemaTrait
             deleted_at TEXT
         )");
 
+        $this->db->query("CREATE TABLE products (
+            id INTEGER PRIMARY KEY {$auto},
+            code TEXT,
+            name TEXT,
+            selling_price REAL DEFAULT 0,
+            wholesale_price REAL,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
         // variants
         $this->db->query("CREATE TABLE db_product_variants_v2 (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            sku TEXT,
+            price REAL,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_variants_v2 (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             sku TEXT,
@@ -58,8 +83,39 @@ trait PriceListSchemaTrait
             deleted_at TEXT
         )");
 
+        $this->db->query("CREATE TABLE price_lists (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            type TEXT,
+            description TEXT,
+            apply_to_groups TEXT,
+            start_date TEXT,
+            end_date TEXT,
+            priority INTEGER DEFAULT 0,
+            is_active INTEGER DEFAULT 1,
+            formula TEXT,
+            base_price_list_id INTEGER,
+            auto_update INTEGER DEFAULT 0,
+            rounding_rule TEXT DEFAULT 'none',
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
         // price list items
         $this->db->query("CREATE TABLE db_price_list_items (
+            id INTEGER PRIMARY KEY {$auto},
+            price_list_id INTEGER,
+            product_id INTEGER,
+            variant_id INTEGER,
+            price REAL,
+            discount_percent REAL DEFAULT 0,
+            discount_amount REAL DEFAULT 0,
+            created_at TEXT,
+            updated_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE price_list_items (
             id INTEGER PRIMARY KEY {$auto},
             price_list_id INTEGER,
             product_id INTEGER,

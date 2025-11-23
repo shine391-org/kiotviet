@@ -235,7 +235,9 @@ class Services extends BaseService
         return new PriceListService(
             static::priceListRepository(false),
             static::priceListItemRepository(false),
-            static::priceListValidator(false)
+            static::priceListValidator(false),
+            null,
+            static::productRepository(false)
         );
     }
 

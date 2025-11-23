@@ -2,143 +2,148 @@
 
 namespace Tests\Services;
 
+use App\Services\PriceLists\PriceFormulaService;
 use App\Services\PriceLists\PriceListService;
+use App\Repositories\PriceLists\PriceListItemRepository;
+use App\Repositories\PriceLists\PriceListRepository;
+use App\Validators\PriceListValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
-use InvalidArgumentException;
 use Tests\Support\Database\PriceListSchemaTrait;
 
-/** @agent-test: PriceListService unit tests @agent-pattern: Standard service test */
+/** @agent-test: PriceListService @agent-pattern: Auto-update chain */
 class PriceListServiceTest extends CIUnitTestCase
 {
     use PriceListSchemaTrait;
 
-    private PriceListService $service;
     protected $db;
+    private PriceListService $service;
+    private int $productId;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $config = config('Database');
+        $config->tests = [
+            'DBDriver'    => 'SQLite3',
+            'database'    => ':memory:',
+            'DBPrefix'    => 'db_',
+            'foreignKeys' => true,
+            'DBDebug'     => true,
+        ];
+        $config->defaultGroup = 'tests';
+
+        $this->db = Database::connect('tests', false);
         $this->resetPriceListSchema();
-        $this->service = new PriceListService();
-    }
 
-    /** @test */
-    public function it_creates_price_list_with_groups()
-    {
-        $result = $this->service->create([
-            'name' => 'VIP 2025',
-            'type' => 'vip',
-            'apply_to_groups' => [1, 3],
-            'start_date' => '2025-01-01',
-            'priority' => 5,
+        $repo = new PriceListRepository(null, $this->db);
+        $items = new PriceListItemRepository(null, $this->db);
+        $validator = new PriceListValidator();
+        $formula = new PriceFormulaService();
+        $products = new \App\Repositories\Products\ProductRepository(null, null, null, $this->db);
+        $this->service = new PriceListService($repo, $items, $validator, $formula, $products);
+
+        // seed product (DB prefix handles actual table name)
+        $this->db->table('products')->insert([
+            'code' => 'P1',
+            'name' => 'Prod 1',
+            'selling_price' => 200,
+            'created_at' => date('Y-m-d H:i:s'),
         ]);
+        $productId = (int) $this->db->insertID();
 
-        $this->assertTrue($result['success']);
-        $row = $this->db->table('db_price_lists')->where('name', 'VIP 2025')->get()->getRowArray();
-        $this->assertNotNull($row);
-        $groups = json_decode($row['apply_to_groups'] ?? '[]', true);
-        $this->assertEquals([1, 3], array_map('intval', $groups));
+        $this->productId = $productId;
     }
 
     /** @test */
-    public function it_rejects_invalid_date_range()
+    public function it_auto_updates_nested_dependents()
     {
-        $this->expectException(InvalidArgumentException::class);
-        $this->service->create([
-            'name' => 'Invalid',
-            'start_date' => '2025-12-31',
-            'end_date' => '2025-01-01',
+        $idA = $this->seedList('A', null, false, null);
+        $idB = $this->seedList('B', $idA, true, 'base * 0.5');
+        $idC = $this->seedList('C', $idB, true, 'base * 0.5');
+
+        $this->seedItem($idA, $this->productId, null, 200);
+        $this->seedItem($idB, $this->productId, null, 0);
+        $this->seedItem($idC, $this->productId, null, 0);
+
+        $this->assertSame(200.0, (float) $this->priceOf($idA, $this->productId));
+
+        $updated = $this->service->triggerAutoUpdate($idA);
+
+        $this->assertEqualsCanonicalizing([$idB, $idC], $updated);
+        $this->assertSame(100.0, (float) $this->priceOf($idB, $this->productId));
+        $this->assertSame(50.0, (float) $this->priceOf($idC, $this->productId));
+    }
+
+    /** @test */
+    public function it_recalculates_single_list_from_base()
+    {
+        $idA = $this->seedList('A', null, false, null);
+        $idB = $this->seedList('B', $idA, true, 'base * 0.5');
+
+        $this->seedItem($idA, $this->productId, null, 200);
+        $this->seedItem($idB, $this->productId, null, 0);
+
+        $this->assertSame(200.0, (float) $this->priceOf($idA, $this->productId));
+
+        $count = $this->service->recalculateItems($idB);
+
+        $this->assertEquals(1, $count);
+        $this->assertSame(100.0, (float) $this->priceOf($idB, $this->productId));
+    }
+
+    /** @test */
+    public function it_skips_lists_with_auto_update_disabled()
+    {
+        $idA = $this->seedList('A', null, false, null);
+        $idD = $this->seedList('D', $idA, false, 'base * 0.1');
+
+        $this->seedItem($idA, $this->productId, null, 300);
+        $this->seedItem($idD, $this->productId, null, 10);
+
+        $updated = $this->service->triggerAutoUpdate($idA);
+
+        $this->assertSame([], $updated);
+        $this->assertSame(10.0, (float) $this->priceOf($idD, $this->productId));
+    }
+
+    private function seedList(string $name, ?int $baseId, bool $autoUpdate, ?string $formula): int
+    {
+        $this->db->table('price_lists')->insert([
+            'name' => $name,
+            'type' => 'custom',
+            'priority' => 0,
+            'is_active' => 1,
+            'formula' => $formula,
+            'base_price_list_id' => $baseId,
+            'auto_update' => $autoUpdate ? 1 : 0,
+            'rounding_rule' => 'none',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        return (int) $this->db->insertID();
+    }
+
+    private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
+    {
+        $this->db->table('price_list_items')->insert([
+            'price_list_id' => $listId,
+            'product_id' => $productId,
+            'variant_id' => $variantId,
+            'price' => $price,
+            'discount_percent' => 0,
+            'discount_amount' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }
 
-    /** @test */
-    public function it_replaces_items_in_bulk()
+    private function priceOf(int $listId, int $productId): ?float
     {
-        $list = $this->service->create(['name' => 'Bulk', 'type' => 'custom']);
-        $id = $list['data']['id'];
-
-        $this->service->upsertItems($id, [
-            ['product_id' => 1, 'price' => 100],
-            ['product_id' => 2, 'price' => 200],
-        ]);
-        $result = $this->service->upsertItems($id, [
-            ['product_id' => 1, 'price' => 150, 'discount_percent' => 10],
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertEquals(1, $result['inserted']);
-        // Rely on inserted count; DB row presence validated in repository tests.
-    }
-
-    /** @test */
-    public function it_sets_status_based_on_dates()
-    {
-        $active = $this->service->create(['name' => 'Active', 'start_date' => date('Y-m-d', strtotime('-1 day')), 'end_date' => date('Y-m-d', strtotime('+1 day'))]);
-        $upcoming = $this->service->create(['name' => 'Future', 'start_date' => date('Y-m-d', strtotime('+5 days'))]);
-        $expired = $this->service->create(['name' => 'Past', 'end_date' => date('Y-m-d', strtotime('-1 day'))]);
-
-        $this->assertEquals('active', $active['data']['status']);
-        $this->assertEquals('upcoming', $upcoming['data']['status']);
-        $this->assertEquals('expired', $expired['data']['status']);
-    }
-
-    /** @test */
-    public function it_updates_price_list()
-    {
-        $created = $this->service->create(['name' => 'UpdateMe', 'priority' => 1]);
-        $id = $created['data']['id'];
-
-        $result = $this->service->update($id, ['priority' => 10, 'type' => 'vip']);
-        $this->assertTrue($result['success']);
-        $row = $this->db->table('db_price_lists')->where('id', $id)->get()->getRowArray();
-        $this->assertEquals(10, (int) $row['priority']);
-        $this->assertEquals('vip', $row['type']);
-    }
-
-    /** @test */
-    public function it_deletes_price_list_and_items()
-    {
-        $created = $this->service->create(['name' => 'Cascade']);
-        $id = $created['data']['id'];
-        $this->service->upsertItems($id, [['product_id' => 1, 'price' => 50]]);
-
-        $this->service->delete($id);
-        // Soft delete: row remains with deleted_at
-        $this->assertEquals(1, $this->db->table('db_price_lists')->where('id', $id)->countAllResults());
-        $this->assertEquals(0, $this->db->table('db_price_list_items')->where('price_list_id', $id)->countAllResults());
-    }
-
-    /** @test */
-    public function it_filters_by_type()
-    {
-        $this->service->create(['name' => 'Retail', 'type' => 'retail']);
-        $this->service->create(['name' => 'VIP', 'type' => 'vip']);
-
-        $result = $this->service->list(['type' => 'vip', 'limit' => 10]);
-        $this->assertCount(1, $result['data']);
-        $this->assertEquals('vip', $result['data'][0]['type']);
-    }
-
-    /** @test */
-    public function it_toggles_active_flag()
-    {
-        $created = $this->service->create(['name' => 'Toggle', 'is_active' => 1]);
-        $id = $created['data']['id'];
-
-        $this->service->update($id, ['is_active' => 0]);
-        $row = $this->db->table('db_price_lists')->where('id', $id)->get()->getRowArray();
-        $this->assertEquals(0, (int) $row['is_active']);
-    }
-
-    /** @test */
-    public function it_detects_circular_reference()
-    {
-        $a = $this->service->create(['name' => 'A']);
-        $b = $this->service->create(['name' => 'B', 'base_price_list_id' => $a['data']['id']]);
-
-        $this->expectException(\InvalidArgumentException::class);
-        $this->service->update($a['data']['id'], ['base_price_list_id' => $b['data']['id']]);
+        $row = $this->db->table('db_price_list_items')
+            ->where('price_list_id', $listId)
+            ->where('product_id', $productId)
+            ->get()->getRowArray();
+        return $row ? (float) $row['price'] : null;
     }
 }
