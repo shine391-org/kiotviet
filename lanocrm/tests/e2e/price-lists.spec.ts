@@ -10,7 +10,11 @@ const mockLists = {
 };
 
 test.describe('Price lists module', () => {
+  let capturedCreateBody: any = null;
+
   test.beforeEach(async ({ page }) => {
+    capturedCreateBody = null;
+
     // Inject auth before any script runs
     await page.addInitScript(({ token, user }) => {
       localStorage.setItem('lano_token', token);
@@ -42,6 +46,7 @@ test.describe('Price lists module', () => {
       }
       // POST create
       const body = await route.request().postDataJSON();
+      capturedCreateBody = body;
       return route.fulfill({
         status: 201,
         contentType: 'application/json',
@@ -73,5 +78,25 @@ test.describe('Price lists module', () => {
     await page.getByRole('button', { name: /Tạo mới/i }).click();
 
     await expect(page).toHaveURL(/price-lists$/);
+  });
+
+  test('supports base price list, auto update, and formula fields (mocked)', async ({ page }) => {
+    await page.goto('/price-lists/create');
+
+    await page.getByLabel('Tên bảng giá').fill('Test Inherit');
+    await page.getByLabel('Độ ưu tiên').fill('4');
+    await page.getByLabel('Bảng giá gốc').click();
+    await page.getByText('Giá VIP 2025 (#1)', { exact: true }).click();
+    await page.getByLabel('Tự động cập nhật').check({ force: true });
+    await page.getByLabel('Công thức giá').fill('base * 1.1 + 5000');
+
+    await Promise.all([
+      page.waitForResponse(r => r.url().includes('/api/price-lists') && r.request().method() === 'POST'),
+      page.getByRole('button', { name: /Tạo mới/i }).click(),
+    ]);
+
+    expect(capturedCreateBody?.base_price_list_id).toBe(1);
+    expect(capturedCreateBody?.auto_update).toBe(true);
+    expect(capturedCreateBody?.formula).toBe('base * 1.1 + 5000');
   });
 });
