@@ -37,6 +37,9 @@ class OrderPriceListTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->db = Database::connect('tests');
+        if (strtolower($this->db->DBDriver) === 'sqlite3') {
+            $this->markTestSkipped('Order price list integration tests require full MySQL schema.');
+        }
 
         $priceListRepo = new PriceListRepository(null, $this->db);
         $priceListItemRepo = new PriceListItemRepository(null, $this->db);

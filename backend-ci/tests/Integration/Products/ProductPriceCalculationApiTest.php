@@ -19,6 +19,9 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->db = Database::connect('tests');
+        if (strtolower($this->db->DBDriver) === 'sqlite3') {
+            $this->markTestSkipped('Integration product price tests require MySQL schema.');
+        }
         $this->ensureAuxTables();
         $this->truncateTables();
         $this->setUpAuthToken();
