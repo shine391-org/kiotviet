@@ -1,3 +1,27 @@
+---
+title: "Return Validation Rules - Order Workflow"
+id: "RETURN-RULES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Validation Rules"
+tags: ["validation", "return", "rules", "business-logic", "error-handling", "inventory", "refund", "status"]
+purpose: "Defines comprehensive validation rules for the Returns module, covering creation, item validation, quantity, reason, financial aspects, status transitions, approval, and completion."
+location: "docs/tasks/MAIN_MODULES/04_VALIDATION"
+related_to:
+  - id: "RETURN-001"
+    description: "Related Task for Returns Tables implementation."
+  - id: "RETURN-002"
+    description: "Related Task for Return Order API implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #23-33."
+  - id: "RETURNS-TABLES-01"
+    description: "The database schema for returns being validated."
+  - id: "RETURN-FLOW-01"
+    description: "Related workflow for return process."
+  - id: "ORDERS-TABLE-01"
+    description: "Returns relate to order and order items."
+---
+
 # RETURN_RULES - Return Validation Rules
 
 # Return Validation Rules

@@ -1,3 +1,26 @@
+---
+title: "Data Integrity Edge Cases - Order Workflow"
+id: "DATA-INTEGRITY-EDGE-CASES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Edge Case Analysis"
+tags: ["data-integrity", "edge-cases", "database", "constraints", "soft-delete", "financial", "inventory", "concurrency"]
+purpose: "Analyzes various data integrity edge cases within the Order Workflow, covering foreign key violations, floating point precision, calculated fields, unique constraints, timestamp issues, cascading deletes, update anomalies, inventory inconsistencies, and corruption prevention."
+location: "docs/tasks/MAIN_MODULES/05_EDGE_CASES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Many integrity issues relate to the orders table."
+  - id: "INVOICES-TABLES-01"
+    description: "Financial calculations and their precision."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Concurrency issues often lead to data integrity problems."
+  - id: "FINANCIAL-EDGE-CASES-01"
+    description: "Specific financial integrity issues."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Inventory integrity issues."
+---
+
 # Data Integrity Edge Cases
 
 **Module:** Order Workflow
@@ -577,6 +600,6 @@ class OrderObserver
 
 ## 🔗 RELATED DOCUMENTS
 
-- **[[CONCURRENCY.md](http://CONCURRENCY.md)]** - Concurrency edge cases
-- **[[FINANCIAL.md](http://FINANCIAL.md)]** - Financial edge cases
-- **[[INVENTORY.md](http://INVENTORY.md)]** - Inventory edge cases
+- [**[[CONCURRENCY.md](http://CONCURRENCY.md)]** - Concurrency edge cases
+- [**[[FINANCIAL.md](http://FINANCIAL.md)]** - Financial edge cases
+- [**[[INVENTORY.md](http://INVENTORY.md)]** - Inventory edge cases

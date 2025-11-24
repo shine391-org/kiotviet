@@ -1,3 +1,29 @@
+---
+title: "Orders Table Schema"
+id: "ORDERS-TABLE-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "orders", "order-workflow", "financial", "status", "shipping", "payment"]
+purpose: "Describes the detailed database schema for the central 'orders' table within the Order Workflow module."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "ORD-003"
+    description: "Related Task: Order Status Management implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #1-15 related to order structure and workflow."
+  - id: "SHIPPING-FLOW-01"
+    description: "Describes the status workflow for SHIPPING orders."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+  - id: "INVOICES-TABLES-01"
+    description: "Related tables: invoices via invoice_orders mapping."
+  - id: "POS-FLOW-01"
+    description: "Contrasted with POS orders, which have no status workflow."
+  - id: "RETURN-FLOW-01"
+    description: "Related to the return process, which references orders."
+---
+
 # ORDERS_TABLE - Orders Table Schema
 
 # Orders Table Schema

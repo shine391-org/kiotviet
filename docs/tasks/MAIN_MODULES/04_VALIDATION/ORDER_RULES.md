@@ -1,3 +1,27 @@
+---
+title: "Order Validation Rules - Order Workflow"
+id: "ORDER-RULES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Validation Rules"
+tags: ["validation", "order", "rules", "business-logic", "error-handling", "inventory", "payment", "shipping"]
+purpose: "Defines comprehensive validation rules for the Orders module, covering creation, financial aspects, item validation, stock availability, status transitions, shipping, and payment."
+location: "docs/tasks/MAIN_MODULES/04_VALIDATION"
+related_to:
+  - id: "ORD-003"
+    description: "Related Task for Order Status Management implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #1-15."
+  - id: "ORDERS-TABLE-01"
+    description: "The database schema for orders being validated."
+  - id: "SHIPPING-FLOW-01"
+    description: "Related to shipping rules within order validation."
+  - id: "POS-FLOW-01"
+    description: "Related to POS order specific validation rules."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Related to payment method validation within orders."
+---
+
 # ORDER_RULES - Order Validation Rules
 
 # Order Validation Rules

@@ -1,3 +1,32 @@
+---
+title: "Database Schema Overview - Order Workflow"
+id: "SCHEMA-OVERVIEW-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Database Schema"
+tags: ["database", "schema", "overview", "ERD", "tables", "relationships"]
+purpose: "Provides a high-level overview of the database schema for the Order Workflow module, summarizing core tables, payment, invoice, return, and supporting tables, along with key relationships and integrity rules."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "BUSINESS-DECISIONS-01"
+    description: "Related to all business decisions for the module."
+  - id: "ORDERS-TABLE-01"
+    description: "Detailed schema for the orders table."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Detailed schema for the payment_methods table."
+  - id: "INVOICES-TABLES-01"
+    description: "Detailed schema for the invoices tables."
+  - id: "RETURNS-TABLES-01"
+    description: "Detailed schema for the returns tables."
+  - id: "SUPPORTING-TABLES-01"
+    description: "Detailed schema for various supporting tables."
+  - id: "DATABASE-RELATIONSHIPS-01"
+    description: "Detailed relationships document."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+---
+
 # SCHEMA_OVERVIEW - Database Schema Overview
 
 # Database Schema Overview
@@ -433,7 +462,7 @@ Auto index trên mọi FK columns
 
 **ON DELETE RESTRICT:**
 
-- `orders.customer_id` → customers
+- `customers.customer_id` → orders
 - `invoices.customer_id` → customers
 - `returns.order_id` → orders
 

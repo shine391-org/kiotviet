@@ -1,3 +1,25 @@
+---
+title: "Payment Validation Rules - Order Workflow"
+id: "PAYMENT-RULES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Validation Rules"
+tags: ["validation", "payment", "rules", "business-logic", "error-handling", "payment-methods", "COD"]
+purpose: "Defines comprehensive validation rules for payment methods and payment processing, covering creation, format, uniqueness, and specific rules for POS, Shipping, COD, and online payments."
+location: "docs/tasks/MAIN_MODULES/04_VALIDATION"
+related_to:
+  - id: "PAY-001"
+    description: "Related Task for Payment Methods implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #8-15."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "The database schema for payment methods being validated."
+  - id: "ORDERS-TABLE-01"
+    description: "Related to order payment fields."
+  - id: "POS-FLOW-01"
+    description: "Related to POS payment specific rules."
+---
+
 # PAYMENT_RULES - Payment Validation Rules
 
 # Payment Validation Rules
@@ -528,5 +550,5 @@ public function addPayment($orderId, $amount) {
 ## 🔗 RELATED DOCUMENTS
 
 - [**PAYMENT_METHODS_](https://www.notion.so/PAYMENT_METHODS_TABLE-Payment-Methods-Schema-ac2e0402fa7b48099e71738e419ccff5?pvs=21)[TABLE.md](http://TABLE.md)** - Payment methods schema
-- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** - Orders schema
+- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLES.md)** - Orders schema
 - **Business Decisions:** #8-15

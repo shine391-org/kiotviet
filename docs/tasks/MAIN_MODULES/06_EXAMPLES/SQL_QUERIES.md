@@ -1,3 +1,32 @@
+---
+title: "Common SQL Queries - Order Workflow"
+id: "SQL-QUERIES-EXAMPLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "SQL Examples"
+tags: ["SQL", "queries", "examples", "database", "analytics", "reporting", "orders", "returns", "invoices", "inventory"]
+purpose: "Provides a collection of common SQL queries for various operations and analytics within the Order Workflow module, including order details, status tracking, financial reporting, return analysis, invoice management, and inventory reconciliation."
+location: "docs/tasks/MAIN_MODULES/06_EXAMPLES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Queries directly interact with the orders table."
+  - id: "INVOICES-TABLES-01"
+    description: "Queries for invoices."
+  - id: "RETURNS-TABLES-01"
+    description: "Queries for returns."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Queries for payment methods."
+  - id: "SUPPORTING-TABLES-01"
+    description: "Queries for inventory_movements and order_status_logs."
+  - id: "SAMPLE-DATA-EXAMPLES-01"
+    description: "Data used in these queries."
+  - id: "API-PAYLOADS-EXAMPLES-01"
+    description: "Queries validate data from API operations."
+  - id: "DATABASE-RELATIONSHIPS-01"
+    description: "Uses the defined relationships."
+---
+
 # Common SQL Queries
 
 **Module:** Order Workflow
@@ -344,6 +373,6 @@ LIMIT 10;
 
 ## 🔗 RELATED DOCUMENTS
 
-- **[SAMPLE_[DATA.md](http://DATA.md)]** - Sample data examples
-- **[API_[PAYLOADS.md](http://PAYLOADS.md)]** - API payload examples
+- [**SAMPLE_[DATA.md](http://DATA.md)]** - Sample data examples
+- [**API_[PAYLOADS.md](http://PAYLOADS.md)]** - API payload examples
 - [**RELATIONSHIPS.md**](http://RELATIONSHIPS.md) - Database relationships

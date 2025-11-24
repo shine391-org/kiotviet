@@ -1,3 +1,32 @@
+---
+title: "Inventory Edge Cases - Order Workflow"
+id: "INVENTORY-EDGE-CASES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Edge Case Analysis"
+tags: ["inventory", "edge-cases", "stock", "overselling", "restock", "concurrency", "multi-branch", "reserved-stock"]
+purpose: "Analyzes various inventory management edge cases within the Order Workflow, covering negative stock, deduction timing, restock policies, damaged items, movement logging, multi-branch transfers, and stock reservation."
+location: "docs/tasks/MAIN_MODULES/05_EDGE_CASES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Inventory deduction/restock linked to orders."
+  - id: "RETURNS-TABLES-01"
+    description: "Restock on returns."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Concurrency impact on inventory."
+  - id: "DATA-INTEGRITY-EDGE-CASES-01"
+    description: "Inventory data integrity."
+  - id: "FINANCIAL-EDGE-CASES-01"
+    description: "Financial impact of inventory."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "Underlying business rules for inventory."
+  - id: "SHIPPING-FLOW-01"
+    description: "Inventory deduction during shipping."
+  - id: "RETURN-FLOW-01"
+    description: "Inventory restock during returns."
+---
+
 # Inventory Edge Cases
 
 **Module:** Order Workflow
@@ -6,7 +35,7 @@
 
 ---
 
-## 🎯 MỤC ĐÍCH
+## 🎯 MỤC ĐÍNH
 
 Document này phân tích **các edge cases về inventory management** trong Order Workflow.
 
@@ -530,5 +559,5 @@ public function confirmOrder($orderId) {
 ## 🔗 RELATED DOCUMENTS
 
 - [**CONCURRENCY.md**](http://CONCURRENCY.md) - Concurrency edge cases
-- [**DATA_](https://www.notion.so/DATA_INTEGRITY-Data-Integrity-Edge-Cases-a99dccea34224a7d8470b6c28c5e458d?pvs=21)[INTEGRITY.md](http://INTEGRITY.md)** - Data integrity edge cases
+- [**DATA_](https://www.notion.so/DATA_INTEGRITY-Data-Integrity-Edge-Cases-a99dccea34224a7d8470b6c28c5e458d?pvs=21)[INTEGRITY.md](http://DATA_INTEGRITY.md)** - Data integrity edge cases
 - **[[FINANCIAL.md](http://FINANCIAL.md)]** - Financial edge cases

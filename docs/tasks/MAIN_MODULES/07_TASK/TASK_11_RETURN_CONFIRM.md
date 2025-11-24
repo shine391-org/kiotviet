@@ -1,3 +1,28 @@
+---
+title: "TASK 11: Return Completion Implementation"
+id: "TASK-11-RETURN-COMPLETION-01"
+priority: "P2 (Medium)"
+estimated_effort: "4 days"
+dependencies: "TASK_10"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "returns", "completion", "inventory", "restock", "logging", "API", "backend"]
+purpose: "Implement the final step of the return workflow, completing an approved return by restocking inventory, logging movement details, and updating the return status to 'completed'."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "RETURN-FLOW-01"
+    description: "Describes the completion step of the return workflow."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Inventory restocking details."
+  - id: "SUPPORTING-TABLES-01"
+    description: "Logging inventory movements."
+  - id: "TASK-10-RETURN-APPROVE-01"
+    description: "Dependency: Return approval."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_11: Return Completion Implementation
 
 **Priority:** P2 (Medium)

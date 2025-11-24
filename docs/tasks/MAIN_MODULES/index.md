@@ -1,4 +1,41 @@
-```markdown
+---
+title: "Order Workflow Documentation - Index"
+id: "ORDER-WORKFLOW-INDEX"
+project: "LanoCRM"
+module: "Order Workflow"
+version: "1.0"
+status: "Active"
+last_updated: "2025-11-24"
+type: "Module Index"
+tags: ["index", "workflow", "orders", "tasks", "backend", "documentation"]
+purpose: "Guides AI agents in implementing 5 backend tasks for the Order Workflow module, outlining purpose, structure, dependencies, and business rules."
+location: "docs/tasks/MAIN_MODULES"
+defines_tasks:
+  - id: "PAY-001"
+    type: "task"
+    description: "Payment Methods Table"
+    file: "07_TASK/TASK_01_PAYMENT_METHODS.md"
+  - id: "INV-001"
+    type: "task"
+    description: "Invoices Tables"
+    file: "07_TASK/TASK_02_INVOICES_SCHEMA.md"
+  - id: "ORD-003"
+    type: "task"
+    description: "Order Status Management"
+    file: "07_TASK/TASK_06_STATUS_MANAGEMENT.md"
+  - id: "RETURN-001"
+    type: "task"
+    description: "Returns Tables"
+    file: "07_TASK/TASK_03_RETURNS_SCHEMA.md"
+  - id: "RETURN-002"
+    type: "task"
+    description: "Return Order API"
+    file: "07_TASK/TASK_09_RETURN_REQUEST.md"
+depends_on:
+  - id: "BUSINESS-DECISIONS-01"
+    description: "All tasks and workflows must follow these 39 business decisions."
+related_to: []
+---
 # 📚 Order Workflow Documentation - Index
 
 **Project:** LanoCRM  

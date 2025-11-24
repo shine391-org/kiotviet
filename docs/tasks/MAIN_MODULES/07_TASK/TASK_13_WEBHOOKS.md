@@ -1,3 +1,26 @@
+---
+title: "TASK 13: Webhooks & Events Implementation"
+id: "TASK-13-WEBHOOKS-01"
+priority: "P3 (Low)"
+estimated_effort: "4 days"
+dependencies: "All previous tasks"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "webhooks", "events", "notifications", "integrations", "backend", "laravel"]
+purpose: "Implement a robust event system and webhooks for real-time external integrations and notifications, defining event catalog, listeners, and flexible configuration."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "SHIPPING-FLOW-01"
+    description: "Events for order status changes."
+  - id: "RETURN-FLOW-01"
+    description: "Events for return status changes."
+  - id: "INVOICE-FLOW-01"
+    description: "Events for invoice generation."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_13: Webhooks & Events Implementation
 
 **Priority:** P3 (Low)

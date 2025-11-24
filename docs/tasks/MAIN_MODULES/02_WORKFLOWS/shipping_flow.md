@@ -1,4 +1,30 @@
-```markdown
+---
+title: "SHIPPING Orders Workflow"
+id: "SHIPPING-FLOW-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Workflow Document"
+tags: ["workflow", "shipping", "orders", "inventory", "status-transitions", "delivery"]
+purpose: "Describes the detailed workflow for Shipping Orders, including status definitions, transition rules, inventory impact, and error handling."
+location: "docs/tasks/MAIN_MODULES/02_WORKFLOWS"
+related_to:
+  - id: "ORD-003"
+    description: "Related Task for Order Status Management implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #1-7."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+  - id: "STATE-MACHINE-01"
+    description: "Provides the underlying state machine rules for order status transitions."
+  - id: "POS-FLOW-01"
+    description: "Contrasted with POS orders, which have a different workflow."
+  - id: "RETURN-FLOW-01"
+    description: "Details the return process, often initiated after failed shipping or delivery."
+  - id: "INVOICE-FLOW-01"
+    description: "Invoice generation is related to completed orders from this workflow."
+---
+
 # 🚚 SHIPPING Orders Workflow
 
 **Module:** Order Workflow  
@@ -589,7 +615,7 @@ Note: Phải thu hồi hàng từ shipper trước
 ```
 
 1. Create order → DRAFT
-2. Admin confirm → CONFIRMED
+2. Confirm → CONFIRMED
 3. Customer đổi ý ngay
 4. Admin cancel
     
@@ -622,7 +648,7 @@ Timeline: < 1 ngày
 
 ---
 
-## 📝 DATABASE TRACKING
+## AUDIT LOGGING
 
 ### **1. order_status_logs**
 
@@ -812,26 +838,87 @@ Response: 403 Forbidden
 
 ```
 
-User A: Update order 123 status
+Problem:
+2 requests cùng lúc update cùng 1 order
 
-User B: Update order 123 status (cùng lúc)
+Solutions:
 
-Solution: Pessimistic locking
+**Option A: Optimistic Locking**
+```
 
-SELECT * FROM orders WHERE id = 123 FOR UPDATE;
+orders.version INT
 
--- User B phải chờ User A commit
+UPDATE orders
+
+SET status = ?, version = version + 1
+
+WHERE id = ? AND version = ?
+
+If affected_rows = 0 → Conflict, retry
 
 ```
 
+**Option B: Pessimistic Locking**
+```
+
+BEGIN TRANSACTION
+
+SELECT * FROM orders WHERE id = ? FOR UPDATE
+
+-- Check transition
+
+UPDATE orders SET status = ?
+
+COMMIT
+
+```
+
+**Recommended:** Option B (simpler, safer for critical operations)
+
 ---
 
-## 🔗 RELATED DOCUMENTS
+## TESTING CHECKLIST
 
-- **Business Decisions:** `01_BUSINESS_[DECISIONS.md](http://DECISIONS.md)` #1-7
+### Valid Transitions
+- [ ] null → DRAFT works
+- [ ] DRAFT → CONFIRMED works
+- [ ] CONFIRMED → PROCESSING works
+- [ ] PROCESSING → SHIPPING works (inventory deducted)
+- [ ] SHIPPING → DELIVERED works
+- [ ] DELIVERED → COMPLETED works
+- [ ] SHIPPING → FAILED works
+- [ ] FAILED → RETURN works
+- [ ] RETURN → RETURN_CONFIRMED works (inventory restored)
+
+### Invalid Transitions
+- [ ] DRAFT → DELIVERED fails (400)
+- [ ] COMPLETED → any fails (400)
+- [ ] PROCESSING → COMPLETED fails (400)
+
+### Inventory
+- [ ] SHIPPING deducts correctly
+- [ ] RETURN_CONFIRMED restores correctly
+- [ ] CANCELLED restores correctly (if >= SHIPPING)
+- [ ] CANCELLED doesn't change inventory (if < SHIPPING)
+
+### Permissions
+- [ ] Staff cannot cancel
+- [ ] Admin can cancel any status (except COMPLETED)
+- [ ] Webhook can update DELIVERED/FAILED
+
+### Audit
+- [ ] Every transition logs to order_status_logs
+- [ ] user_id captured correctly
+- [ ] Inventory changes log to inventory_movements
+
+---
+
+## RELATED DOCUMENTS
+
+- **Business Decisions:** `01_BUSINESS_[DECISIONS.md](http://BUSINESS_[DECISIONS.md](http://BUSINESS_DECISIONS.md))` #1-7
 - **API Implementation:** Task ORD-003
-- **Return Flow:** `RETURN_[FLOW.md](http://FLOW.md)`
-- **Invoice Flow:** `INVOICE_[FLOW.md](http://FLOW.md)`
+- **Return Flow:** `RETURN_[FLOW.md](http://RETURN_[FLOW.md](http://RETURN_FLOW.md))`
+- **Invoice Flow:** `INVOICE_[FLOW.md](http://INVOICE_[FLOW.md](http://INVOICE_FLOW.md))`
 
 ---
 

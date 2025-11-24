@@ -1,3 +1,28 @@
+---
+title: "TASK 09: Return Request Implementation"
+id: "TASK-09-RETURN-REQUEST-01"
+priority: "P2 (Medium)"
+estimated_effort: "4 days"
+dependencies: "TASK_05"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "returns", "request", "validation", "refund", "API", "backend"]
+purpose: "Implement the creation of customer return requests, including comprehensive validation (order status, return window, item ownership, quantity), return number generation, and initial refund calculation."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "RETURN-RULES-01"
+    description: "Defines the validation rules implemented by this task."
+  - id: "RETURN-FLOW-01"
+    description: "Describes the workflow this task is part of."
+  - id: "RETURNS-TABLES-01"
+    description: "Schema used by this task."
+  - id: "TASK-05-ORDER-CREATE-01"
+    description: "Dependency: Order Create implementation."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_09: Return Request Implementation
 
 **Priority:** P2 (Medium)

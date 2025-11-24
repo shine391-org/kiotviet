@@ -1,3 +1,34 @@
+---
+title: "TASK 05: Order Create Implementation"
+id: "TASK-05-ORDER-CREATE-01"
+priority: "P0 (Blocker)"
+estimated_effort: "5 days"
+dependencies: "TASK_01, TASK_04"
+status: "Ready"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "orders", "create", "POS", "SHIPPING", "validation", "inventory", "API", "backend"]
+purpose: "Implement the full order creation logic, including order number generation, financial calculations, stock validation, and initial status management for both POS and Shipping order types."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Schema implemented by this task."
+  - id: "ORDER-RULES-01"
+    description: "Validation rules implemented by this task."
+  - id: "SHIPPING-FLOW-01"
+    description: "Related workflow for Shipping orders."
+  - id: "POS-FLOW-01"
+    description: "Related workflow for POS orders."
+  - id: "PAY-001"
+    description: "Dependency: Payment Methods implementation (TASK_01)."
+  - id: "TASK-04-SUPPORTING-TABLES-01"
+    description: "Dependency: Supporting Tables implementation for logging and inventory (TASK_04)."
+  - id: "API-PAYLOADS-EXAMPLES-01"
+    description: "Provides API examples for this task."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_05: Order Create Implementation
 
 **Priority:** P0 (Blocker)

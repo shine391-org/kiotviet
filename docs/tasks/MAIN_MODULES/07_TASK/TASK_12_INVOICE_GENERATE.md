@@ -1,3 +1,30 @@
+---
+title: "TASK 12: Invoice Generation Implementation"
+id: "TASK-12-INVOICE-GENERATE-01"
+priority: "P2 (Medium)"
+estimated_effort: "5 days"
+dependencies: "TASK_02, TASK_05"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "invoice", "generation", "VAT", "PDF", "API", "backend"]
+purpose: "Implement invoice generation logic from completed orders, including unique invoice number generation, VAT calculation, multi-order aggregation, and on-demand PDF export."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "INVOICE-FLOW-01"
+    description: "Describes the invoice generation workflow."
+  - id: "INVOICES-TABLES-01"
+    description: "Schema implemented by this task."
+  - id: "INVOICE-RULES-01"
+    description: "Validation rules implemented by this task."
+  - id: "TASK-02-INVOICES-SCHEMA-01"
+    description: "Dependency: Invoices Schema implementation."
+  - id: "TASK-05-ORDER-CREATE-01"
+    description: "Dependency: Order Create implementation."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_12: Invoice Generation Implementation
 
 **Priority:** P2 (Medium)

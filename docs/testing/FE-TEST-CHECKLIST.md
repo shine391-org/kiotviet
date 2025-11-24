@@ -1,3 +1,20 @@
+---
+title: "Frontend Test Checklist"
+id: "FE-TEST-CHECKLIST-01"
+version: "1.0"
+status: "Active"
+module: "Frontend Testing"
+type: "Checklist"
+tags: ["testing", "checklist", "frontend", "react", "pr-process"]
+purpose: "Provides a mandatory checklist for all Pull Requests to ensure code quality, test coverage, and functionality for frontend (React) changes."
+location: "docs/testing"
+related_to:
+  - id: "FE-TESTING-GUIDE-01"
+    description: "Refer to the comprehensive frontend testing guide."
+  - id: "AGENT-GUIDE-01"
+    description: "The main AI Agent Guide that mandates this checklist."
+---
+
 # Frontend Test Checklist
 
 **Must be 100% Checked Before Merge**

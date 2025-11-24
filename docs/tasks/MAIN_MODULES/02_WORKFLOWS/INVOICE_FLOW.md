@@ -1,3 +1,21 @@
+---
+title: "Invoice Generation Workflow"
+id: "INVOICE-FLOW-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Workflow Document"
+tags: ["workflow", "invoice", "VAT", "generation", "pdf", "order-workflow"]
+purpose: "Describes the detailed workflow for Invoice Generation, including prerequisites, steps, business rules, schema, and scenarios."
+location: "docs/tasks/MAIN_MODULES/02_WORKFLOWS"
+related_to:
+  - id: "INV-001"
+    description: "Related Task for Invoice Tables implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #16-22."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+---
+
 # INVOICE_FLOW - Invoice Generation Workflow
 
 # Invoice Generation Workflow
@@ -236,6 +254,7 @@ INSERT INTO invoices (
     vat_rate,
     vat_amount,
     total,
+    pdf_path,
     notes,
     created_by
 ) VALUES (
@@ -328,6 +347,7 @@ return response()->file($path);
     <style>
         /* Invoice styling */
     </style>
+</head>
 </head>
 <body>
     <h1>HÓA ĐƠN GIÁ TRỊ GIA TĂNG</h1>

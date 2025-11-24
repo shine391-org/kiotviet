@@ -1,3 +1,26 @@
+---
+title: "TASK 04: Supporting Tables Implementation"
+id: "TASK-04-SUPPORTING-TABLES-01"
+priority: "P1 (High)"
+estimated_effort: "2 days"
+dependencies: "None"
+status: "Ready"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "database", "schema", "logs", "inventory", "branches", "auditing", "tracking", "backend"]
+purpose: "Implement three critical supporting tables: order_status_logs, inventory_movements, and branches, enabling automatic status change logging, comprehensive inventory tracking, and multi-branch operations."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "SUPPORTING-TABLES-01"
+    description: "Details the schema to be implemented."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Related to inventory tracking and management."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+  - id: "ORDERS-TABLE-01"
+    description: "Core table that order status logs reference."
+---
+
 # TASK_04: Supporting Tables Implementation
 
 **Priority:** P1 (High)

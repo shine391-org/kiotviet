@@ -1,3 +1,25 @@
+---
+title: "Invoices Tables Schema"
+id: "INVOICES-TABLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "invoices", "invoice_orders", "tables", "financial", "VAT"]
+purpose: "Details the database schema for invoices and invoice_orders tables, including field definitions, indexes, and relationships."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "INV-001"
+    description: "Related Task for Invoices Tables implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #16-22."
+  - id: "INVOICE-FLOW-01"
+    description: "Describes the workflow that uses this schema."
+  - id: "ORDERS-TABLE-01"
+    description: "Related to orders table, as invoice_orders links to orders."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+---
+
 # Invoices Tables Schema
 
 **Module:** Order Workflow
@@ -520,7 +542,7 @@ function generateInvoiceNumber($branchId) {
 function generateInvoicePDF($invoiceId) {
     $invoice = Invoice::with('orders.items')->find($invoiceId);
     
-    // Check if PDF already exists
+    // Check if PDF already generated
     if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
         return Storage::path($invoice->pdf_path);
     }
@@ -601,7 +623,8 @@ LIMIT 20;
 ```
 Tháng 1: VAT = 10% → Invoice #1 lưu vat_rate = 0.10
 Tháng 6: Chính phủ đổi VAT = 8%
-Tháng 7: Invoice #2 lưu vat_rate = 0.08
+Tháng 7: Tạo invoice mới
+   → Invoice #2 lưu vat_rate = 0.08
 
 Invoice #1 vẫn giữ 0.10 (immutability)
 ```

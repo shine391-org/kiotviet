@@ -1,3 +1,32 @@
+---
+title: "Financial Edge Cases - Order Workflow"
+id: "FINANCIAL-EDGE-CASES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Edge Case Analysis"
+tags: ["financial", "edge-cases", "accounting", "discount", "shipping-fee", "payment", "returns", "VAT", "precision"]
+purpose: "Analyzes various financial calculation edge cases within the Order Workflow, covering discounts, shipping fees, partial payments, rounding, currency storage, zero-amount orders, and revenue reporting with returns."
+location: "docs/tasks/MAIN_MODULES/05_EDGE_CASES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Financial fields in orders table."
+  - id: "INVOICES-TABLES-01"
+    description: "VAT rounding and invoice totals."
+  - id: "RETURNS-TABLES-01"
+    description: "Refund calculations."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Payment processing rules."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "Underlying financial business rules."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Concurrency impact on financial integrity."
+  - id: "DATA-INTEGRITY-EDGE-CASES-01"
+    description: "Financial data integrity issues."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Inventory valuation and financial impact."
+---
+
 # Financial Edge Cases
 
 **Module:** Order Workflow
@@ -544,5 +573,5 @@ WHERE o.status = 'completed'
 ## 🔗 RELATED DOCUMENTS
 
 - [**CONCURRENCY.md**](http://CONCURRENCY.md) - Concurrency edge cases
-- [**DATA_](https://www.notion.so/DATA_INTEGRITY-Data-Integrity-Edge-Cases-a99dccea34224a7d8470b6c28c5e458d?pvs=21)[INTEGRITY.md](http://INTEGRITY.md)** - Data integrity edge cases
+- [**DATA_](https://www.notion.so/DATA_INTEGRITY-Data-Integrity-Edge-Cases-a99dccea34224a7d8470b6c28c5e458d?pvs=21)[INTEGRITY.md](http://DATA_INTEGRITY.md)** - Data integrity edge cases
 - **[[INVENTORY.md](http://INVENTORY.md)]** - Inventory edge cases

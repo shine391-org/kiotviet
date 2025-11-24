@@ -1,3 +1,32 @@
+---
+title: "Concurrency & Race Conditions - Order Workflow"
+id: "CONCURRENCY-EDGE-CASES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Edge Case Analysis"
+tags: ["concurrency", "race-condition", "locking", "transactions", "inventory", "orders", "edge-cases"]
+purpose: "Analyzes concurrency edge cases and solutions for race conditions in order number generation, inventory deduction, invoice generation, payment processing, return processing, and status updates within the Order Workflow."
+location: "docs/tasks/MAIN_MODULES/05_EDGE_CASES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Related to order number generation and status updates."
+  - id: "INVOICES-TABLES-01"
+    description: "Related to invoice number generation."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Related to payment processing."
+  - id: "RETURNS-TABLES-01"
+    description: "Related to return processing."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "Underlying business rules may affect concurrency."
+  - id: "DATA-INTEGRITY-EDGE-CASES-01"
+    description: "Related data integrity issues."
+  - id: "FINANCIAL-EDGE-CASES-01"
+    description: "Related financial edge cases."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Related inventory edge cases."
+---
+
 # Concurrency & Race Conditions
 
 **Module:** Order Workflow
@@ -6,7 +35,7 @@
 
 ---
 
-## 🎯 MỤC ĐÍCH
+## 🎯 MỤC ĐÍNH
 
 Document này phân tích **các edge cases về concurrency** và cách xử lý race conditions trong Order Workflow.
 
@@ -601,6 +630,6 @@ public function updateOrderWithRetry($orderId, $data, $maxRetries = 3) {
 
 ## 🔗 RELATED DOCUMENTS
 
-- **[DATA_[INTEGRITY.md](http://INTEGRITY.md)]** - Data integrity edge cases
-- **[[FINANCIAL.md](http://FINANCIAL.md)]** - Financial edge cases
-- **[[INVENTORY.md](http://INVENTORY.md)]** - Inventory edge cases
+- [**DATA_[INTEGRITY.md](http://INTEGRITY.md)]** - Data integrity edge cases
+- [**[FINANCIAL.md](http://FINANCIAL.md)]** - Financial edge cases
+- [**[INVENTORY.md](http://INVENTORY.md)]** - Inventory edge cases

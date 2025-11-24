@@ -1,4 +1,25 @@
-```markdown
+---
+title: "STATE MACHINE - Order Status Transitions"
+id: "STATE-MACHINE-01"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Workflow Document"
+tags: ["workflow", "state-machine", "order-status", "inventory", "transitions", "business-rules"]
+purpose: "Defines the State Machine for Order Status transitions, applicable only to SHIPPING orders, detailing states, rules, and inventory impact."
+location: "docs/tasks/MAIN_MODULES/02_WORKFLOWS"
+related_to:
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #1-7 related to order status and inventory."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+  - id: "POS-FLOW-01"
+    description: "Contrasted with POS orders that have no status workflow."
+  - id: "SHIPPING-FLOW-01"
+    description: "Detailed shipping workflow where state machine is applied."
+  - id: "TASK-06-STATUS-MANAGEMENT-01"
+    description: "Implementation guide for order status management."
+---
+
 # STATE MACHINE - Order Status Transitions
 
 **Last Updated:** 2025-11-24  
@@ -7,7 +28,7 @@
 
 ---
 
-## MỤC ĐÍCH
+## MỤC ĐÍNH
 
 Document này định nghĩa **State Machine** cho order status transitions.
 
@@ -616,10 +637,10 @@ COMMIT
 
 ## RELATED DOCUMENTS
 
-- [BUSINESS_[DECISIONS.md](http://DECISIONS.md)](../01_BUSINESS_[DECISIONS.md](http://DECISIONS.md)) - Decisions #1-7
-- [SHIPPING_[FLOW.md](http://FLOW.md)](./SHIPPING_[FLOW.md](http://FLOW.md)) - Detailed SHIPPING workflow
-- [POS_[FLOW.md](http://FLOW.md)](./POS_[FLOW.md](http://FLOW.md)) - POS orders (no status)
-- [TASK_06_STATUS_[MANAGEMENT.md](http://MANAGEMENT.md)](../07_TASKS/TASK_06_STATUS_[MANAGEMENT.md](http://MANAGEMENT.md)) - Implementation guide
+- [BUSINESS_[DECISIONS.md](http://BUSINESS_[DECISIONS.md](http://BUSINESS_DECISIONS.md))] - Decisions #1-7
+- [SHIPPING_[FLOW.md](http://SHIPPING_[FLOW.md](http://SHIPPING_FLOW.md))] - Detailed SHIPPING workflow
+- [POS_[FLOW.md](http://POS_[FLOW.md](http://POS_FLOW.md))] - POS orders (no status)
+- [TASK_06_STATUS_[MANAGEMENT.md](http://MANAGEMENT.md)] - Implementation guide
 
 ---
 

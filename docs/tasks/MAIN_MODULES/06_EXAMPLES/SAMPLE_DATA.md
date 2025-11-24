@@ -1,3 +1,28 @@
+---
+title: "Sample Data Examples - Order Workflow"
+id: "SAMPLE-DATA-EXAMPLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Data Examples"
+tags: ["sample-data", "examples", "database", "SQL", "seeding", "customers", "orders", "returns", "invoices"]
+purpose: "Provides comprehensive SQL INSERT statements for various entities within the Order Workflow, including customers, branches, payment methods, POS/Shipping orders, returns, and invoices, along with complex scenarios."
+location: "docs/tasks/MAIN_MODULES/06_EXAMPLES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Provides sample data for orders table."
+  - id: "INVOICES-TABLES-01"
+    description: "Provides sample data for invoices tables."
+  - id: "RETURNS-TABLES-01"
+    description: "Provides sample data for returns tables."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Provides sample data for payment methods."
+  - id: "API-PAYLOADS-EXAMPLES-01"
+    description: "Complements API examples with data."
+  - id: "SQL-QUERIES-EXAMPLES-01"
+    description: "Data used in SQL queries."
+---
+
 # SAMPLE_DATA - Sample Data Examples
 
 # Sample Data Examples
@@ -439,6 +464,6 @@ SELECT 11, id FROM orders WHERE order_number IN (
 
 ## 🔗 RELATED DOCUMENTS
 
-- **[API_[PAYLOADS.md](http://PAYLOADS.md)]** - API request/response examples
-- **[SQL_[QUERIES.md](http://QUERIES.md)]** - Common SQL queries
-- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** - Orders schema
+- [**API_[PAYLOADS.md](http://PAYLOADS.md)]** - API request/response examples
+- [**SQL_[QUERIES.md](http://QUERIES.md)]** - Common SQL queries
+- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLES.md)** - Orders schema

@@ -1,3 +1,30 @@
+---
+title: "TASK 08: Cancel Order Implementation"
+id: "TASK-08-CANCEL-ORDER-01"
+priority: "P1 (High)"
+estimated_effort: "3 days"
+dependencies: "TASK_06"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "orders", "cancel", "inventory", "status-management", "API", "backend"]
+purpose: "Implement the order cancellation logic, including validating cancellable statuses, conditionally restoring inventory, logging movements and status changes, and providing an API endpoint for cancellation."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Schema for orders to be cancelled."
+  - id: "SHIPPING-FLOW-01"
+    description: "Cancellation rules within the shipping workflow."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Inventory restoration during cancellation."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Concurrency for order updates."
+  - id: "TASK-06-STATUS-MANAGEMENT-01"
+    description: "Dependency: Status management for core logic."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_08: Cancel Order Implementation
 
 **Priority:** P1 (High)

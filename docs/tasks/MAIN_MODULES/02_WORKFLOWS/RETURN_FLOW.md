@@ -1,3 +1,27 @@
+---
+title: "Return Orders Workflow"
+id: "RETURN-FLOW-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Workflow Document"
+tags: ["workflow", "return", "orders", "refund", "inventory", "sales"]
+purpose: "Describes the detailed workflow for Return Orders, from customer request to restock and refund."
+location: "docs/tasks/MAIN_MODULES/02_WORKFLOWS"
+related_to:
+  - id: "RETURN-001"
+    description: "Related Task for Returns Tables implementation."
+  - id: "RETURN-002"
+    description: "Related Task for Return Order API implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #23-33."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+  - id: "SHIPPING-FLOW-01"
+    description: "Implied comparison of workflows."
+  - id: "INVOICE-FLOW-01"
+    description: "Related to the invoice generation flow."
+---
+
 # Return Orders Workflow
 
 **Module:** Order Workflow
@@ -361,15 +385,20 @@ WHERE return_id = ?;
 
 ```
 Order:
-- 5 items A
-- 3 items B
+- 5x iPhone 15 (10 triệu/cái)
+- 3x AirPods (5 triệu/cái)
 
 Return:
-- 2 items A only
+- 2x iPhone 15 only
 
-Keep:
-- 3 items A
-- 3 items B
+Calculation:
+- return_amount = 2 × 10tr = 20tr
+- shipping_fee = 30k
+- refund_amount = 20tr + 30k = 20,030,000
+
+Restock:
+- iPhone 15: +2
+- AirPods: không đổi
 ```
 
 ### 3. Return Reasons

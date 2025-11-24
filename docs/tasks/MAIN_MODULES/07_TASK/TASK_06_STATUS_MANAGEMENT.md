@@ -1,3 +1,32 @@
+---
+title: "TASK 06: Order Status Management Implementation"
+id: "TASK-06-STATUS-MANAGEMENT-01"
+priority: "P0 (Blocker)"
+estimated_effort: "6 days"
+dependencies: "TASK_05"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "order-status", "workflow", "state-machine", "inventory", "API", "backend"]
+purpose: "Implement the complete order status workflow, including valid transitions, inventory side effects (deduction/restoration), timestamp updates, and API endpoints for status changes."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Schema for order status."
+  - id: "STATE-MACHINE-01"
+    description: "Defines the status transitions."
+  - id: "SHIPPING-FLOW-01"
+    description: "Describes the detailed shipping workflow."
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Inventory side effects and challenges."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Concurrency challenges for status updates."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+  - id: "TASK-05-ORDER-CREATE-01"
+    description: "Dependency: Order Create implementation."
+---
+
 # TASK_06_STATUS_MANAGEMENT - Order Status Management
 
 # TASK_06: Order Status Management

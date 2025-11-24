@@ -1,3 +1,27 @@
+---
+title: "Database Relationships - Order Workflow"
+id: "DATABASE-RELATIONSHIPS-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "relationships", "ERD", "foreign-keys"]
+purpose: "Describes the detailed relationships between various database tables within the Order Workflow module, including cardinality, foreign key constraints, and common join patterns."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Detailed schema for the orders table."
+  - id: "INVOICES-TABLES-01"
+    description: "Detailed schema for the invoices and invoice_orders tables."
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Detailed schema for the payment_methods table."
+  - id: "RETURNS-TABLES-01"
+    description: "Detailed schema for the returns and return_items tables."
+  - id: "SUPPORTING-TABLES-01"
+    description: "Detailed schema for various supporting tables."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+---
+
 # Database Relationships
 
 **Module:** Order Workflow

@@ -1,3 +1,32 @@
+---
+title: "API Payloads Examples - Order Workflow"
+id: "API-PAYLOADS-EXAMPLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "API Examples"
+tags: ["API", "payloads", "examples", "requests", "responses", "order-workflow"]
+purpose: "Provides example API request and response payloads for key operations within the Order Workflow module, including creating orders (POS, Shipping), updating order status, creating/approving returns, creating invoices, and downloading invoice PDFs."
+location: "docs/tasks/MAIN_MODULES/06_EXAMPLES"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "Related to order creation and updates."
+  - id: "INVOICES-TABLES-01"
+    description: "Related to invoice creation and PDF."
+  - id: "RETURNS-TABLES-01"
+    description: "Related to return creation and approval."
+  - id: "ORDER-RULES-01"
+    description: "Shows validation error responses for order operations."
+  - id: "RETURN-RULES-01"
+    description: "Shows validation error responses for return operations."
+  - id: "INVOICE-RULES-01"
+    description: "Shows validation error responses for invoice operations."
+  - id: "SAMPLE-DATA-EXAMPLES-01"
+    description: "Complementary sample data for testing these payloads."
+  - id: "SQL-QUERIES-EXAMPLES-01"
+    description: "Complementary SQL queries for data verification."
+---
+
 # API Payloads Examples
 
 **Module:** Order Workflow
@@ -74,8 +103,8 @@ Content-Type: application/json
         "product_name": "iPhone 15 Pro",
         "variant_name": "256GB Tím",
         "sku": "IP15P-256-PUR",
-        "price": 25000000,
         "quantity": 1,
+        "price": 25000000,
         "subtotal": 25000000
       },
       {
@@ -84,8 +113,8 @@ Content-Type: application/json
         "product_name": "AirPods Pro 2",
         "variant_name": null,
         "sku": "APP2-GEN2",
-        "price": 5000000,
         "quantity": 1,
+        "price": 5000000,
         "subtotal": 5000000
       }
     ],
@@ -458,6 +487,6 @@ GET /api/invoices/1/pdf
 
 ## 🔗 RELATED DOCUMENTS
 
-- **[SAMPLE_[DATA.md](http://DATA.md)]** - Sample data examples
-- **[SQL_[QUERIES.md](http://QUERIES.md)]** - Common SQL queries
+- [**SAMPLE_[DATA.md](http://DATA.md)]** - Sample data examples
+- [**SQL_[QUERIES.md](http://QUERIES.md)]** - Common SQL queries
 - [**ORDER_](https://www.notion.so/ORDER_RULES-Order-Validation-Rules-2b69907faaac48bdba1d2159793193c3?pvs=21)[RULES.md](http://RULES.md)** - Validation rules

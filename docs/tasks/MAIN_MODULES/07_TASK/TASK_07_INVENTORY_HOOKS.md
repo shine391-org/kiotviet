@@ -1,3 +1,28 @@
+---
+title: "TASK 07: Inventory Hooks Implementation"
+id: "TASK-07-INVENTORY-HOOKS-01"
+priority: "P1 (High)"
+estimated_effort: "5 days"
+dependencies: "TASK_06"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "inventory", "hooks", "stock", "deduction", "restoration", "locking", "reconciliation", "multi-branch", "backend"]
+purpose: "Implement a robust inventory management system with stock checking, deduction (using pessimistic locking), restoration, movement logging, and reconciliation, supporting multi-branch operations."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "INVENTORY-EDGE-CASES-01"
+    description: "Addresses inventory edge cases discussed."
+  - id: "CONCURRENCY-EDGE-CASES-01"
+    description: "Deals with concurrency for inventory deduction."
+  - id: "TASK-06-STATUS-MANAGEMENT-01"
+    description: "Dependency for status-based inventory hooks."
+  - id: "ORDERS-TABLE-01"
+    description: "Inventory changes linked to orders."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_07: Inventory Hooks Implementation
 
 **Priority:** P1 (High)
@@ -202,6 +227,7 @@ namespace App\Services;
 
 use App\Models\Inventory;
 use App\Models\InventoryMovement;
+use Illuminate\Support\Facades\DB;
 
 class InventoryReconciliation
 {

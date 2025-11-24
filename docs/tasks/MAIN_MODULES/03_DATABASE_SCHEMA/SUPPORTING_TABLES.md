@@ -1,3 +1,21 @@
+---
+title: "Supporting Tables Schema - Order Workflow"
+id: "SUPPORTING-TABLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "supporting-tables", "logs", "inventory", "branches"]
+purpose: "Describes the detailed database schema for supporting tables including order_status_logs, inventory_movements, and branches, which are crucial for auditing and tracking within the Order Workflow module."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "ORDERS-TABLE-01"
+    description: "order_status_logs relates directly to the orders table."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+  - id: "DATABASE-RELATIONSHIPS-01"
+    description: "Detailed relationships document."
+---
+
 # Supporting Tables Schema
 
 **Module:** Order Workflow
@@ -709,5 +727,5 @@ ORDER BY order_count DESC;
 ## 🔗 RELATED DOCUMENTS
 
 - [**SCHEMA_](https://www.notion.so/SCHEMA_OVERVIEW-Database-Schema-Overview-399a75e39df64c8c8a343bd9c6bbe0a2?pvs=21)[OVERVIEW.md](http://OVERVIEW.md)** - Full schema
-- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** - Orders schema
+- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLES.md)** - Orders schema
 - [**RETURNS_](https://www.notion.so/RETURNS_TABLES-Returns-Schema-4a31069a3d7f44999f9b01f61ed53b1a?pvs=21)[TABLES.md](http://TABLES.md)** - Returns schema

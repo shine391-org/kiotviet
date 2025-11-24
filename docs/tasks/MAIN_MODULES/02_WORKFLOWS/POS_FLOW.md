@@ -1,4 +1,25 @@
-```markdown
+---
+title: "POS FLOW - Point of Sale Orders"
+id: "POS-FLOW-01"
+last_updated: "2025-11-24"
+version: "1.0"
+type: "Workflow Document"
+tags: ["workflow", "POS", "orders", "point-of-sale", "inventory", "sales"]
+purpose: "Describes the detailed workflow for Point of Sale (POS) Orders, characterized by instant transactions and no status workflow."
+location: "docs/tasks/MAIN_MODULES/02_WORKFLOWS"
+related_to:
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #1, #12 related to POS orders."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Referenced by the main Order Workflow Index."
+  - id: "STATE-MACHINE-01"
+    description: "Explains why POS orders are excluded from the state machine."
+  - id: "SHIPPING-FLOW-01"
+    description: "Provides a comparison between POS and Shipping order workflows."
+  - id: "TASK-05-ORDER-CREATE-01"
+    description: "Implementation task for order creation which might include POS orders."
+---
+
 # POS FLOW - Point of Sale Orders
 
 **Last Updated:** 2025-11-24  
@@ -945,8 +966,8 @@ Response:
 ## RELATED DOCUMENTS
 
 - [BUSINESS_[DECISIONS.md](http://DECISIONS.md)](../01_BUSINESS_[DECISIONS.md](http://DECISIONS.md)) - Decisions #1, #12
-- [STATE_[MACHINE.md](http://MACHINE.md)](./STATE_[MACHINE.md](http://MACHINE.md)) - Why POS orders excluded
-- [SHIPPING_[FLOW.md](http://FLOW.md)](./SHIPPING_[FLOW.md](http://FLOW.md)) - Comparison
+- [STATE_[MACHINE.md](http://STATE_[MACHINE.md](http://STATE_MACHINE.md))) - Why POS orders excluded
+- [SHIPPING_[FLOW.md](http://SHIPPING_[FLOW.md](http://SHIPPING_FLOW.md))) - Comparison
 - [TASK_05_ORDER_[CREATE.md](http://CREATE.md)](../07_TASKS/TASK_05_ORDER_[CREATE.md](http://CREATE.md)) - Implementation
 
 ---

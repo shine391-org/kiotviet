@@ -1,3 +1,30 @@
+---
+title: "TASK 10: Return Approval Implementation"
+id: "TASK-10-RETURN-APPROVE-01"
+priority: "P2 (Medium)"
+estimated_effort: "3 days"
+dependencies: "TASK_09"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "returns", "approval", "rejection", "workflow", "refund", "API", "backend"]
+purpose: "Implement the administrative workflow for approving or rejecting return requests, including recalculating refund amounts based on shipping fee policy, storing refund methods, and updating return status."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "RETURN-RULES-01"
+    description: "Defines validation for approval/rejection."
+  - id: "RETURN-FLOW-01"
+    description: "Describes the approval workflow."
+  - id: "RETURNS-TABLES-01"
+    description: "Schema for returns to be updated."
+  - id: "FINANCIAL-EDGE-CASES-01"
+    description: "Refund calculation edge cases."
+  - id: "TASK-09-RETURN-REQUEST-01"
+    description: "Dependency: Return request creation."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_10: Return Approval Implementation
 
 **Priority:** P2 (Medium)

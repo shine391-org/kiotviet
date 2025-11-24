@@ -1,3 +1,23 @@
+---
+title: "Invoice Validation Rules - Order Workflow"
+id: "INVOICE-RULES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Validation Rules"
+tags: ["validation", "invoice", "rules", "business-logic", "error-handling"]
+purpose: "Defines all comprehensive validation rules for the Invoice module, covering creation, financial calculations, date rules, numbering, editing, deletion, and PDF generation."
+location: "docs/tasks/MAIN_MODULES/04_VALIDATION"
+related_to:
+  - id: "INV-001"
+    description: "Related Task for Invoice Tables implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #16-22."
+  - id: "INVOICE-FLOW-01"
+    description: "Related workflow for invoice generation."
+  - id: "INVOICES-TABLES-01"
+    description: "The database schema for invoices being validated."
+---
+
 # Invoice Validation Rules
 
 **Module:** Order Workflow

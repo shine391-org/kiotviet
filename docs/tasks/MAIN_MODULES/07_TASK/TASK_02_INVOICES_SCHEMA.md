@@ -1,3 +1,28 @@
+---
+title: "TASK 02: Invoices Schema Implementation"
+id: "INV-001"
+priority: "P1 (High)"
+estimated_effort: "3 days"
+dependencies: "TASK_01 (Payment Methods)"
+status: "Ready"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "invoices", "database", "schema", "junction-table", "PDF", "VAT", "backend"]
+purpose: "Implement the 'invoices' and 'invoice_orders' tables, including number generation, VAT calculation, and on-demand PDF generation."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "INVOICES-TABLES-01"
+    description: "Details the schema to be implemented."
+  - id: "INVOICE-RULES-01"
+    description: "Defines the validation rules to be implemented."
+  - id: "INVOICE-FLOW-01"
+    description: "Describes the workflow for invoice generation."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+  - id: "PAY-001"
+    description: "Dependency: Payment Methods implementation."
+---
+
 # TASK_02: Invoices Schema Implementation
 
 **Priority:** P1 (High)

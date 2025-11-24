@@ -1,3 +1,25 @@
+---
+title: "TASK 01: Payment Methods Implementation"
+id: "PAY-001"
+priority: "P0 (Blocker)"
+estimated_effort: "2 days"
+status: "Ready"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "payment-methods", "CRUD", "backend", "database", "API"]
+purpose: "Implement the payment_methods master data table and its associated CRUD operations, including seeding, validation, and API endpoints."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "PAYMENT-METHODS-TABLE-01"
+    description: "Details the schema to be implemented."
+  - id: "PAYMENT-RULES-01"
+    description: "Defines the validation rules to be implemented."
+  - id: "SAMPLE-DATA-EXAMPLES-01"
+    description: "Provides sample data relevant to payment methods."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+---
+
 # TASK_01: Payment Methods Implementation
 
 **Priority:** P0 (Blocker)
@@ -474,6 +496,7 @@ class PaymentMethodApiTest extends TestCase
         $response->assertStatus(400)
             ->assertJson([
                 'success' => false,
+                'message' => 'Cannot delete payment method that is used in orders',
                 'error_code' => 'PAY_METHOD_IN_USE'
             ]);
     }

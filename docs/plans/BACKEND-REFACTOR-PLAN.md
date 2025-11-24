@@ -1,3 +1,19 @@
+---
+title: "Backend Refactor Plan - LANO CRM"
+id: "BACKEND-REFACTOR-PLAN-01"
+project: "LanoCRM"
+version: "2.1"
+status: "In Progress (Phase 2)"
+last_updated: "2025-11-23"
+type: "Project Plan"
+tags: ["plan", "backend", "refactoring", "modules", "architecture", "roadmap"]
+purpose: "Outlines the comprehensive plan to refactor the LANO CRM backend to clean architecture and build 9 essential new modules."
+location: "docs/plans"
+related_to:
+  - id: "AGENT-GUIDE-01"
+    description: "All development and refactoring must follow the rules and patterns in this guide."
+---
+
 # Backend Refactor Plan - LANO CRM
 
 **Version:** 2.1

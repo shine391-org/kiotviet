@@ -1,3 +1,27 @@
+---
+title: "Returns Tables Schema"
+id: "RETURNS-TABLES-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "returns", "return-items", "financial", "status", "inventory"]
+purpose: "Describes the detailed database schema for the 'returns' and 'return_items' tables within the Order Workflow module, including financial, status, and inventory tracking fields."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "RETURN-001"
+    description: "Related Task for Returns Tables implementation."
+  - id: "RETURN-002"
+    description: "Related Task for Return Order API implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #23-33."
+  - id: "RETURN-FLOW-01"
+    description: "Describes the workflow that uses this schema."
+  - id: "ORDERS-TABLE-01"
+    description: "Related to the 'orders' table."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+---
+
 # Returns Tables Schema
 
 **Module:** Order Workflow
@@ -575,7 +599,7 @@ SELECT
   DATE_FORMAT(o.created_at, '%Y-%m') as month,
   COUNT(DISTINCT [o.id](http://o.id)) as total_orders,
   COUNT(DISTINCT [r.id](http://r.id)) as total_returns,
-  ROUND(COUNT(DISTINCT [r.id](http://r.id)) * 100.0 / COUNT(DISTINCT [o.id](http://o.id)), 2) as return_rate
+  ROUND(COUNT(DISTINCT [r.id](http://r.id)) * 100.0 / (SELECT COUNT(*) FROM orders), 2) as return_rate
 FROM orders o
 LEFT JOIN returns r ON r.order_id = [o.id](http://o.id) AND r.status != 'rejected'
 WHERE o.created_at >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)

@@ -1,3 +1,28 @@
+---
+title: "TASK 03: Returns Schema Implementation"
+id: "RETURN-001"
+priority: "P1 (High)"
+estimated_effort: "3 days"
+dependencies: "TASK_05 (Order Create)"
+status: "Blocked"
+module: "Order Workflow"
+type: "Implementation Task"
+tags: ["task", "returns", "database", "schema", "workflow", "refund", "backend"]
+purpose: "Implement the 'returns' and 'return_items' tables, including number generation, partial returns, approval workflow, refund calculation, and item condition tracking."
+location: "docs/tasks/MAIN_MODULES/07_TASK"
+related_to:
+  - id: "RETURNS-TABLES-01"
+    description: "Details the schema to be implemented."
+  - id: "RETURN-RULES-01"
+    description: "Defines the validation rules to be implemented."
+  - id: "RETURN-FLOW-01"
+    description: "Describes the workflow for returns."
+  - id: "ORDER-WORKFLOW-INDEX"
+    description: "Task listed in the module index."
+  - id: "TASK-05-ORDER-CREATE-01"
+    description: "Dependency: Order Create implementation."
+---
+
 # TASK_03_RETURNS_SCHEMA - Returns Schema Implementation
 
 # TASK_03: Returns Schema Implementation

@@ -1,4 +1,17 @@
 ```markdown
+ ---
+title: "BUSINESS DECISIONS - LanoCRM Order Workflow"
+id: "BUSINESS-DECISIONS-01"
+version: "1.0"
+status: "Final - Approved by Boss"
+last_updated: "2025-11-24"
+module: "Order Workflow"
+type: "Business Logic"
+tags: ["business-rules", "orders", "invoices", "returns", "decisions"]
+purpose: "Records 39 approved business decisions for implementing the Order Workflow module in LanoCRM."
+location: "docs/tasks/MAIN_MODULES"
+author: "Boss"
+ ---
 # BUSINESS DECISIONS - LanoCRM Order Workflow
 
 **Last Updated:** 2025-11-24  

@@ -1,3 +1,23 @@
+---
+title: "Payment Methods Table Schema"
+id: "PAYMENT-METHODS-TABLE-01"
+module: "Order Workflow"
+last_updated: "2025-11-24"
+type: "Database Schema"
+tags: ["database", "schema", "payment", "payment-methods", "master-data", "financial"]
+purpose: "Describes the database schema for the 'payment_methods' table, which stores master data for various payment options, including their configuration and usage rules."
+location: "docs/tasks/MAIN_MODULES/03_DATABASE_SCHEMA"
+related_to:
+  - id: "PAY-001"
+    description: "Related Task for Payment Methods Table implementation."
+  - id: "BUSINESS-DECISIONS-01"
+    description: "References Business Decisions #8-15."
+  - id: "ORDERS-TABLE-01"
+    description: "Related to the 'orders' table which references payment methods."
+  - id: "SCHEMA-OVERVIEW-01"
+    description: "Overall database schema overview."
+---
+
 # Payment Methods Table Schema
 
 **Module:** Order Workflow

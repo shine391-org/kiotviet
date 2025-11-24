@@ -1,3 +1,18 @@
+---
+title: "Testing Guide - LANO CRM Backend"
+id: "TESTING-GUIDE-01"
+version: "1.0"
+status: "Active"
+module: "Testing"
+type: "Guideline"
+tags: ["testing", "backend", "unit-tests", "integration-tests", "test-pyramid", "ci-cd"]
+purpose: "Provides a comprehensive guide to the backend testing strategy, process, environment setup, and requirements for LANO CRM."
+location: "docs/testing"
+related_to:
+  - id: "TESTING-PATTERNS-01"
+    description: "Refer to this for code examples and patterns to copy."
+---
+
 # Testing Guide
 
 ## Section 1: Test Pyramid
