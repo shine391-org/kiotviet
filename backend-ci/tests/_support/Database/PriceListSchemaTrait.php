@@ -48,6 +48,8 @@ trait PriceListSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
+        $this->db->query('DROP TABLE IF EXISTS product_attributes');
         $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('DROP TABLE IF EXISTS products');
 
