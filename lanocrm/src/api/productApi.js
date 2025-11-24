@@ -86,9 +86,10 @@ export const getProducts = async (params = {}) => {
 /**
  * Get product detail by ID
  * @param {number} id - Product ID
+ * @param {Object} [config] - Optional axios config (e.g., { params: { price_list_id } })
  * @returns {Promise<Object>}
  */
-export const getProductDetail = async (id) => {
+export const getProductDetail = async (id, config = {}) => {
   try {
     const productId = parseInt(id, 10);
     // ✅ ADD: Validate ID
@@ -96,7 +97,11 @@ export const getProductDetail = async (id) => {
       throw new Error(`Invalid product ID: ${id}`);
     }
 
-    const response = await axiosInstance.get(ENDPOINTS.DETAIL(id));
+    const hasConfig = config && Object.keys(config).length > 0;
+    const response = await axiosInstance.get(
+      ENDPOINTS.DETAIL(productId),
+      hasConfig ? config : undefined
+    );
     return response.data;
   } catch (error) {
     // ✅ ADD: Handle 404 gracefully
