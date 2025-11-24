@@ -198,7 +198,7 @@ const ProductPriceListsTab = ({ productId }) => {
         <div>
           <div style={{ fontWeight: 'bold' }}>{text}</div>
           {!record.hasPrice && (
-            <div style={{ fontSize: '12px', color: '#999' }}>Chưa có giá</div>
+            <div style={{ fontSize: '12px', opacity: 0.6 }}>Chưa có giá</div>
           )}
         </div>
       ),
@@ -210,7 +210,7 @@ const ProductPriceListsTab = ({ productId }) => {
       align: 'right',
       sorter: (a, b) => a.basePrice - b.basePrice,
       render: (price) => (
-        <span style={{ color: '#666' }}>
+        <span style={{ opacity: 0.75 }}>
           {formatCurrency(price)}
         </span>
       ),
@@ -224,7 +224,8 @@ const ProductPriceListsTab = ({ productId }) => {
       render: (price, record) => (
         <span style={{ 
           fontWeight: 'bold', 
-          color: record.hasPrice ? '#1890ff' : '#999' 
+          color: record.hasPrice ? '#1890ff' : undefined,
+          opacity: record.hasPrice ? 1 : 0.6
         }}>
           {formatCurrency(price)}
         </span>
@@ -243,8 +244,9 @@ const ProductPriceListsTab = ({ productId }) => {
         const discount = calculateDiscount(record.basePrice, record.finalPrice);
         return (
           <span style={{ 
-            color: discount !== '-' ? '#f5222d' : '#999',
-            fontWeight: discount !== '-' ? 'bold' : 'normal'
+            color: discount !== '-' ? '#f5222d' : undefined,
+            fontWeight: discount !== '-' ? 'bold' : 'normal',
+            opacity: discount !== '-' ? 1 : 0.6
           }}>
             {discount}
           </span>
@@ -266,7 +268,7 @@ const ProductPriceListsTab = ({ productId }) => {
       key: 'customerGroups',
       render: (groups) => {
         if (!groups || groups.length === 0) {
-          return <span style={{ color: '#999' }}>Tất cả</span>;
+          return <span style={{ opacity: 0.6 }}>Tất cả</span>;
         }
         
         return (
