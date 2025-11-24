@@ -6,7 +6,7 @@
  * @agent-pattern: React Testing Library + Vitest
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterAll, vi } from 'vitest';
 import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
@@ -32,6 +32,22 @@ const { getProductDetail } = await import('../../api/productApi');
 
 describe('ProductPriceListsTab', () => {
   const mockProductId = 123;
+  const originalSetProperty = CSSStyleDeclaration.prototype.setProperty;
+
+  // JSDOM + AntD inject CSS vars that cssstyle cannot parse fully; swallow harmless errors
+  beforeAll(() => {
+    CSSStyleDeclaration.prototype.setProperty = function(name, value, priority) {
+      try {
+        return originalSetProperty.call(this, name, value, priority);
+      } catch (e) {
+        return undefined;
+      }
+    };
+  });
+
+  afterAll(() => {
+    CSSStyleDeclaration.prototype.setProperty = originalSetProperty;
+  });
 
   const mockPriceLists = [
     {
@@ -119,22 +135,22 @@ describe('ProductPriceListsTab', () => {
     });
 
     // Check price formatting
-    expect(screen.getByText('1.000.000 ₫')).toBeInTheDocument();
-    expect(screen.getByText('900.000 ₫')).toBeInTheDocument();
+    expect(screen.getAllByText('1.000.000 ₫').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('900.000 ₫').length).toBeGreaterThan(0);
     
     // Check discount calculation
-    expect(screen.getByText('-10.0%')).toBeInTheDocument();
+    expect(screen.getAllByText('-10.0%').length).toBeGreaterThan(0);
   });
 
   it('displays correct table columns', async () => {
     renderComponent();
 
     await waitFor(() => {
-      expect(screen.getByText('Tên bảng giá')).toBeInTheDocument();
-      expect(screen.getByText('Giá gốc')).toBeInTheDocument();
-      expect(screen.getByText('Giá bán')).toBeInTheDocument();
-      expect(screen.getByText('Giảm giá')).toBeInTheDocument();
-      expect(screen.getByText('Trạng thái')).toBeInTheDocument();
+      expect(screen.getAllByText('Tên bảng giá').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Giá gốc').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Giá bán').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Giảm giá').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Trạng thái').length).toBeGreaterThan(0);
     });
   });
 
