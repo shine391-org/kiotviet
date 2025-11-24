@@ -12,6 +12,7 @@ import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import ProductForm from '../../components/products/ProductForm';
 import ProductImageManager from '../../components/products/ProductImageManager';
 import VariantList from '../../components/products/VariantList';
+import ProductPriceListsTab from '../../components/products/ProductPriceListsTab';
 import * as attributeApi from '../../api/attributeApi';
 import { fetchProductDetailWithVariants } from '../../api/productApi';
 import { fetchProductDetail, resetSuccessFlags } from '../../store/slices/productSlice';
@@ -434,7 +435,7 @@ const ProductEditPage = () => {
         </Card>
       )}
 
-      {/* Form Card */}
+      {/* ✅ PRODUCT PRICE LISTS CARD */}
       <Card className={styles.card}>
         <ProductForm
           mode="edit"
