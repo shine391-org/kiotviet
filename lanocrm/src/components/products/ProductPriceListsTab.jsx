@@ -31,7 +31,7 @@ const ProductPriceListsTab = ({ productId }) => {
    * @returns {string} Formatted currency string
    */
   const formatCurrency = (amount) => {
-    if (amount === null || amount === undefined || amount === 0) {
+    if (amount === null || amount === undefined) {
       return '-';
     }
     return new Intl.NumberFormat('vi-VN', {
@@ -102,12 +102,21 @@ const ProductPriceListsTab = ({ productId }) => {
    * @returns {string} Discount percentage
    */
   const calculateDiscount = (basePrice, finalPrice) => {
-    if (!basePrice || !finalPrice || basePrice === 0 || finalPrice >= basePrice) {
+    if (!basePrice || !finalPrice || basePrice === 0) {
       return '-';
     }
     
-    const discount = ((basePrice - finalPrice) / basePrice * 100).toFixed(1);
-    return `-${discount}%`;
+    if (finalPrice > basePrice) {
+      const increase = ((finalPrice - basePrice) / basePrice * 100).toFixed(1);
+      return `+${increase}%`;
+    }
+    
+    if (finalPrice < basePrice) {
+      const discount = ((basePrice - finalPrice) / basePrice * 100).toFixed(1);
+      return `-${discount}%`;
+    }
+    
+    return '0%';
   };
 
   /**
@@ -134,7 +143,10 @@ const ProductPriceListsTab = ({ productId }) => {
       // Load product price for each price list
       const pricePromises = lists.map(async (priceList) => {
         try {
-          const productResponse = await productApi.getProductDetail(`${productId}?price_list_id=${priceList.id}`);
+          // Use proper params object instead of query string
+          const productResponse = await productApi.getProductDetail(productId, {
+            params: { price_list_id: priceList.id }
+          });
           
           return {
             priceListId: priceList.id,
@@ -146,7 +158,7 @@ const ProductPriceListsTab = ({ productId }) => {
             startDate: priceList.start_date,
             endDate: priceList.end_date,
             customerGroups: priceList.customer_groups || [],
-            hasPrice: !!(productResponse.data?.final_price || productResponse.data?.selling_price)
+            hasPrice: productResponse.data?.final_price != null || productResponse.data?.selling_price != null
           };
         } catch (error) {
           console.warn(`Failed to load price for price list ${priceList.id}:`, error);
@@ -183,7 +195,7 @@ const ProductPriceListsTab = ({ productId }) => {
     if (productId) {
       loadData();
     }
-  }, [productId, refreshKey]);
+  }, [productId, refreshKey, loadData]);
 
   /**
    * Define table columns
@@ -236,17 +248,41 @@ const ProductPriceListsTab = ({ productId }) => {
       key: 'discount',
       align: 'right',
       sorter: (a, b) => {
-        const discountA = a.basePrice > 0 ? (a.basePrice - a.finalPrice) / a.basePrice : 0;
-        const discountB = b.basePrice > 0 ? (b.basePrice - b.finalPrice) / b.basePrice : 0;
-        return discountA - discountB;
+        const discountA = calculateDiscount(a.basePrice, a.finalPrice);
+        const discountB = calculateDiscount(b.basePrice, b.finalPrice);
+        
+        const toNumeric = (discount) => {
+          if (discount === '-') return 0;
+          if (discount.startsWith('+')) return parseFloat(discount.slice(1, -1));
+          if (discount.startsWith('-')) return -parseFloat(discount.slice(1, -1));
+          return parseFloat(discount.slice(0, -1));
+        };
+        
+        return toNumeric(discountA) - toNumeric(discountB);
       },
       render: (_, record) => {
         const discount = calculateDiscount(record.basePrice, record.finalPrice);
+        let color = undefined;
+        let fontWeight = 'normal';
+        let opacity = 0.6;
+        
+        if (discount !== '-') {
+          opacity = 1;
+          fontWeight = 'bold';
+          if (discount.startsWith('+')) {
+            color = '#52c41a'; // green for price increases
+          } else if (discount.startsWith('-')) {
+            color = '#f5222d'; // red for price decreases
+          } else {
+            color = '#1890ff'; // blue for zero
+          }
+        }
+        
         return (
           <span style={{ 
-            color: discount !== '-' ? '#f5222d' : undefined,
-            fontWeight: discount !== '-' ? 'bold' : 'normal',
-            opacity: discount !== '-' ? 1 : 0.6
+            color,
+            fontWeight,
+            opacity
           }}>
             {discount}
           </span>

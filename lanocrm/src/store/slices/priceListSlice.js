@@ -113,9 +113,12 @@ const priceListSlice = createSlice({
       .addCase(deletePriceList.fulfilled, (state) => { state.deleting = false; })
       .addCase(deletePriceList.rejected, (state, action) => { state.deleting = false; state.error = action.payload; })
 
+      .addCase(fetchPriceListItems.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(fetchPriceListItems.fulfilled, (state, action) => {
+        state.loading = false;
         state.currentItems = action.payload.data || [];
       })
+      .addCase(fetchPriceListItems.rejected, (state, action) => { state.loading = false; state.error = action.payload; })
       .addCase(savePriceListItems.pending, (state) => { state.saving = true; })
       .addCase(savePriceListItems.fulfilled, (state) => { state.saving = false; })
       .addCase(savePriceListItems.rejected, (state, action) => { state.saving = false; state.error = action.payload; });

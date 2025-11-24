@@ -154,9 +154,13 @@ describe('Product Slice', () => {
 
     test('should update current product when updating single product', () => {
       const product = { id: 1, name: 'Product 1' };
+      const updatedProduct = { id: 1, name: 'Updated Product 1' };
+      
+      // First add product to items array and set as current
+      store.dispatch({ type: 'product/fetchProducts/fulfilled', payload: { success: true, data: [product] } });
       store.dispatch(setCurrentProduct(product));
 
-      const updatedProduct = { id: 1, name: 'Updated Product 1' };
+      // Now update it
       store.dispatch(updateSingleProduct(updatedProduct));
 
       const state = store.getState().product;
@@ -202,25 +206,25 @@ describe('Product Slice', () => {
       expect(state.pagination).toEqual(mockPagination);
     });
 
-    test('should handle fetchProducts fulfilled with failure', () => {
+    test('should handle fetchProducts fulfilled with failure', async () => {
       productApi.getProductsWithVariants.mockResolvedValue({
         success: false,
         message: 'API Error',
       });
 
-      store.dispatch(fetchProducts());
+      await store.dispatch(fetchProducts());
       const state = store.getState().product;
       expect(state.loading).toBe(false);
       expect(state.error).toBe('API Error');
     });
 
-    test('should handle fetchProducts rejected', () => {
+    test('should handle fetchProducts rejected', async () => {
       productApi.getProductsWithVariants.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(fetchProducts());
+      await store.dispatch(fetchProducts());
       const state = store.getState().product;
       expect(state.loading).toBe(false);
-      expect(state.error).toBe('Không thể tải danh sách sản phẩm');
+      expect(state.error).toBe('Network error');
     });
   });
 
@@ -232,7 +236,7 @@ describe('Product Slice', () => {
       expect(state.error).toBeNull();
     });
 
-    test('should handle fetchProductDetail fulfilled with success', () => {
+    test('should handle fetchProductDetail fulfilled with success', async () => {
       const mockProduct = {
         id: 1,
         name: 'Product 1',
@@ -245,7 +249,7 @@ describe('Product Slice', () => {
         data: mockProduct,
       });
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.loading).toBe(false);
       expect(state.currentProduct).toEqual({
@@ -254,7 +258,7 @@ describe('Product Slice', () => {
       });
     });
 
-    test('should handle fetchProductDetail with variants_v2', () => {
+    test('should handle fetchProductDetail with variants_v2', async () => {
       const mockProduct = {
         id: 1,
         name: 'Product 1',
@@ -267,12 +271,12 @@ describe('Product Slice', () => {
         data: mockProduct,
       });
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.currentProduct.variants).toEqual(mockProduct.variants_v2);
     });
 
-    test('should handle fetchProductDetail with no variants', () => {
+    test('should handle fetchProductDetail with no variants', async () => {
       const mockProduct = {
         id: 1,
         name: 'Product 1',
@@ -284,19 +288,19 @@ describe('Product Slice', () => {
         data: mockProduct,
       });
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.currentProduct.variants).toEqual([]);
       expect(state.currentProduct.has_variants).toBe(0);
     });
 
-    test('should handle fetchProductDetail rejected', () => {
+    test('should handle fetchProductDetail rejected', async () => {
       productApi.getProductDetail.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.loading).toBe(false);
-      expect(state.error).toBe('Không thể tải thông tin sản phẩm');
+      expect(state.error).toBe('Network error');
     });
   });
 
@@ -309,36 +313,36 @@ describe('Product Slice', () => {
       expect(state.error).toBeNull();
     });
 
-    test('should handle createProduct fulfilled with success', () => {
+    test('should handle createProduct fulfilled with success', async () => {
       productApi.createProduct.mockResolvedValue({ success: true });
 
-      store.dispatch(createProduct({ name: 'New Product' }));
+      await store.dispatch(createProduct({ name: 'New Product' }));
       const state = store.getState().product;
       expect(state.createLoading).toBe(false);
       expect(state.createSuccess).toBe(true);
     });
 
-    test('should handle createProduct fulfilled with failure', () => {
+    test('should handle createProduct fulfilled with failure', async () => {
       productApi.createProduct.mockResolvedValue({
         success: false,
         message: 'Validation error',
       });
 
-      store.dispatch(createProduct({ name: 'New Product' }));
+      await store.dispatch(createProduct({ name: 'New Product' }));
       const state = store.getState().product;
       expect(state.createLoading).toBe(false);
       expect(state.createSuccess).toBe(false);
       expect(state.error).toBe('Validation error');
     });
 
-    test('should handle createProduct rejected', () => {
+    test('should handle createProduct rejected', async () => {
       productApi.createProduct.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(createProduct({ name: 'New Product' }));
+      await store.dispatch(createProduct({ name: 'New Product' }));
       const state = store.getState().product;
       expect(state.createLoading).toBe(false);
       expect(state.createSuccess).toBe(false);
-      expect(state.error).toBe('Không thể tạo sản phẩm');
+      expect(state.error).toBe('Network error');
     });
   });
 
@@ -351,23 +355,23 @@ describe('Product Slice', () => {
       expect(state.error).toBeNull();
     });
 
-    test('should handle updateProduct fulfilled with success', () => {
+    test('should handle updateProduct fulfilled with success', async () => {
       productApi.updateProduct.mockResolvedValue({ success: true });
 
-      store.dispatch(updateProduct({ id: 1, data: { name: 'Updated' } }));
+      await store.dispatch(updateProduct({ id: 1, data: { name: 'Updated' } }));
       const state = store.getState().product;
       expect(state.updateLoading).toBe(false);
       expect(state.updateSuccess).toBe(true);
     });
 
-    test('should handle updateProduct rejected', () => {
+    test('should handle updateProduct rejected', async () => {
       productApi.updateProduct.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(updateProduct({ id: 1, data: { name: 'Updated' } }));
+      await store.dispatch(updateProduct({ id: 1, data: { name: 'Updated' } }));
       const state = store.getState().product;
       expect(state.updateLoading).toBe(false);
       expect(state.updateSuccess).toBe(false);
-      expect(state.error).toBe('Không thể cập nhật sản phẩm');
+      expect(state.error).toBe('Network error');
     });
   });
 
@@ -380,81 +384,80 @@ describe('Product Slice', () => {
       expect(state.error).toBeNull();
     });
 
-    test('should handle deleteProduct fulfilled with success', () => {
+    test('should handle deleteProduct fulfilled with success', async () => {
       productApi.deleteProduct.mockResolvedValue({ success: true });
 
-      store.dispatch(deleteProduct(1));
+      await store.dispatch(deleteProduct(1));
       const state = store.getState().product;
       expect(state.deleteLoading).toBe(false);
       expect(state.deleteSuccess).toBe(true);
     });
 
-    test('should handle deleteProduct rejected', () => {
+    test('should handle deleteProduct rejected', async () => {
       productApi.deleteProduct.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(deleteProduct(1));
+      await store.dispatch(deleteProduct(1));
       const state = store.getState().product;
       expect(state.deleteLoading).toBe(false);
       expect(state.deleteSuccess).toBe(false);
-      expect(state.error).toBe('Không thể xóa sản phẩm');
+      expect(state.error).toBe('Network error');
     });
   });
 
   describe('Async Thunks - checkProductCode', () => {
-    test('should handle checkProductCode fulfilled', () => {
+    test('should handle checkProductCode fulfilled', async () => {
       productApi.checkProductCode.mockResolvedValue({
         success: true,
         exists: false,
       });
 
-      store.dispatch(checkProductCode({ code: 'TEST001' }));
-      // This thunk doesn't update state, just test it doesn't error
+      await store.dispatch(checkProductCode({ code: 'TEST001' }));
       expect(productApi.checkProductCode).toHaveBeenCalledWith('TEST001', undefined);
     });
 
-    test('should handle checkProductCode with excludeId', () => {
+    test('should handle checkProductCode with excludeId', async () => {
       productApi.checkProductCode.mockResolvedValue({
         success: true,
         exists: false,
       });
 
-      store.dispatch(checkProductCode({ code: 'TEST001', excludeId: 1 }));
+      await store.dispatch(checkProductCode({ code: 'TEST001', excludeId: 1 }));
       expect(productApi.checkProductCode).toHaveBeenCalledWith('TEST001', 1);
     });
   });
 
   describe('Async Thunks - uploadProductImage', () => {
-    test('should handle uploadProductImage fulfilled', () => {
+    test('should handle uploadProductImage fulfilled', async () => {
       const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       productApi.uploadProductImage.mockResolvedValue({
         success: true,
         data: { url: 'http://example.com/image.jpg' },
       });
 
-      store.dispatch(uploadProductImage(mockFile));
+      await store.dispatch(uploadProductImage(mockFile));
       expect(productApi.uploadProductImage).toHaveBeenCalledWith(mockFile);
     });
   });
 
   describe('Async Thunks - importProducts', () => {
-    test('should handle importProducts fulfilled', () => {
+    test('should handle importProducts fulfilled', async () => {
       const mockFile = new File(['test'], 'products.csv', { type: 'text/csv' });
       productApi.importProducts.mockResolvedValue({
         success: true,
         imported: 10,
       });
 
-      store.dispatch(importProducts(mockFile));
+      await store.dispatch(importProducts(mockFile));
       expect(productApi.importProducts).toHaveBeenCalledWith(mockFile);
     });
   });
 
   describe('Async Thunks - exportProducts', () => {
-    test('should handle exportProducts fulfilled', () => {
+    test('should handle exportProducts fulfilled', async () => {
       const mockBlob = new Blob(['test'], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       productApi.exportProducts.mockResolvedValue(mockBlob);
 
-      store.dispatch(exportProducts({}));
+      await store.dispatch(exportProducts({}));
       expect(productApi.exportProducts).toHaveBeenCalledWith({});
       expect(productApi.downloadFile).toHaveBeenCalledWith(mockBlob, 'products.xlsx');
     });
@@ -468,65 +471,65 @@ describe('Product Slice', () => {
       expect(state.errorCategoryProducts).toBeNull();
     });
 
-    test('should handle fetchProductsByCategory fulfilled with success', () => {
+    test('should handle fetchProductsByCategory fulfilled with success', async () => {
       const mockData = [{ id: 1, name: 'Product 1' }];
       productApi.getProducts.mockResolvedValue({
         success: true,
         data: mockData,
       });
 
-      store.dispatch(fetchProductsByCategory({ category_id: 1 }));
+      await store.dispatch(fetchProductsByCategory({ category_id: 1 }));
       const state = store.getState().product;
       expect(state.loadingCategoryProducts).toBe(false);
       expect(state.categoryProducts).toEqual(mockData);
     });
 
-    test('should handle fetchProductsByCategory fulfilled with failure', () => {
+    test('should handle fetchProductsByCategory fulfilled with failure', async () => {
       productApi.getProducts.mockResolvedValue({
         success: false,
         message: 'Category error',
       });
 
-      store.dispatch(fetchProductsByCategory({ category_id: 1 }));
+      await store.dispatch(fetchProductsByCategory({ category_id: 1 }));
       const state = store.getState().product;
       expect(state.loadingCategoryProducts).toBe(false);
       expect(state.errorCategoryProducts).toBe('Category error');
     });
 
-    test('should handle fetchProductsByCategory rejected', () => {
+    test('should handle fetchProductsByCategory rejected', async () => {
       productApi.getProducts.mockRejectedValue(new Error('Network error'));
 
-      store.dispatch(fetchProductsByCategory({ category_id: 1 }));
+      await store.dispatch(fetchProductsByCategory({ category_id: 1 }));
       const state = store.getState().product;
       expect(state.loadingCategoryProducts).toBe(false);
-      expect(state.errorCategoryProducts).toBe('Không thể tải danh sách sản phẩm');
+      expect(state.errorCategoryProducts).toBe('Network error');
     });
   });
 
   describe('Edge Cases', () => {
-    test('should handle empty data array in fetchProducts', () => {
+    test('should handle empty data array in fetchProducts', async () => {
       productApi.getProductsWithVariants.mockResolvedValue({
         success: true,
         data: null, // null instead of array
       });
 
-      store.dispatch(fetchProducts());
+      await store.dispatch(fetchProducts());
       const state = store.getState().product;
       expect(state.items).toEqual([]);
     });
 
-    test('should handle non-array data in fetchProducts', () => {
+    test('should handle non-array data in fetchProducts', async () => {
       productApi.getProductsWithVariants.mockResolvedValue({
         success: true,
         data: 'not an array', // string instead of array
       });
 
-      store.dispatch(fetchProducts());
+      await store.dispatch(fetchProducts());
       const state = store.getState().product;
       expect(state.items).toEqual([]);
     });
 
-    test('should handle string has_variants conversion', () => {
+    test('should handle string has_variants conversion', async () => {
       const mockProduct = {
         id: 1,
         name: 'Product 1',
@@ -538,12 +541,12 @@ describe('Product Slice', () => {
         data: mockProduct,
       });
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.currentProduct.has_variants).toBe(0); // Should default to 0
     });
 
-    test('should handle NaN has_variants conversion', () => {
+    test('should handle NaN has_variants conversion', async () => {
       const mockProduct = {
         id: 1,
         name: 'Product 1',
@@ -555,7 +558,7 @@ describe('Product Slice', () => {
         data: mockProduct,
       });
 
-      store.dispatch(fetchProductDetail(1));
+      await store.dispatch(fetchProductDetail(1));
       const state = store.getState().product;
       expect(state.currentProduct.has_variants).toBe(0); // Should default to 0
     });

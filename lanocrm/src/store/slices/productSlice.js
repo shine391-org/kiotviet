@@ -346,7 +346,7 @@ const productSlice = createSlice({
       })
       .addCase(fetchProducts.fulfilled, (state, action) => {
         state.loading = false;
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           if (Array.isArray(action.payload.data)) {
             state.items = action.payload.data;  // ✅ UPDATED: state.items
           } else {
@@ -358,7 +358,7 @@ const productSlice = createSlice({
             state.pagination = action.payload.pagination;
           }
         } else {
-          state.error = action.payload.message || 'Lỗi không xác định';
+          state.error = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })
       .addCase(fetchProducts.rejected, (state, action) => {
@@ -375,14 +375,14 @@ const productSlice = createSlice({
       .addCase(fetchProductDetail.fulfilled, (state, action) => {
         state.loading = false;
       
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           const data = action.payload.data;
       
           data.variants = Array.isArray(data.variants) ? data.variants
                         : Array.isArray(data.variants_v2) ? data.variants_v2
                         : [];
           
-          // CHUẨN HÓA GIÁ TRỊ - KHÔNG ĐỔI TÊN TRƯỜNG
+          // CHUẨN HÓA GIÁ TRỊ - KHÔNG ĐỔI TÊN TRƯỜG
           if (data.has_variants !== undefined) {
             if (typeof data.has_variants === 'string') {
               data.has_variants = parseInt(data.has_variants, 10);
@@ -398,7 +398,7 @@ const productSlice = createSlice({
       
           state.currentProduct = data;
         } else {
-          state.error = action.payload.message || 'Lỗi không xác định';
+          state.error = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })      
       
@@ -417,10 +417,10 @@ const productSlice = createSlice({
       .addCase(createProduct.fulfilled, (state, action) => {
         state.createLoading = false;
         
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           state.createSuccess = true;
         } else {
-          state.error = action.payload.message || 'Lỗi không xác định';
+          state.error = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })
       .addCase(createProduct.rejected, (state, action) => {
@@ -438,10 +438,10 @@ const productSlice = createSlice({
       .addCase(updateProduct.fulfilled, (state, action) => {
         state.updateLoading = false;
         
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           state.updateSuccess = true;
         } else {
-          state.error = action.payload.message || 'Lỗi không xác định';
+          state.error = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })
       .addCase(updateProduct.rejected, (state, action) => {
@@ -459,10 +459,10 @@ const productSlice = createSlice({
       .addCase(deleteProduct.fulfilled, (state, action) => {
         state.deleteLoading = false;
         
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           state.deleteSuccess = true;
         } else {
-          state.error = action.payload.message || 'Lỗi không xác định';
+          state.error = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })
       .addCase(deleteProduct.rejected, (state, action) => {
@@ -478,10 +478,10 @@ const productSlice = createSlice({
       })
       .addCase(fetchProductsByCategory.fulfilled, (state, action) => {
         state.loadingCategoryProducts = false;
-        if (action.payload.success) {
+        if (action.payload && action.payload.success) {
           state.categoryProducts = action.payload.data || [];
         } else {
-          state.errorCategoryProducts = action.payload.message || 'Lỗi không xác định';
+          state.errorCategoryProducts = action.payload?.message || action.payload || 'Lỗi không xác định';
         }
       })
       .addCase(fetchProductsByCategory.rejected, (state, action) => {

@@ -30,9 +30,15 @@ const PriceListPage = () => {
     price_value: null,
   });
 
+  const [form] = Form.useForm();
+
   useEffect(() => {
     dispatch(fetchPriceLists(filters));
   }, [dispatch, filters]);
+
+  useEffect(() => {
+    form.setFieldsValue(filters);
+  }, [filters, form]);
 
   useEffect(() => () => { dispatch(resetPriceListState()); }, [dispatch]);
 
@@ -104,7 +110,7 @@ const PriceListPage = () => {
         </Space>
       ),
     },
-  ], [navigate, filters]);
+  ], [navigate, onDelete, statusColor]);
 
   const resetFilters = () => {
     const base = {
@@ -118,7 +124,6 @@ const PriceListPage = () => {
       price_value: null,
     };
     setFilters(base);
-    dispatch(fetchPriceLists(base));
   };
 
   return (
@@ -137,6 +142,7 @@ const PriceListPage = () => {
               <Select
                 placeholder="Trạng thái"
                 allowClear
+                value={filters.status}
                 onChange={(value) => setFilters({ ...filters, status: value, page: 1 })}
                 options={[
                   { label: 'Đang áp dụng', value: 'active' },
@@ -149,9 +155,9 @@ const PriceListPage = () => {
               <Select
                 placeholder="Tồn kho"
                 allowClear
+                value={filters.stock}
                 onChange={(value) => setFilters({ ...filters, stock: value, page: 1 })}
                 options={[
-                  { label: 'Tất cả', value: null },
                   { label: 'Còn hàng', value: 'in_stock' },
                   { label: 'Hết hàng', value: 'out_of_stock' },
                 ]}
@@ -159,9 +165,9 @@ const PriceListPage = () => {
 
               <Divider style={{ margin: '8px 0' }}>Giá bán</Divider>
               <Form
+                form={form}
                 layout="vertical"
                 onFinish={(values) => setFilters({ ...filters, ...values, page: 1 })}
-                initialValues={filters}
               >
                 <Form.Item name="price_condition" label="Điều kiện">
                   <Select
