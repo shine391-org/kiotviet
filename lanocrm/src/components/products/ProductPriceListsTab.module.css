@@ -8,6 +8,7 @@
 .container {
   width: 100%;
   background: #fff;
+  color: #262626;
   border-radius: 8px;
   overflow: hidden;
 }
@@ -33,12 +34,12 @@
   padding: 16px 24px 24px;
 }
 
-/* Table responsive styles */
-:global(.ant-table) {
+/* Table responsive styles - scoped to this component only */
+.container :global(.ant-table) {
   font-size: 13px;
 }
 
-:global(.ant-table-thead > tr > th) {
+.container :global(.ant-table-thead > tr > th) {
   background: #f8f9fa;
   font-weight: 600;
   color: #595959;
@@ -46,24 +47,24 @@
   padding: 12px 16px;
 }
 
-:global(.ant-table-tbody > tr > td) {
+.container :global(.ant-table-tbody > tr > td) {
   padding: 12px 16px;
   border-bottom: 1px solid #f5f5f5;
 }
 
-:global(.ant-table-tbody > tr:hover > td) {
+.container :global(.ant-table-tbody > tr:hover > td) {
   background: #f9f9f9;
 }
 
 /* Price column styling */
-:global(.ant-table-tbody > tr > td:nth-child(2)),
-:global(.ant-table-tbody > tr > td:nth-child(3)),
-:global(.ant-table-tbody > tr > td:nth-child(4)) {
+.container :global(.ant-table-tbody > tr > td:nth-child(2)),
+.container :global(.ant-table-tbody > tr > td:nth-child(3)),
+.container :global(.ant-table-tbody > tr > td:nth-child(4)) {
   font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
 }
 
 /* Status tag styling */
-:global(.ant-tag) {
+.container :global(.ant-tag) {
   margin: 0;
   font-size: 11px;
   line-height: 18px;
@@ -72,17 +73,17 @@
 }
 
 /* Empty state styling */
-:global(.ant-empty) {
+.container :global(.ant-empty) {
   margin: 40px 0;
 }
 
-:global(.ant-empty-description) {
+.container :global(.ant-empty-description) {
   color: #8c8c8c;
   font-size: 14px;
 }
 
 /* Loading spinner styling */
-:global(.ant-spin-container) {
+.container :global(.ant-spin-container) {
   min-height: 200px;
 }
 
@@ -103,12 +104,12 @@
     padding: 12px 16px 16px;
   }
   
-  :global(.ant-table) {
+  .container :global(.ant-table) {
     font-size: 12px;
   }
   
-  :global(.ant-table-thead > tr > th),
-  :global(.ant-table-tbody > tr > td) {
+  .container :global(.ant-table-thead > tr > th),
+  .container :global(.ant-table-tbody > tr > td) {
     padding: 8px 12px;
   }
 }
@@ -120,13 +121,13 @@
     border-bottom: 1px solid #000;
   }
   
-  :global(.ant-table-thead > tr > th) {
+  .container :global(.ant-table-thead > tr > th) {
     background: none !important;
     color: #000 !important;
     border-bottom: 1px solid #000;
   }
   
-  :global(.ant-table-tbody > tr > td) {
+  .container :global(.ant-table-tbody > tr > td) {
     border-bottom: 1px solid #f0f0f0;
   }
 }
@@ -135,6 +136,7 @@
 @media (prefers-color-scheme: dark) {
   .container {
     background: #1f1f1f;
+    color: #f0f0f0;
   }
   
   .header {
@@ -146,18 +148,18 @@
     color: #fff;
   }
   
-  :global(.ant-table-thead > tr > th) {
+  .container :global(.ant-table-thead > tr > th) {
     background: #2a2a2a;
     color: #a6a6a6;
     border-bottom-color: #404040;
   }
   
-  :global(.ant-table-tbody > tr > td) {
+  .container :global(.ant-table-tbody > tr > td) {
     border-bottom-color: #404040;
     color: #fff;
   }
   
-  :global(.ant-table-tbody > tr:hover > td) {
+  .container :global(.ant-table-tbody > tr:hover > td) {
     background: #2a2a2a;
   }
 }
@@ -192,29 +194,29 @@
   }
 }
 
-:global(.ant-table-tbody > tr.price-highlight > td) {
+.container :global(.ant-table-tbody > tr.price-highlight > td) {
   animation: priceHighlight 2s ease-in-out;
 }
 
 /* Custom scrollbar for table */
-:global(.ant-table-body) {
+.container :global(.ant-table-body) {
   scrollbar-width: thin;
   scrollbar-color: #d9d9d9 transparent;
 }
 
-:global(.ant-table-body::-webkit-scrollbar) {
+.container :global(.ant-table-body::-webkit-scrollbar) {
   height: 6px;
 }
 
-:global(.ant-table-body::-webkit-scrollbar-track) {
+.container :global(.ant-table-body::-webkit-scrollbar-track) {
   background: transparent;
 }
 
-:global(.ant-table-body::-webkit-scrollbar-thumb) {
+.container :global(.ant-table-body::-webkit-scrollbar-thumb) {
   background: #d9d9d9;
   border-radius: 3px;
 }
 
-:global(.ant-table-body::-webkit-scrollbar-thumb:hover) {
+.container :global(.ant-table-body::-webkit-scrollbar-thumb:hover) {
   background: #bfbfbf;
 }
