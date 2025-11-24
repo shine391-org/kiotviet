@@ -100,6 +100,7 @@ class OrderService
             'order_number' => $orderNumber,
             'customer_id' => $data['customer_id'],
             'customer_group_id' => $data['customer_group_id'],
+            'branch_id' => $validated['branch_id'],
             'order_date' => $data['order_date'],
             'order_type' => $validated['order_type'],
             'payment_method' => $validated['payment_method'],
@@ -136,8 +137,68 @@ class OrderService
 
         $order = $this->orders->create($orderPayload, $itemRows);
         $order['items'] = $itemRows;
+
+        // POS đơn hàng auto hoàn tất -> trừ tồn ngay
+        if ($validated['order_type'] === 'pos') {
+            $this->deductPosInventory($order, (int) ($validated['branch_id'] ?? 0));
+            $this->logPosStatus($order);
+        }
+
         $this->emit('order.created', $order);
         return ['success' => true, 'data' => $order];
+    }
+
+    /**
+     * Deduct inventory for POS orders and log movement.
+     */
+    private function deductPosInventory(array $order, int $branchId): void
+    {
+        if ($branchId <= 0 || empty($order['items'])) {
+            return;
+        }
+        $db = Database::connect();
+        if (! $db->tableExists('inventory_stock')) {
+            return;
+        }
+        $now = date('Y-m-d H:i:s');
+        foreach ($order['items'] as $item) {
+            $productId = (int) ($item['product_id'] ?? 0);
+            $variantId = $item['variant_id'] ?? null;
+            $qty = (float) ($item['quantity'] ?? 0);
+            if ($productId <= 0 || $qty <= 0) {
+                continue;
+            }
+
+            // Update stock
+            $row = $db->table('inventory_stock')
+                ->where('branch_id', $branchId)
+                ->where('product_id', $productId)
+                ->where('variant_id', $variantId)
+                ->get()->getRowArray();
+            if ($row) {
+                $db->table('inventory_stock')
+                    ->where('id', $row['id'])
+                    ->set('quantity_on_hand', 'quantity_on_hand - ' . $qty, false)
+                    ->update();
+            }
+
+            // Log movement
+            if ($db->tableExists('inventory_movements')) {
+                $db->table('inventory_movements')->insert([
+                    'branch_id' => $branchId,
+                    'product_id' => $productId,
+                    'variant_id' => $variantId,
+                    'type' => 'sale',
+                    'quantity' => -$qty,
+                    'reference_type' => 'order',
+                    'reference_id' => $order['id'] ?? null,
+                    'notes' => 'POS auto-complete deduction',
+                    'created_by' => $order['created_by'] ?? null,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+        }
     }
 
     private function resolveCustomerGroup(?int $customerId, ?int $providedGroupId): ?int
@@ -180,5 +241,27 @@ class OrderService
         } catch (\Throwable $e) {
             log_message('error', 'Webhook dispatch failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Log auto-complete status change for POS orders.
+     */
+    private function logPosStatus(array $order): void
+    {
+        $db = Database::connect();
+        if (! $db->tableExists('order_status_logs')) {
+            return;
+        }
+        $now = date('Y-m-d H:i:s');
+        $db->table('order_status_logs')->insert([
+            'order_id' => $order['id'] ?? null,
+            'from_status' => null,
+            'to_status' => 'completed',
+            'notes' => 'POS auto complete',
+            'changed_by' => $order['created_by'] ?? null,
+            'changed_at' => $now,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
     }
 }

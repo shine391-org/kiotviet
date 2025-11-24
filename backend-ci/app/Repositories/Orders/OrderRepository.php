@@ -42,6 +42,10 @@ class OrderRepository
             $this->db->table('order_items')->insertBatch($rows);
         }
         $this->db->transComplete();
+        if ($this->db->transStatus() === false) {
+            $err = $this->db->error();
+            throw new \RuntimeException('Order create failed: ' . ($err['message'] ?? 'unknown DB error'));
+        }
 
         return $payload + ['id' => $orderId];
     }

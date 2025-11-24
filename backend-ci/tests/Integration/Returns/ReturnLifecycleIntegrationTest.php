@@ -22,20 +22,8 @@ class ReturnLifecycleIntegrationTest extends CIUnitTestCase
     {
         parent::setUp();
         $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        }
         $config->defaultGroup = 'tests';
         $this->db = Database::connect('tests', false);
-        if (strtolower($this->db->DBDriver) === 'sqlite3') {
-            $this->markTestSkipped('Return lifecycle integration requires MySQL schema.');
-        }
         $this->resetReturnSchema();
 
         // seed base lookup

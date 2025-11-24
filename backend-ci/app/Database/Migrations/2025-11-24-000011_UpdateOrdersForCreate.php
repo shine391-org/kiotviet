@@ -14,6 +14,13 @@ class UpdateOrdersForCreate extends Migration
 {
     public function up()
     {
+        // If columns already exist (rerun), skip to avoid duplicate errors.
+        $db = \Config\Database::connect();
+        $fields = array_map('strtolower', $db->getFieldNames('orders'));
+        if (in_array('payment_method', $fields, true)) {
+            return;
+        }
+
         // Extra columns for orders
         $this->forge->addColumn('orders', [
             'order_number' => [

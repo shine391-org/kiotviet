@@ -140,7 +140,7 @@ class ReturnRepository
     public function transition(int $id, string $toStatus, array $extra = [], ?int $expectedVersion = null): array
     {
         $this->db->transStart();
-        $builder = $this->returns->builder()->where('id', $id);
+        $builder = $this->db->table($this->returns->table)->where('id', $id);
         if ($expectedVersion !== null) {
             $builder->where('lock_version', $expectedVersion);
         }
@@ -148,7 +148,7 @@ class ReturnRepository
             'status' => $toStatus,
             'updated_at' => date('Y-m-d H:i:s'),
         ];
-        $builder->set($payload, '', false);
+        $builder->set($payload);
         $builder->set('lock_version', 'lock_version + 1', false);
         $builder->update();
         $this->db->transComplete();

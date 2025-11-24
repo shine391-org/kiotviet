@@ -23,9 +23,7 @@ class ReturnApiTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (! getenv('ENABLE_API_TESTS')) {
-            $this->markTestSkipped('Integration API tests require running app server');
-        }
+        // Use local HTTP kernel without external server requirement.
         $this->db = Database::connect('tests');
         $this->resetReturnSchema();
         $this->seedLookup();

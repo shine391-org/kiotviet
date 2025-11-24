@@ -12,7 +12,7 @@ class OrderModel extends Model
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
     protected $allowedFields = [
-        'order_number','customer_id','customer_group_id','order_date','status','order_type',
+        'order_number','customer_id','customer_group_id','branch_id','order_date','status','order_type',
         'payment_method','shipping_fee','subtotal','discount_total','total',
         'paid_amount','debt_amount','is_paid','applied_price_list_id',
         'shipping_name','shipping_phone','shipping_address','shipping_ward','shipping_district','shipping_city',

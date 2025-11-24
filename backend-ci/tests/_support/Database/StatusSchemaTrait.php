@@ -93,7 +93,9 @@ trait StatusSchemaTrait
             id INTEGER PRIMARY KEY {$auto},
             order_number {$varchar30},
             customer_id INTEGER,
+            customer_group_id INTEGER,
             branch_id INTEGER,
+            order_date DATE NULL,
             status {$varchar50},
             order_type {$varchar50},
             payment_method {$varchar50},
@@ -105,6 +107,14 @@ trait StatusSchemaTrait
             debt_amount REAL,
             is_paid INTEGER,
             cod_collected INTEGER,
+            applied_price_list_id INTEGER NULL,
+            shipping_name {$varchar50},
+            shipping_phone {$varchar50},
+            shipping_address TEXT,
+            shipping_ward {$varchar50},
+            shipping_district {$varchar50},
+            shipping_city {$varchar50},
+            notes TEXT,
             confirmed_at TEXT,
             processing_at TEXT,
             shipping_at TEXT,
@@ -113,13 +123,16 @@ trait StatusSchemaTrait
             cancelled_at TEXT,
             cancellation_reason TEXT,
             created_at TEXT,
-            updated_at TEXT
+            updated_at TEXT,
+            deleted_at TEXT
         )");
         $this->db->query("CREATE TABLE db_orders (
             id INTEGER PRIMARY KEY {$auto},
             order_number {$varchar30},
             customer_id INTEGER,
+            customer_group_id INTEGER,
             branch_id INTEGER,
+            order_date DATE NULL,
             status {$varchar50},
             order_type {$varchar50},
             payment_method {$varchar50},
@@ -131,6 +144,14 @@ trait StatusSchemaTrait
             debt_amount REAL,
             is_paid INTEGER,
             cod_collected INTEGER,
+            applied_price_list_id INTEGER NULL,
+            shipping_name {$varchar50},
+            shipping_phone {$varchar50},
+            shipping_address TEXT,
+            shipping_ward {$varchar50},
+            shipping_district {$varchar50},
+            shipping_city {$varchar50},
+            notes TEXT,
             confirmed_at TEXT,
             processing_at TEXT,
             shipping_at TEXT,
@@ -139,7 +160,8 @@ trait StatusSchemaTrait
             cancelled_at TEXT,
             cancellation_reason TEXT,
             created_at TEXT,
-            updated_at TEXT
+            updated_at TEXT,
+            deleted_at TEXT
         )");
 
         $this->db->query("CREATE TABLE order_items (
@@ -149,7 +171,11 @@ trait StatusSchemaTrait
             variant_id INTEGER,
             quantity REAL,
             base_price REAL,
-            final_price REAL
+            final_price REAL,
+            created_at TEXT,
+            updated_at TEXT,
+            price_list_id INTEGER NULL,
+            price_list_name {$varchar50}
         )");
         $this->db->query("CREATE TABLE db_order_items (
             id INTEGER PRIMARY KEY {$auto},
@@ -158,7 +184,11 @@ trait StatusSchemaTrait
             variant_id INTEGER,
             quantity REAL,
             base_price REAL,
-            final_price REAL
+            final_price REAL,
+            created_at TEXT,
+            updated_at TEXT,
+            price_list_id INTEGER NULL,
+            price_list_name {$varchar50}
         )");
 
         if (! $isSqlite) {

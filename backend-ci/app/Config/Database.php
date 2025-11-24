@@ -164,17 +164,16 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'         => '',
-        'hostname'    => '127.0.0.1',
+        'hostname'    => '',
         'username'    => '',
         'password'    => '',
-        // Use file-based SQLite so multiple connections share state in tests.
-        'database'    => WRITEPATH . 'tests.sqlite',
-        'DBDriver'    => 'SQLite3',
-        'DBPrefix'    => 'db_',  // giữ prefix để hạn chế nhầm
+        'database'    => '',
+        'DBDriver'    => 'MySQLi',
+        'DBPrefix'    => 'db_',
         'pConnect'    => false,
         'DBDebug'     => true,
-        'charset'     => 'utf8',
-        'DBCollat'    => '',
+        'charset'     => 'utf8mb4',
+        'DBCollat'    => 'utf8mb4_general_ci',
         'swapPre'     => '',
         'encrypt'     => false,
         'compress'    => false,
@@ -200,5 +199,14 @@ class Database extends Config
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        // Load test connection from .env if provided
+        $this->tests['hostname'] = env('database.tests.hostname', 'db-test');
+        $this->tests['database'] = env('database.tests.database', 'lanocrm_test');
+        $this->tests['username'] = env('database.tests.username', 'lanocrm_user');
+        $this->tests['password'] = env('database.tests.password', 'KP7n4RjcDbedSE2W8GgA');
+        $this->tests['DBDriver'] = env('database.tests.DBDriver', 'MySQLi');
+        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', 'db_');
+        $this->tests['port']     = (int) env('database.tests.port', 3306);
     }
 }

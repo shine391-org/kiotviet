@@ -29,6 +29,11 @@ class OrderCreateValidator
             throw new InvalidArgumentException('payment_method is required');
         }
 
+        $branchId = isset($input['branch_id']) ? (int) $input['branch_id'] : 0;
+        if ($branchId <= 0) {
+            throw new InvalidArgumentException('branch_id is required');
+        }
+
         $customerId = isset($input['customer_id']) ? (int) $input['customer_id'] : null;
         if ($customerId !== null && $customerId < 0) {
             throw new InvalidArgumentException('customer_id invalid');
@@ -67,6 +72,7 @@ class OrderCreateValidator
             'order_type' => $orderType,
             'payment_method' => trim((string) $paymentMethod),
             'order_date' => $input['order_date'] ?? date('Y-m-d'),
+            'branch_id' => $branchId,
             'shipping_fee' => $shippingFee,
             'paid_amount' => $paidAmount,
             'notes' => isset($input['notes']) ? trim((string) $input['notes']) : null,

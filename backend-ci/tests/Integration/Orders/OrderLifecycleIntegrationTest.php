@@ -25,21 +25,9 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
         parent::setUp();
 
         $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        }
         $config->defaultGroup = 'tests';
 
         $this->db = Database::connect('tests', false);
-        if (strtolower($this->db->DBDriver) === 'sqlite3') {
-            $this->markTestSkipped('Order lifecycle integration requires MySQL schema.');
-        }
         $this->resetStatusSchema();
         $this->resetProducts();
 
@@ -52,23 +40,70 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS products');
         $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('CREATE TABLE products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT,
-            name TEXT,
-            selling_price REAL DEFAULT 0,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )');
-        $this->db->query('CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT,
-            name TEXT,
-            selling_price REAL DEFAULT 0,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )');
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50),
+            name VARCHAR(255),
+            selling_price DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        $this->db->query('CREATE TABLE db_products LIKE products');
+
+        // minimal price list tables required by price calculator
+        $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            type VARCHAR(50) DEFAULT \'custom\',
+            description TEXT,
+            apply_to_groups JSON NULL,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            priority INT DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            formula TEXT NULL,
+            base_price_list_id INT NULL,
+            auto_update TINYINT(1) DEFAULT 0,
+            rounding_rule VARCHAR(50) NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_lists LIKE price_lists');
+
+        $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            price_list_id INT,
+            product_id INT,
+            variant_id INT NULL,
+            price DECIMAL(14,2) DEFAULT 0,
+            discount_percent DECIMAL(8,2) DEFAULT 0,
+            discount_amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_list_items LIKE price_list_items');
+
+        $this->db->query('CREATE TABLE IF NOT EXISTS customers (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            customer_group_id INT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_customers LIKE customers');
+
+        foreach (['price_list_items','db_price_list_items','price_lists','db_price_lists','products','db_products','customers','db_customers'] as $tbl) {
+            if ($this->db->tableExists($tbl)) {
+                $this->db->table($tbl)->truncate();
+            }
+        }
+
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('customers')->insertBatch([
+            ['id' => 1, 'name' => 'Customer 1', 'customer_group_id' => null, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'name' => 'Customer 2', 'customer_group_id' => null, 'created_at' => $now, 'updated_at' => $now],
+        ]);
     }
 
     /** @test */
@@ -180,7 +215,6 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
         ];
         $this->db->table('products')->insert($row);
         $id = (int) $this->db->insertID();
-        $this->db->table('db_products')->insert($row);
         return $id;
     }
 }

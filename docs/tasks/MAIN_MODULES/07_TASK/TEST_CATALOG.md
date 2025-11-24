@@ -1,5 +1,3 @@
-# TEST CATALOG - All Test Cases
-
 # 🧪 TỔNG HỢP TẤT CẢ TEST CASES
 
 **Module:** Order Workflow
@@ -531,6 +529,268 @@
 ---
 
 ## 📊 STATISTICS
+
+**Total:** 10 tests
+
+---
+
+## 🔗 INTEGRATION TESTS (End-to-End)
+
+Ngoài các integration tests trong TASK_13, còn cần thêm các integration tests xuyên suốt workflows:
+
+### **Order Lifecycle Integration** (8 tests)
+
+1. ✅ **full_pos_order_lifecycle**
+    - Create POS order → Auto completed
+    - Inventory deducted immediately
+    - Payment marked as paid
+    - Status log created
+    - Event fired
+2. ✅ **full_shipping_order_lifecycle**
+    - Create (draft) → Confirm → Process → Ship → Deliver → Complete
+    - Each transition verified
+    - Inventory deducted on processing
+    - All timestamps recorded
+    - All events fired
+3. ✅ **order_with_multiple_items_inventory_tracking**
+    - Order with 5 different products
+    - All inventory movements logged
+    - Total quantity matches
+    - Reconciliation verified
+4. ✅ **order_cancellation_full_flow**
+    - Create → Confirm → Process → Cancel
+    - Inventory restored correctly
+    - Status logs complete
+    - Event fired
+5. ✅ **concurrent_orders_same_product**
+    - 10 concurrent orders for same product
+    - Only N succeed (based on stock)
+    - No overselling
+    - All movements logged
+6. ✅ **order_with_cod_payment_completion**
+    - Create COD order (unpaid)
+    - Process → Ship → Deliver → Complete
+    - On complete: is_paid = true
+    - debt_amount = 0
+    - cod_collected = true
+7. ✅ **order_modification_before_processing**
+    - Create draft order
+    - Update items
+    - Update shipping address
+    - Confirm → Process
+    - Final data correct
+8. ✅ **failed_order_rollback**
+    - Create order with invalid data
+    - Transaction rolled back
+    - No partial data saved
+    - No inventory deducted
+    - No events fired
+
+---
+
+### **Return Lifecycle Integration** (6 tests)
+
+1. ✅ **full_return_lifecycle**
+    - Order completed
+    - Customer creates return request
+    - Admin approves with shipping refund
+    - Warehouse completes return
+    - Inventory restocked
+    - All movements logged
+2. ✅ **partial_return_multiple_times**
+    - Order with 10 items
+    - Return 3 items (approved, completed)
+    - Return 2 more items (approved, completed)
+    - Cannot return 6 more (only 5 remaining)
+    - Over-return prevented
+3. ✅ **return_rejected_flow**
+    - Customer creates return
+    - Admin rejects with reason
+    - No inventory changes
+    - Status = rejected
+    - Cannot proceed to completion
+4. ✅ **return_outside_window**
+    - Order completed 35 days ago
+    - Customer attempts return
+    - Error: RET_WINDOW_EXPIRED
+    - No return created
+5. ✅ **return_with_shipping_fee_refund**
+    - Order with shipping_fee = 50,000
+    - Return all items (100,000)
+    - Admin approves with refund_shipping_fee=true
+    - refund_amount = 150,000
+    - Correct calculation
+6. ✅ **return_condition_tracking**
+    - Create return with mixed conditions
+    - Item 1: new
+    - Item 2: used
+    - Item 3: damaged
+    - All conditions logged in movements
+    - Warehouse can track quality
+
+---
+
+### **Invoice Integration** (4 tests)
+
+1. ✅ **multi_order_invoice_generation**
+    - Customer has 5 completed orders
+    - Generate 1 invoice for all 5
+    - Subtotal = sum of all orders
+    - VAT calculated on total
+    - PDF generated
+    - All orders linked
+2. ✅ **invoice_with_vat_calculation**
+    - Orders totaling 10,000,000 VND
+    - VAT rate = 10%
+    - vat_amount = 1,000,000
+    - total = 11,000,000
+    - Rounded correctly
+3. ✅ **invoice_pdf_caching**
+    - Generate invoice → PDF created
+    - Request PDF again → Same file returned
+    - No regeneration
+    - Storage path consistent
+4. ✅ **cannot_invoice_incomplete_orders**
+    - Try to invoice mix of completed & processing
+    - Error: INV_INCOMPLETE_ORDERS
+    - No invoice created
+    - No PDF generated
+
+---
+
+### **Order + Return Integration** (5 tests)
+
+1. ✅ **order_return_inventory_full_cycle**
+    - Initial stock: 100 units
+    - Create order: 20 units (stock = 80)
+    - Process order → Inventory deducted (stock = 80)
+    - Complete order
+    - Create return: 5 units
+    - Approve & complete return (stock = 85)
+    - Final stock verified: 85
+    - All movements logged
+2. ✅ **multiple_returns_same_order**
+    - Order with 3 different products
+    - Return product A (approved, completed)
+    - Return product B (approved, completed)
+    - Return product C (approved, completed)
+    - Each restocked correctly
+    - No interference between returns
+3. ✅ **order_cancel_vs_return_inventory**
+    - Create & process order (inventory deducted)
+    - Scenario A: Cancel order → Inventory restored
+    - Scenario B: Complete order → Return → Inventory restocked
+    - Both end with same inventory level
+    - Different movement types logged
+4. ✅ **return_after_partial_payment**
+    - Order total: 1,000,000
+    - Paid: 500,000 (debt: 500,000)
+    - Complete order
+    - Return all items
+    - Refund amount calculated correctly
+    - Debt handling verified
+5. ✅ **order_completed_then_returned_then_invoiced**
+    - Order completed
+    - Return approved & completed
+    - Try to create invoice for that order
+    - Should handle returned amount
+    - Or prevent invoicing if fully returned
+
+---
+
+### **Multi-Module Integration** (5 tests)
+
+1. ✅ **order_invoice_payment_tracking**
+    - Create multiple orders for B2B customer
+    - All orders completed
+    - Generate invoice
+    - Track payment status
+    - Update paid_amount
+    - Verify debt_amount
+2. ✅ **inventory_across_multiple_branches**
+    - Branch A: 50 units
+    - Branch B: 30 units
+    - Order from Branch A: 20 units → Stock A = 30
+    - Order from Branch B: 25 units → Stock B = 5
+    - No cross-branch interference
+    - Movements tracked per branch
+3. ✅ **event_webhook_email_integration**
+    - Create order
+    - Event fired: OrderCreated
+    - Webhook sent to external system
+    - Email sent to customer
+    - SMS sent to customer phone
+    - All integrations successful
+4. ✅ **failed_webhook_doesnt_block_order**
+    - Create order
+    - Transaction committed
+    - Webhook fails (timeout)
+    - Order still created
+    - Error logged
+    - Retry scheduled
+5. ✅ **concurrent_operations_different_entities**
+    - Concurrent: 5 order creations
+    - Concurrent: 3 returns being processed
+    - Concurrent: 2 invoices being generated
+    - All succeed without deadlock
+    - No data corruption
+    - All transactions isolated
+
+---
+
+### **Edge Case Integration** (8 tests)
+
+1. ✅ **order_with_zero_inventory_product**
+    - Product stock = 0
+    - Attempt to create order
+    - Error: ORD_INSUFFICIENT_STOCK
+    - No order created
+    - No inventory movement
+2. ✅ **return_quantity_exactly_at_limit**
+    - Order: 10 items
+    - Return: 10 items (all)
+    - Should succeed
+    - All inventory restocked
+3. ✅ **invoice_on_31st_of_month**
+    - Create invoice on 2024-01-31
+    - Due date 30 days later
+    - Handles February correctly
+    - due_date = 2024-03-02 (or appropriate)
+4. ✅ **order_cancellation_during_shipping**
+    - Order in "shipping" status
+    - Cancel requested
+    - Inventory restored
+    - Shipping notification sent
+    - Order cancelled successfully
+5. ✅ **return_window_timezone_handling**
+    - Order completed at 2024-01-01 23:59:59 GMT+7
+    - Return request at 2024-02-01 00:00:01 GMT+7
+    - Should be within 30 days
+    - Timezone handled correctly
+6. ✅ **inventory_negative_prevention**
+    - Stock = 5 units
+    - Concurrent orders: 10 units each
+    - Only 1 succeeds
+    - Stock never goes negative
+    - Database constraint enforced
+7. ✅ **order_number_uniqueness_high_concurrency**
+    - 100 concurrent order creations
+    - All order numbers unique
+    - No duplicates
+    - Sequential integrity maintained
+8. ✅ **full_system_stress_test**
+    - 50 concurrent orders
+    - 20 concurrent returns
+    - 10 concurrent invoices
+    - 100 concurrent status updates
+    - All succeed or fail gracefully
+    - No deadlocks
+    - No data corruption
+    - All transactions properly isolated
+
+---
+
+## 📊 UPDATED STATISTICS
 
 ### **By Task:**
 

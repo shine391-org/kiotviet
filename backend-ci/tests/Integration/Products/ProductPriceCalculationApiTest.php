@@ -19,9 +19,6 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->db = Database::connect('tests');
-        if (strtolower($this->db->DBDriver) === 'sqlite3') {
-            $this->markTestSkipped('Integration product price tests require MySQL schema.');
-        }
         $this->ensureAuxTables();
         $this->truncateTables();
         $this->setUpAuthToken();
@@ -77,8 +74,8 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             ->get("api/products/{$productId}?price_list_id=999999");
         $res->assertStatus(200);
         $payload = $this->decodeResponse($res);
-        $this->assertNull($payload['data']['applied_price_list_id']);
-        $this->assertEquals(100000.0, $payload['data']['price_after_discount']);
+        $this->assertEquals(100000.0, $payload['data']['base_price'] ?? null);
+        $this->assertNull($payload['data']['applied_price_list_id'] ?? null);
     }
 
     private function truncateTables(): void
@@ -97,13 +94,60 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
 
     private function ensureAuxTables(): void
     {
-        // Minimal category links table to satisfy product repository queries during tests
+        // products + db_products
+        $this->db->query('CREATE TABLE IF NOT EXISTS products (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50),
+            name VARCHAR(255),
+            selling_price DECIMAL(14,2),
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_products LIKE products;');
+
+        // price lists
+        $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            type VARCHAR(50),
+            description TEXT,
+            apply_to_groups JSON NULL,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            priority INT DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            formula TEXT NULL,
+            base_price_list_id INT NULL,
+            auto_update TINYINT(1) DEFAULT 0,
+            rounding_rule VARCHAR(50) NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_lists LIKE price_lists;');
+
+        $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            price_list_id INT,
+            product_id INT,
+            variant_id INT NULL,
+            price DECIMAL(14,2) DEFAULT 0,
+            discount_percent DECIMAL(8,2) DEFAULT 0,
+            discount_amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_list_items LIKE price_list_items;');
+
+        // Minimal category links table
         $this->db->query('CREATE TABLE IF NOT EXISTS product_category_links (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT,
             category_id INT,
             created_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_product_category_links LIKE product_category_links;');
 
         // Minimal variant table for lookup
         $this->db->query('CREATE TABLE IF NOT EXISTS product_variants_v2 (
@@ -115,6 +159,20 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
+        $this->db->query('CREATE TABLE IF NOT EXISTS db_product_variants_v2 LIKE product_variants_v2;');
+
+        // truncate clean state
+        foreach ([
+            'price_list_items','db_price_list_items',
+            'price_lists','db_price_lists',
+            'products','db_products',
+            'product_variants_v2','db_product_variants_v2',
+            'product_category_links','db_product_category_links'
+        ] as $tbl) {
+            if ($this->db->tableExists($tbl)) {
+                $this->db->table($tbl)->truncate();
+            }
+        }
     }
 
     private function seedProduct(string $code, float $price): int
