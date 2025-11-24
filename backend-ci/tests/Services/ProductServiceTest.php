@@ -385,6 +385,8 @@ class ProductServiceTest extends CIUnitTestCase
         $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
         $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
         $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS product_attributes');
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query("CREATE TABLE db_products (
@@ -430,9 +432,18 @@ class ProductServiceTest extends CIUnitTestCase
         $this->db->query("CREATE TABLE db_product_attributes (
             id INTEGER PRIMARY KEY {$auto},
             name TEXT,
+            attribute_key TEXT,
             type TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER,
+            is_required INTEGER,
+            is_visible INTEGER,
+            attribute_values TEXT,
             created_at TEXT,
-            updated_at TEXT
+            updated_at TEXT,
+            deleted_at TEXT
         )");
 
         $this->db->query("CREATE TABLE db_product_attribute_values (
@@ -440,9 +451,41 @@ class ProductServiceTest extends CIUnitTestCase
             product_id INTEGER,
             attribute_id INTEGER,
             variant_id INTEGER,
-            value TEXT,
+            option_id INTEGER,
+            value_text TEXT,
             created_at TEXT,
-            updated_at TEXT
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        // mirror non-prefixed tables because repositories use them
+        $this->db->query("CREATE TABLE product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            attribute_key TEXT,
+            type TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER,
+            is_required INTEGER,
+            is_visible INTEGER,
+            attribute_values TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            attribute_id INTEGER,
+            variant_id INTEGER,
+            option_id INTEGER,
+            value_text TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
         )");
 
         $this->db->query("CREATE TABLE db_product_images (
