@@ -22,6 +22,8 @@ import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
 import ProductEditPage from './pages/products/ProductEditPage';
 import VariantEditPage from './pages/products/VariantEditPage';
+import PriceListListPage from './pages/price-lists/PriceListListPage';
+import PriceListFormPage from './pages/price-lists/PriceListFormPage';
 
 // ✅ THÊM: ATTRIBUTE PAGES
 import AttributeListPage from './pages/products/AttributeListPage';
@@ -178,6 +180,20 @@ function App() {
                           <VariantEditPage />
                         </ProtectedRoute>
                       }
+                    />
+
+                    {/* 🆕 Price Lists */}
+                    <Route
+                      path="/price-lists"
+                      element={<PriceListListPage />}
+                    />
+                    <Route
+                      path="/price-lists/create"
+                      element={<PriceListFormPage />}
+                    />
+                    <Route
+                      path="/price-lists/edit/:id"
+                      element={<PriceListFormPage />}
                     />
 
                     {/* ========== ✅ Categories product ROUTES ========== */}

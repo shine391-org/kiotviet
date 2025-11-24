@@ -94,6 +94,19 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('branches', 'Api\\BranchesController::index');
     $routes->post('branches', 'Api\\BranchesController::create');
     $routes->get('branches/export', 'Api\\BranchesController::export');
+
+    // Price lists
+    $routes->get('price-lists', 'Api\\PriceListsController::index');
+    $routes->get('price-lists/(:num)', 'Api\\PriceListsController::show/$1');
+    $routes->post('price-lists', 'Api\\PriceListsController::create');
+    $routes->put('price-lists/(:num)', 'Api\\PriceListsController::update/$1');
+    $routes->delete('price-lists/(:num)', 'Api\\PriceListsController::delete/$1');
+    $routes->get('price-lists/(:num)/items', 'Api\\PriceListsController::items/$1');
+    $routes->post('price-lists/(:num)/items', 'Api\\PriceListsController::saveItems/$1');
+
+    // Orders
+    $routes->post('orders/calculate-preview', 'Api\\OrdersController::calculatePreview');
+    $routes->post('orders', 'Api\\OrdersController::create');
 });
 
 // Catch-all for frontend build

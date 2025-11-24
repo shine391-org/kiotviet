@@ -49,12 +49,23 @@ describe('productApi', () => {
 
       const result = await productApi.getProductDetail(1);
 
-      expect(axiosInstance.get).toHaveBeenCalledWith('/products/1');
+      expect(axiosInstance.get).toHaveBeenCalledWith('/products/1', undefined);
       expect(result).toEqual(mockData);
     });
 
     it('should throw error for invalid ID', async () => {
       await expect(productApi.getProductDetail('invalid')).rejects.toThrow('Invalid product ID');
+    });
+
+    it('should forward axios config when provided', async () => {
+      const config = { params: { price_list_id: 5 } };
+      const mockData = { success: true, data: { id: 2 } };
+      axiosInstance.get.mockResolvedValue({ data: mockData });
+
+      const result = await productApi.getProductDetail(2, config);
+
+      expect(axiosInstance.get).toHaveBeenCalledWith('/products/2', config);
+      expect(result).toEqual(mockData);
     });
 
     it('should handle 404 gracefully', async () => {

@@ -64,7 +64,7 @@ axiosInstance.interceptors.response.use(
           
         case 401:
           errorMessage = 'Token hết hạn, vui lòng đăng nhập lại';
-          if (window.location.pathname !== '/login') {
+          if (!window.__E2E_TEST__ && window.location.pathname !== '/login') {
             localStorage.removeItem(TOKEN_KEY);
             window.location.href = '/login';
           }

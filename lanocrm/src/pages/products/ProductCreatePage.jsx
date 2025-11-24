@@ -45,7 +45,12 @@ const ProductCreatePage = () => {
   }, [createSuccess, dispatch, navigate]);
 
   const handleCancel = () => {
-    navigate('/products');
+    try {
+      navigate('/products');
+    } catch (error) {
+      console.error('Navigation error', error);
+      message.error('Không thể điều hướng, vui lòng thử lại');
+    }
   };
 
   return (
@@ -56,6 +61,7 @@ const ProductCreatePage = () => {
           <Button 
             type="text" 
             icon={<ArrowLeftOutlined />}
+            aria-label="Quay lại"
             onClick={handleCancel}
           >
             Quay lại

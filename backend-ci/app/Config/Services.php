@@ -5,13 +5,21 @@ namespace Config;
 use App\Repositories\Attributes\AttributeRepository;
 use App\Repositories\ProductMedia\ProductMediaRepository;
 use App\Repositories\Products\ProductRepository;
+use App\Repositories\PriceLists\PriceListItemRepository;
+use App\Repositories\PriceLists\PriceListRepository;
+use App\Repositories\Orders\OrderRepository;
 use App\Services\Products\ProductService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
+use App\Services\PriceLists\PriceCalculatorService;
+use App\Services\PriceLists\PriceListService;
+use App\Services\Orders\OrderService;
 use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
+use App\Validators\PriceListValidator;
+use App\Validators\OrderValidator;
 use App\Validators\AttributeValidator;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Inventory\InventoryService;
@@ -57,7 +65,11 @@ class Services extends BaseService
             return static::getSharedInstance('productService');
         }
 
-        return new ProductService(static::productRepository(false), static::productValidator(false));
+        return new ProductService(
+            static::productRepository(false),
+            static::productValidator(false),
+            static::priceCalculatorService(false)
+        );
     }
 
     public static function productVariantRepository(bool $getShared = true): \App\Repositories\ProductVariants\ProductVariantRepository
@@ -198,6 +210,73 @@ class Services extends BaseService
         return new InventoryService(
             static::inventoryRepository(false),
             static::inventoryValidator(false)
+        );
+    }
+
+    public static function priceListRepository(bool $getShared = true): PriceListRepository
+    {
+        if ($getShared) { return static::getSharedInstance('priceListRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PriceListRepository(null, $db);
+    }
+
+    public static function priceListItemRepository(bool $getShared = true): PriceListItemRepository
+    {
+        if ($getShared) { return static::getSharedInstance('priceListItemRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PriceListItemRepository(null, $db);
+    }
+
+    public static function priceListValidator(bool $getShared = true): PriceListValidator
+    {
+        return $getShared ? static::getSharedInstance('priceListValidator') : new PriceListValidator();
+    }
+
+    public static function priceListService(bool $getShared = true): PriceListService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('priceListService'); }
+
+        return new PriceListService(
+            static::priceListRepository(false),
+            static::priceListItemRepository(false),
+            static::priceListValidator(false),
+            null,
+            static::productRepository(false)
+        );
+    }
+
+    public static function priceCalculatorService(bool $getShared = true): PriceCalculatorService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('priceCalculatorService'); }
+
+        return new PriceCalculatorService(
+            static::priceListRepository(false),
+            static::priceListItemRepository(false),
+            static::productRepository(false),
+            static::productVariantRepository(false)
+        );
+    }
+
+    public static function orderRepository(bool $getShared = true): OrderRepository
+    {
+        if ($getShared) { return static::getSharedInstance('orderRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderRepository(null, null, $db);
+    }
+
+    public static function orderValidator(bool $getShared = true): OrderValidator
+    {
+        return $getShared ? static::getSharedInstance('orderValidator') : new OrderValidator();
+    }
+
+    public static function orderService(bool $getShared = true): OrderService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderService'); }
+
+        return new OrderService(
+            static::orderRepository(false),
+            static::orderValidator(false),
+            static::priceCalculatorService(false)
         );
     }
 }

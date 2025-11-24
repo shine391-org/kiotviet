@@ -3,6 +3,7 @@
 namespace App\Services\Products;
 
 use App\Repositories\Products\ProductRepository;
+use App\Services\PriceLists\PriceCalculatorService;
 use App\Validators\ProductValidator;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use InvalidArgumentException;
@@ -11,33 +12,50 @@ use RuntimeException;
 /** Product business logic. @agent-service: Product service layer @agent-pattern: Service orchestrator @agent-reusable: HIGH */
 class ProductService
 {
-    protected ProductRepository $repo; protected ProductValidator $validator;
+    protected ProductRepository $repo; protected ProductValidator $validator; protected PriceCalculatorService $pricing;
 
-    public function __construct(?ProductRepository $repo = null, ?ProductValidator $validator = null)
+    public function __construct(?ProductRepository $repo = null, ?ProductValidator $validator = null, ?PriceCalculatorService $pricing = null)
     {
         $this->repo = $repo ?? new ProductRepository();
         $this->validator = $validator ?? new ProductValidator();
+        $this->pricing = $pricing ?? service('priceCalculatorService');
     }
 
     /** List products with filters, categories, variants. @agent-use: GET /api/products @agent-pattern: Standard list pattern */
     public function list(array $filters): array
     {
         $validated = $this->validator->validateListFilters($filters);
+        $priceListId = isset($validated['price_list_id']) ? (int) $validated['price_list_id'] : null;
+
         $products = $this->repo->findAll($validated); $total = $this->repo->count($validated);
         $ids = array_column($products, 'id');
         if ($ids) {
             $categories = $this->repo->categoryMap($ids); $variants = $validated['include_variants'] ? $this->repo->variantMap($ids) : [];
-            foreach ($products as &$row) { $row['category_ids'] = $categories[$row['id']] ?? []; if ($validated['include_variants']) { $row['variants'] = $variants[$row['id']] ?? []; $row['variants_v2'] = $row['variants']; } }
+            foreach ($products as &$row) {
+                $row['category_ids'] = $categories[$row['id']] ?? [];
+                if ($validated['include_variants']) {
+                    $row['variants'] = $variants[$row['id']] ?? [];
+                    $row['variants_v2'] = $row['variants'];
+                }
+                if ($priceListId) {
+                    $row = $this->applyPriceList($row, $priceListId, $validated['include_variants']);
+                }
+            }
         }
         return ['success' => true, 'data' => $products, 'pagination' => $this->formatPagination($validated, $total)];
     }
 
     /** Fetch a single product (with variants/categories). @agent-use: GET /api/products/{id} @agent-pattern: Get by id */
-    public function get(int $id, bool $withVariants = true, bool $withCategories = true): array
+    public function get(int $id, bool $withVariants = true, bool $withCategories = true, ?int $priceListId = null): array
     {
         $product = $this->requireProduct($id); $ids = [$product['id']];
         if ($withCategories) { $map = $this->repo->categoryMap($ids); $product['category_ids'] = $map[$id] ?? []; }
         if ($withVariants) { $variants = $this->repo->variantMap($ids); $product['variants'] = $variants[$id] ?? []; $product['variants_v2'] = $product['variants']; }
+
+        if ($priceListId) {
+            $product = $this->applyPriceList($product, $priceListId, $withVariants);
+        }
+
         return ['success' => true, 'data' => $product];
     }
 
@@ -219,5 +237,30 @@ class ProductService
         $rows = [];
         foreach ($files as $file) { $newName = $file->getRandomName(); $file->move($uploadPath, $newName); $rows[] = ['product_id' => $productId, 'variant_id' => null, 'image_path' => '/uploads/products/' . $newName, 'image_url' => '/uploads/products/' . $newName, 'is_primary' => 0, 'sort_order' => 0, 'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s'), 'file_name' => $file->getClientName()]; }
         return $rows;
+    }
+
+    /** Apply price list to product (and variants if present). */
+    private function applyPriceList(array $product, int $priceListId, bool $withVariants): array
+    {
+        $pricing = $this->pricing->getProductPriceByListId($priceListId, (int) $product['id']);
+        $product['base_price'] = $pricing['base_price'];
+        $product['price_after_discount'] = $pricing['final_price'];
+        $product['applied_price_list_id'] = $pricing['applied_price_list_id'];
+        $product['applied_price_list_name'] = $pricing['applied_price_list_name'];
+        $product['price_list_type'] = $pricing['price_list_type'];
+
+        if ($withVariants && ! empty($product['variants'])) {
+            foreach ($product['variants'] as &$variant) {
+                $p = $this->pricing->getProductPriceByListId($priceListId, (int) $product['id'], (int) $variant['id']);
+                $variant['base_price'] = $p['base_price'];
+                $variant['price_after_discount'] = $p['final_price'];
+                $variant['applied_price_list_id'] = $p['applied_price_list_id'];
+                $variant['applied_price_list_name'] = $p['applied_price_list_name'];
+                $variant['price_list_type'] = $p['price_list_type'];
+            }
+            $product['variants_v2'] = $product['variants'];
+        }
+
+        return $product;
     }
 }

@@ -1,3 +1,18 @@
+---
+title: "Frontend Testing Guide - LANO CRM"
+id: "FE-TESTING-GUIDE-01"
+version: "1.0"
+status: "Active"
+module: "Frontend Testing"
+type: "Guideline"
+tags: ["testing", "frontend", "react", "vitest", "playwright", "unit-tests", "integration-tests", "e2e-tests"]
+purpose: "Provides a comprehensive guide to the frontend testing strategy, tools, and workflow for LANO CRM (React)."
+location: "docs/testing"
+related_to:
+  - id: "FE-TESTING-PATTERNS-01"
+    description: "Refer to this for FE code examples and patterns to copy."
+---
+
 # Frontend Testing Guide
 
 ## 1. Test Pyramid (Frontend)

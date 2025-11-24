@@ -21,6 +21,12 @@ const Sidebar = ({ collapsed, onClose }) => {
   const [openSubmenu, setOpenSubmenu] = useState(null);
   const [dynamicMenu, setDynamicMenu] = useState([]);
 
+  const canSeePriceLists = (permissions) => {
+    const hasPermission = (name) => permissions?.some((p) => p.name === name || p === name);
+    const isAdmin = user?.role === 'admin' || user?.role === 'super-admin';
+    return isAdmin || hasPermission('price_lists.view') || hasPermission('products.view');
+  };
+
   // Icon mapping for module groups
   const groupIconMap = {
     'merchandise': <ShoppingOutlined />,
@@ -32,30 +38,31 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // Module display names (Vietnamese)
   const moduleDisplayNames = {
-    'products': 'Hàng hóa',
-    'product_categories': 'Danh mục SP',
-    'purchase_orders': 'Đơn mua hàng',
-    'inventory': 'Kho hàng',
-    'cash': 'Sổ quỹ',
-    'partners': 'Đối tác',
-    'customers': 'Khách hàng',
-    'customer_groups': 'Nhóm KH',
-    'products': 'Danh sách sản phẩm',  // ← CHỈ THÊM DÒNG NÀY
-    'orders': 'Đơn hàng',
-    'shipments': 'Vận chuyển',
-    'returns': 'Trả hàng',
-    'invoices': 'Hóa đơn',
-    'reports': 'Báo cáo',
-    'users': 'Người dùng',
-    'roles': 'Vai trò',
-    'branches': 'Chi nhánh',
-    'settings': 'Cài đặt',
+    products: 'Danh sách sản phẩm',
+    product_categories: 'Danh mục SP',
+    price_lists: 'Bảng giá',
+    purchase_orders: 'Đơn mua hàng',
+    inventory: 'Kho hàng',
+    cash: 'Sổ quỹ',
+    partners: 'Đối tác',
+    customers: 'Khách hàng',
+    customer_groups: 'Nhóm KH',
+    orders: 'Đơn hàng',
+    shipments: 'Vận chuyển',
+    returns: 'Trả hàng',
+    invoices: 'Hóa đơn',
+    reports: 'Báo cáo',
+    users: 'Người dùng',
+    roles: 'Vai trò',
+    branches: 'Chi nhánh',
+    settings: 'Cài đặt',
   };
 
   // Module routes
   const moduleRoutes = {
     'products': '/products',
     'product_categories': '/product-categories',
+    'price_lists': '/price-lists',
     'purchase_orders': '/purchase-orders',
     'inventory': '/inventory',
     'cash': '/cash',
@@ -82,12 +89,10 @@ const Sidebar = ({ collapsed, onClose }) => {
     'system': 'Hệ thống',
   };
 
-  // BUILD DYNAMIC MENU từ user permissions
+  // BUILD DYNAMIC MENU từ user permissions (fallback hiển thị cơ bản)
   useEffect(() => {
-    if (user && user.permissions) {
-      const menu = buildDynamicMenu(user.permissions);
-      setDynamicMenu(menu);
-    }
+    const menu = buildDynamicMenu(user?.permissions || []);
+    setDynamicMenu(menu);
   }, [user]);
 
   // AUTO-EXPAND SUBMENU khi URL match
@@ -100,7 +105,11 @@ const Sidebar = ({ collapsed, onClose }) => {
 
   // BUILD DYNAMIC MENU FROM USER PERMISSIONS
   const buildDynamicMenu = (permissions) => {
-    const groups = {};
+    // Nếu không có quyền và không phải admin -> không hiện menu
+    if ((!permissions || permissions.length === 0) && !canSeePriceLists([])) {
+      return [];
+    }
+    let groups = {};
 
     permissions.forEach(permission => {
       const module = permission.module;
@@ -136,7 +145,37 @@ const Sidebar = ({ collapsed, onClose }) => {
       }
     });
 
+    groups = ensurePriceListMenu(groups, permissions);
+
     return Object.values(groups);
+  };
+
+  // Ensure price lists appear under Hàng hóa when user có quyền xem sản phẩm
+  const ensurePriceListMenu = (groups, permissions) => {
+    const hasProductView = permissions.some(
+      (p) => p.module === 'products' && p.name.endsWith('.view')
+    );
+    if (!hasProductView && !canSeePriceLists(permissions)) { return groups; }
+
+    const updated = { ...groups };
+    if (!updated['merchandise']) {
+      updated['merchandise'] = {
+        key: 'merchandise',
+        label: groupDisplayNames['merchandise'] || 'Hàng hóa',
+        icon: groupIconMap['merchandise'] || <AppstoreOutlined />,
+        children: [],
+      };
+    }
+
+    const exists = updated['merchandise'].children.some((c) => c.key === 'price_lists');
+    if (!exists) {
+      updated['merchandise'].children.unshift({
+        key: 'price_lists',
+        label: moduleDisplayNames['price_lists'],
+        path: moduleRoutes['price_lists'],
+      });
+    }
+    return updated;
   };
 
   const findCurrentGroup = (menuGroups, pathname) => {

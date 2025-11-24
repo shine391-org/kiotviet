@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.5/phpunit.xsd"
+    bootstrap="vendor/codeigniter4/framework/system/Test/bootstrap.php"
+    backupGlobals="false"
+    colors="true"
+    columns="max"
+    failOnRisky="true"
+    failOnWarning="true"
+    cacheDirectory="build/.phpunit.cache">
+    <testsuites>
+        <testsuite name="IntegrationMySQL">
+            <directory>./tests/Integration</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <server name="app.baseURL" value="http://localhost:8000/"/>
+        <env name="database.tests.hostname" value="db-test"/>
+        <env name="database.tests.database" value="lanocrm_test"/>
+        <env name="database.tests.username" value="lanocrm_user"/>
+        <env name="database.tests.password" value="KP7n4RjcDbedSE2W8GgA"/>
+        <env name="database.tests.DBDriver" value="MySQLi"/>
+        <env name="database.tests.DBPrefix" value=""/>
+    </php>
+</phpunit>

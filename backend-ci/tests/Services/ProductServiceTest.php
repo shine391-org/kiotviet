@@ -5,6 +5,7 @@ namespace Tests\Services;
 use App\Services\Products\ProductService;
 use App\Services\ProductVariants\ProductVariantService;
 use CodeIgniter\Test\CIUnitTestCase;
+use CodeIgniter\HTTP\Files\UploadedFile;
 use Config\Database;
 use InvalidArgumentException;
 
@@ -136,12 +137,256 @@ class ProductServiceTest extends CIUnitTestCase
         $this->service->update(999, ['name' => 'none']);
     }
 
+    public function test_attach_images_skips_duplicates_and_reports(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PATT', 'name' => 'Prod for attach']);
+        $existingId = $this->seedImage(['product_id' => $productId]);
+        $newId = $this->seedImage(['product_id' => null]);
+
+        $result = $this->service->attachImages($productId, [$existingId, $newId, 9999]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(1, $result['attached_count']);
+        $this->assertSame(1, $result['skipped_count']);
+        $this->assertSame(1, $result['missing_count']);
+        $this->assertContains($newId, $result['attached_ids']);
+        $this->assertContains($existingId, $result['skipped_ids']);
+        $this->assertContains(9999, $result['missing_ids']);
+
+        $row = $this->db->table('db_product_images')->where('id', $newId)->get()->getRowArray();
+        $this->assertSame($productId, (int) $row['product_id']);
+        $this->assertNull($row['deleted_at']);
+    }
+
+    public function test_get_single_product_with_categories_and_variants(): void
+    {
+        $productId = $this->seedProduct(['code' => 'GET001', 'name' => 'Get Product']);
+        $this->seedCategoryLink($productId, 5);
+        $this->seedVariant($productId, 'Blue');
+
+        $result = $this->service->get($productId, true, true);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('GET001', $result['data']['code']);
+        $this->assertSame([5], $result['data']['category_ids']);
+        $this->assertNotEmpty($result['data']['variants']);
+    }
+
+    public function test_get_product_without_variants_and_categories(): void
+    {
+        $productId = $this->seedProduct(['code' => 'GET002', 'name' => 'Simple Product']);
+
+        $result = $this->service->get($productId, false, false);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('GET002', $result['data']['code']);
+        $this->assertArrayNotHasKey('category_ids', $result['data']);
+        $this->assertArrayNotHasKey('variants', $result['data']);
+    }
+
+    public function test_get_nonexistent_product_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Product not found');
+        $this->service->get(999);
+    }
+
+    public function test_variants_returns_product_variants(): void
+    {
+        $productId = $this->seedProduct(['code' => 'VAR001', 'name' => 'Variant Product']);
+        $this->seedVariant($productId, 'Red');
+        $this->seedVariant($productId, 'Green');
+
+        $result = $this->service->variants($productId);
+
+        $this->assertTrue($result['success']);
+        $this->assertCount(2, $result['data']);
+    }
+
+    public function test_variants_nonexistent_product_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Product not found');
+        $this->service->variants(999);
+    }
+
+    public function test_images_returns_product_images(): void
+    {
+        $productId = $this->seedProduct(['code' => 'IMG001', 'name' => 'Image Product']);
+        $imageId1 = $this->seedImage(['product_id' => $productId]);
+        $imageId2 = $this->seedImage(['product_id' => $productId]);
+
+        $result = $this->service->images($productId);
+
+        $this->assertTrue($result['success']);
+        $this->assertCount(2, $result['data']);
+    }
+
+    public function test_images_nonexistent_product_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Product not found');
+        $this->service->images(999);
+    }
+
+    public function test_set_primary_image(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PRIM001', 'name' => 'Primary Product']);
+        $imageId = $this->seedImage(['product_id' => $productId]);
+
+        $result = $this->service->setPrimaryImage($imageId);
+
+        $this->assertTrue($result['success']);
+    }
+
+    public function test_set_primary_nonexistent_image_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Image not found');
+        $this->service->setPrimaryImage(999);
+    }
+
+    public function test_delete_image_soft(): void
+    {
+        $productId = $this->seedProduct(['code' => 'DELIMG001', 'name' => 'Delete Image Product']);
+        $imageId = $this->seedImage(['product_id' => $productId]);
+
+        $result = $this->service->deleteImage($imageId, false);
+
+        $this->assertTrue($result['success']);
+        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $this->assertNotNull($row['deleted_at']);
+    }
+
+    public function test_delete_image_hard(): void
+    {
+        $productId = $this->seedProduct(['code' => 'DELIMG002', 'name' => 'Delete Image Product']);
+        $imageId = $this->seedImage(['product_id' => $productId]);
+
+        $result = $this->service->deleteImage($imageId, true);
+
+        $this->assertTrue($result['success']);
+        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $this->assertNull($row);
+    }
+
+    public function test_import_stub(): void
+    {
+        // Mock uploaded file
+        $mockFile = $this->createMock(UploadedFile::class);
+        $mockFile->method('isValid')->willReturn(true);
+        $mockFile->method('getRandomName')->willReturn('test_import.csv');
+        $mockFile->method('move')->willReturn(true);
+
+        $result = $this->service->import($mockFile);
+
+        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('imported', $result['data']);
+        $this->assertArrayHasKey('failed', $result['data']);
+        $this->assertArrayHasKey('errors', $result['data']);
+    }
+
+    public function test_import_no_file_throws(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('file is required');
+        $this->service->import(null);
+    }
+
+    public function test_export_returns_csv(): void
+    {
+        $this->seedProduct(['code' => 'EXP001', 'name' => 'Export Product 1', 'selling_price' => 100]);
+        $this->seedProduct(['code' => 'EXP002', 'name' => 'Export Product 2', 'selling_price' => 200]);
+
+        $csv = $this->service->export();
+
+        $this->assertStringContainsString('id,code,name,price', $csv);
+        $this->assertStringContainsString('EXP001', $csv);
+        $this->assertStringContainsString('EXP002', $csv);
+        $this->assertStringContainsString('100', $csv);
+        $this->assertStringContainsString('200', $csv);
+    }
+
+    public function test_analytics_returns_summary(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ANA001', 'name' => 'Analytics Product']);
+        $this->seedVariant($productId, 'Red');
+        $this->seedVariant($productId, 'Blue');
+
+        $result = $this->service->analytics($productId);
+
+        $this->assertTrue($result['success']);
+        $this->assertArrayHasKey('total_stock', $result['data']);
+        $this->assertArrayHasKey('total_variant', $result['data']);
+        $this->assertSame(2, $result['data']['total_variant']);
+    }
+
+    public function test_analytics_nonexistent_product_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('Product not found');
+        $this->service->analytics(999);
+    }
+
+    public function test_used_attribute_options(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ATTR001', 'name' => 'Attribute Product']);
+
+        $result = $this->service->usedAttributeOptions($productId);
+
+        $this->assertTrue($result['success']);
+        $this->assertIsArray($result['data']);
+    }
+
+    public function test_product_attribute_values(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ATTR002', 'name' => 'Attribute Values Product']);
+
+        $result = $this->service->productAttributeValues($productId);
+
+        $this->assertTrue($result['success']);
+        $this->assertIsArray($result['data']);
+    }
+
+    public function test_update_product_attribute_values(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ATTR003', 'name' => 'Update Attributes Product']);
+        $values = ['color' => 'red', 'size' => 'L'];
+
+        $result = $this->service->updateProductAttributeValues($productId, $values);
+
+        $this->assertTrue($result['success']);
+        $this->assertIsArray($result['data']);
+    }
+
+    public function test_update_product_attribute_values_invalid_throws(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ATTR004', 'name' => 'Invalid Attributes Product']);
+
+        $this->expectException(\TypeError::class);
+        $this->service->updateProductAttributeValues($productId, 'invalid');
+    }
+
+    public function test_remove_attribute_from_product(): void
+    {
+        $productId = $this->seedProduct(['code' => 'ATTR005', 'name' => 'Remove Attribute Product']);
+
+        $result = $this->service->removeAttributeFromProduct($productId, 1);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame('Removed attribute from product', $result['message']);
+    }
+
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
         $this->db->query('DROP TABLE IF EXISTS db_product_images');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
+        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS product_attributes');
         $this->db->query('DROP TABLE IF EXISTS db_products');
 
         $this->db->query("CREATE TABLE db_products (
@@ -179,6 +424,65 @@ class ProductServiceTest extends CIUnitTestCase
             image_url TEXT,
             attributes TEXT,
             status TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE db_product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            attribute_key TEXT,
+            type TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER,
+            is_required INTEGER,
+            is_visible INTEGER,
+            attribute_values TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE db_product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            attribute_id INTEGER,
+            variant_id INTEGER,
+            option_id INTEGER,
+            value_text TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        // mirror non-prefixed tables because repositories use them
+        $this->db->query("CREATE TABLE product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            attribute_key TEXT,
+            type TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER,
+            is_required INTEGER,
+            is_visible INTEGER,
+            attribute_values TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            attribute_id INTEGER,
+            variant_id INTEGER,
+            option_id INTEGER,
+            value_text TEXT,
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
@@ -261,26 +565,5 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->db->table('db_product_images')->insert($payload);
         return (int) $this->db->insertID();
-    }
-
-    public function test_attach_images_skips_duplicates_and_reports(): void
-    {
-        $productId = $this->seedProduct(['code' => 'PATT', 'name' => 'Prod for attach']);
-        $existingId = $this->seedImage(['product_id' => $productId]);
-        $newId = $this->seedImage(['product_id' => null]);
-
-        $result = $this->service->attachImages($productId, [$existingId, $newId, 9999]);
-
-        $this->assertTrue($result['success']);
-        $this->assertSame(1, $result['attached_count']);
-        $this->assertSame(1, $result['skipped_count']);
-        $this->assertSame(1, $result['missing_count']);
-        $this->assertContains($newId, $result['attached_ids']);
-        $this->assertContains($existingId, $result['skipped_ids']);
-        $this->assertContains(9999, $result['missing_ids']);
-
-        $row = $this->db->table('db_product_images')->where('id', $newId)->get()->getRowArray();
-        $this->assertSame($productId, (int) $row['product_id']);
-        $this->assertNull($row['deleted_at']);
     }
 }
