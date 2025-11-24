@@ -26,35 +26,105 @@ vi.mock('../../store/slices/categorySlice');
 vi.mock('../../store/slices/productSlice');
 vi.mock('../../utils/apiErrorHandler');
 
-// Mock antd components properly
+// Mock antd components to simplify rendering
+const messageMock = { success: vi.fn(), error: vi.fn(), warning: vi.fn(), info: vi.fn() };
 vi.mock('antd', async (importOriginal) => {
   const actual = await importOriginal();
+
+  const Form = ({ children, onFinish, ...props }) => (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onFinish && onFinish();
+      }}
+      {...props}
+    >
+      {children}
+    </form>
+  );
+  Form.Item = ({ label, children }) => (
+    <div>
+      {label ? <label>{label}{children}</label> : children}
+    </div>
+  );
+
+  const Input = (props) => <input {...props} />;
+  Input.TextArea = (props) => <textarea {...props} />;
+  const InputNumber = ({ formatter, parser, ...props }) => <input type="number" {...props} />;
+  const Select = ({ children, options = [], mode, ...props }) => (
+    <select multiple={mode === 'multiple'} {...props}>
+      {children ||
+        options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+    </select>
+  );
+  const Checkbox = ({ children, ...props }) => (
+    <label>
+      <input type="checkbox" {...props} />
+      {children}
+    </label>
+  );
+  const Button = ({ children, onClick, htmlType, type, ...props }) => (
+    <button type={htmlType || 'button'} onClick={onClick} {...props}>
+      {children}
+    </button>
+  );
+  const Spin = ({ children }) => <div>{children}</div>;
+  const Space = ({ children }) => <div>{children}</div>;
+  const Row = ({ children }) => <div>{children}</div>;
+  const Col = ({ children }) => <div>{children}</div>;
+
+  const MockTreeSelect = ({ onChange = () => {}, value = [], treeData = [] }) => {
+    const normalizedValue = Array.isArray(value) ? value : value ? [value] : [];
+    const options =
+      Array.isArray(treeData) && treeData.length > 0
+        ? treeData
+        : [
+            { value: 1, title: 'Category 1' },
+            { value: 2, title: 'Category 2' },
+          ];
+
+    return (
+      <select
+        data-testid="tree-select"
+        multiple
+        value={normalizedValue.map((v) => String(v))}
+        onChange={(e) => {
+          const selected = Array.from(e.target.selectedOptions).map((o) => parseInt(o.value, 10));
+          onChange(selected);
+        }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value || opt.id} value={opt.value || opt.id}>
+            {opt.title || opt.name}
+          </option>
+        ))}
+      </select>
+    );
+  };
+  MockTreeSelect.SHOW_PARENT = 'SHOW_PARENT';
+
   return {
     ...actual,
     App: {
       useApp: () => ({
-        message: {
-          success: vi.fn(),
-          error: vi.fn(),
-          warning: vi.fn(),
-        },
+        message: messageMock,
       }),
     },
-    TreeSelect: {
-      SHOW_PARENT: 'SHOW_PARENT',
-      __esModule: true,
-      default: vi.fn(({ onChange, ...props }) => (
-        <select
-          data-testid="tree-select"
-          onChange={(e) => onChange(e.target.value ? [parseInt(e.target.value)] : [])}
-          {...props}
-        >
-          <option value="">Select categories</option>
-          <option value="1">Category 1</option>
-          <option value="2">Category 2</option>
-        </select>
-      )),
-    },
+    Form,
+    Input,
+    InputNumber,
+    Select,
+    Checkbox,
+    Button,
+    Spin,
+    Space,
+    Row,
+    Col,
+    TreeSelect: MockTreeSelect,
   };
 });
 
@@ -165,6 +235,17 @@ describe('ProductForm Component', () => {
     
     attributeApi.updateProductAttributeValues.mockResolvedValue({
       success: true,
+    });
+
+    // Mock category fetch thunk to avoid plain-object dispatch errors
+    fetchCategoryTree.mockImplementation(() => {
+      const payload = [
+        { id: 1, name: 'Category 1', children: [] },
+        { id: 2, name: 'Category 2', children: [] },
+      ];
+      const promise = Promise.resolve({ payload, type: 'category/fetchCategoryTree/fulfilled' });
+      promise.unwrap = () => Promise.resolve(payload);
+      return () => promise;
     });
   });
 
