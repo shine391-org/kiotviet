@@ -4,7 +4,7 @@ id: "TASK-08-CANCEL-ORDER-01"
 priority: "P1 (High)"
 estimated_effort: "3 days"
 dependencies: "TASK_06"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "orders", "cancel", "inventory", "status-management", "API", "backend"]
@@ -33,7 +33,7 @@ related_to:
 
 **Dependencies:** TASK_06
 
-**Status:** Blocked
+**Status:** Done
 
 ---
 

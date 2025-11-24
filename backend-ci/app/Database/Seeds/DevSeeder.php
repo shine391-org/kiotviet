@@ -108,6 +108,9 @@ class DevSeeder extends Seeder
             ['id'=>304,'attribute_id'=>202,'option_name'=>'L','sort_order'=>2,'status'=>'active','created_at'=>$now],
         ]);
 
+        // Payment methods master data
+        $this->call('PaymentMethodSeeder');
+
         // Gọi seeder sản phẩm/biến thể/ảnh mẫu
         $this->call('ProductSeeder');
     }

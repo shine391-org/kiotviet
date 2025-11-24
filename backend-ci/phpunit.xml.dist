@@ -9,7 +9,7 @@
     columns="max"
     failOnRisky="true"
     failOnWarning="true"
-    cacheDirectory="build/.phpunit.cache">
+    cacheDirectory="writable/.phpunit.cache">
     <!-- Code coverage outputs are disabled in local/unit runs to avoid
          warnings when no coverage driver (xdebug/pcov) is installed. -->
     <testsuites>
@@ -19,9 +19,9 @@
         </testsuite>
     </testsuites>
     <logging>
-        <testdoxHtml outputFile="build/logs/testdox.html"/>
-        <testdoxText outputFile="build/logs/testdox.txt"/>
-        <junit outputFile="build/logs/logfile.xml"/>
+        <testdoxHtml outputFile="writable/logs/testdox.html"/>
+        <testdoxText outputFile="writable/logs/testdox.txt"/>
+        <junit outputFile="writable/logs/logfile.xml"/>
     </logging>
     <source>
         <include>

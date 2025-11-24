@@ -154,8 +154,18 @@ class InventoryRepository
         $this->db->transStart();
 
         // Use raw SQL with FOR UPDATE to lock the row
-        $sql = "SELECT * FROM inventory_stock WHERE product_id = ? AND warehouse_id = ? AND variant_id = ? FOR UPDATE";
-        $row = $this->db->query($sql, [$productId, $warehouseId, $variantId])->getRowArray();
+        $table = $this->db->prefixTable('inventory_stock');
+        $params = [$productId, $warehouseId];
+        if ($variantId === null) {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id IS NULL";
+        } else {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id = ?";
+            $params[] = $variantId;
+        }
+        if (strtolower($this->db->DBDriver) !== 'sqlite3') {
+            $sql .= " FOR UPDATE";
+        }
+        $row = $this->db->query($sql, $params)->getRowArray();
 
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = ($row['quantity_reserved'] ?? 0) + $qty;
@@ -176,8 +186,18 @@ class InventoryRepository
         $this->db->transStart();
 
         // Use raw SQL with FOR UPDATE to lock the row
-        $sql = "SELECT * FROM inventory_stock WHERE product_id = ? AND warehouse_id = ? AND variant_id = ? FOR UPDATE";
-        $row = $this->db->query($sql, [$productId, $warehouseId, $variantId])->getRowArray();
+        $table = $this->db->prefixTable('inventory_stock');
+        $params = [$productId, $warehouseId];
+        if ($variantId === null) {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id IS NULL";
+        } else {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id = ?";
+            $params[] = $variantId;
+        }
+        if (strtolower($this->db->DBDriver) !== 'sqlite3') {
+            $sql .= " FOR UPDATE";
+        }
+        $row = $this->db->query($sql, $params)->getRowArray();
 
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = max(0, ($row['quantity_reserved'] ?? 0) - $qty);

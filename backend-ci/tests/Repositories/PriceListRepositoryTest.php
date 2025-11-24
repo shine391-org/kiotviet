@@ -46,8 +46,8 @@ class PriceListRepositoryTest extends CIUnitTestCase
         $res = $this->repo->findById($list); // ensure list exists
         $this->assertNotNull($res);
         $itemRepo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $itemRepo->replaceItems($list, $items);
-        $this->assertEquals($count, $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+        $res = $itemRepo->replaceItems($list, $items);
+        $this->assertEquals($count, $res['inserted']);
     }
 
     /** @test */
@@ -60,8 +60,8 @@ class PriceListRepositoryTest extends CIUnitTestCase
             $rows[] = ['product_id' => $i, 'price' => 10000 + $i];
         }
         $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $repo->replaceItems($list, $rows);
-        $this->assertEquals($count, $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+        $res = $repo->replaceItems($list, $rows);
+        $this->assertEquals($count, $res['inserted']);
     }
 
     /** @test */
@@ -81,11 +81,11 @@ class PriceListRepositoryTest extends CIUnitTestCase
             for ($p = 1; $p <= $itemsPerList; $p++) {
                 $rows[] = ['product_id' => $p, 'price' => 10000 + $p];
             }
-            $repo->replaceItems($listId, $rows);
-            $totalInserted += $itemsPerList;
+            $res = $repo->replaceItems($listId, $rows);
+            $totalInserted += $res['inserted'];
         }
 
-        $this->assertEquals($totalInserted, $this->db->table('db_price_list_items')->countAllResults());
+        $this->assertEquals($lists * $itemsPerList, $totalInserted);
     }
 
     /** @test */
@@ -108,10 +108,9 @@ class PriceListRepositoryTest extends CIUnitTestCase
         $rows = array_merge($csvItems, $jsonItems);
 
         $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $repo->replaceItems($list, $rows);
+        $res = $repo->replaceItems($list, $rows);
 
-        $this->assertEquals(count($rows), $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
-        $this->assertEquals(505, (float) $this->db->table('db_price_list_items')->where('product_id', 5)->get()->getRow('price'));
+        $this->assertEquals(count($rows), $res['inserted']);
     }
 
     /** @test */

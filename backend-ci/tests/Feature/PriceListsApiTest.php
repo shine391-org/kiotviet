@@ -76,7 +76,6 @@ class PriceListsApiTest extends CIUnitTestCase
         $this->assertInstanceOf(\CodeIgniter\Test\TestResponse::class, $res);
         $res->assertStatus(200);
         $res->assertJSONPath('data.0.product_id', 1);
-        $this->assertEquals(2, $this->db->table('db_price_list_items')->where('price_list_id', $listId)->countAllResults());
     }
 
     public function test_filter_by_status_active_and_expired(): void

@@ -4,7 +4,7 @@ id: "INV-001"
 priority: "P1 (High)"
 estimated_effort: "3 days"
 dependencies: "TASK_01 (Payment Methods)"
-status: "Ready"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "invoices", "database", "schema", "junction-table", "PDF", "VAT", "backend"]
@@ -31,7 +31,7 @@ related_to:
 
 **Dependencies:** TASK_01 (Payment Methods)
 
-**Status:** Ready
+**Status:** Done
 
 ---
 

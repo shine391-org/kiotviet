@@ -3,23 +3,46 @@
 namespace Config;
 
 use App\Repositories\Attributes\AttributeRepository;
+use App\Repositories\Branches\BranchRepository;
 use App\Repositories\ProductMedia\ProductMediaRepository;
 use App\Repositories\Products\ProductRepository;
 use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
+use App\Repositories\PaymentMethods\PaymentMethodRepository;
+use App\Repositories\Invoices\InvoiceRepository;
+use App\Repositories\Returns\ReturnRepository;
+use App\Repositories\Inventory\InventoryMovementRepository;
+use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
+use App\Repositories\Webhooks\WebhookEventRepository;
+use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Services\Products\ProductService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Services\PriceLists\PriceListService;
+use App\Services\PaymentMethods\PaymentMethodService;
+use App\Services\Invoices\InvoiceService;
+use App\Services\Invoices\VATCalculator;
+use App\Services\Invoices\InvoicePDFGenerator;
+use App\Services\Returns\ReturnService;
+use App\Services\Orders\OrderStatusService;
+use App\Services\Orders\OrderStatusTransition;
+use App\Services\Orders\OrderCancellationService;
+use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
+use App\Services\Webhooks\WebhookDispatcher;
+use App\Services\Webhooks\WebhookSubscriptionService;
 use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\PriceListValidator;
+use App\Validators\PaymentMethodValidator;
+use App\Validators\InvoiceValidator;
+use App\Validators\ReturnValidator;
 use App\Validators\OrderValidator;
+use App\Validators\WebhookSubscriptionValidator;
 use App\Validators\AttributeValidator;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Inventory\InventoryService;
@@ -276,7 +299,185 @@ class Services extends BaseService
         return new OrderService(
             static::orderRepository(false),
             static::orderValidator(false),
-            static::priceCalculatorService(false)
+            static::priceCalculatorService(false),
+            null,
+            null,
+            static::webhookDispatcher(false)
+        );
+    }
+
+    public static function paymentMethodRepository(bool $getShared = true): PaymentMethodRepository
+    {
+        if ($getShared) { return static::getSharedInstance('paymentMethodRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PaymentMethodRepository(null, $db);
+    }
+
+    public static function paymentMethodValidator(bool $getShared = true): PaymentMethodValidator
+    {
+        return $getShared ? static::getSharedInstance('paymentMethodValidator') : new PaymentMethodValidator();
+    }
+
+    public static function paymentMethodService(bool $getShared = true): PaymentMethodService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('paymentMethodService'); }
+
+        return new PaymentMethodService(
+            static::paymentMethodRepository(false),
+            static::paymentMethodValidator(false)
+        );
+    }
+
+    public static function invoiceRepository(bool $getShared = true): InvoiceRepository
+    {
+        if ($getShared) { return static::getSharedInstance('invoiceRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new InvoiceRepository(null, null, $db);
+    }
+
+    public static function invoiceValidator(bool $getShared = true): InvoiceValidator
+    {
+        return $getShared ? static::getSharedInstance('invoiceValidator') : new InvoiceValidator();
+    }
+
+    public static function vatCalculator(bool $getShared = true): VATCalculator
+    {
+        return $getShared ? static::getSharedInstance('vatCalculator') : new VATCalculator();
+    }
+
+    public static function invoicePdfGenerator(bool $getShared = true): InvoicePDFGenerator
+    {
+        return $getShared ? static::getSharedInstance('invoicePdfGenerator') : new InvoicePDFGenerator();
+    }
+
+    public static function invoiceService(bool $getShared = true): InvoiceService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('invoiceService'); }
+
+        return new InvoiceService(
+            static::invoiceRepository(false),
+            static::invoiceValidator(false),
+            null,
+            static::vatCalculator(false),
+            static::invoicePdfGenerator(false),
+            static::webhookDispatcher(false)
+        );
+    }
+
+    public static function returnRepository(bool $getShared = true): ReturnRepository
+    {
+        if ($getShared) { return static::getSharedInstance('returnRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ReturnRepository(null, null, $db);
+    }
+
+    public static function returnValidator(bool $getShared = true): ReturnValidator
+    {
+        return $getShared ? static::getSharedInstance('returnValidator') : new ReturnValidator();
+    }
+
+    public static function returnService(bool $getShared = true): ReturnService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('returnService'); }
+
+        return new ReturnService(
+            static::returnRepository(false),
+            static::returnValidator(false),
+            null,
+            static::inventoryMovementLogger(false),
+            static::webhookDispatcher(false)
+        );
+    }
+
+    public static function orderStatusTransition(bool $getShared = true): \App\Services\Orders\OrderStatusTransition
+    {
+        return $getShared ? static::getSharedInstance('orderStatusTransition') : new \App\Services\Orders\OrderStatusTransition();
+    }
+
+    public static function orderStatusService(bool $getShared = true): \App\Services\Orders\OrderStatusService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderStatusService'); }
+
+        return new \App\Services\Orders\OrderStatusService(
+            static::orderRepository(false),
+            static::orderStatusTransition(false),
+            static::orderStatusLogRepository(false),
+            static::inventoryService(false),
+            static::inventoryMovementLogger(false),
+            static::webhookDispatcher(false)
+        );
+    }
+
+    public static function orderCancellationService(bool $getShared = true): \App\Services\Orders\OrderCancellationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderCancellationService'); }
+        return new \App\Services\Orders\OrderCancellationService(
+            static::orderStatusService(false),
+            null
+        );
+    }
+
+    public static function branchRepository(bool $getShared = true): BranchRepository
+    {
+        if ($getShared) { return static::getSharedInstance('branchRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new BranchRepository(null, $db);
+    }
+
+    public static function orderStatusLogRepository(bool $getShared = true): OrderStatusLogRepository
+    {
+        if ($getShared) { return static::getSharedInstance('orderStatusLogRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderStatusLogRepository(null, $db);
+    }
+
+    public static function inventoryMovementRepository(bool $getShared = true): InventoryMovementRepository
+    {
+        if ($getShared) { return static::getSharedInstance('inventoryMovementRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new InventoryMovementRepository(null, $db);
+    }
+
+    public static function inventoryMovementLogger(bool $getShared = true): InventoryMovementLogger
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('inventoryMovementLogger'); }
+        return new InventoryMovementLogger(static::inventoryMovementRepository(false));
+    }
+
+    public static function webhookSubscriptionRepository(bool $getShared = true): WebhookSubscriptionRepository
+    {
+        if ($getShared) { return static::getSharedInstance('webhookSubscriptionRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new WebhookSubscriptionRepository(null, $db);
+    }
+
+    public static function webhookEventRepository(bool $getShared = true): WebhookEventRepository
+    {
+        if ($getShared) { return static::getSharedInstance('webhookEventRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new WebhookEventRepository(null, $db);
+    }
+
+    public static function webhookSubscriptionValidator(bool $getShared = true): WebhookSubscriptionValidator
+    {
+        return $getShared ? static::getSharedInstance('webhookSubscriptionValidator') : new WebhookSubscriptionValidator();
+    }
+
+    public static function webhookSubscriptionService(bool $getShared = true): WebhookSubscriptionService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('webhookSubscriptionService'); }
+        return new WebhookSubscriptionService(
+            static::webhookSubscriptionRepository(false),
+            static::webhookSubscriptionValidator(false)
+        );
+    }
+
+    public static function webhookDispatcher(bool $getShared = true): WebhookDispatcher
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('webhookDispatcher'); }
+        return new WebhookDispatcher(
+            static::webhookSubscriptionRepository(false),
+            static::webhookEventRepository(false)
         );
     }
 }

@@ -167,7 +167,8 @@ class Database extends Config
         'hostname'    => '127.0.0.1',
         'username'    => '',
         'password'    => '',
-        'database'    => ':memory:',
+        // Use file-based SQLite so multiple connections share state in tests.
+        'database'    => WRITEPATH . 'tests.sqlite',
         'DBDriver'    => 'SQLite3',
         'DBPrefix'    => 'db_',  // giữ prefix để hạn chế nhầm
         'pConnect'    => false,

@@ -1,0 +1,156 @@
+<?php
+
+namespace Tests\Services;
+
+use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
+use App\Repositories\Orders\OrderRepository;
+use App\Services\Inventory\InventoryMovementLogger;
+use App\Services\Orders\OrderStatusService;
+use App\Services\Orders\OrderStatusTransition;
+use CodeIgniter\Test\CIUnitTestCase;
+use Config\Database;
+use Tests\Support\Database\StatusSchemaTrait;
+
+/** @agent-test: OrderStatusService @agent-pattern: Status workflow test */
+class OrderStatusServiceTest extends CIUnitTestCase
+{
+    use StatusSchemaTrait;
+
+    protected $db;
+    private OrderStatusService $service;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $config = config('Database');
+        if (extension_loaded('sqlite3')) {
+            $config->tests = [
+                'DBDriver'    => 'SQLite3',
+                'database'    => ':memory:',
+                'DBPrefix'    => 'db_',
+                'foreignKeys' => true,
+                'DBDebug'     => true,
+            ];
+        } else {
+            $config->tests = [
+                'hostname' => '127.0.0.1',
+                'port' => 3307,
+                'username' => 'lanocrm_user',
+                'password' => 'KP7n4RjcDbedSE2W8GgA',
+                'database' => 'lanocrm_test',
+                'DBDriver' => 'MySQLi',
+                'DBPrefix' => '',
+                'charset' => 'utf8mb4',
+                'DBCollat' => 'utf8mb4_general_ci',
+                'DBDebug' => true,
+            ];
+        }
+        $config->defaultGroup = 'tests';
+
+        $this->db = Database::connect('tests', false);
+        $this->resetStatusSchema();
+
+        $orders = new OrderRepository(null, null, $this->db);
+        $logs = new OrderStatusLogRepository(null, $this->db);
+        $transition = new OrderStatusTransition();
+        $logger = new InventoryMovementLogger(new \App\Repositories\Inventory\InventoryMovementRepository(null, $this->db));
+
+        $this->service = new OrderStatusService($orders, $transition, $logs, null, $logger);
+    }
+
+    /** @test */
+    public function it_allows_valid_transition_and_logs()
+    {
+        $orderId = $this->seedOrder('draft');
+
+        $res = $this->service->updateStatus($orderId, 'confirmed', 1, 'auto');
+
+        $this->assertTrue($res['success']);
+        $this->assertEquals('confirmed', $res['data']['status']);
+
+        $logCount = $this->db->table('order_status_logs')->where('order_id', $orderId)->countAllResults();
+        $this->assertEquals(1, $logCount);
+    }
+
+    /** @test */
+    public function it_deducts_inventory_when_processing()
+    {
+        $orderId = $this->seedOrder('confirmed');
+        $this->seedItems($orderId, [
+            ['product_id' => 10, 'variant_id' => null, 'quantity' => 2, 'final_price' => 100],
+        ]);
+        $this->seedStock(branchId: 1, productId: 10, qty: 5);
+
+        $res = $this->service->updateStatus($orderId, 'processing', 2, 'go processing');
+        $this->assertTrue($res['success']);
+
+        $stock = $this->db->table('inventory_stock')->where('product_id', 10)->get()->getRowArray();
+        $this->assertEquals(3.0, (float) $stock['quantity_on_hand']);
+
+        $movement = $this->db->table('inventory_movements')->where('reference_id', $orderId)->get()->getRowArray();
+        $this->assertEquals(-2.0, (float) $movement['quantity']);
+    }
+
+    /** @test */
+    public function it_restores_inventory_when_cancel_after_processing()
+    {
+        $orderId = $this->seedOrder('processing');
+        $this->seedItems($orderId, [
+            ['product_id' => 10, 'variant_id' => null, 'quantity' => 2, 'final_price' => 100],
+        ]);
+        $this->seedStock(branchId: 1, productId: 10, qty: 3); // already deducted, so currently 3
+
+        $res = $this->service->updateStatus($orderId, 'cancelled', 3, 'customer asked');
+        $this->assertTrue($res['success']);
+        $stock = $this->db->table('inventory_stock')->where('product_id', 10)->get()->getRowArray();
+        $this->assertEquals(5.0, (float) $stock['quantity_on_hand']);
+    }
+
+    private function seedOrder(string $status): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('orders')->insert([
+            'order_number' => 'ORD-' . rand(100, 999),
+            'customer_id' => 1,
+            'branch_id' => 1,
+            'status' => $status,
+            'order_type' => 'shipping',
+            'payment_method' => 'BANK_TRANSFER',
+            'subtotal' => 0,
+            'discount_total' => 0,
+            'total' => 0,
+            'shipping_fee' => 0,
+            'paid_amount' => 0,
+            'debt_amount' => 0,
+            'is_paid' => 0,
+            'created_at' => $now,
+        ]);
+        return (int) $this->db->insertID();
+    }
+
+    private function seedItems(int $orderId, array $items): void
+    {
+        foreach ($items as $item) {
+            $this->db->table('order_items')->insert([
+                'order_id' => $orderId,
+                'product_id' => $item['product_id'],
+                'variant_id' => $item['variant_id'],
+                'quantity' => $item['quantity'],
+                'base_price' => $item['final_price'],
+                'final_price' => $item['final_price'],
+            ]);
+        }
+    }
+
+    private function seedStock(int $branchId, int $productId, float $qty): void
+    {
+        $this->db->table('inventory_stock')->insert([
+            'branch_id' => $branchId,
+            'product_id' => $productId,
+            'variant_id' => null,
+            'quantity_on_hand' => $qty,
+            'quantity_reserved' => 0,
+        ]);
+    }
+}

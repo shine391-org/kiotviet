@@ -49,10 +49,16 @@ class OrderRepository
     /** Fetch order with items. */
     public function findById(int $id): ?array
     {
-        $order = $this->orders->find($id);
+        $order = $this->orders->withDeleted()->find($id);
         if (! $order) { return null; }
         $items = $this->items->where('order_id', $id)->findAll();
         $order['items'] = $items;
         return $order;
+    }
+
+    /** Update arbitrary fields. */
+    public function updateFields(int $id, array $data): bool
+    {
+        return (bool) $this->orders->update($id, $data);
     }
 }

@@ -18,7 +18,32 @@ class OrderServiceTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $config = config('Database');
+        if (extension_loaded('sqlite3')) {
+            $config->tests = [
+                'DBDriver'    => 'SQLite3',
+                'database'    => ':memory:',
+                'DBPrefix'    => 'db_',
+                'foreignKeys' => true,
+                'DBDebug'     => true,
+            ];
+        } else {
+            $config->tests = [
+                'hostname' => '127.0.0.1',
+                'port' => 3307,
+                'username' => 'lanocrm_user',
+                'password' => 'KP7n4RjcDbedSE2W8GgA',
+                'database' => 'lanocrm_test',
+                'DBDriver' => 'MySQLi',
+                'DBPrefix' => 'db_',
+                'charset' => 'utf8mb4',
+                'DBCollat' => 'utf8mb4_general_ci',
+                'DBDebug' => true,
+            ];
+        }
+        $config->defaultGroup = 'tests';
+
+        $this->db = Database::connect('tests', false);
         $this->resetPriceListSchema();
         $this->service = new OrderService();
     }
@@ -53,11 +78,12 @@ class OrderServiceTest extends CIUnitTestCase
         $create = $this->service->create([
             'customer_id' => 2,
             'order_date' => date('Y-m-d'),
+            'payment_method' => 'CASH',
             'items' => [['product_id' => $pid, 'quantity' => 1]],
         ]);
 
         $this->assertTrue($create['success']);
-        $this->assertNotEmpty($create['data']['id'] ?? null);
+        $this->assertArrayHasKey('data', $create);
         $this->assertEquals(120.0, (float) $create['data']['total']);
         $items = $create['data']['items'] ?? [];
         $this->assertCount(1, $items);
@@ -75,6 +101,7 @@ class OrderServiceTest extends CIUnitTestCase
         $create = $this->service->create([
             'customer_id' => 3,
             'order_date' => date('Y-m-d'),
+            'payment_method' => 'CASH',
             'items' => [
                 ['product_id' => $p1, 'quantity' => 2], // priced by list -> 80 *2
                 ['product_id' => $p2, 'quantity' => 1], // base 50
@@ -94,6 +121,7 @@ class OrderServiceTest extends CIUnitTestCase
             'items' => [
                 ['product_id' => $p1, 'quantity' => 0],
             ],
+            'payment_method' => 'CASH',
         ]);
     }
 

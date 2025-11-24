@@ -4,7 +4,7 @@ id: "RETURN-001"
 priority: "P1 (High)"
 estimated_effort: "3 days"
 dependencies: "TASK_05 (Order Create)"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "returns", "database", "schema", "workflow", "refund", "backend"]
@@ -33,7 +33,7 @@ related_to:
 
 **Dependencies:** TASK_05 (Order Create)
 
-**Status:** Blocked
+**Status:** Done
 
 ---
 

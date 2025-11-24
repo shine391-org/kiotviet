@@ -13,7 +13,7 @@ class NotificationService
             mkdir($logDir, 0775, true);
         }
         $line = '[' . date('Y-m-d H:i:s') . '] inventory_alert ' . json_encode($alert) . PHP_EOL;
-        $result = file_put_contents($logDir . '/inventory-alerts.log', $line, FILE_APPEND | LOCK_EX);
+        $result = @file_put_contents($logDir . '/inventory-alerts.log', $line, FILE_APPEND | LOCK_EX);
         if ($result === false) {
             error_log('Failed to write inventory alert to log file');
         }

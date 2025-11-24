@@ -107,6 +107,41 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     // Orders
     $routes->post('orders/calculate-preview', 'Api\\OrdersController::calculatePreview');
     $routes->post('orders', 'Api\\OrdersController::create');
+    $routes->patch('orders/(:num)/status', 'Api\\OrderStatusController::update/$1');
+    $routes->post('orders/(:num)/cancel', 'Api\\OrderCancellationController::cancel/$1');
+
+    // Payment methods
+    $routes->get('payment-methods', 'Api\\PaymentMethodsController::index');
+    $routes->get('payment-methods/(:num)', 'Api\\PaymentMethodsController::show/$1');
+    $routes->post('payment-methods', 'Api\\PaymentMethodsController::create');
+    $routes->put('payment-methods/(:num)', 'Api\\PaymentMethodsController::update/$1');
+    $routes->delete('payment-methods/(:num)', 'Api\\PaymentMethodsController::delete/$1');
+    $routes->patch('payment-methods/(:num)/activate', 'Api\\PaymentMethodsController::activate/$1');
+    $routes->patch('payment-methods/(:num)/deactivate', 'Api\\PaymentMethodsController::deactivate/$1');
+
+    // Invoices
+    $routes->get('invoices', 'Api\\InvoicesController::index');
+    $routes->get('invoices/(:num)', 'Api\\InvoicesController::show/$1');
+    $routes->post('invoices', 'Api\\InvoicesController::create');
+    $routes->post('invoices/generate', 'Api\\InvoicesController::generate');
+    $routes->post('invoices/(:num)/pdf', 'Api\\InvoicesController::generatePdf/$1');
+
+    // Returns
+    $routes->get('returns', 'Api\\ReturnsController::index');
+    $routes->get('returns/(:num)', 'Api\\ReturnsController::show/$1');
+    $routes->post('returns', 'Api\\ReturnsController::create');
+    $routes->patch('returns/(:num)/approve', 'Api\\ReturnsController::approve/$1');
+    $routes->patch('returns/(:num)/reject', 'Api\\ReturnsController::reject/$1');
+    $routes->patch('returns/(:num)/complete', 'Api\\ReturnsController::complete/$1');
+
+    // Webhooks
+    $routes->get('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::index');
+    $routes->post('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::create');
+    $routes->put('webhooks/subscriptions/(:num)', 'Api\\WebhookSubscriptionsController::update/$1');
+    $routes->patch('webhooks/subscriptions/(:num)/activate', 'Api\\WebhookSubscriptionsController::activate/$1');
+    $routes->patch('webhooks/subscriptions/(:num)/deactivate', 'Api\\WebhookSubscriptionsController::deactivate/$1');
+    $routes->get('webhook-events', 'Api\\WebhookEventsController::index');
+    $routes->post('webhook-events/(:num)/retry', 'Api\\WebhookEventsController::retry/$1');
 });
 
 // Catch-all for frontend build

@@ -13,7 +13,9 @@ trait PriceListSchemaTrait
         }
 
         $this->db->query('DROP TABLE IF EXISTS db_order_items');
+        $this->db->query('DROP TABLE IF EXISTS order_items');
         $this->db->query('DROP TABLE IF EXISTS db_orders');
+        $this->db->query('DROP TABLE IF EXISTS orders');
         $this->db->query('DROP TABLE IF EXISTS db_price_list_items');
         $this->db->query('DROP TABLE IF EXISTS price_list_items');
         $this->db->query('DROP TABLE IF EXISTS db_price_lists');
@@ -52,6 +54,7 @@ trait PriceListSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS product_attributes');
         $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('DROP TABLE IF EXISTS products');
+        $this->db->query('DROP TABLE IF EXISTS order_items');
 
         // products
         $this->db->query("CREATE TABLE db_products (
@@ -255,7 +258,36 @@ trait PriceListSchemaTrait
             deleted_at TEXT
         )");
 
+        $this->db->query("CREATE TABLE orders (
+            id INTEGER PRIMARY KEY {$auto},
+            customer_id INTEGER,
+            customer_group_id INTEGER,
+            order_date TEXT,
+            status TEXT,
+            subtotal REAL,
+            discount_total REAL,
+            total REAL,
+            applied_price_list_id INTEGER,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
         $this->db->query("CREATE TABLE db_order_items (
+            id INTEGER PRIMARY KEY {$auto},
+            order_id INTEGER,
+            product_id INTEGER,
+            variant_id INTEGER,
+            quantity REAL,
+            base_price REAL,
+            final_price REAL,
+            price_list_id INTEGER,
+            price_list_name TEXT,
+            created_at TEXT,
+            updated_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE order_items (
             id INTEGER PRIMARY KEY {$auto},
             order_id INTEGER,
             product_id INTEGER,

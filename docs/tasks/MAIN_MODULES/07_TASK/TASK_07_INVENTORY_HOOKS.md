@@ -4,7 +4,7 @@ id: "TASK-07-INVENTORY-HOOKS-01"
 priority: "P1 (High)"
 estimated_effort: "5 days"
 dependencies: "TASK_06"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "inventory", "hooks", "stock", "deduction", "restoration", "locking", "reconciliation", "multi-branch", "backend"]
@@ -31,7 +31,7 @@ related_to:
 
 **Dependencies:** TASK_06
 
-**Status:** Blocked
+**Status:** Done
 
 ---
 

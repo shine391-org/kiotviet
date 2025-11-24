@@ -5,6 +5,8 @@ namespace App\Services\Orders;
 use App\Repositories\Orders\OrderRepository;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Validators\OrderValidator;
+use App\Validators\OrderCreateValidator;
+use App\Services\Webhooks\WebhookDispatcher;
 use Config\Database;
 use RuntimeException;
 
@@ -13,16 +15,25 @@ class OrderService
 {
     protected OrderRepository $orders;
     protected OrderValidator $validator;
+    protected OrderCreateValidator $createValidator;
     protected PriceCalculatorService $pricing;
+    protected OrderNumberGenerator $numberGen;
+    protected ?WebhookDispatcher $webhooks;
 
     public function __construct(
         ?OrderRepository $orders = null,
         ?OrderValidator $validator = null,
-        ?PriceCalculatorService $pricing = null
+        ?PriceCalculatorService $pricing = null,
+        ?OrderCreateValidator $createValidator = null,
+        ?OrderNumberGenerator $numberGen = null,
+        ?WebhookDispatcher $webhooks = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
         $this->validator = $validator ?? new OrderValidator();
+        $this->createValidator = $createValidator ?? new OrderCreateValidator();
         $this->pricing = $pricing ?? new PriceCalculatorService();
+        $this->numberGen = $numberGen ?? new OrderNumberGenerator();
+        $this->webhooks = $webhooks;
     }
 
     /** Preview order totals with price lists applied. @agent-use: POST /api/orders/calculate-preview */
@@ -74,18 +85,40 @@ class OrderService
     /** Create order (persists) after pricing. */
     public function create(array $payload): array
     {
-        $preview = $this->preview($payload);
+        $validated = $this->createValidator->validate($payload);
+        $preview = $this->preview($validated);
         $data = $preview['data'];
 
+        $orderNumber = $this->numberGen->generate();
+        $paidAmount = $validated['paid_amount'];
+        $shippingFee = $validated['shipping_fee'];
+        $totalWithShipping = $data['total'] + $shippingFee;
+        $debt = max(0, round($totalWithShipping - $paidAmount, 2));
+        $isPaid = abs($debt) < 0.01;
+
         $orderPayload = [
+            'order_number' => $orderNumber,
             'customer_id' => $data['customer_id'],
             'customer_group_id' => $data['customer_group_id'],
             'order_date' => $data['order_date'],
-            'status' => 'confirmed',
+            'order_type' => $validated['order_type'],
+            'payment_method' => $validated['payment_method'],
+            'status' => $validated['order_type'] === 'pos' ? 'completed' : 'draft',
             'subtotal' => $data['subtotal'],
             'discount_total' => $data['discount_total'],
-            'total' => $data['total'],
+            'shipping_fee' => $shippingFee,
+            'total' => $totalWithShipping,
+            'paid_amount' => $paidAmount,
+            'debt_amount' => $debt,
+            'is_paid' => $isPaid ? 1 : 0,
             'applied_price_list_id' => $data['applied_price_list_id'],
+            'shipping_name' => $validated['shipping']['name'],
+            'shipping_phone' => $validated['shipping']['phone'],
+            'shipping_address' => $validated['shipping']['address'],
+            'shipping_ward' => $validated['shipping']['ward'],
+            'shipping_district' => $validated['shipping']['district'],
+            'shipping_city' => $validated['shipping']['city'],
+            'notes' => $validated['notes'],
         ];
 
         $itemRows = [];
@@ -103,6 +136,7 @@ class OrderService
 
         $order = $this->orders->create($orderPayload, $itemRows);
         $order['items'] = $itemRows;
+        $this->emit('order.created', $order);
         return ['success' => true, 'data' => $order];
     }
 
@@ -133,6 +167,18 @@ class OrderService
         $available = (float) ($row['quantity_on_hand'] ?? 0) - (float) ($row['quantity_reserved'] ?? 0);
         if ($available < $qty) {
             throw new \RuntimeException('Insufficient stock for product');
+        }
+    }
+
+    private function emit(string $event, array $payload): void
+    {
+        if (! $this->webhooks) {
+            return;
+        }
+        try {
+            $this->webhooks->dispatch($event, $payload);
+        } catch (\Throwable $e) {
+            log_message('error', 'Webhook dispatch failed: ' . $e->getMessage());
         }
     }
 }

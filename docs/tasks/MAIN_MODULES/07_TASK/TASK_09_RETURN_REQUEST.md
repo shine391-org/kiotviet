@@ -4,7 +4,7 @@ id: "TASK-09-RETURN-REQUEST-01"
 priority: "P2 (Medium)"
 estimated_effort: "4 days"
 dependencies: "TASK_05"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "returns", "request", "validation", "refund", "API", "backend"]
@@ -31,7 +31,7 @@ related_to:
 
 **Dependencies:** TASK_05
 
-**Status:** Blocked
+**Status:** Done
 
 ---
 

@@ -4,7 +4,7 @@ id: "TASK-12-INVOICE-GENERATE-01"
 priority: "P2 (Medium)"
 estimated_effort: "5 days"
 dependencies: "TASK_02, TASK_05"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
 tags: ["task", "invoice", "generation", "VAT", "PDF", "API", "backend"]
@@ -33,7 +33,7 @@ related_to:
 
 **Dependencies:** TASK_02, TASK_05
 
-**Status:** Blocked
+**Status:** Done
 
 ---
 
