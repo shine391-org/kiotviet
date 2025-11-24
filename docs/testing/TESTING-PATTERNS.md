@@ -1,3 +1,15 @@
+---
+title: "Testing Patterns - LANO CRM"
+id: "TESTING-PATTERNS-01"
+version: "1.0"
+status: "Active"
+module: "Testing"
+type: "Code Patterns"
+tags: ["testing", "patterns", "code-examples", "unit-tests", "integration-tests", "repository-tests"]
+purpose: "Provides standard, copy-pasteable code patterns for various types of backend tests (Service, API Integration, Repository) in LANO CRM."
+location: "docs/testing"
+---
+
 # Testing Patterns
 
 ## COPY THESE PATTERNS TO START FAST

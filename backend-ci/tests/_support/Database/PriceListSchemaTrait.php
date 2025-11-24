@@ -113,6 +113,66 @@ trait PriceListSchemaTrait
              updated_at TEXT
         )");
 
+        // product attributes
+        $this->db->query("CREATE TABLE db_product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            attribute_key TEXT,
+            type TEXT,
+            attribute_values TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER DEFAULT 0,
+            is_required INTEGER DEFAULT 0,
+            is_visible INTEGER DEFAULT 1,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_attributes (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            attribute_key TEXT,
+            type TEXT,
+            attribute_values TEXT,
+            slug TEXT,
+            sort_order INTEGER,
+            status TEXT,
+            is_filterable INTEGER DEFAULT 0,
+            is_required INTEGER DEFAULT 0,
+            is_visible INTEGER DEFAULT 1,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        // product attribute values
+        $this->db->query("CREATE TABLE db_product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            variant_id INTEGER,
+            attribute_id INTEGER,
+            option_id INTEGER,
+            value_text TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE product_attribute_values (
+            id INTEGER PRIMARY KEY {$auto},
+            product_id INTEGER,
+            variant_id INTEGER,
+            attribute_id INTEGER,
+            option_id INTEGER,
+            value_text TEXT,
+            created_at TEXT,
+            updated_at TEXT,
+            deleted_at TEXT
+        )");
+
         // price lists
         $this->db->query("CREATE TABLE db_price_lists (
             id INTEGER PRIMARY KEY {$auto},
@@ -127,7 +187,7 @@ trait PriceListSchemaTrait
             formula TEXT,
             base_price_list_id INTEGER,
             auto_update INTEGER DEFAULT 0,
-            rounding_rule TEXT DEFAULT 'none',
+            rounding_rule TEXT,
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
@@ -146,7 +206,7 @@ trait PriceListSchemaTrait
             formula TEXT,
             base_price_list_id INTEGER,
             auto_update INTEGER DEFAULT 0,
-            rounding_rule TEXT DEFAULT 'none',
+            rounding_rule TEXT,
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT

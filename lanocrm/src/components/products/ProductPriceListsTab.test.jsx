@@ -77,8 +77,8 @@ describe('ProductPriceListsTab', () => {
       data: mockPriceLists,
     });
 
-    getProductDetail.mockImplementation((url) => {
-      const priceListId = parseInt(url.split('price_list_id=')[1]);
+    getProductDetail.mockImplementation((_, config) => {
+      const priceListId = parseInt(config?.params?.price_list_id, 10) || 0;
       
       if (priceListId === 1) {
         return Promise.resolve({

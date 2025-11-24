@@ -7,7 +7,7 @@
  * @agent-reusable: HIGH
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Table, Tag, Spin, message, Button, Space, Empty } from 'antd';
 import { ReloadOutlined, DollarOutlined } from '@ant-design/icons';
 import * as priceListApi from '../../api/priceListApi';
@@ -122,7 +122,7 @@ const ProductPriceListsTab = ({ productId }) => {
   /**
    * Load price lists and product prices
    */
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!productId) {
       message.error('Thiếu Product ID');
       return;
@@ -186,7 +186,7 @@ const ProductPriceListsTab = ({ productId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [productId]);
 
   /**
    * Load data on component mount and when productId/refreshKey changes

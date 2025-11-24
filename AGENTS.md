@@ -1,3 +1,22 @@
+---
+title: "AI Agent Guide - LANO CRM"
+id: "AGENT-GUIDE-01"
+purpose: "Single source of truth for AI agents on architecture, patterns, and development workflow."
+version: "1.0"
+status: "Active"
+location: "root"
+tags: ["guideline", "architecture", "patterns", "testing", "workflow", "agent"]
+related_to:
+  - id: "TESTING-PATTERNS-01"
+    description: "Contains mandatory test patterns to be copied."
+  - id: "TESTING-GUIDE-01"
+    description: "Explains the backend testing philosophy and process."
+  - id: "FE-TESTING-GUIDE-01"
+    description: "Explains the frontend testing philosophy and process."
+  - id: "FE-TEST-CHECKLIST-01"
+    description: "Mandatory checklist for frontend changes."
+---
+
 # AI Agent Guide - LANO CRM
 
 > **Agent start here!** This is your single source of truth.

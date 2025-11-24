@@ -1,3 +1,20 @@
+---
+title: "Test Checklist - Backend"
+id: "TEST-CHECKLIST-01"
+version: "1.0"
+status: "Active"
+module: "Testing"
+type: "Checklist"
+tags: ["testing", "checklist", "backend", "pr-process"]
+purpose: "Provides a mandatory checklist for all Pull Requests to ensure code quality, test coverage, and functionality for backend changes."
+location: "docs/testing"
+related_to:
+  - id: "TESTING-GUIDE-01"
+    description: "Refer to the comprehensive backend testing guide."
+  - id: "AGENT-GUIDE-01"
+    description: "The main AI Agent Guide that mandates this checklist."
+---
+
 # Test Checklist - Copy into every PR
 
 ## Unit Tests ✓
