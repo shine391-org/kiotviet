@@ -164,12 +164,12 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'         => '',
-        'hostname'    => '',
-        'username'    => '',
-        'password'    => '',
-        'database'    => '',
+        'hostname'    => 'db',
+        'username'    => 'lanocrm_user',
+        'password'    => 'KP7n4RjcDbedSE2W8GgA',
+        'database'    => 'lanocrm_shop',
         'DBDriver'    => 'MySQLi',
-        'DBPrefix'    => 'db_',
+        'DBPrefix'    => '',
         'pConnect'    => false,
         'DBDebug'     => true,
         'charset'     => 'utf8mb4',
@@ -201,12 +201,13 @@ class Database extends Config
         }
 
         // Load test connection from .env if provided
-        $this->tests['hostname'] = env('database.tests.hostname', 'db-test');
-        $this->tests['database'] = env('database.tests.database', 'lanocrm_test');
+        // Using main database for testing with transaction rollback
+        $this->tests['hostname'] = env('database.tests.hostname', 'db');
+        $this->tests['database'] = env('database.tests.database', 'lanocrm_shop');
         $this->tests['username'] = env('database.tests.username', 'lanocrm_user');
         $this->tests['password'] = env('database.tests.password', 'KP7n4RjcDbedSE2W8GgA');
         $this->tests['DBDriver'] = env('database.tests.DBDriver', 'MySQLi');
-        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', 'db_');
+        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', '');
         $this->tests['port']     = (int) env('database.tests.port', 3306);
     }
 }
