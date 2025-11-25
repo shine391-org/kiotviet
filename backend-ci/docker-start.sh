@@ -9,11 +9,15 @@ for i in {1..30}; do
   echo "Waiting DB..."; sleep 2;
 done
 
-# Quick schema bootstrap (minimal tables for dev demo)
+# Quick schema bootstrap (drop + create minimal tables for dev demo)
 cat <<'PHP' | php || true
 <?php
 $mysqli = new mysqli('db','lanocrm_user','KP7n4RjcDbedSE2W8GgA','lanocrm_shop');
 if ($mysqli->connect_errno) { fwrite(STDERR, "DB connect failed\n"); exit(1);} 
+$tables = [
+  'order_items','orders','order_sequences','price_list_items','price_lists','product_attribute_values','product_images','product_category_links','product_variants_v2','products','product_attribute_options','product_attributes','product_categories','inventory_stock','payment_methods','role_has_permissions','model_has_roles','permissions','roles','users','branches','customers'
+];
+foreach ($tables as $t) { $mysqli->query("DROP TABLE IF EXISTS `$t`"); }
 $sql = [
   "CREATE TABLE IF NOT EXISTS branches (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), code VARCHAR(50), status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
   "CREATE TABLE IF NOT EXISTS roles (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), guard_name VARCHAR(50), description TEXT, is_system TINYINT DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
