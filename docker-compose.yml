@@ -7,7 +7,7 @@ services:
       dockerfile: backend-ci/Dockerfile
     command: >-
       bash -lc "cd /var/www/html && \
-      until php spark db:info >/dev/null 2>&1; do echo 'Waiting for DB...'; sleep 2; done; \
+      until php -r \"new mysqli('db','lanocrm_user','KP7n4RjcDbedSE2W8GgA','lanocrm_shop');\" >/dev/null 2>&1; do echo 'Waiting for DB...'; sleep 2; done; \
       php spark migrate --all && php spark db:seed DevDemoSeeder || true; \
       exec apache2-foreground"
     ports:
@@ -43,7 +43,6 @@ services:
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
     volumes:
       - db_data:/var/lib/mysql
-      - ./db_lano.gz:/docker-entrypoint-initdb.d/001-db.sql.gz:ro
 
   # MySQL test database (separate from dev)
   db-test:
