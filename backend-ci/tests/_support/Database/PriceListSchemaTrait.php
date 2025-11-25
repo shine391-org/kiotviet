@@ -34,7 +34,8 @@ trait PriceListSchemaTrait
             'db_stock_transactions', 'stock_transactions_v2', 'db_stock_transactions_v2',
             'product_categories', 'db_product_categories', 'product_category_links',
             'db_product_category_links', 'db_product_variants_v2', 'product_variants_v2',
-            'db_product_attributes', 'product_attributes', 'db_products', 'products'
+            'db_product_attributes', 'product_attributes', 'db_products', 'products',
+            'db_order_sequences', 'order_sequences'
         ];
 
         foreach ($tables as $table) {
@@ -51,6 +52,7 @@ trait PriceListSchemaTrait
         $this->createPriceListItemTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
+        $this->createOrderSequenceTables();
         
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -282,35 +284,39 @@ trait PriceListSchemaTrait
      */
     private function createOrderTables(): void
     {
-        $this->db->query("CREATE TABLE db_orders (
+        $schema = "CREATE TABLE %s (
             id INT AUTO_INCREMENT PRIMARY KEY,
-            customer_id INT,
-            customer_group_id INT,
+            order_number VARCHAR(50) NULL,
+            customer_id INT NULL,
+            customer_group_id INT NULL,
+            branch_id INT NULL,
             order_date DATE NULL,
-            status VARCHAR(50),
-            subtotal DECIMAL(10,2),
-            discount_total DECIMAL(10,2),
-            total DECIMAL(10,2),
-            applied_price_list_id INT,
+            order_type VARCHAR(50) DEFAULT 'online',
+            payment_method VARCHAR(50) NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            subtotal DECIMAL(10,2) DEFAULT 0,
+            discount_total DECIMAL(10,2) DEFAULT 0,
+            shipping_fee DECIMAL(10,2) DEFAULT 0,
+            total DECIMAL(10,2) DEFAULT 0,
+            paid_amount DECIMAL(10,2) DEFAULT 0,
+            debt_amount DECIMAL(10,2) DEFAULT 0,
+            is_paid TINYINT DEFAULT 0,
+            applied_price_list_id INT NULL,
+            shipping_name VARCHAR(255) NULL,
+            shipping_phone VARCHAR(50) NULL,
+            shipping_address TEXT NULL,
+            shipping_ward VARCHAR(100) NULL,
+            shipping_district VARCHAR(100) NULL,
+            shipping_city VARCHAR(100) NULL,
+            notes TEXT NULL,
+            created_by INT NULL,
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL,
             deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-        $this->db->query("CREATE TABLE orders (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            customer_id INT,
-            customer_group_id INT,
-            order_date DATE NULL,
-            status VARCHAR(50),
-            subtotal DECIMAL(10,2),
-            discount_total DECIMAL(10,2),
-            total DECIMAL(10,2),
-            applied_price_list_id INT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query(sprintf($schema, 'db_orders'));
+        $this->db->query(sprintf($schema, 'orders'));
     }
     
     /**
@@ -342,6 +348,30 @@ trait PriceListSchemaTrait
             final_price DECIMAL(10,2),
             price_list_id INT,
             price_list_name VARCHAR(255),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create order sequence tables (MySQL-only)
+     */
+    private function createOrderSequenceTables(): void
+    {
+        $this->db->query("CREATE TABLE order_sequences (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            sequence_number INT DEFAULT 1,
+            prefix VARCHAR(20) DEFAULT 'ORD',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE db_order_sequences (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            sequence_number INT DEFAULT 1,
+            prefix VARCHAR(20) DEFAULT 'ORD',
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
