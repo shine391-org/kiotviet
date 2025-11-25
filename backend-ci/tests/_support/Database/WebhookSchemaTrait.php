@@ -21,7 +21,7 @@ trait WebhookSchemaTrait
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
 
-        foreach (['webhook_events', 'db_webhook_events', 'webhook_subscriptions', 'db_webhook_subscriptions'] as $table) {
+        foreach (['webhook_events', 'webhook_subscriptions'] as $table) {
             $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
@@ -46,16 +46,6 @@ trait WebhookSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-        $this->db->query("CREATE TABLE db_webhook_subscriptions (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            event VARCHAR(100) NOT NULL,
-            target_url VARCHAR(255) NOT NULL,
-            secret VARCHAR(255) NULL,
-            is_active TINYINT(1) DEFAULT 1,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**
@@ -64,17 +54,6 @@ trait WebhookSchemaTrait
     private function createWebhookEventTables(): void
     {
         $this->db->query("CREATE TABLE webhook_events (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            event VARCHAR(100) NOT NULL,
-            payload JSON,
-            status VARCHAR(20) DEFAULT 'pending',
-            attempts INT DEFAULT 0,
-            last_error TEXT NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
-        $this->db->query("CREATE TABLE db_webhook_events (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100) NOT NULL,
             payload JSON,

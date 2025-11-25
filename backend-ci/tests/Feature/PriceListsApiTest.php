@@ -5,22 +5,25 @@ namespace Tests\Feature;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
 use Tests\Support\AuthTestTrait;
 
-/** @agent-test: Price lists API @agent-pattern: Feature test (SQLite) */
+/**
+ * @agent-test: Price lists API
+ * @agent-pattern: MySQL-only feature test with DevDatabaseTrait
+ */
 class PriceListsApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
+    use DevDatabaseTrait;
     use PriceListSchemaTrait;
     use AuthTestTrait;
-
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetPriceListSchema();
         $this->seedProduct(1, 100000);
         $this->setUpAuthToken();

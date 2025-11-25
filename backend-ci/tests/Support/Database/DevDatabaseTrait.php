@@ -86,6 +86,9 @@ trait DevDatabaseTrait
         // Create basic schema for testing (MySQL-only)
         $this->createBasicTestSchema($db);
         
+        // Create attributes schema for testing
+        $this->createAttributesSchema($db);
+        
         // Log migration status for debugging
         if (defined('TEST_DEBUG') && TEST_DEBUG) {
             log_message('info', 'Database migrated for testing: ' . date('Y-m-d H:i:s'));
@@ -300,6 +303,80 @@ trait DevDatabaseTrait
             `branch_id` INT NOT NULL,
             `sequence_number` INT DEFAULT 1,
             `prefix` VARCHAR(20) DEFAULT 'ORD',
+            `created_at` TIMESTAMP NULL,
+            `updated_at` TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create attributes schema for testing
+     *
+     * @agent-use: Creates attributes tables for ProductService tests
+     */
+    private function createAttributesSchema($db): void
+    {
+        // Create attributes table
+        $db->query("CREATE TABLE IF NOT EXISTS `attributes` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `name` VARCHAR(255) NOT NULL,
+            `code` VARCHAR(100) NOT NULL,
+            `type` ENUM('text', 'number', 'select', 'multiselect', 'boolean', 'date') DEFAULT 'text',
+            `is_required` TINYINT DEFAULT 0,
+            `is_filterable` TINYINT DEFAULT 0,
+            `sort_order` INT DEFAULT 0,
+            `created_at` TIMESTAMP NULL,
+            `updated_at` TIMESTAMP NULL,
+            `deleted_at` TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Create attribute_options table
+        $db->query("CREATE TABLE IF NOT EXISTS `attribute_options` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `attribute_id` INT NOT NULL,
+            `value` VARCHAR(255) NOT NULL,
+            `sort_order` INT DEFAULT 0,
+            `created_at` TIMESTAMP NULL,
+            `updated_at` TIMESTAMP NULL,
+            `deleted_at` TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Create product_attribute_values table
+        $db->query("CREATE TABLE IF NOT EXISTS `product_attribute_values` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `product_id` INT NOT NULL,
+            `variant_id` INT NULL,
+            `attribute_id` INT NOT NULL,
+            `attribute_option_id` INT NULL,
+            `value_text` TEXT NULL,
+            `value` TEXT NULL,
+            `created_at` TIMESTAMP NULL,
+            `updated_at` TIMESTAMP NULL,
+            `deleted_at` TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Create webhook_subscriptions table for webhook tests
+        $db->query("CREATE TABLE IF NOT EXISTS `webhook_subscriptions` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `url` VARCHAR(500) NOT NULL,
+            `event` VARCHAR(100) NOT NULL,
+            `secret` VARCHAR(255) NULL,
+            `is_active` TINYINT DEFAULT 1,
+            `retry_count` INT DEFAULT 0,
+            `last_triggered_at` TIMESTAMP NULL,
+            `created_at` TIMESTAMP NULL,
+            `updated_at` TIMESTAMP NULL,
+            `deleted_at` TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        // Create webhook_events table for webhook tests
+        $db->query("CREATE TABLE IF NOT EXISTS `webhook_events` (
+            `id` INT AUTO_INCREMENT PRIMARY KEY,
+            `subscription_id` INT NOT NULL,
+            `event_data` JSON NULL,
+            `status` ENUM('pending', 'success', 'failed') DEFAULT 'pending',
+            `response_code` INT NULL,
+            `response_body` TEXT NULL,
+            `attempts` INT DEFAULT 0,
             `created_at` TIMESTAMP NULL,
             `updated_at` TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

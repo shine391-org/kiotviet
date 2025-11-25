@@ -5,22 +5,25 @@ namespace Tests\Feature;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
 use Tests\Support\AuthTestTrait;
 
-/** @agent-test: Orders pricing API @agent-pattern: Feature test (SQLite) */
+/**
+ * @agent-test: Orders pricing API
+ * @agent-pattern: MySQL-only feature test with DevDatabaseTrait
+ */
 class OrdersPricingApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
+    use DevDatabaseTrait;
     use PriceListSchemaTrait;
     use AuthTestTrait;
-
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetPriceListSchema();
         $this->seedProduct(1, 100000);
         $listId = $this->seedPriceList(['name' => 'VIP', 'priority' => 5, 'apply_to_groups' => [2]]);

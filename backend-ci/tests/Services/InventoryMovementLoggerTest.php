@@ -5,12 +5,13 @@ namespace Tests\Services;
 use App\Repositories\Inventory\InventoryMovementRepository;
 use App\Services\Inventory\InventoryMovementLogger;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\SupportingSchemaTrait;
 
 /** @agent-test: InventoryMovementLogger @agent-pattern: Standard service test */
 class InventoryMovementLoggerTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use SupportingSchemaTrait;
 
     protected $db;
@@ -19,35 +20,16 @@ class InventoryMovementLoggerTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'hostname' => '127.0.0.1',
-                'port' => 3307,
-                'username' => 'lanocrm_user',
-                'password' => 'KP7n4RjcDbedSE2W8GgA',
-                'database' => 'lanocrm_test',
-                'DBDriver' => 'MySQLi',
-                'DBPrefix' => '',
-                'DBDebug' => true,
-                'charset' => 'utf8mb4',
-                'DBCollat' => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetSupportingSchema();
         $repo = new InventoryMovementRepository(null, $this->db);
         $this->logger = new InventoryMovementLogger($repo);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

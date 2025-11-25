@@ -27,7 +27,13 @@ class ProductRepository
     public function count(array $filters): int { return $this->applyFilters($filters)->countAllResults(); }
 
     /** Find product by id. @agent-use: Fetch single product @agent-pattern: Find by id */
-    public function findById(int $id): ?array { $row = $this->products->where('deleted_at', null)->find($id); return $row ?: null; }
+    public function findById(int $id): ?array {
+        $product = $this->products->where('deleted_at', null)->find($id);
+        if (!$product) {
+            return null;
+        }
+        return is_array($product) ? $product : $product->toArray();
+    }
 
     /** Create product row. @agent-use: Create flow @agent-pattern: Insert with timestamps */
     public function create(array $data): array { $payload = $data + ['created_at' => $this->now(), 'updated_at' => $this->now()]; $this->products->insert($payload); $payload['id'] = $this->products->getInsertID(); return $payload; }
@@ -133,10 +139,28 @@ class ProductRepository
     public function deleteImage(int $imageId, bool $hard = false): void { $table = $this->db->table('product_images'); $hard ? $table->delete(['id' => $imageId]) : $table->where('id', $imageId)->update(['deleted_at' => $this->now()]); }
 
     /** Used attribute options for product. @agent-use: Attribute overview @agent-pattern: Join fetch */
-    public function usedAttributeOptions(int $productId): array { return $this->db->table('product_attribute_values pav')->select('pav.attribute_id, pav.option_id, pa.name as attribute_name, pa.type, pa.attribute_key, pa.slug, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, pa.is_visible, pa.created_at, pa.updated_at')->join('product_attributes pa', 'pa.id = pav.attribute_id', 'left')->where('pav.product_id', $productId)->where('pav.deleted_at', null)->get()->getResultArray(); }
+    public function usedAttributeOptions(int $productId): array {
+        $query = $this->db->table('product_attribute_values pav')
+            ->select('pav.attribute_id, pav.attribute_option_id as option_id, pa.name as attribute_name, pa.type, pa.code as attribute_key, pa.code as slug, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.created_at, pa.updated_at')
+            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->where('pav.product_id', $productId)
+            ->where('pav.deleted_at', null);
+        
+        $result = $query->get();
+        return $result ? $result->getResultArray() : [];
+    }
 
     /** Attribute values for product. @agent-use: Attribute listing @agent-pattern: Join fetch */
-    public function productAttributeValues(int $productId): array { return $this->db->table('product_attribute_values pav')->select('pav.*, pa.name as attribute_name, pa.type, pa.attribute_key, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, pa.is_visible, pa.slug, pa.attribute_values, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at')->join('product_attributes pa', 'pa.id = pav.attribute_id', 'left')->where('pav.product_id', $productId)->where('pav.deleted_at', null)->get()->getResultArray(); }
+    public function productAttributeValues(int $productId): array {
+        $query = $this->db->table('product_attribute_values pav')
+            ->select('pav.*, pa.name as attribute_name, pa.type, pa.code as attribute_key, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.code as slug, null as attribute_values, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at')
+            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->where('pav.product_id', $productId)
+            ->where('pav.deleted_at', null);
+            
+        $result = $query->get();
+        return $result ? $result->getResultArray() : [];
+    }
 
     /** Sync product-level attribute values. @agent-use: Update attributes @agent-pattern: Delete + batch insert */
     public function syncProductAttributeValues(int $productId, array $values): array { $this->db->table('product_attribute_values')->where('product_id', $productId)->where('variant_id', null)->delete(); if (empty($values)) { return []; } $rows = []; foreach ($values as $val) { if (empty($val['attribute_id'])) { continue; } $rows[] = ['product_id' => $productId, 'variant_id' => $val['variant_id'] ?? null, 'attribute_id' => $val['attribute_id'], 'option_id' => $val['option_id'] ?? null, 'value_text' => $val['value_text'] ?? null, 'created_at' => $this->now(), 'updated_at' => $this->now()]; } if (empty($rows)) { return []; } $this->db->table('product_attribute_values')->insertBatch($rows); return $rows; }

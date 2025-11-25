@@ -4,12 +4,13 @@ namespace Tests\Services;
 
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\SupportingSchemaTrait;
 
 /** @agent-test: OrderStatusLogRepository @agent-pattern: Standard repository test */
 class OrderStatusLogRepositoryTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use SupportingSchemaTrait;
 
     protected $db;
@@ -18,34 +19,15 @@ class OrderStatusLogRepositoryTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'hostname' => '127.0.0.1',
-                'port' => 3307,
-                'username' => 'lanocrm_user',
-                'password' => 'KP7n4RjcDbedSE2W8GgA',
-                'database' => 'lanocrm_test',
-                'DBDriver' => 'MySQLi',
-                'DBPrefix' => '',
-                'DBDebug' => true,
-                'charset' => 'utf8mb4',
-                'DBCollat' => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetSupportingSchema();
         $this->repo = new OrderStatusLogRepository(null, $this->db);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

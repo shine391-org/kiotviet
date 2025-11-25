@@ -6,58 +6,39 @@ use App\Repositories\Webhooks\WebhookEventRepository;
 use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Services\Webhooks\WebhookDispatcher;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\WebhookSchemaTrait;
 
-/** @agent-test: WebhookDispatcher @agent-pattern: Dispatch with stub transport */
+/**
+ * @agent-test: WebhookDispatcher
+ * @agent-pattern: MySQL-only test with DevDatabaseTrait
+ */
 class WebhookDispatcherTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use WebhookSchemaTrait;
 
-    protected $db;
     private WebhookSubscriptionRepository $subs;
     private WebhookEventRepository $events;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        try {
-            $this->db = Database::connect('tests', false);
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database connection not available for webhook tests: ' . $e->getMessage());
-        }
-
+        $this->setUpDatabase();
         $this->resetWebhookSchema();
-        $this->subs = new WebhookSubscriptionRepository(null, $this->db);
-        $this->events = new WebhookEventRepository(null, $this->db);
+        
+        // Create database connection without prefix for webhook tables
+        $dbWithoutPrefix = \Config\Database::connect('tests');
+        $dbWithoutPrefix->setPrefix('');
+        
+        $this->subs = new WebhookSubscriptionRepository(null, $dbWithoutPrefix);
+        $this->events = new WebhookEventRepository(null, $dbWithoutPrefix);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

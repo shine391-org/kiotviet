@@ -4,12 +4,13 @@ namespace Tests\Services;
 
 use App\Services\Invoices\InvoiceService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\InvoiceSchemaTrait;
 
 /** @agent-test: Invoice generation @agent-pattern: Service test */
 class InvoiceGenerationServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use InvoiceSchemaTrait;
 
     protected $db;
@@ -18,20 +19,8 @@ class InvoiceGenerationServiceTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (! extension_loaded('sqlite3')) {
-            $this->markTestSkipped('Requires sqlite extension');
-        }
-        $config = config('Database');
-        $config->tests = [
-            'DBDriver'    => 'SQLite3',
-            'database'    => ':memory:',
-            'DBPrefix'    => 'db_',
-            'foreignKeys' => true,
-            'DBDebug'     => true,
-        ];
-        $config->defaultGroup = 'tests';
 
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetInvoiceSchema();
         $this->seedLookup();
 
@@ -91,5 +80,11 @@ class InvoiceGenerationServiceTest extends CIUnitTestCase
             'updated_at' => $now,
         ]);
         return (int) $this->db->insertID();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }

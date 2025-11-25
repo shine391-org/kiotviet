@@ -8,12 +8,13 @@ use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\StatusSchemaTrait;
 
 /** @agent-test: OrderStatusService @agent-pattern: Status workflow test */
 class OrderStatusServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use StatusSchemaTrait;
 
     protected $db;
@@ -23,32 +24,7 @@ class OrderStatusServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'hostname' => '127.0.0.1',
-                'port' => 3307,
-                'username' => 'lanocrm_user',
-                'password' => 'KP7n4RjcDbedSE2W8GgA',
-                'database' => 'lanocrm_test',
-                'DBDriver' => 'MySQLi',
-                'DBPrefix' => '',
-                'charset' => 'utf8mb4',
-                'DBCollat' => 'utf8mb4_general_ci',
-                'DBDebug' => true,
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetStatusSchema();
 
         $orders = new OrderRepository(null, null, $this->db);
@@ -152,5 +128,11 @@ class OrderStatusServiceTest extends CIUnitTestCase
             'quantity_on_hand' => $qty,
             'quantity_reserved' => 0,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }
