@@ -6,7 +6,7 @@ use CodeIgniter\Model;
 
 class ProductCategoryLinkModel extends Model
 {
-    protected $table = 'db_product_category_links';
+    protected $table = 'product_category_links';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = ['product_id','category_id','created_at'];

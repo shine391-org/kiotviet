@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Docker-only Spark Command Runner
+# Usage: ./docker-spark <command>
+# Example: ./docker-spark migrate
+
+# Check if Docker container is running
+if ! docker ps | grep -q "meomeo2-api-1"; then
+    echo "❌ API container is not running!"
+    echo "Please start Docker containers first:"
+    echo "  docker-compose up -d"
+    exit 1
+fi
+
+# Execute spark command in Docker container
+docker exec meomeo2-api-1 php spark "$@"

@@ -7,7 +7,7 @@ use CodeIgniter\Model;
 /** Order item schema model. @agent-model: order_items */
 class OrderItemModel extends Model
 {
-    protected $table = 'db_order_items';
+    protected $table = 'order_items';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = [
