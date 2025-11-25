@@ -5,11 +5,7 @@ services:
     build:
       context: .
       dockerfile: backend-ci/Dockerfile
-    command: >-
-      bash -lc "cd /var/www/html && \
-      until php -r \"new mysqli('db','lanocrm_user','KP7n4RjcDbedSE2W8GgA','lanocrm_shop');\" >/dev/null 2>&1; do echo 'Waiting for DB...'; sleep 2; done; \
-      php spark migrate --all && php spark db:seed DevDemoSeeder || true; \
-      exec apache2-foreground"
+    command: ["bash", "/var/www/html/docker-start.sh"]
     ports:
       - "8000:80"
     env_file:
