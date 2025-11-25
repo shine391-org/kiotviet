@@ -2,23 +2,31 @@
 
 namespace Tests\Support\Database;
 
+/**
+ * InvoiceSchemaTrait - Invoice database schema (MySQL-only)
+ * 
+ * @agent-trait: Invoice testing schema
+ * @agent-pattern: MySQL-only schema creation (SQLite removed)
+ * @agent-reusable: HIGH
+ */
 trait InvoiceSchemaTrait
 {
+    /**
+     * Reset invoice schema for testing (MySQL-only)
+     * 
+     * @agent-pattern: Standard schema reset - COPY THIS
+     * @agent-use: Call this in setUp() for invoice-related tests
+     */
     protected function resetInvoiceSchema(): void
     {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $isSqlite = strtolower($this->db->DBDriver ?? '') === 'sqlite3';
-        $varchar50 = $isSqlite ? 'TEXT' : 'VARCHAR(50)';
-        $varchar255 = $isSqlite ? 'TEXT' : 'VARCHAR(255)';
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-            // Drop all existing tables in isolated test DB to avoid FK conflicts.
-            foreach ($this->db->listTables() as $table) {
-                $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
-            }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        
+        // Drop all existing tables in isolated test DB to avoid FK conflicts.
+        foreach ($this->db->listTables() as $table) {
+            $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
+        // Drop invoice-related tables
         $this->db->query('DROP TABLE IF EXISTS db_activity_logs');
         $this->db->query('DROP TABLE IF EXISTS activity_logs');
         $this->db->query('DROP TABLE IF EXISTS db_invoice_orders');
@@ -34,120 +42,154 @@ trait InvoiceSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS db_users');
         $this->db->query('DROP TABLE IF EXISTS users');
 
+        // Create tables with MySQL-specific syntax
+        $this->createBaseTables();
+        $this->createOrderTables();
+        $this->createInvoiceTables();
+        $this->createInvoiceOrderTables();
+        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+    
+    /**
+     * Create base user/branch/customer tables (MySQL-only)
+     */
+    private function createBaseTables(): void
+    {
         $this->db->query("CREATE TABLE users (
-            id INTEGER PRIMARY KEY {$auto},
-            username {$varchar50},
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_users (
-            id INTEGER PRIMARY KEY {$auto},
-            username {$varchar50},
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         $this->db->query("CREATE TABLE branches (
-            id INTEGER PRIMARY KEY {$auto},
-            name {$varchar255},
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_branches (
-            id INTEGER PRIMARY KEY {$auto},
-            name {$varchar255},
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         $this->db->query("CREATE TABLE customers (
-            id INTEGER PRIMARY KEY {$auto},
-            name {$varchar255},
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_customers (
-            id INTEGER PRIMARY KEY {$auto},
-            name {$varchar255},
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create order tables (MySQL-only)
+     */
+    private function createOrderTables(): void
+    {
         $this->db->query("CREATE TABLE orders (
-            id INTEGER PRIMARY KEY {$auto},
-            customer_id INTEGER,
-            branch_id INTEGER,
-            order_date TEXT,
-            total REAL,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            customer_id INT,
+            branch_id INT,
+            order_date DATE,
+            total DECIMAL(10,2),
+            status VARCHAR(50),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_orders (
-            id INTEGER PRIMARY KEY {$auto},
-            customer_id INTEGER,
-            branch_id INTEGER,
-            order_date TEXT,
-            total REAL,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            customer_id INT,
+            branch_id INT,
+            order_date DATE,
+            total DECIMAL(10,2),
+            status VARCHAR(50),
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create invoice tables (MySQL-only)
+     */
+    private function createInvoiceTables(): void
+    {
         $this->db->query("CREATE TABLE invoices (
-            id INTEGER PRIMARY KEY {$auto},
-            invoice_number {$varchar50} UNIQUE,
-            customer_id INTEGER,
-            branch_id INTEGER,
-            issue_date TEXT,
-            due_date TEXT,
-            subtotal REAL,
-            vat_rate REAL,
-            vat_amount REAL,
-            total REAL,
-            pdf_path {$varchar255},
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            invoice_number VARCHAR(50) UNIQUE,
+            customer_id INT,
+            branch_id INT,
+            issue_date DATE,
+            due_date DATE,
+            subtotal DECIMAL(10,2),
+            vat_rate DECIMAL(5,2),
+            vat_amount DECIMAL(10,2),
+            total DECIMAL(10,2),
+            pdf_path VARCHAR(255),
             notes TEXT,
-            meta TEXT,
-            created_by INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            meta JSON,
+            created_by INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_invoices (
-            id INTEGER PRIMARY KEY {$auto},
-            invoice_number {$varchar50} UNIQUE,
-            customer_id INTEGER,
-            branch_id INTEGER,
-            issue_date TEXT,
-            due_date TEXT,
-            subtotal REAL,
-            vat_rate REAL,
-            vat_amount REAL,
-            total REAL,
-            pdf_path {$varchar255},
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            invoice_number VARCHAR(50) UNIQUE,
+            customer_id INT,
+            branch_id INT,
+            issue_date DATE,
+            due_date DATE,
+            subtotal DECIMAL(10,2),
+            vat_rate DECIMAL(5,2),
+            vat_amount DECIMAL(10,2),
+            total DECIMAL(10,2),
+            pdf_path VARCHAR(255),
             notes TEXT,
-            meta TEXT,
-            created_by INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
+            meta JSON,
+            created_by INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create invoice-order junction tables (MySQL-only)
+     */
+    private function createInvoiceOrderTables(): void
+    {
         $this->db->query("CREATE TABLE invoice_orders (
-            id INTEGER PRIMARY KEY {$auto},
-            invoice_id INTEGER,
-            order_id INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            invoice_id INT,
+            order_id INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_invoice_orders (
-            id INTEGER PRIMARY KEY {$auto},
-            invoice_id INTEGER,
-            order_id INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=1');
-        }
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            invoice_id INT,
+            order_id INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

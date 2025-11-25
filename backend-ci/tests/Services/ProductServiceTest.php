@@ -8,18 +8,29 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 
+/**
+ * @agent-test: ProductService unified MySQL testing
+ * @agent-pattern: Standard service test with DevDatabaseTrait
+ */
 class ProductServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+    
     private ProductService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
-        $this->resetSchema();
+        $this->setUpDatabase();
         $this->service = new ProductService();
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_list_returns_products_with_categories_and_variants(): void
@@ -377,131 +388,10 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertSame('Removed attribute from product', $result['message']);
     }
 
-    private function resetSchema(): void
-    {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_images');
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
-        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS product_attributes');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-
-        $this->db->query("CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY {$auto},
-            product_type TEXT,
-            code TEXT,
-            barcode TEXT,
-            name TEXT,
-            status TEXT,
-            selling_price REAL,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_category_links (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            category_id INTEGER,
-            created_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_name TEXT,
-            variant_signature TEXT,
-            sku TEXT,
-            barcode TEXT,
-            price REAL,
-            cost_price REAL,
-            stock_quantity REAL,
-            min_stock REAL,
-            max_stock REAL,
-            image_url TEXT,
-            attributes TEXT,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_attributes (
-            id INTEGER PRIMARY KEY {$auto},
-            name TEXT,
-            attribute_key TEXT,
-            type TEXT,
-            slug TEXT,
-            sort_order INTEGER,
-            status TEXT,
-            is_filterable INTEGER,
-            is_required INTEGER,
-            is_visible INTEGER,
-            attribute_values TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_attribute_values (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            attribute_id INTEGER,
-            variant_id INTEGER,
-            option_id INTEGER,
-            value_text TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        // mirror non-prefixed tables because repositories use them
-        $this->db->query("CREATE TABLE product_attributes (
-            id INTEGER PRIMARY KEY {$auto},
-            name TEXT,
-            attribute_key TEXT,
-            type TEXT,
-            slug TEXT,
-            sort_order INTEGER,
-            status TEXT,
-            is_filterable INTEGER,
-            is_required INTEGER,
-            is_visible INTEGER,
-            attribute_values TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE product_attribute_values (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            attribute_id INTEGER,
-            variant_id INTEGER,
-            option_id INTEGER,
-            value_text TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_id INTEGER,
-            image_path TEXT,
-            image_url TEXT,
-            is_primary INTEGER,
-            sort_order INTEGER,
-            file_name TEXT,
-            deleted_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-    }
+    /**
+     * @agent-removed: resetSchema() is no longer needed
+     * @agent-use: DevDatabaseTrait handles schema via migrations
+     */
 
     private function seedProduct(array $data): int
     {

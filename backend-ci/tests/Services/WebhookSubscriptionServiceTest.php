@@ -6,58 +6,37 @@ use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Services\Webhooks\WebhookSubscriptionService;
 use App\Validators\WebhookSubscriptionValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\WebhookSchemaTrait;
 
-/** @agent-test: WebhookSubscriptionService @agent-pattern: Service test with sqlite fallback */
+/**
+ * @agent-test: WebhookSubscriptionService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + WebhookSchemaTrait (MySQL-only)
+ */
 class WebhookSubscriptionServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use WebhookSchemaTrait;
 
-    protected $db;
     private WebhookSubscriptionService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        try {
-            $this->db = Database::connect('tests', false);
-        } catch (\Throwable $e) {
-            $this->markTestSkipped('Database connection not available for webhook tests: ' . $e->getMessage());
-        }
-
+        $this->setUpDatabase();
+        
+        // Use WebhookSchemaTrait for comprehensive schema
         $this->resetWebhookSchema();
 
+        // Pass database connection to repository so it uses correct tables
         $repo = new WebhookSubscriptionRepository(null, $this->db);
         $this->service = new WebhookSubscriptionService($repo, new WebhookSubscriptionValidator());
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

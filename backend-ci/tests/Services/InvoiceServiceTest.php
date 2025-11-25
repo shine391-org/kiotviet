@@ -8,50 +8,27 @@ use App\Services\Invoices\InvoiceService;
 use App\Services\Invoices\VATCalculator;
 use App\Validators\InvoiceValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\InvoiceSchemaTrait;
 
-/** @agent-test: InvoiceService @agent-pattern: Standard service test */
+/**
+ * @agent-test: InvoiceService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + InvoiceSchemaTrait (MySQL-only)
+ */
 class InvoiceServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use InvoiceSchemaTrait;
 
-    protected $db;
     private InvoiceService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
+        
+        // Use InvoiceSchemaTrait for comprehensive schema
         $this->resetInvoiceSchema();
         $this->seedLookup();
 
@@ -60,6 +37,12 @@ class InvoiceServiceTest extends CIUnitTestCase
         $vat = new VATCalculator();
         $pdf = new InvoicePDFGenerator();
         $this->service = new InvoiceService($repo, $validator, null, $vat, $pdf);
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -135,15 +118,15 @@ class InvoiceServiceTest extends CIUnitTestCase
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
-        $this->db->table('orders')->insert($row);
+        $this->db->table('db_orders')->insert($row);
         return (int) $this->db->insertID();
     }
 
     private function seedLookup(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('db_customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('db_branches')->insert(['id' => 1, 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('db_users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 }

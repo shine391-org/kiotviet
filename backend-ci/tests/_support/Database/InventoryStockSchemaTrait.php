@@ -2,79 +2,103 @@
 
 namespace Tests\Support\Database;
 
+/**
+ * InventoryStockSchemaTrait - Inventory stock database schema (MySQL-only)
+ * 
+ * @agent-trait: Inventory stock tables testing schema
+ * @agent-pattern: MySQL-only schema creation (SQLite removed)
+ * @agent-reusable: HIGH
+ */
 trait InventoryStockSchemaTrait
 {
+    /**
+     * Reset inventory stock schema for testing (MySQL-only)
+     * 
+     * @agent-pattern: Standard schema reset - COPY THIS
+     * @agent-use: Call this in setUp() for inventory stock table tests
+     */
     protected function resetInventoryStockSchema(): void
     {
-        $isSqlite = strtolower($this->db->DBDriver ?? '') === 'sqlite3';
-        $auto = $isSqlite ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $varchar50 = $isSqlite ? 'TEXT' : 'VARCHAR(50)';
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-            foreach ($this->db->listTables() as $table) {
-                $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
-            }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        
+        foreach ($this->db->listTables() as $table) {
+            $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
+        // Create tables with MySQL-specific syntax
+        $this->createInventoryStockTables();
+        $this->createInventoryAlertTables();
+        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+    
+    /**
+     * Create inventory stock tables (MySQL-only)
+     */
+    private function createInventoryStockTables(): void
+    {
         $this->db->query("CREATE TABLE inventory_stock (
-            id INTEGER PRIMARY KEY {$auto},
-            branch_id INTEGER,
-            warehouse_id INTEGER,
-            product_id INTEGER,
-            variant_id INTEGER,
-            quantity_on_hand REAL,
-            quantity_reserved REAL,
-            minimum_stock REAL,
-            last_movement_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            warehouse_id INT,
+            product_id INT,
+            variant_id INT,
+            quantity_on_hand DECIMAL(10,2),
+            quantity_reserved DECIMAL(10,2),
+            minimum_stock DECIMAL(10,2),
+            last_movement_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_inventory_stock (
-            id INTEGER PRIMARY KEY {$auto},
-            branch_id INTEGER,
-            warehouse_id INTEGER,
-            product_id INTEGER,
-            variant_id INTEGER,
-            quantity_on_hand REAL,
-            quantity_reserved REAL,
-            minimum_stock REAL,
-            last_movement_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            warehouse_id INT,
+            product_id INT,
+            variant_id INT,
+            quantity_on_hand DECIMAL(10,2),
+            quantity_reserved DECIMAL(10,2),
+            minimum_stock DECIMAL(10,2),
+            last_movement_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create inventory alert tables (MySQL-only)
+     */
+    private function createInventoryAlertTables(): void
+    {
         $this->db->query("CREATE TABLE inventory_alerts (
-            id INTEGER PRIMARY KEY {$auto},
-            alert_type {$varchar50},
-            product_id INTEGER,
-            variant_id INTEGER,
-            warehouse_id INTEGER,
-            current_quantity REAL,
-            threshold_quantity REAL,
-            status {$varchar50},
-            resolved_by INTEGER,
-            resolved_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            alert_type VARCHAR(50),
+            product_id INT,
+            variant_id INT,
+            warehouse_id INT,
+            current_quantity DECIMAL(10,2),
+            threshold_quantity DECIMAL(10,2),
+            status VARCHAR(50),
+            resolved_by INT,
+            resolved_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        
         $this->db->query("CREATE TABLE db_inventory_alerts (
-            id INTEGER PRIMARY KEY {$auto},
-            alert_type {$varchar50},
-            product_id INTEGER,
-            variant_id INTEGER,
-            warehouse_id INTEGER,
-            current_quantity REAL,
-            threshold_quantity REAL,
-            status {$varchar50},
-            resolved_by INTEGER,
-            resolved_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=1');
-        }
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            alert_type VARCHAR(50),
+            product_id INT,
+            variant_id INT,
+            warehouse_id INT,
+            current_quantity DECIMAL(10,2),
+            threshold_quantity DECIMAL(10,2),
+            status VARCHAR(50),
+            resolved_by INT,
+            resolved_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

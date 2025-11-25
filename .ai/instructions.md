@@ -1,29 +1,34 @@
 # AI Agent Instructions - LANO CRM Backend
 
-VERSION: 2.0
-UPDATED: 2025-11-21
+VERSION: 3.0
+UPDATED: 2025-11-25
 PROJECT: LANO CRM (KiotViet Clone)
 TECH STACK: PHP 8.4 + CodeIgniter 4.5 + MySQL 8.4
 
 ---
 
-## QUAN TRỌNG: ĐỌC ĐẦU TIÊN
+## QUAN TRỌNG: ĐỌC ĐẦU TIÊN (MySQL-Only)
 
-Bạn đang refactor backend PHP (CodeIgniter 4) từ fat controllers sang clean architecture.
+Dự án đã chuyển sang kiến trúc test MySQL-only. SQLite đã bị loại bỏ hoàn toàn.
+- Tất cả Unit/Integration tests chạy trên MySQL thật
+- Dùng DevDatabaseTrait cho kết nối + transaction isolation
+- Dùng Schema Traits để tạo schema MySQL theo module
 
 TÀI LIỆU CHÍNH:
-1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow
-2. docs/plans/BACKEND-REFACTOR-PLAN.md - Kế hoạch 8 tuần
-3. docs/tasks/refactor/REFACTOR-XXX.md - Tasks refactor
-4. docs/tasks/new-modules/TASK-XXX.md - Tasks modules mới
+1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow (ĐÃ CẬP NHẬT MySQL-only)
+2. docs/testing/TESTING-GUIDE.md - Testing Guide MySQL-only (DevDatabaseTrait)
+3. docs/testing/TESTING-PATTERNS.md - Patterns MySQL-only (copy-paste)
+4. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
 
 ---
 
 ## KIẾN TRÚC CLEAN (BẮT BUỘC)
 
 Controller (routing only)
-↓ Service (business logic) 
-↓ Repository (database u vv)
+↓ Service (business logic)
+↓ Repository (database queries)
+↓ Model (schema)
+↓ DB (MySQL)
 
 KHÔNG trộn logic giữa các layers!
 
@@ -32,13 +37,16 @@ KHÔNG trộn logic giữa các layers!
 ## WORKFLOW (TỪNG BƯỚC)
 
 1. ĐỌC tài liệu: AGENTS.md + task file
-2. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
-3. VIẾT tests (unit + integration)
-4. TỰ KIỂM TRA:
-docker exec meomeo2-api-1 vendor/bin/phpunit
-bash .ai/pre-commit-checks.sh
-5. COMMIT chỉ khi tests pass
-6. TẠO session log: docs/session-logs/YYYY-MM-DD-TASK-XXX.md
+2. VIẾT TESTS TRƯỚC (TDD) theo patterns MySQL-only
+3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
+4. CHẠY TESTS (MySQL-only):
+   - Unit (transactions): `docker exec meomeo2-api-1 vendor/bin/phpunit`
+   - Integration (full stack): `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+5. TỰ KIỂM TRA:
+   - `docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text`
+   - `bash scripts/validate-checklist.sh`
+6. COMMIT chỉ khi tests pass
+7. TẠO session log: docs/session-logs/YYYY-MM-DD-TASK-XXX.md
 
 ---
 
@@ -93,51 +101,86 @@ Code dễ đọc, dễ maintain > Code ngắn
 
 ---
 
-## PATTERNS CHUẨN (Copy từ AGENTS.md)
+## PATTERNS CHUẨN (MySQL-only - Copy từ docs/testing/TESTING-PATTERNS.md)
 
 ### Controller (Thin):
+```php
 public function index()
 {
-try {
-$filters = $this->request->getGet();
-$result = $this->service->list($filters);
-return $this->respond($result);
-} catch (\Exception $e) {
-return $this->fail($e->getMessage(), 500);
+    try {
+        $filters = $this->request->getGet();
+        $result = $this->service->list($filters);
+        return $this->respond($result);
+    } catch (\Throwable $e) {
+        return $this->fail($e->getMessage(), 500);
+    }
 }
-}
+```
 
 ### Service (Business Logic):
+```php
 public function list(array $filters): array
 {
-$validated = $this->validator->validateListFilters($filters);
-$items = $this->repo->findAll($validated);
-$total = $this->repo->count($validated);
+    $validated = $this->validator->validateListFilters($filters);
+    $items = $this->repo->findAll($validated);
+    $total = $this->repo->count($validated);
 
-return [
-    'success' => true,
-    'data' => $items,
-    'pagination' => $this->formatPagination($validated, $total)
-];
+    return [
+        'success' => true,
+        'data' => $items,
+        'pagination' => $this->formatPagination($validated, $total)
+    ];
 }
-
+```
 
 ### Repository (Database):
+```php
 public function findAll(array $filters): array
 {
-$builder = $this->model->builder()->where('deleted_at', null);
+    $builder = $this->model->builder()->where('deleted_at', null);
 
-if (!empty($filters['search'])) {
-    $builder->like('name', $filters['search']);
+    if (!empty($filters['search'])) {
+        $builder->groupStart()
+                ->like('name', $filters['search'])
+                ->orLike('code', $filters['search'])
+                ->groupEnd();
+    }
+
+    $page = $filters['page'] ?? 1;
+    $limit = $filters['limit'] ?? 20;
+    $offset = ($page - 1) * $limit;
+
+    return $builder->orderBy('created_at', 'DESC')
+                   ->limit($limit, $offset)
+                   ->get()->getResultArray();
 }
+```
 
-$page = $filters['page'] ?? 1;
-$limit = $filters['limit'] ?? 20;
-$offset = ($page - 1) * $limit;
+### Test (MySQL-only) với DevDatabaseTrait:
+```php
+use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\YourSchemaTrait;
 
-return $builder->limit($limit, $offset)->get()->getResultArray();
+class YourServiceTest extends CIUnitTestCase
+{
+    use DevDatabaseTrait;      // MySQL connection + transactions
+    use YourSchemaTrait;       // Schema creation
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpDatabase();    // Auto MySQL + transaction
+        $this->resetYourSchema();  // Create tables
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase(); // Auto rollback
+        parent::tearDown();
+    }
 }
-
+```
 
 ---
 
@@ -145,17 +188,16 @@ return $builder->limit($limit, $offset)->get()->getResultArray();
 
 CHỈ sửa files trong scope task:
 
-REFACTOR-001 (Products):
-✅ app/Controllers/Api/ProductsController.php
-✅ app/Services/Products/*
-✅ app/Repositories/Products/*
-✅ app/Validators/ProductValidator.php
+Ví dụ REFACTOR-001 (Products):
+✅ app/Controllers/Api/ProductsController.php  
+✅ app/Services/Products/*  
+✅ app/Repositories/Products/*  
+✅ app/Validators/ProductValidator.php  
 ✅ tests/*
 
-❌ app/Config/Routes.php (trừ khi task yêu cầu)
-❌ app/Controllers/Auth.php
+❌ app/Config/Routes.php (trừ khi task yêu cầu)  
+❌ app/Controllers/Auth.php  
 ❌ Bất kỳ controller/module khác
-
 
 NẾU CẦN sửa ngoài scope: DỪNG và hỏi user trước!
 
@@ -164,27 +206,36 @@ NẾU CẦN sửa ngoài scope: DỪNG và hỏi user trước!
 ## SAFETY CHECKS (BẮT BUỘC TRƯỚC COMMIT)
 
 1. Chỉ sửa files trong scope?
+```bash
 git diff --cached --name-only
+```
 
-2. Tests pass?
+2. Tests pass (MySQL-only)?
+```bash
 docker exec meomeo2-api-1 vendor/bin/phpunit
+```
 
 3. Auth endpoints vẫn work?
-curl -X POST http://localhost:8000/api/auth/login
--H "Content-Type: application/json"
--d '{"username":"devadmin","password":"Admin@123"}'
+```bash
+curl -X POST http://localhost:8000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"devadmin","password":"Admin@123"}'
+```
 
 4. Module endpoints work?
+```bash
 curl http://localhost:8000/api/products
+```
 
 5. Inline docs có đủ?
+```bash
 grep -c "@agent-" app/Services/Products/ProductService.php
-
+```
 
 NẾU BẤT KỲ CHECK NÀO FAIL → ROLLBACK!
-
+```bash
 git reset --hard HEAD~1
-
+```
 
 ---
 
@@ -205,57 +256,47 @@ git reset --hard HEAD~1
 
 ### Inline Docs BẮT BUỘC:
 /**
-
-Product Service - Business logic layer
-
-@agent-service Products
-
-@agent-pattern Standard CRUD service
-
+@agent-service Products  
+@agent-pattern Standard CRUD service  
 @agent-reusable HIGH
 */
 class ProductService { }
 
 /**
-
-List products với filters
-
 @agent-method list
-
 @param array $filters
-
 @return array
 */
 public function list(array $filters): array { }
-
-text
 
 ---
 
 ## API RESPONSE FORMAT
 
 ### Success:
+```json
 {
-"success": true,
-"data": {...},
-"pagination": {
-"page": 1,
-"limit": 20,
-"total": 150,
-"total_pages": 8
+  "success": true,
+  "data": {...},
+  "pagination": {
+    "page": 1,
+    "limit": 20,
+    "total": 150,
+    "total_pages": 8
+  }
 }
-}
-
+```
 
 ### Error:
+```json
 {
-"success": false,
-"message": "Error message",
-"errors": {
-"field": ["Validation error"]
+  "success": false,
+  "message": "Error message",
+  "errors": {
+    "field": ["Validation error"]
+  }
 }
-}
-
+```
 
 ---
 
@@ -273,49 +314,37 @@ text
 - ✅ Tuân thủ clean architecture
 - ✅ Single Responsibility Principle
 
-## WORKFLOW (CẬP NHẬT)
+---
 
-1. ĐỌC tài liệu: AGENTS.md + task file
-2. **VIẾT TESTS TRƯỚC (TDD)**: `docs/testing/TESTING-PATTERNS.md`
-3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
-4. **CHẠY TESTS**: 
-   - Unit: `vendor/bin/phpunit`
-   - Integration: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
-5. TỰ KIỂM TRA: `bash .ai/pre-commit-checks.sh`
-6. COMMIT chỉ khi tests pass
+## WORKFLOW (CẬP NHẬT - MySQL-only)
+
+1. ĐỌC tài liệu: AGENTS.md + task file  
+2. **VIẾT TESTS TRƯỚC (TDD)**: `docs/testing/TESTING-PATTERNS.md` (DevDatabaseTrait + SchemaTrait)  
+3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller  
+4. **CHẠY TESTS**:
+   - Unit (Transactions): `docker exec meomeo2-api-1 vendor/bin/phpunit`
+   - Integration (Full Stack): `docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+5. TỰ KIỂM TRA: `bash scripts/validate-checklist.sh`  
+6. COMMIT chỉ khi tests pass  
 7. TẠO session log với test checklist
 
 ---
 
 ## COVERAGE MEASUREMENT
 
-### Đo lường Coverage
-
-**Tool:** PHPUnit built-in với Xdebug hoặc PCOV
+**Tool:** PHPUnit + Xdebug/PCOV
 
 **Commands:**
 ```bash
-# Generate HTML coverage report
-vendor/bin/phpunit --coverage-html coverage/
-
-# Generate Clover XML (for CI)
-vendor/bin/phpunit --coverage-clover coverage.xml
-
-# View coverage summary in terminal
-vendor/bin/phpunit --coverage-text
+docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-html coverage/
+docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-clover coverage.xml
+docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
 ```
 
 **Yêu cầu:**
 - **Coverage >= 70%** là **HARD REQUIREMENT**
 - Đo coverage cho cả Unit và Integration tests
-- Pre-commit script sẽ kiểm tra coverage tự động (nếu được cấu hình)
-
-**Setup Xdebug (nếu chưa có):**
-```bash
-# In Docker container
-docker exec meomeo2-api-1 pecl install xdebug
-docker exec meomeo2-api-1 docker-php-ext-enable xdebug
-```
+- CI sẽ kiểm tra coverage tự động (nếu cấu hình)
 
 **Xem chi tiết:** `docs/testing/TESTING-GUIDE.md`
 
@@ -325,12 +354,11 @@ docker exec meomeo2-api-1 docker-php-ext-enable xdebug
 
 Task hoàn thành khi:
 - [ ] Files tạo/sửa đúng scope
-- [ ] Tuân thủ Single Responsibility
-- [ ] Separation of Concerns đúng
-- [ ] **Unit tests viết và pass (NEW)**
-- [ ] **Integration tests viết và pass (NEW)**
-- [ ] **Coverage >= 70% (NEW)**
-- [ ] **Test checklist hoàn thành (NEW)**
+- [ ] Tuân thủ Single Responsibility & Separation of Concerns
+- [ ] **Unit tests (MySQL + transactions) viết và pass**
+- [ ] **Integration tests (MySQL full stack) viết và pass**
+- [ ] **Coverage >= 70%**
+- [ ] **Test checklist hoàn thành**
 - [ ] Inline docs đầy đủ
 - [ ] API endpoints test OK
 - [ ] Safety checks pass
@@ -350,6 +378,7 @@ Code:
 Tests:
 - backend-ci/tests/Services/
 - backend-ci/tests/Repositories/
+- backend-ci/tests/Integration/
 
 Docs:
 - docs/plans/BACKEND-REFACTOR-PLAN.md
@@ -375,8 +404,8 @@ Phase 2: Modules mới
 
 ## NGUYÊN TẮC THEN CHỐT
 
-**"Copy patterns thành công, đừng sáng tạo."**
-**"Quality > Speed"**
+**"Copy patterns thành công, đừng sáng tạo."**  
+**"Quality > Speed"**  
 **"Principles > Rules"**
 
 Single Responsibility & Separation of Concerns > Số dòng
@@ -387,7 +416,7 @@ GHI NHỚ:
 1. AGENTS.md là bible
 2. Task files là assignments
 3. Clean architecture KHÔNG optional
-4. Tests PHẢI pass
+4. Tests PHẢI pass (MySQL-only)
 5. Inline docs BẮT BUỘC
 6. Safety checks TRƯỚC commit
 7. Rollback nếu phá vỡ
@@ -399,3 +428,4 @@ Good luck! 🚀
 VERSION HISTORY:
 - 1.0 (2025-11-21): Initial với hard limits
 - 2.0 (2025-11-21): Guidelines linh hoạt, tập trung principles
+- 3.0 (2025-11-25): MySQL-only testing, DevDatabaseTrait + SchemaTraits, remove SQLite hoàn toàn

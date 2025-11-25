@@ -8,32 +8,27 @@ use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
 use App\Validators\PriceListValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
 
-/** @agent-test: PriceListService @agent-pattern: Auto-update chain */
+/**
+ * @agent-test: PriceListService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + PriceListSchemaTrait (MySQL-only)
+ */
 class PriceListServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use PriceListSchemaTrait;
 
-    protected $db;
     private PriceListService $service;
     private int $productId;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        $config->tests = [
-            'DBDriver'    => 'SQLite3',
-            'database'    => ':memory:',
-            'DBPrefix'    => 'db_',
-            'foreignKeys' => true,
-            'DBDebug'     => true,
-        ];
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
+        
+        // Use PriceListSchemaTrait for comprehensive schema
         $this->resetPriceListSchema();
 
         $repo = new PriceListRepository(null, $this->db);
@@ -44,7 +39,7 @@ class PriceListServiceTest extends CIUnitTestCase
         $this->service = new PriceListService($repo, $items, $validator, $formula, $products);
 
         // seed product (DB prefix handles actual table name)
-        $this->db->table('products')->insert([
+        $this->db->table('db_products')->insert([
             'code' => 'P1',
             'name' => 'Prod 1',
             'selling_price' => 200,
@@ -53,6 +48,12 @@ class PriceListServiceTest extends CIUnitTestCase
         $productId = (int) $this->db->insertID();
 
         $this->productId = $productId;
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -109,7 +110,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function seedList(string $name, ?int $baseId, bool $autoUpdate, ?string $formula): int
     {
-        $this->db->table('price_lists')->insert([
+        $this->db->table('db_price_lists')->insert([
             'name' => $name,
             'type' => 'custom',
             'priority' => 0,
@@ -126,7 +127,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
     {
-        $this->db->table('price_list_items')->insert([
+        $this->db->table('db_price_list_items')->insert([
             'price_list_id' => $listId,
             'product_id' => $productId,
             'variant_id' => $variantId,

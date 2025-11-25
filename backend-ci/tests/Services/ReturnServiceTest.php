@@ -6,55 +6,38 @@ use App\Repositories\Returns\ReturnRepository;
 use App\Services\Returns\ReturnService;
 use App\Validators\ReturnValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\ReturnSchemaTrait;
 
-/** @agent-test: ReturnService @agent-pattern: Standard service test */
+/**
+ * @agent-test: ReturnService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + ReturnSchemaTrait (MySQL-only)
+ */
 class ReturnServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use ReturnSchemaTrait;
 
-    protected $db;
     private ReturnService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
+        
+        // Use ReturnSchemaTrait for comprehensive schema
         $this->resetReturnSchema();
         $this->seedBase();
 
         $repo = new ReturnRepository(null, null, $this->db);
         $this->service = new ReturnService($repo, new ReturnValidator());
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -123,15 +106,15 @@ class ReturnServiceTest extends CIUnitTestCase
     private function seedBase(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('db_customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('db_users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 
     private function seedOrderWithItems(int $customerId, array $items, string $status = 'completed'): int
     {
         $now = date('Y-m-d H:i:s');
         $total = array_sum(array_map(fn ($i) => $i['quantity'] * $i['price'], $items));
-        $this->db->table('orders')->insert([
+        $this->db->table('db_orders')->insert([
             'customer_id' => $customerId,
             'status' => $status,
             'total' => $total,
@@ -141,7 +124,7 @@ class ReturnServiceTest extends CIUnitTestCase
         $orderId = (int) $this->db->insertID();
         $id = 1;
         foreach ($items as $item) {
-            $this->db->table('order_items')->insert([
+            $this->db->table('db_order_items')->insert([
                 'id' => $id,
                 'order_id' => $orderId,
                 'product_id' => 1,

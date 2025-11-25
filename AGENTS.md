@@ -380,29 +380,63 @@ public function list() {
 ---
 
 
-## 🧪 Testing (BẮT BUỘC)
+## 🧪 Testing (BẮT BUỘC) - MYSQL-ONLY ⚠️
+
+### 🚨 BREAKING CHANGE: MySQL-Only Testing (2025-11-25)
+
+**ALL tests now use MySQL-only architecture. SQLite has been REMOVED.**
 
 ### Test-Driven Development
 You MUST write tests. No exceptions.
 
 **Order:**
 1. Write test first (RED)
-2. Implement code (GREEN)
+2. Implement code (GREEN)  
 3. Refactor (REFACTOR)
 
-### Test Types
+### Test Types (MySQL-Only)
 
-**Unit Tests** (SQLite - Fast)
+**Unit Tests** (MySQL with Transactions - Fast)
 - Service logic
 - Repository queries
 - Validators
-- Run: `vendor/bin/phpunit`
+- Uses: DevDatabaseTrait + Transactions
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit`
 
-**Integration Tests** (MySQL - Real)
+**Integration Tests** (MySQL Full Stack)
 - API endpoints
 - Database operations
 - Authentication flows
-- Run: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+
+### DevDatabaseTrait Pattern (MANDATORY)
+
+**👉 ALL tests MUST use DevDatabaseTrait:**
+
+```php
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\YourSchemaTrait;
+
+class YourServiceTest extends CIUnitTestCase
+{
+    use DevDatabaseTrait;      // MySQL connection + transactions
+    use YourSchemaTrait;        // Schema creation
+    
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpDatabase();     // Auto MySQL connection
+        $this->resetYourSchema();   // Create tables
+        // Your setup
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();  // Auto rollback
+        parent::tearDown();
+    }
+}
+```
 
 ### Test Patterns (Copy từ đây)
 
@@ -410,22 +444,32 @@ You MUST write tests. No exceptions.
 `docs/testing/TESTING-PATTERNS.md`
 
 File này chứa mẫu chuẩn cho:
-- **Service Test** (Unit - SQLite)
-- **Integration Test** (API - MySQL)
-- **Repository Test** (Database)
+- **Service Test** (MySQL with DevDatabaseTrait)
+- **Integration Test** (API - MySQL Full Stack)
+- **Repository Test** (MySQL Database)
 
 **Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
 ### Vấn đề thường gặp
 
-**Q: PHPUnit pass nhưng dev server fail?**
-A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
-`docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+**Q: Test bị lỗi "Connection refused"?**
+A: MySQL test container chưa chạy:
+```bash
+docker-compose up -d db-test
+docker exec meomeo2-api-1 php spark db:info tests
+```
+
+**Q: Test bị lỗi "Table doesn't exist"?**
+A: Chưa gọi resetSchema trong setUp():
+```php
+$this->setUpDatabase();
+$this->resetYourSchema();  // MUST call this!
+```
 
 **Q: Tests pass riêng lẻ, fail khi chạy cùng?**
-A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+A: Thiếu tearDownDatabase(). Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
 
-**Đọc thêm**: `docs/testing/TESTING-GUIDE.md`
+**Đọc thêm**: `docs/testing/TESTING-GUIDE.md` (Updated for MySQL-only)
 
 ---
 

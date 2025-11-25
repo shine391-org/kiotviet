@@ -5,47 +5,36 @@ namespace Tests\Services;
 use App\Services\Orders\OrderService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
-use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
-/** @agent-test: OrderService tests @agent-pattern: Service orchestrator test */
+/**
+ * @agent-test: OrderService unified MySQL testing
+ * @agent-pattern: Service orchestrator test with DevDatabaseTrait
+ */
 class OrderServiceTest extends CIUnitTestCase
 {
-    use PriceListSchemaTrait;
+    use DevDatabaseTrait;
 
     private OrderService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'hostname' => '127.0.0.1',
-                'port' => 3307,
-                'username' => 'lanocrm_user',
-                'password' => 'KP7n4RjcDbedSE2W8GgA',
-                'database' => 'lanocrm_test',
-                'DBDriver' => 'MySQLi',
-                'DBPrefix' => 'db_',
-                'charset' => 'utf8mb4',
-                'DBCollat' => 'utf8mb4_general_ci',
-                'DBDebug' => true,
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetPriceListSchema();
+        $this->setUpDatabase();
+        
+        // Force fresh migration to get new tables
+        $this->forceFreshMigrate();
+        
+        // Seed order sequences for OrderNumberGenerator
+        $this->seedOrderSequences();
+        
         $this->service = new OrderService();
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -56,7 +45,8 @@ class OrderServiceTest extends CIUnitTestCase
         $this->seedItem($listId, $pid, null, 80);
 
         $preview = $this->service->preview([
-            'customer_id' => 1,
+            'customer_id' => null,
+            'branch_id' => 1,
             'order_date' => date('Y-m-d'),
             'items' => [['product_id' => $pid, 'quantity' => 2]],
         ]);
@@ -76,10 +66,21 @@ class OrderServiceTest extends CIUnitTestCase
         $this->seedItem($listId, $pid, null, 120);
 
         $create = $this->service->create([
-            'customer_id' => 2,
+            'customer_id' => null,
+            'branch_id' => 1,
             'order_date' => date('Y-m-d'),
             'payment_method' => 'CASH',
+            'order_type' => 'shipping',
+            'shipping' => [
+                'name' => 'Test Customer',
+                'phone' => '123456789',
+                'address' => 'Test Address',
+                'ward' => 'Test Ward',
+                'district' => 'Test District',
+                'city' => 'Test City'
+            ],
             'items' => [['product_id' => $pid, 'quantity' => 1]],
+            'notes' => 'Test order'
         ]);
 
         $this->assertTrue($create['success']);
@@ -99,13 +100,24 @@ class OrderServiceTest extends CIUnitTestCase
         $this->seedItem($listId, $p1, null, 80);
 
         $create = $this->service->create([
-            'customer_id' => 3,
+            'customer_id' => null,
+            'branch_id' => 1,
             'order_date' => date('Y-m-d'),
             'payment_method' => 'CASH',
+            'order_type' => 'shipping',
+            'shipping' => [
+                'name' => 'Test Customer',
+                'phone' => '123456789',
+                'address' => 'Test Address',
+                'ward' => 'Test Ward',
+                'district' => 'Test District',
+                'city' => 'Test City'
+            ],
             'items' => [
                 ['product_id' => $p1, 'quantity' => 2], // priced by list -> 80 *2
                 ['product_id' => $p2, 'quantity' => 1], // base 50
             ],
+            'notes' => 'Test order'
         ]);
 
         $this->assertTrue($create['success']);
@@ -118,10 +130,23 @@ class OrderServiceTest extends CIUnitTestCase
         $this->expectException(\InvalidArgumentException::class);
         $p1 = $this->seedProduct(100);
         $this->service->create([
+            'customer_id' => null,
+            'branch_id' => 1,
+            'order_date' => date('Y-m-d'),
+            'payment_method' => 'CASH',
+            'order_type' => 'shipping',
+            'shipping' => [
+                'name' => 'Test Customer',
+                'phone' => '123456789',
+                'address' => 'Test Address',
+                'ward' => 'Test Ward',
+                'district' => 'Test District',
+                'city' => 'Test City'
+            ],
             'items' => [
                 ['product_id' => $p1, 'quantity' => 0],
             ],
-            'payment_method' => 'CASH',
+            'notes' => 'Test order'
         ]);
     }
 
@@ -161,6 +186,17 @@ class OrderServiceTest extends CIUnitTestCase
             'price' => $price,
             'discount_percent' => 0,
             'discount_amount' => 0,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function seedOrderSequences(): void
+    {
+        $this->db->table('db_order_sequences')->insert([
+            'branch_id' => 1,
+            'sequence_number' => 1,
+            'prefix' => 'ORD',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
