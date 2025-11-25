@@ -316,7 +316,7 @@ trait DevDatabaseTrait
     private function createAttributesSchema($db): void
     {
         // Create attributes table
-        $db->query("CREATE TABLE IF NOT EXISTS `attributes` (
+        $db->query("CREATE TABLE IF NOT EXISTS `db_attributes` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
             `name` VARCHAR(255) NOT NULL,
             `code` VARCHAR(100) NOT NULL,
@@ -341,7 +341,7 @@ trait DevDatabaseTrait
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         // Create product_attribute_values table
-        $db->query("CREATE TABLE IF NOT EXISTS `product_attribute_values` (
+        $db->query("CREATE TABLE IF NOT EXISTS `db_product_attribute_values` (
             `id` INT AUTO_INCREMENT PRIMARY KEY,
             `product_id` INT NOT NULL,
             `variant_id` INT NULL,

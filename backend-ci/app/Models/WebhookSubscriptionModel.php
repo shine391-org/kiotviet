@@ -11,7 +11,7 @@ use CodeIgniter\Model;
  */
 class WebhookSubscriptionModel extends Model
 {
-    protected $table = 'webhook_subscriptions';
+    protected $table = 'db_webhook_subscriptions';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useSoftDeletes = false;

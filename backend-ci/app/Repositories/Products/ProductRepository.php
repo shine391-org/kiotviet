@@ -32,7 +32,7 @@ class ProductRepository
         if (!$product) {
             return null;
         }
-        return is_array($product) ? $product : $product->toArray();
+        return is_array($product) ? $product : (array) $product;
     }
 
     /** Create product row. @agent-use: Create flow @agent-pattern: Insert with timestamps */

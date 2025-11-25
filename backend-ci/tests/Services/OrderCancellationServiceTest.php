@@ -70,7 +70,7 @@ class OrderCancellationServiceTest extends CIUnitTestCase
         $dbWithoutPrefix = \Config\Database::connect('tests');
         $dbWithoutPrefix->setPrefix('');
         
-        $dbWithoutPrefix->table('orders')->insert([
+        $dbWithoutPrefix->table('db_orders')->insert([
             'order_number' => 'ORD-' . rand(100, 999),
             'customer_id' => 1,
             'branch_id' => 1,
@@ -94,7 +94,7 @@ class OrderCancellationServiceTest extends CIUnitTestCase
         $dbWithoutPrefix->setPrefix('');
         
         foreach ($items as $item) {
-            $dbWithoutPrefix->table('order_items')->insert([
+            $dbWithoutPrefix->table('db_order_items')->insert([
                 'order_id' => $orderId,
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],

@@ -11,7 +11,7 @@ use CodeIgniter\Model;
  */
 class WebhookEventModel extends Model
 {
-    protected $table = 'webhook_events';
+    protected $table = 'db_webhook_events';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useSoftDeletes = false;

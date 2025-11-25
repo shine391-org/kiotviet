@@ -22,7 +22,7 @@ class ProductVariantRepository
     /** Cross-check variant SKU against product codes. @agent-use: Cross-table validation @agent-pattern: Prevent product/variant collision */
     public function skuExistsInProducts(string $sku): bool
     {
-        return $this->db->table('products')->where('code', $sku)->where('deleted_at', null)->countAllResults() > 0;
+        return $this->db->table('db_products')->where('code', $sku)->where('deleted_at', null)->countAllResults() > 0;
     }
 
     /** Find variant by id (soft-deleted aware). @agent-use: Fetch variant @agent-pattern: Find by id */
@@ -32,7 +32,7 @@ class ProductVariantRepository
         if (!$variant) {
             return null;
         }
-        return is_array($variant) ? $variant : $variant->toArray();
+        return is_array($variant) ? $variant : (array) $variant;
     }
 
     /** Create new variant row. @agent-use: Create flow @agent-pattern: Insert with timestamps */
@@ -79,7 +79,7 @@ class ProductVariantRepository
         }
 
         $ids = array_values(array_unique(array_map('intval', $imageIds)));
-        $rows = $this->db->table('product_images')
+        $rows = $this->db->table('db_product_images')
             ->select('id, variant_id, product_id, deleted_at')
             ->whereIn('id', $ids)
             ->get()
@@ -103,7 +103,7 @@ class ProductVariantRepository
         }
 
         if ($attachable) {
-            $this->db->table('product_images')
+            $this->db->table('db_product_images')
                 ->whereIn('id', $attachable)
                 ->update([
                     'variant_id' => $variantId,
@@ -123,9 +123,9 @@ class ProductVariantRepository
     /** Get attribute values of variant with attribute meta. @agent-use: Attribute listing @agent-pattern: Join fetch */
     public function attributeValues(int $variantId): array
     {
-        $query = $this->db->table('product_attribute_values pav')
+        $query = $this->db->table('db_product_attribute_values pav')
             ->select('pav.*, pa.name AS attribute_name, pa.id as attribute_id, pa.type, pa.status, pa.sort_order, pa.code as slug, pa.is_required, pa.is_filterable, null as group_name, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at, null as attribute_parent_id, null as attribute_level, pa.code as attribute_code, null as attribute_description, null as attribute_unit, null as attribute_options, null as attribute_display_type, null as attribute_is_searchable, null as attribute_is_used_for_variations, null as attribute_is_highlight, null as attribute_meta, pa.status as attribute_status, null as attribute_is_system, null as attribute_is_default, null as attribute_position, null as attribute_created_by, null as attribute_updated_by, pa.is_filterable as attribute_filterable, null as attribute_comparable, null as attribute_visibility, null as attribute_required_at_checkout, null as attribute_default_value, null as attribute_help_text, null as attribute_icon, null as attribute_tooltip')
-            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->join('db_attributes pa', 'pa.id = pav.attribute_id', 'left')
             ->where('pav.variant_id', $variantId)
             ->where('pav.deleted_at', null);
             
@@ -136,17 +136,40 @@ class ProductVariantRepository
     /** Sync attribute values for a variant. @agent-use: Sync attributes @agent-pattern: Delete + batch insert */
     public function syncAttributeValues(int $variantId, array $values): array
     {
-        $this->db->table('product_attribute_values')->where('variant_id', $variantId)->delete(); if (empty($values)) { return []; }
+        // First delete existing values for this variant
+        $this->db->table('db_product_attribute_values')->where('variant_id', $variantId)->delete();
+        
+        if (empty($values)) {
+            return [];
+        }
+        
         $rows = [];
-        foreach ($values as $val) { if (empty($val['attribute_id'])) { continue; } $rows[] = ['product_id' => $val['product_id'] ?? null, 'variant_id' => $variantId, 'attribute_id' => $val['attribute_id'], 'option_id' => $val['option_id'] ?? null, 'value_text' => $val['value_text'] ?? null, 'created_at' => $this->now(), 'updated_at' => $this->now()]; }
-        if (! empty($rows)) { $this->db->table('product_attribute_values')->insertBatch($rows); }
+        foreach ($values as $val) {
+            if (empty($val['attribute_id'])) {
+                continue;
+            }
+            $rows[] = [
+                'product_id' => $val['product_id'] ?? null,
+                'variant_id' => $variantId,
+                'attribute_id' => $val['attribute_id'],
+                'attribute_option_id' => $val['option_id'] ?? null,
+                'value_text' => $val['value_text'] ?? null,
+                'created_at' => $this->now(),
+                'updated_at' => $this->now()
+            ];
+        }
+        
+        if (! empty($rows)) {
+            $this->db->table('db_product_attribute_values')->insertBatch($rows);
+        }
+        
         return $rows;
     }
 
     /** Remove a single attribute from variant. @agent-use: Delete attribute @agent-pattern: Targeted delete */
     public function removeAttributeFromVariant(int $variantId, int $attributeId): int
     {
-        return $this->db->table('product_attribute_values')->where('variant_id', $variantId)->where('attribute_id', $attributeId)->delete();
+        return $this->db->table('db_product_attribute_values')->where('variant_id', $variantId)->where('attribute_id', $attributeId)->delete();
     }
 
     private function now(): string { return date('Y-m-d H:i:s'); }

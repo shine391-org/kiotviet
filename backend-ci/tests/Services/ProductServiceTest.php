@@ -17,6 +17,7 @@ use Tests\Support\Database\DevDatabaseTrait;
 class ProductServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
+    use \Tests\Support\Database\ProductSchemaTrait;
     
     private ProductService $service;
 
@@ -24,6 +25,7 @@ class ProductServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetSchema();
         $this->service = new ProductService();
     }
     

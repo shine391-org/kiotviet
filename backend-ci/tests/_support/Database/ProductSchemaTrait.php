@@ -14,6 +14,8 @@ trait ProductSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
         $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
         $this->db->query('DROP TABLE IF EXISTS db_products');
+        $this->db->query('DROP TABLE IF EXISTS db_attributes');
+        $this->db->query('DROP TABLE IF EXISTS db_attribute_options');
 
         $this->db->query("CREATE TABLE db_products (
             id INTEGER PRIMARY KEY {$auto},
@@ -96,6 +98,31 @@ trait ProductSchemaTrait
              attribute_id INTEGER,
              option_id INTEGER,
              value_text TEXT,
+             created_at TEXT,
+             updated_at TEXT,
+             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE db_attributes (
+             id INTEGER PRIMARY KEY {$auto},
+             name TEXT,
+             code TEXT,
+             type TEXT,
+             options TEXT,
+             is_required INTEGER DEFAULT 0,
+             is_filterable INTEGER DEFAULT 0,
+             sort_order INTEGER DEFAULT 0,
+             status TEXT DEFAULT 'active',
+             created_at TEXT,
+             updated_at TEXT,
+             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE db_attribute_options (
+             id INTEGER PRIMARY KEY {$auto},
+             attribute_id INTEGER,
+             value TEXT,
+             sort_order INTEGER DEFAULT 0,
              created_at TEXT,
              updated_at TEXT,
              deleted_at TEXT
