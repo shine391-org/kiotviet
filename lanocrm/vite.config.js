@@ -12,7 +12,8 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        // Use environment override inside container; fallback to docker service name
+        target: process.env.VITE_API_URL || 'http://api',
         changeOrigin: true,
       },
     },
