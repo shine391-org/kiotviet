@@ -60,12 +60,10 @@ class CashTransactionRepository
      * @agent-use: Service list method
      * @agent-pattern: Query builder with filters
      */
-    public function list(array $filters): array
+    public function list(array $filters, int $page = 1, int $limit = 20): array
     {
         $builder = $this->applyFilters($filters);
 
-        $page = $filters['page'] ?? 1;
-        $limit = $filters['limit'] ?? 20;
         $offset = ($page - 1) * $limit;
 
         $rows = $builder
@@ -75,7 +73,12 @@ class CashTransactionRepository
             ->get()
             ->getResultArray();
 
-        return array_map(fn($row) => $this->hydrate($row), $rows);
+        $total = $this->count($filters);
+
+        return [
+            'data' => array_map(fn($row) => $this->hydrate($row), $rows),
+            'total' => $total
+        ];
     }
 
     /**
@@ -133,10 +136,10 @@ class CashTransactionRepository
      *
      * @agent-use: Service getDailyReport method
      * @agent-pattern: Grouped aggregation
-     * 
+     *
      * @param string $date Date in Y-m-d format
      * @param int|null $branchId Filter by branch
-     * @return array Summary with receipt_total, payment_total, net
+     * @return array Summary with receipt_total, payment_total, balance
      */
     public function getDailySummary(string $date, ?int $branchId = null): array
     {
@@ -175,7 +178,7 @@ class CashTransactionRepository
             'branch_id' => $branchId,
             'receipt_total' => $receiptTotal,
             'payment_total' => $paymentTotal,
-            'net' => $receiptTotal - $paymentTotal,
+            'balance' => $receiptTotal - $paymentTotal, // Changed from 'net' to 'balance'
             'transaction_count' => $transactionCount,
         ];
     }
@@ -188,6 +191,12 @@ class CashTransactionRepository
      */
     public function softDelete(int $id): bool
     {
+        // Check if transaction exists first
+        $transaction = $this->findById($id);
+        if (!$transaction) {
+            return false;
+        }
+        
         return (bool) $this->model->delete($id);
     }
 

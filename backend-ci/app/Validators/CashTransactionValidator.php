@@ -190,15 +190,16 @@ class CashTransactionValidator
      */
     protected function validateOrderReference(int $orderId, float $amount): array
     {
-        if (!$this->db->tableExists('orders')) {
+        // Use raw SQL to check table existence
+        $tableCheck = $this->db->query("SHOW TABLES LIKE 'orders'")->getResultArray();
+        if (empty($tableCheck)) {
             throw new InvalidArgumentException('Orders table not found');
         }
 
-        $order = $this->db->table('orders')
-            ->where('id', $orderId)
-            ->where('deleted_at', null)
-            ->get()
-            ->getRowArray();
+        $order = $this->db->query("
+            SELECT * FROM orders
+            WHERE id = ? AND deleted_at IS NULL
+        ", [$orderId])->getRowArray();
 
         if (!$order) {
             throw new InvalidArgumentException("Order #{$orderId} not found");
@@ -207,9 +208,7 @@ class CashTransactionValidator
         // Validate amount matches order total
         $orderTotal = (float) $order['total'];
         if (abs($orderTotal - $amount) > 0.01) { // Allow 0.01 difference for floating point
-            throw new InvalidArgumentException(
-                "Amount mismatch: Transaction amount ({$amount}) does not match order total ({$orderTotal})"
-            );
+            throw new InvalidArgumentException("Amount does not match order total");
         }
 
         // Check for duplicate payment
@@ -230,15 +229,16 @@ class CashTransactionValidator
      */
     protected function validatePurchaseOrderReference(int $poId, float $amount): array
     {
-        if (!$this->db->tableExists('purchase_orders')) {
+        // Use raw SQL to check table existence
+        $tableCheck = $this->db->query("SHOW TABLES LIKE 'purchase_orders'")->getResultArray();
+        if (empty($tableCheck)) {
             throw new InvalidArgumentException('Purchase orders table not found');
         }
 
-        $po = $this->db->table('purchase_orders')
-            ->where('id', $poId)
-            ->where('deleted_at', null)
-            ->get()
-            ->getRowArray();
+        $po = $this->db->query("
+            SELECT * FROM purchase_orders
+            WHERE id = ? AND deleted_at IS NULL
+        ", [$poId])->getRowArray();
 
         if (!$po) {
             throw new InvalidArgumentException("Purchase order #{$poId} not found");
@@ -247,9 +247,12 @@ class CashTransactionValidator
         // Validate amount matches PO total
         $poTotal = (float) $po['total'];
         if (abs($poTotal - $amount) > 0.01) {
-            throw new InvalidArgumentException(
-                "Amount mismatch: Transaction amount ({$amount}) does not match purchase order total ({$poTotal})"
-            );
+            throw new InvalidArgumentException("Amount does not match purchase order total");
+        }
+
+        // Check for duplicate payment
+        if ($this->hasExistingPayment('purchase_order', $poId)) {
+            throw new InvalidArgumentException("Purchase order already paid");
         }
 
         return [
@@ -265,15 +268,16 @@ class CashTransactionValidator
      */
     protected function branchExists(int $branchId): bool
     {
-        if (!$this->db->tableExists('branches')) {
+        // Use raw SQL to check table existence
+        $tableCheck = $this->db->query("SHOW TABLES LIKE 'branches'")->getResultArray();
+        if (empty($tableCheck)) {
             return true; // Skip validation if table doesn't exist
         }
 
-        $branch = $this->db->table('branches')
-            ->where('id', $branchId)
-            ->where('deleted_at', null)
-            ->get()
-            ->getRowArray();
+        $branch = $this->db->query("
+            SELECT * FROM branches
+            WHERE id = ? AND deleted_at IS NULL AND status = 'active'
+        ", [$branchId])->getRowArray();
 
         return !empty($branch);
     }
@@ -283,16 +287,16 @@ class CashTransactionValidator
      */
     protected function hasExistingPayment(string $referenceType, int $referenceId): bool
     {
-        if (!$this->db->tableExists('cash_transactions')) {
+        // Use raw SQL to check table existence
+        $tableCheck = $this->db->query("SHOW TABLES LIKE 'cash_transactions'")->getResultArray();
+        if (empty($tableCheck)) {
             return false;
         }
 
-        $existing = $this->db->table('cash_transactions')
-            ->where('reference_type', $referenceType)
-            ->where('reference_id', $referenceId)
-            ->where('deleted_at', null)
-            ->get()
-            ->getRowArray();
+        $existing = $this->db->query("
+            SELECT * FROM cash_transactions
+            WHERE reference_type = ? AND reference_id = ? AND deleted_at IS NULL
+        ", [$referenceType, $referenceId])->getRowArray();
 
         return !empty($existing);
     }
