@@ -95,7 +95,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->delete('attribute-values/(:num)', 'Api\\AttributesController::deleteValue/$1');
 
     $routes->get('roles', 'Api\\RolesController::index');
+    $routes->get('roles/(:num)', 'Api\\RolesController::show/$1');
     $routes->post('roles/create', 'Api\\RolesController::create');
+    $routes->put('roles/update/(:num)', 'Api\\RolesController::update/$1');
+    $routes->delete('roles/delete/(:num)', 'Api\\RolesController::delete/$1');
+    $routes->get('roles/(:num)/permissions', 'Api\\RolesController::getPermissions/$1');
+    $routes->post('roles/(:num)/assign-permissions', 'Api\\RolesController::assignPermissions/$1');
     $routes->get('permissions', 'Api\\PermissionsController::index');
 
     $routes->get('branches', 'Api\\BranchesController::index');
