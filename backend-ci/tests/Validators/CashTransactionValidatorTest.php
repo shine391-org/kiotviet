@@ -2,6 +2,7 @@
 namespace Tests\Validators;
 
 use App\Validators\CashTransactionValidator;
+use App\Validators\CashTransactionReferenceValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\CashTransactionSchemaTrait;
@@ -16,6 +17,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
     use CashTransactionSchemaTrait;    // Schema creation for cash transactions
 
     private CashTransactionValidator $validator;
+    private CashTransactionReferenceValidator $referenceValidator;
 
     protected function setUp(): void
     {
@@ -42,7 +44,8 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         // Skip transaction for now - work directly with main database
         // $this->db->transStart();
         
-        $this->validator = new CashTransactionValidator();
+        $this->validator = new CashTransactionValidator(null, $this->db);
+        $this->referenceValidator = new CashTransactionReferenceValidator($this->db);
     }
 
     protected function tearDown(): void
@@ -288,7 +291,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         $orderId = $this->seedOrder(['code' => 'HD001', 'total' => 500000]);
 
         // Act
-        $result = $this->validator->validateReference('order', $orderId, 500000);
+        $result = $this->referenceValidator->validateReference('order', $orderId, 500000);
 
         // Assert
         $this->assertTrue($result['valid']);
@@ -301,7 +304,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         $purchaseOrderId = $this->seedPurchaseOrder(['code' => 'PO001', 'total' => 300000]);
 
         // Act
-        $result = $this->validator->validateReference('purchase_order', $purchaseOrderId, 300000);
+        $result = $this->referenceValidator->validateReference('purchase_order', $purchaseOrderId, 300000);
 
         // Assert
         $this->assertTrue($result['valid']);
@@ -311,7 +314,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
     public function it_validates_manual_reference_successfully()
     {
         // Act
-        $result = $this->validator->validateReference('manual', 0, 0);
+        $result = $this->referenceValidator->validateReference('manual', 0, 0);
 
         // Assert
         $this->assertTrue($result['valid']);
@@ -325,7 +328,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         $this->expectExceptionMessage('Order #99999 not found');
         
         // Act
-        $this->validator->validateReference('order', 99999, 100000);
+        $this->referenceValidator->validateReference('order', 99999, 100000);
     }
 
     /** @test */
@@ -336,7 +339,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         $this->expectExceptionMessage('Purchase order #99999 not found');
         
         // Act
-        $this->validator->validateReference('purchase_order', 99999, 100000);
+        $this->referenceValidator->validateReference('purchase_order', 99999, 100000);
     }
 
     /** @test */
@@ -347,7 +350,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         $this->expectExceptionMessage('Invalid reference type');
         
         // Act
-        $this->validator->validateReference('invalid_type', 123, 100000);
+        $this->referenceValidator->validateReference('invalid_type', 123, 100000);
     }
 
     /** @test */

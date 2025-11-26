@@ -4,6 +4,8 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Services\CashTransactions\CashTransactionService;
+use App\Validators\CashTransactionReferenceValidator;
+use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\API\ResponseTrait;
 
 /**
@@ -20,7 +22,12 @@ class CashTransactionsController extends BaseController
 
     public function __construct()
     {
-        $this->service = new CashTransactionService();
+        $db = \Config\Database::connect();
+        $this->service = new CashTransactionService(
+            null, // repository
+            null, // validator
+            new CashTransactionReferenceValidator($db) // reference validator
+        );
     }
 
     /**

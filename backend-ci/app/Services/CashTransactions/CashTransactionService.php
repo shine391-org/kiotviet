@@ -120,7 +120,10 @@ class CashTransactionService
             throw new InvalidArgumentException('Transaction not found');
         }
 
-        return $transaction;
+        return [
+            'success' => true,
+            'data' => $transaction,
+        ];
     }
 
     /**
