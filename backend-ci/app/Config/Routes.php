@@ -141,6 +141,16 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->patch('returns/(:num)/reject', 'Api\\ReturnsController::reject/$1');
     $routes->patch('returns/(:num)/complete', 'Api\\ReturnsController::complete/$1');
 
+    // Cash Transactions
+    $routes->post('cash/receipt', 'Api\\CashTransactionsController::createReceipt');
+    $routes->post('cash/payment', 'Api\\CashTransactionsController::createPayment');
+    $routes->get('cash/transactions', 'Api\\CashTransactionsController::list');
+    $routes->get('cash/transactions/(:num)', 'Api\\CashTransactionsController::show/$1');
+    $routes->get('cash/balance', 'Api\\CashTransactionsController::getBalance');
+    $routes->get('cash/balance/branch/(:num)', 'Api\\CashTransactionsController::getBranchBalance/$1');
+    $routes->get('cash/report/daily', 'Api\\CashTransactionsController::dailyReport');
+    $routes->delete('cash/transactions/(:num)', 'Api\\CashTransactionsController::delete/$1');
+
     // Webhooks
     $routes->get('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::index');
     $routes->post('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::create');
