@@ -36,15 +36,12 @@ db_lano*
 .env.*.local
 
 # Docker volumes and temporary data
-uploads/
-temp/
 tmp/
 
 # ========================================
 # Logs & Debug Files
 # ========================================
 *.log
-logs/
 debug.log
 error.log
 access.log
@@ -170,10 +167,6 @@ screenshots/*.jpeg
 db_lano
 db_lano.gz
 
-# Temporary upload directories
-uploads/*
-!uploads/.gitkeep
-
 # Generated documentation
 docs/generated/
 api-docs/
@@ -186,5 +179,7 @@ logs/*
 !logs/.gitkeep
 temp/*
 !temp/.gitkeep
+tmp/*
+!tmp/.gitkeep
 uploads/*
 !uploads/.gitkeep

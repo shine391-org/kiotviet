@@ -5,6 +5,7 @@ namespace App\Services\CashTransactions;
 use App\Models\CashTransactionModel;
 use App\Repositories\CashTransactions\CashTransactionRepository;
 use App\Validators\CashTransactionValidator;
+use App\Validators\CashTransactionReferenceValidator;
 use CodeIgniter\I18n\Time;
 use InvalidArgumentException;
 use RuntimeException;
@@ -20,13 +21,16 @@ class CashTransactionService
 {
     protected CashTransactionRepository $repo;
     protected CashTransactionValidator $validator;
+    protected ?CashTransactionReferenceValidator $referenceValidator;
 
     public function __construct(
         ?CashTransactionRepository $repo = null,
-        ?CashTransactionValidator $validator = null
+        ?CashTransactionValidator $validator = null,
+        ?CashTransactionReferenceValidator $referenceValidator = null
     ) {
         $this->repo = $repo ?? new CashTransactionRepository();
         $this->validator = $validator ?? new CashTransactionValidator();
+        $this->referenceValidator = $referenceValidator;
     }
 
     /**
@@ -37,9 +41,9 @@ class CashTransactionService
      */
     public function createReceipt(array $data): array
     {
-        // Auto-add created_by if not provided (for testing)
+        // Validate created_by is provided
         if (!isset($data['created_by'])) {
-            $data['created_by'] = 1; // Default test user
+            throw new InvalidArgumentException('created_by field is required');
         }
         
         // Validate receipt data
@@ -47,11 +51,13 @@ class CashTransactionService
 
         // Validate reference if provided
         if (!empty($validated['reference_type']) && !empty($validated['reference_id'])) {
-            $this->validator->validateReference(
-                $validated['reference_type'],
-                $validated['reference_id'],
-                $validated['amount']
-            );
+            if ($this->referenceValidator) {
+                $this->referenceValidator->validateReference(
+                    $validated['reference_type'],
+                    $validated['reference_id'],
+                    $validated['amount']
+                );
+            }
         }
 
         // Create transaction
@@ -72,9 +78,9 @@ class CashTransactionService
      */
     public function createPayment(array $data): array
     {
-        // Auto-add created_by if not provided (for testing)
+        // Validate created_by is provided
         if (!isset($data['created_by'])) {
-            $data['created_by'] = 1; // Default test user
+            throw new InvalidArgumentException('created_by field is required');
         }
         
         // Validate payment data
@@ -82,11 +88,13 @@ class CashTransactionService
 
         // Validate reference if provided
         if (!empty($validated['reference_type']) && !empty($validated['reference_id'])) {
-            $this->validator->validateReference(
-                $validated['reference_type'],
-                $validated['reference_id'],
-                $validated['amount']
-            );
+            if ($this->referenceValidator) {
+                $this->referenceValidator->validateReference(
+                    $validated['reference_type'],
+                    $validated['reference_id'],
+                    $validated['amount']
+                );
+            }
         }
 
         // Create transaction
@@ -166,8 +174,13 @@ class CashTransactionService
      * @agent-use: GET /api/cash/report/daily
      * @agent-pattern: Daily summary with net calculation
      */
-    public function getDailyReport(string $date, ?int $branchId = null): array
+    public function getDailyReport(?string $date, ?int $branchId = null): array
     {
+        // Validate date parameter
+        if (empty($date)) {
+            throw new InvalidArgumentException('Date parameter is required');
+        }
+        
         // Validate date format
         if (!strtotime($date)) {
             throw new InvalidArgumentException('Invalid date format. Use YYYY-MM-DD');

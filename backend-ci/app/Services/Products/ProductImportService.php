@@ -122,10 +122,10 @@ class ProductImportService
 
         $dir = WRITEPATH . 'exports';
         if (! is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            mkdir($dir, 0755, true);
         }
         if (! is_writable($dir)) {
-            @chmod($dir, 0777);
+            chmod($dir, 0755);
         }
         $path = $dir . '/products_import_template.xlsx';
         (new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet))->save($path);

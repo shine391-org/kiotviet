@@ -505,7 +505,7 @@ class CashTransactionServiceTest extends CIUnitTestCase
 
         // Assert
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Cannot delete transactions older than 30 days');
+        $this->expectExceptionMessageMatches('/Cannot delete transactions older than 30 days/');
         
         $this->service->deleteTransaction($transactionId);
     }

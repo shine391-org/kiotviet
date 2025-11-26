@@ -1259,6 +1259,7 @@ const productApi = {
   uploadMultipleProductImages,
   importProducts,
   exportProducts,
+  downloadImportTemplate,
   getProductAnalytics,
   downloadFile,
   getProductsWithVariants,

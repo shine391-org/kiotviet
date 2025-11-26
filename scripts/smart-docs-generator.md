@@ -335,7 +335,217 @@ ai_models:
     max_tokens: 1500
 ```
 
-### 3. Project Customization
+### 3. Security and Cost Management
+
+#### Credential Management
+```yaml
+# scripts/security-config.yml
+security:
+  credential_management:
+    # Use environment variables or secure vault
+    api_keys:
+      source: "ENVIRONMENT_VARIABLES"  # Never hardcode
+      required_vars:
+        - "OPENAI_API_KEY"
+        - "CLAUDE_API_KEY"
+        - "AZURE_OPENAI_KEY"
+    
+    # Secure storage options
+    vault_integration:
+      provider: "hashicorp_vault"  # or "aws_secrets_manager"
+      path: "secret/smart-docs-generator"
+      auto_rotation: true
+      rotation_interval: "90d"
+    
+    # Access control
+    key_access:
+      minimum_role: "developer"
+      audit_logging: true
+      session_timeout: "1h"
+```
+
+#### Cost Monitoring and Budget Controls
+```yaml
+# scripts/cost-config.yml
+cost_management:
+  budget_controls:
+    daily_limit: 100.00      # USD
+    monthly_limit: 2000.00   # USD
+    alert_thresholds:
+      warning: 70            # % of budget
+      critical: 90           # % of budget
+      block_at: 100          # % of budget
+  
+  usage_tracking:
+    metrics:
+      - "tokens_consumed"
+      - "api_calls_made"
+      - "cost_per_request"
+      - "response_time"
+    
+    reporting:
+      frequency: "daily"
+      recipients: ["team-lead@company.com", "finance@company.com"]
+      format: "json + dashboard"
+  
+  cost_optimization:
+    model_selection: "auto"  # Choose cheapest model for task
+    caching_enabled: true
+    batch_processing: true
+    compression: true
+```
+
+#### Rate Limiting and Quota Management
+```yaml
+# scripts/rate-limit-config.yml
+rate_limiting:
+  api_limits:
+    openai:
+      requests_per_minute: 60
+      tokens_per_minute: 150000
+      retry_strategy: "exponential_backoff"
+    
+    claude:
+      requests_per_minute: 50
+      tokens_per_minute: 100000
+      retry_strategy: "linear_backoff"
+  
+  quota_management:
+    per_user_quota:
+      daily_requests: 1000
+      monthly_tokens: 1000000
+    
+    fair_usage:
+      peak_hours: "09:00-17:00"
+      reduced_rate_off_hours: true
+      priority_queue: true
+  
+  graceful_degradation:
+    fallback_strategies:
+      - "use_cached_response"
+      - "switch_to_cheaper_model"
+      - "provide_template_only"
+      - "queue_for_later"
+    
+    circuit_breaker:
+      failure_threshold: 5
+      timeout_seconds: 30
+      half_open_requests: 3
+```
+
+#### Data Handling and Privacy
+```yaml
+# scripts/privacy-config.yml
+data_privacy:
+  data_classification:
+    public: "documentation_templates, patterns"
+    internal: "project_structure, implementation_details"
+    confidential: "api_keys, credentials, customer_data"
+  
+  data_retention:
+    cache_retention: "7d"
+    log_retention: "30d"
+    audit_retention: "1y"
+    auto_cleanup: true
+  
+  anonymization:
+    strip_personal_data: true
+    replace_secrets: "***REDACTED***"
+    hash_identifiers: true
+  
+  compliance:
+    gdpr_compliant: true
+    data_residency: "eu_west"  # or specify region
+    consent_required: false     # for automated systems
+    privacy_by_design: true
+```
+
+#### Compliance and Governance
+```yaml
+# scripts/compliance-config.yml
+compliance:
+  regulatory_requirements:
+    gdpr:
+      data_minimization: true
+      purpose_limitation: true
+      storage_limitation: true
+      accountability: true
+    
+    soc2:
+      access_controls: true
+      audit_logging: true
+      encryption_at_rest: true
+      encryption_in_transit: true
+  
+  external_api_restrictions:
+    prohibited_providers:
+      - "unverified_ai_services"
+      - "non_compliant_regions"
+    
+    data_residency_rules:
+      eu_data_only: true
+      cross_border_transfer: "explicit_consent"
+    
+    approval_workflow:
+      new_provider_required: "security_review"
+      data_type_change: "compliance_review"
+      cost_increase: "manager_approval"
+  
+  monitoring_and_alerting:
+    security_events:
+      - "unauthorized_access_attempt"
+      - "credential_exposure"
+      - "data_exfiltration"
+    
+    compliance_violations:
+      - "data_retention_breach"
+      - "unapproved_api_usage"
+      - "cost_overrun"
+    
+    notification_channels:
+      security: "security-team@company.com"
+      compliance: "compliance-officer@company.com"
+      management: "cto@company.com"
+```
+
+#### Implementation Guidelines
+```php
+// Security implementation examples
+class SecureAIClient {
+    private function validateRequest($data) {
+        // 1. Sanitize input data
+        $sanitized = $this->sanitizeData($data);
+        
+        // 2. Check for sensitive information
+        if ($this->containsSensitiveData($sanitized)) {
+            throw new SecurityException('Sensitive data detected');
+        }
+        
+        // 3. Apply rate limiting
+        $this->rateLimiter->checkLimit();
+        
+        // 4. Log request for audit
+        $this->auditLogger->log($sanitized);
+        
+        return $sanitized;
+    }
+    
+    private function handleCostLimits() {
+        $currentUsage = $this->costTracker->getCurrentUsage();
+        
+        if ($currentUsage > $this->budgetLimit) {
+            $this->alertManager->sendAlert('Budget limit exceeded');
+            return $this->getFallbackResponse();
+        }
+        
+        if ($currentUsage > $this->warningThreshold) {
+            $this->alertManager->sendWarning('Approaching budget limit');
+        }
+    }
+}
+```
+
+### 4. Project Customization
 ```yaml
 # scripts/project-config.yml
 project:

@@ -35,7 +35,10 @@ class CashTransactionsController extends BaseController
             $data = $this->safeInput();
             $currentUserId = $this->getCurrentUserId();
             
-            $result = $this->service->createReceipt($data, $currentUserId);
+            // Inject created_by into data
+            $data['created_by'] = $currentUserId;
+            
+            $result = $this->service->createReceipt($data);
             return $this->respondCreated($result);
         });
     }
@@ -52,7 +55,10 @@ class CashTransactionsController extends BaseController
             $data = $this->safeInput();
             $currentUserId = $this->getCurrentUserId();
             
-            $result = $this->service->createPayment($data, $currentUserId);
+            // Inject created_by into data
+            $data['created_by'] = $currentUserId;
+            
+            $result = $this->service->createPayment($data);
             return $this->respondCreated($result);
         });
     }
@@ -126,10 +132,6 @@ class CashTransactionsController extends BaseController
         return $this->wrap(function () {
             $date = $this->request->getGet('date');
             $branchId = $this->request->getGet('branch_id');
-            
-            if (empty($date)) {
-                return $this->failValidationErrors('Date parameter is required');
-            }
             
             $result = $this->service->getDailyReport($date, $branchId ? (int) $branchId : null);
             return $this->respond($result);

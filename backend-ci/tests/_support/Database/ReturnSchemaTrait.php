@@ -54,7 +54,7 @@ trait ReturnSchemaTrait
      */
     private function createCustomerTables(): void
     {
-        $this->db->query('CREATE TABLE customers (
+        $this->db->query("CREATE TABLE customers (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             organization_id INT UNSIGNED NOT NULL DEFAULT 1,
             customer_group_id INT NULL,
@@ -85,7 +85,7 @@ trait ReturnSchemaTrait
             deleted_at DATETIME NULL,
             UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code),
             KEY idx_customers_tax_code (tax_code)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**

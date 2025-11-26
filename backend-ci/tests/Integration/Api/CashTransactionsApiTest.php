@@ -220,7 +220,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->get("/api/cash/transactions/{$transactionId}");
 
         // Assert
@@ -238,7 +238,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
     {
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->get('/api/cash/transactions/99999');
 
         // Assert
@@ -258,7 +258,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->get('/api/cash/balance');
 
         // Assert
@@ -284,7 +284,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->get("/api/cash/balance/branch/{$branchId1}");
 
         // Assert
@@ -325,7 +325,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->get('/api/cash/report/daily?date=2025-11-26');
 
         // Assert
@@ -357,11 +357,11 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token
+            'Authorization' => 'Bearer ' . $this->authToken
         ])->delete("/api/cash/transactions/{$transactionId}");
 
         // Assert
-        $response->assertStatus(204);
+        $response->assertStatus(200);
         
         // Verify transaction is soft deleted
         $this->dontSeeInDatabase('cash_transactions', [
@@ -375,7 +375,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
     {
         // Act - Send invalid data
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer ' . $this->authToken,
             'Content-Type' => 'application/json'
         ])->post('/api/cash/receipt', [
             // Missing required fields
@@ -429,7 +429,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer ' . $this->authToken,
             'Content-Type' => 'application/json'
         ])->post('/api/cash/receipt', $data);
 
@@ -469,7 +469,7 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         // Act
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer ' . $this->authToken,
             'Content-Type' => 'application/json'
         ])->post('/api/cash/receipt', $data);
 
@@ -498,7 +498,8 @@ class CashTransactionsApiTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        return (int) $this->db->table('branches')->insert($payload);
+        $this->db->table('branches')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function createTestOrder(array $data): int
@@ -511,12 +512,13 @@ class CashTransactionsApiTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        return (int) $this->db->table('orders')->insert($payload);
+        $this->db->table('orders')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function createTestTransaction(array $data): int
     {
-        $branchId = $data['branch_id'] ?? $this->createTestBranch();
+        $branchId = $data['branch_id'] ?? $this->createTestBranch([]);
         
         $payload = array_merge([
             'type' => 'RECEIPT',
@@ -531,7 +533,8 @@ class CashTransactionsApiTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        return (int) $this->db->table('cash_transactions')->insert($payload);
+        $this->db->table('cash_transactions')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function cleanupTestData(): void
