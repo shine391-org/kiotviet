@@ -26,6 +26,7 @@ trait WebhookSchemaTrait
         }
 
         // Create tables with MySQL-specific syntax
+        $this->createSupportTables();
         $this->createWebhookSubscriptionTables();
         $this->createWebhookEventTables();
         
@@ -60,6 +61,30 @@ trait WebhookSchemaTrait
             status VARCHAR(20) DEFAULT 'pending',
             attempts INT DEFAULT 0,
             last_error TEXT NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /**
+     * Ensure common support tables exist for webhook-related tests.
+     */
+    private function createSupportTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS branches (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NULL,
+            code VARCHAR(50) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS users (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NULL,
+            email VARCHAR(100) NULL,
+            status VARCHAR(20) DEFAULT 'active',
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

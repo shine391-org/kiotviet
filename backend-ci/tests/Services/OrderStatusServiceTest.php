@@ -4,6 +4,9 @@ namespace Tests\Services;
 
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
+use App\Repositories\Orders\OrderPaymentRepository;
+use App\Repositories\Inventory\InventoryRepository;
+use App\Repositories\Inventory\InventoryMovementRepository;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
@@ -30,9 +33,12 @@ class OrderStatusServiceTest extends CIUnitTestCase
         $orders = new OrderRepository(null, null, $this->db);
         $logs = new OrderStatusLogRepository(null, $this->db);
         $transition = new OrderStatusTransition();
-        $logger = new InventoryMovementLogger(new \App\Repositories\Inventory\InventoryMovementRepository(null, $this->db));
+        $paymentRepo = new OrderPaymentRepository($this->db);
+        $inventoryRepo = new InventoryRepository(null, $this->db);
+        $movementRepo = new InventoryMovementRepository(null, $this->db);
+        $logger = new InventoryMovementLogger($movementRepo);
 
-        $this->service = new OrderStatusService($orders, $transition, $logs, null, $logger);
+        $this->service = new OrderStatusService($orders, $transition, $logs, $paymentRepo, $inventoryRepo, $logger);
     }
 
     /** @test */
@@ -83,21 +89,41 @@ class OrderStatusServiceTest extends CIUnitTestCase
         $this->assertEquals(5.0, (float) $stock['quantity_on_hand']);
     }
 
-    private function seedOrder(string $status): int
+    /** @test */
+    public function it_creates_cash_receipt_when_completed_cash_order()
+    {
+        $orderId = $this->seedOrder('delivered', paymentMethod: 'CASH', total: 150000, branchId: 1);
+
+        $res = $this->service->updateStatus($orderId, 'completed', 1);
+
+        $this->assertTrue($res['success']);
+
+        $cashRow = $this->db->table('cash_transactions')
+            ->where('reference_type', 'order')
+            ->where('reference_id', $orderId)
+            ->get()->getRowArray();
+
+        $this->assertNotNull($cashRow, 'Cash receipt should be created for completed cash order');
+        $this->assertEquals('RECEIPT', $cashRow['type']);
+        $this->assertEquals(150000.00, (float) $cashRow['amount']);
+    }
+
+    private function seedOrder(string $status, string $paymentMethod = 'BANK_TRANSFER', float $total = 0, int $branchId = 1): int
     {
         $now = date('Y-m-d H:i:s');
         $this->db->table('orders')->insert([
             'order_number' => 'ORD-' . rand(100, 999),
             'customer_id' => 1,
-            'branch_id' => 1,
+            'branch_id' => $branchId,
             'status' => $status,
             'order_type' => 'shipping',
-            'payment_method' => 'BANK_TRANSFER',
+            'payment_method' => $paymentMethod,
             'subtotal' => 0,
             'discount_total' => 0,
             'total' => 0,
             'shipping_fee' => 0,
-            'paid_amount' => 0,
+            'total' => $total,
+            'paid_amount' => $paymentMethod === 'CASH' ? $total : 0,
             'debt_amount' => 0,
             'is_paid' => 0,
             'created_at' => $now,

@@ -24,8 +24,11 @@ trait PaymentMethodSchemaTrait
         $this->db->query('DROP TABLE IF EXISTS `payment_methods`');
         $this->db->query('DROP TABLE IF EXISTS `order_items`');
         $this->db->query('DROP TABLE IF EXISTS `orders`');
+        $this->db->query('DROP TABLE IF EXISTS `branches`');
+        $this->db->query('DROP TABLE IF EXISTS `users`');
 
         // Create tables with MySQL-specific syntax
+        $this->createSupportTables();
         $this->createPaymentMethodTables();
         $this->createOrderTables();
         
@@ -64,6 +67,30 @@ trait PaymentMethodSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL,
             deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /**
+     * Base tables required by several feature tests.
+     */
+    private function createSupportTables(): void
+    {
+        $this->db->query("CREATE TABLE branches (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NULL,
+            code VARCHAR(50) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NULL,
+            email VARCHAR(100) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

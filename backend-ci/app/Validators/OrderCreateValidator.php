@@ -24,9 +24,10 @@ class OrderCreateValidator
             throw new InvalidArgumentException('order_type must be pos or shipping');
         }
 
+        $payments = $input['payments'] ?? null;
         $paymentMethod = $input['payment_method'] ?? null;
-        if (! $paymentMethod) {
-            throw new InvalidArgumentException('payment_method is required');
+        if (! $paymentMethod && empty($payments)) {
+            throw new InvalidArgumentException('payment_method is required when payments not provided');
         }
 
         $branchId = isset($input['branch_id']) ? (int) $input['branch_id'] : 0;
@@ -47,6 +48,24 @@ class OrderCreateValidator
         $paidAmount = isset($input['paid_amount']) ? (float) $input['paid_amount'] : 0.0;
         if ($paidAmount < 0) {
             throw new InvalidArgumentException('paid_amount must be >= 0');
+        }
+        $paymentsArr = [];
+        if ($payments && is_array($payments)) {
+            foreach ($payments as $p) {
+                $pm = $p['payment_method'] ?? null;
+                $amt = isset($p['amount']) ? (float) $p['amount'] : 0;
+                if (! $pm) {
+                    throw new InvalidArgumentException('payment_method in payments is required');
+                }
+                if ($amt <= 0) {
+                    throw new InvalidArgumentException('payment amount must be > 0');
+                }
+                $paymentsArr[] = [
+                    'payment_method' => $pm,
+                    'amount' => $amt,
+                ];
+            }
+            $paidAmount = array_sum(array_column($paymentsArr, 'amount'));
         }
 
         $orderItems = [];
@@ -75,6 +94,7 @@ class OrderCreateValidator
             'branch_id' => $branchId,
             'shipping_fee' => $shippingFee,
             'paid_amount' => $paidAmount,
+            'payments' => $paymentsArr ?: null,
             'notes' => isset($input['notes']) ? trim((string) $input['notes']) : null,
             'shipping' => [
                 'name' => $input['shipping_name'] ?? ($input['shipping']['name'] ?? null),

@@ -15,6 +15,7 @@ use App\Repositories\Inventory\InventoryMovementRepository;
 use App\Repositories\Customers\CustomerRepository;
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
+use App\Repositories\Orders\OrderPaymentRepository;
 use App\Repositories\Webhooks\WebhookEventRepository;
 use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Services\Customers\CustomerService;
@@ -33,6 +34,7 @@ use App\Services\Returns\ReturnService;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
+use App\Services\PurchaseOrders\PurchaseOrderStatusService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -467,10 +469,18 @@ class Services extends BaseService
             static::orderRepository(false),
             static::orderStatusTransition(false),
             static::orderStatusLogRepository(false),
+            static::orderPaymentRepository(false),
             static::inventoryRepository(false),
             static::inventoryMovementLogger(false),
             static::webhookDispatcher(false)
         );
+    }
+
+    public static function orderPaymentRepository(bool $getShared = true): OrderPaymentRepository
+    {
+        if ($getShared) { return static::getSharedInstance('orderPaymentRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderPaymentRepository($db);
     }
 
     public static function orderCancellationService(bool $getShared = true): \App\Services\Orders\OrderCancellationService
@@ -480,6 +490,13 @@ class Services extends BaseService
             static::orderStatusService(false),
             null
         );
+    }
+
+    public static function purchaseOrderStatusService(bool $getShared = true): \App\Services\PurchaseOrders\PurchaseOrderStatusService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('purchaseOrderStatusService'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Services\PurchaseOrders\PurchaseOrderStatusService($db);
     }
 
     public static function branchRepository(bool $getShared = true): BranchRepository

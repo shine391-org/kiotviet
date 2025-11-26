@@ -20,17 +20,33 @@ trait StatusSchemaTrait
     protected function resetStatusSchema(): void
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-        
+
+        foreach ([
+            'inventory_stock',
+            'inventory_movements',
+            'order_status_logs',
+            'order_items',
+            'orders',
+            'cash_transactions',
+            'branches',
+            'users'
+        ] as $table) {
+            $this->db->query("DROP TABLE IF EXISTS `{$table}`");
+        }
+
         foreach ($this->db->listTables() as $table) {
             $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
         // Create tables with MySQL-specific syntax
+        $this->createBaseTables();
         $this->createInventoryStockTables();
         $this->createInventoryMovementTables();
         $this->createOrderStatusLogTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
+        $this->createOrderPaymentTables();
+        $this->createCashTransactionTables();
         
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -114,6 +130,7 @@ trait StatusSchemaTrait
             shipping_fee DECIMAL(10,2),
             paid_amount DECIMAL(10,2),
             debt_amount DECIMAL(10,2),
+            payment_status VARCHAR(20) NULL,
             is_paid TINYINT,
             cod_collected TINYINT,
             applied_price_list_id INT NULL,
@@ -136,7 +153,7 @@ trait StatusSchemaTrait
             deleted_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
-    
+
     /**
      * Create order item tables (MySQL-only)
      */
@@ -154,6 +171,68 @@ trait StatusSchemaTrait
             updated_at TIMESTAMP NULL,
             price_list_id INT NULL,
             price_list_name VARCHAR(50)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createOrderPaymentTables(): void
+    {
+        $this->db->query("CREATE TABLE order_payments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_id BIGINT UNSIGNED NOT NULL,
+            payment_method ENUM('CASH','BANK_TRANSFER','CARD','COD','EWALLET') NOT NULL,
+            amount DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+            paid_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_order (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createCashTransactionTables(): void
+    {
+        $this->db->query("CREATE TABLE cash_transactions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            type ENUM('RECEIPT','PAYMENT') NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            description TEXT NULL,
+            reference_type VARCHAR(50) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            reference_code VARCHAR(100) NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            created_by BIGINT UNSIGNED NOT NULL,
+            transaction_date DATE NOT NULL,
+            note TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            KEY idx_type_category (type, category),
+            KEY idx_reference (reference_type, reference_id),
+            KEY idx_transaction_date (transaction_date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /**
+     * Base tables required by status-related tests.
+     */
+    private function createBaseTables(): void
+    {
+        $this->db->query("CREATE TABLE branches (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NULL,
+            code VARCHAR(50) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NULL,
+            email VARCHAR(100) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

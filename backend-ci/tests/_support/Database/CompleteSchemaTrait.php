@@ -30,12 +30,14 @@ trait CompleteSchemaTrait
             'product_attribute_options','product_attribute_values',
             'price_lists','price_list_items',
             'payment_methods',
+            'purchase_orders',
             'orders','order_items','order_sequences',
             'returns','return_items',
             'invoices','invoice_orders',
             'inventory_stock','inventory_movements','inventory_alerts',
             'order_status_logs',
-            'webhook_subscriptions','webhook_events'
+            'webhook_subscriptions','webhook_events',
+            'cash_transactions'
         ];
         foreach ($allTables as $table) {
             $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
@@ -56,8 +58,10 @@ trait CompleteSchemaTrait
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
+        $this->createPurchaseOrderTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
+        $this->createOrderPaymentTables();
         $this->createOrderSequenceTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
@@ -68,6 +72,7 @@ trait CompleteSchemaTrait
         $this->createInventoryAlertTables();
         $this->createOrderStatusLogTables();
         $this->createWebhookTables();
+        $this->createCashTransactionTables();
 
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -350,6 +355,25 @@ trait CompleteSchemaTrait
         $this->db->query($sql);
     }
 
+    private function createPurchaseOrderTables(): void
+    {
+        $this->db->query("DROP TABLE IF EXISTS purchase_orders");
+        $sql = "CREATE TABLE purchase_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            po_number VARCHAR(50) NULL,
+            code VARCHAR(50) NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NULL,
+            total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+            status VARCHAR(50) DEFAULT 'draft',
+            received_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $this->db->query($sql);
+    }
+
     private function createOrderTables(): void
     {
         $this->db->query("DROP TABLE IF EXISTS orders");
@@ -369,6 +393,7 @@ trait CompleteSchemaTrait
             total DECIMAL(14,2) DEFAULT 0,
             paid_amount DECIMAL(14,2) DEFAULT 0,
             debt_amount DECIMAL(14,2) DEFAULT 0,
+            payment_status VARCHAR(20) NULL,
             is_paid TINYINT(1) DEFAULT 0,
             applied_price_list_id INT NULL,
             shipping_name VARCHAR(255) NULL,
@@ -409,6 +434,61 @@ trait CompleteSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL,
             deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $this->db->query($sql);
+    }
+
+    private function createOrderPaymentTables(): void
+    {
+        $this->db->query("DROP TABLE IF EXISTS order_payments");
+        $sql = "CREATE TABLE order_payments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_id BIGINT UNSIGNED NOT NULL,
+            payment_method VARCHAR(20),
+            amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+            paid_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $this->db->query($sql);
+    }
+
+    private function createCashTransactionTables(): void
+    {
+        $this->db->query("DROP TABLE IF EXISTS cash_transactions");
+        $sql = "CREATE TABLE cash_transactions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            type ENUM('RECEIPT','PAYMENT') NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            payment_method VARCHAR(50) NULL,
+            status VARCHAR(20) NULL,
+            account_name VARCHAR(120) NULL,
+            description TEXT NULL,
+            reference_type VARCHAR(50) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            reference_code VARCHAR(100) NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_by_name VARCHAR(120) NULL,
+            staff_name VARCHAR(120) NULL,
+            payer_code VARCHAR(60) NULL,
+            payer_name VARCHAR(180) NULL,
+            payer_phone VARCHAR(50) NULL,
+            payer_address VARCHAR(255) NULL,
+            bank_account VARCHAR(60) NULL,
+            transfer_note VARCHAR(255) NULL,
+            transaction_date DATE NOT NULL,
+            note TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            KEY idx_type_category (type, category),
+            KEY idx_branch (branch_id),
+            KEY idx_reference (reference_type, reference_id),
+            KEY idx_transaction_date (transaction_date),
+            KEY idx_created_by (created_by),
+            KEY idx_deleted_at (deleted_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
         $this->db->query($sql);
     }

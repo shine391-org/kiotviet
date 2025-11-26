@@ -15,9 +15,9 @@ class OrderRepository
 
     public function __construct(?OrderModel $orders = null, ?OrderItemModel $items = null, ?BaseConnection $db = null)
     {
+        $this->db = $db ?? \Config\Database::connect();
         $this->orders = $orders ?? new OrderModel();
         $this->items = $items ?? new OrderItemModel();
-        $this->db = $db ?? \Config\Database::connect();
     }
 
     /** Create order with items. */
@@ -27,12 +27,8 @@ class OrderRepository
         $payload = $order + ['created_at' => $now, 'updated_at' => $now];
 
         $this->db->transStart();
-        $inserted = $this->orders->insert($payload);
-        if ($inserted === false) {
-            $err = $this->orders->errors() ?: $this->db->error();
-            throw new \RuntimeException('Order insert failed: ' . json_encode($err));
-        }
-        $orderId = (int) $this->orders->getInsertID();
+        $this->db->table('orders')->insert($payload);
+        $orderId = (int) $this->db->insertID();
 
         if ($items) {
             $rows = [];
@@ -62,9 +58,9 @@ class OrderRepository
     /** Fetch order with items. */
     public function findById(int $id): ?array
     {
-        $order = $this->orders->withDeleted()->find($id);
+        $order = $this->db->table('orders')->where('id', $id)->get()->getRowArray();
         if (! $order) { return null; }
-        $items = $this->items->where('order_id', $id)->findAll();
+        $items = $this->db->table('order_items')->where('order_id', $id)->get()->getResultArray();
         $order['items'] = $items;
         return $order;
     }
@@ -72,6 +68,6 @@ class OrderRepository
     /** Update arbitrary fields. */
     public function updateFields(int $id, array $data): bool
     {
-        return (bool) $this->orders->update($id, $data);
+        return (bool) $this->db->table('orders')->where('id', $id)->update($data);
     }
 }

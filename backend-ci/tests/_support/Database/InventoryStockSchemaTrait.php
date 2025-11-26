@@ -26,6 +26,7 @@ trait InventoryStockSchemaTrait
         }
 
         // Create tables with MySQL-specific syntax
+        $this->createBaseTables();
         $this->createInventoryStockTables();
         $this->createInventoryAlertTables();
         
@@ -68,6 +69,30 @@ trait InventoryStockSchemaTrait
             status VARCHAR(50),
             resolved_by INT,
             resolved_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /**
+     * Ensure supporting base tables exist for inventory-related tests.
+     */
+    private function createBaseTables(): void
+    {
+        $this->db->query("CREATE TABLE branches (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NULL,
+            code VARCHAR(50) NULL,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NULL,
+            email VARCHAR(100) NULL,
+            status VARCHAR(20) DEFAULT 'active',
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

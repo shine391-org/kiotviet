@@ -30,7 +30,7 @@ class CashTransactionService
     ) {
         $this->repo = $repo ?? new CashTransactionRepository();
         $this->validator = $validator ?? new CashTransactionValidator();
-        $this->referenceValidator = $referenceValidator;
+        $this->referenceValidator = $referenceValidator ?? new CashTransactionReferenceValidator(\Config\Database::connect());
     }
 
     /**
@@ -48,6 +48,9 @@ class CashTransactionService
         
         // Validate receipt data
         $validated = $this->validator->validateReceipt($data);
+        $validated['payment_method'] = $validated['payment_method'] ?? 'cash';
+        $validated['status'] = $validated['status'] ?? 'approved';
+        $validated['account_name'] = $validated['account_name'] ?? ($validated['payment_method'] === 'bank' ? 'Ngân hàng' : 'Tiền mặt');
 
         // Validate reference if provided
         if (!empty($validated['reference_type']) && !empty($validated['reference_id'])) {
@@ -85,6 +88,9 @@ class CashTransactionService
         
         // Validate payment data
         $validated = $this->validator->validatePayment($data);
+        $validated['payment_method'] = $validated['payment_method'] ?? 'cash';
+        $validated['status'] = $validated['status'] ?? 'approved';
+        $validated['account_name'] = $validated['account_name'] ?? ($validated['payment_method'] === 'bank' ? 'Ngân hàng' : 'Tiền mặt');
 
         // Validate reference if provided
         if (!empty($validated['reference_type']) && !empty($validated['reference_id'])) {
@@ -141,6 +147,14 @@ class CashTransactionService
 
         // Get data
         $result = $this->repo->list($validated);
+
+        // Post-filter for status/payment_method if provided (in case DB lacks indexes)
+        if (!empty($validated['status'])) {
+            $result['data'] = array_values(array_filter($result['data'], fn($r) => ($r['status'] ?? null) === $validated['status']));
+        }
+        if (!empty($validated['payment_method'])) {
+            $result['data'] = array_values(array_filter($result['data'], fn($r) => ($r['payment_method'] ?? null) === $validated['payment_method']));
+        }
 
         return [
             'success' => true,

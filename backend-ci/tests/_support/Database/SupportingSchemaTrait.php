@@ -26,6 +26,7 @@ trait SupportingSchemaTrait
         }
 
         // Create tables with MySQL-specific syntax
+        $this->createUserTables();
         $this->createBranchTables();
         $this->createOrderTables();
         $this->createOrderStatusLogTables();
@@ -104,6 +105,21 @@ trait SupportingSchemaTrait
             reference_id INT,
             notes TEXT,
             created_by INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    /**
+     * Create user tables (MySQL-only)
+     */
+    private function createUserTables(): void
+    {
+        $this->db->query("CREATE TABLE users (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(50) NULL,
+            email VARCHAR(100) NULL,
+            status VARCHAR(20) DEFAULT 'active',
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

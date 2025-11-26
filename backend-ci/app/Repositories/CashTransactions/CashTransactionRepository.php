@@ -247,6 +247,36 @@ class CashTransactionRepository
             $builder->where('reference_type', $filters['reference_type']);
         }
 
+        // Filter by status
+        if (!empty($filters['status'])) {
+            $builder->where('status', $filters['status']);
+        }
+
+        // Filter by payment_method
+        if (!empty($filters['payment_method'])) {
+            $builder->where('payment_method', $filters['payment_method']);
+        }
+
+        // Staff / payer filters (LIKE for partial)
+        if (!empty($filters['staff_name'])) {
+            $builder->like('staff_name', $filters['staff_name']);
+        }
+        if (!empty($filters['payer_name'])) {
+            $builder->like('payer_name', $filters['payer_name']);
+        }
+        if (!empty($filters['payer_phone'])) {
+            $builder->like('payer_phone', $filters['payer_phone']);
+        }
+        if (!empty($filters['payer_code'])) {
+            $builder->like('payer_code', $filters['payer_code']);
+        }
+        if (!empty($filters['bank_account'])) {
+            $builder->like('bank_account', $filters['bank_account']);
+        }
+        if (!empty($filters['transfer_note'])) {
+            $builder->like('transfer_note', $filters['transfer_note']);
+        }
+
         // Search in description or note
         if (!empty($filters['search'])) {
             $search = $filters['search'];
@@ -254,6 +284,8 @@ class CashTransactionRepository
                 ->like('description', $search)
                 ->orLike('note', $search)
                 ->orLike('reference_code', $search)
+                ->orLike('payer_name', $search)
+                ->orLike('payer_code', $search)
                 ->groupEnd();
         }
 
@@ -270,6 +302,16 @@ class CashTransactionRepository
         $row['branch_id'] = isset($row['branch_id']) ? (int) $row['branch_id'] : null;
         $row['created_by'] = isset($row['created_by']) ? (int) $row['created_by'] : null;
         $row['reference_id'] = isset($row['reference_id']) ? (int) $row['reference_id'] : null;
+        $row['status'] = $row['status'] ?? 'approved';
+        $row['payment_method'] = $row['payment_method'] ?? 'cash';
+        $row['account_name'] = $row['account_name'] ?? ($row['payment_method'] === 'bank' ? 'Ngân hàng' : 'Tiền mặt');
+        $row['bank_account'] = $row['bank_account'] ?? null;
+        $row['staff_name'] = $row['staff_name'] ?? null;
+        $row['payer_code'] = $row['payer_code'] ?? null;
+        $row['payer_name'] = $row['payer_name'] ?? null;
+        $row['payer_phone'] = $row['payer_phone'] ?? null;
+        $row['payer_address'] = $row['payer_address'] ?? null;
+        $row['transfer_note'] = $row['transfer_note'] ?? null;
 
         return $row;
     }

@@ -38,6 +38,17 @@ trait CashTransactionSchemaTrait
             type ENUM('RECEIPT', 'PAYMENT') NOT NULL,
             amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
             category VARCHAR(50) NOT NULL,
+            payment_method VARCHAR(50) NULL,
+            status ENUM('approved','cancelled','pending') DEFAULT 'approved',
+            account_name VARCHAR(255) NULL,
+            bank_account VARCHAR(120) NULL,
+            created_by_name VARCHAR(120) NULL,
+            staff_name VARCHAR(120) NULL,
+            payer_code VARCHAR(60) NULL,
+            payer_name VARCHAR(180) NULL,
+            payer_phone VARCHAR(30) NULL,
+            payer_address VARCHAR(255) NULL,
+            transfer_note VARCHAR(255) NULL,
             description TEXT NULL,
             reference_type VARCHAR(50) NULL,
             reference_id BIGINT UNSIGNED NULL,
@@ -95,11 +106,7 @@ trait CashTransactionSchemaTrait
      */
     protected function createSupportingTablesDirect(): void
     {
-        // Debug: Log that we're creating tables
-        error_log("Creating supporting tables...");
-        
-        // Create branches table
-        $sql = "CREATE TABLE branches (
+        $this->db->query("CREATE TABLE branches (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
             code VARCHAR(50) NOT NULL,
@@ -109,13 +116,9 @@ trait CashTransactionSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        
-        $result = $this->db->query($sql);
-        error_log("Branches table creation result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Create users table
-        $sql = "CREATE TABLE users (
+        $this->db->query("CREATE TABLE users (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(255) NOT NULL,
             email VARCHAR(255) NULL,
@@ -123,13 +126,9 @@ trait CashTransactionSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        
-        $result = $this->db->query($sql);
-        error_log("Users table creation result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Create orders table
-        $sql = "CREATE TABLE orders (
+        $this->db->query("CREATE TABLE orders (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             order_number VARCHAR(50) NOT NULL,
             code VARCHAR(50) NOT NULL,
@@ -138,46 +137,21 @@ trait CashTransactionSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        
-        $result = $this->db->query($sql);
-        error_log("Orders table creation result: " . ($result ? 'SUCCESS' : 'FAILED'));
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-        // Create purchase_orders table
-        $sql = "CREATE TABLE purchase_orders (
+        $this->db->query("CREATE TABLE purchase_orders (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             po_number VARCHAR(50) NOT NULL,
             code VARCHAR(50) NOT NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NULL,
             total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
             status VARCHAR(50) NOT NULL DEFAULT 'pending',
+            received_at DATETIME NULL,
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        
-        $result = $this->db->query($sql);
-        error_log("Purchase orders table creation result: " . ($result ? 'SUCCESS' : 'FAILED'));
-        
-        // Debug: List tables after creation
-        $tables = $this->db->listTables();
-        error_log("Tables after creation: " . implode(', ', $tables));
-        
-        // Debug: Check individual tables with raw SQL
-        $branchesCheck = $this->db->query("SHOW TABLES LIKE 'branches'")->getResultArray();
-        $usersCheck = $this->db->query("SHOW TABLES LIKE 'users'")->getResultArray();
-        $ordersCheck = $this->db->query("SHOW TABLES LIKE 'orders'")->getResultArray();
-        $purchaseOrdersCheck = $this->db->query("SHOW TABLES LIKE 'purchase_orders'")->getResultArray();
-        
-        error_log("Branches exists (raw SQL): " . (count($branchesCheck) > 0 ? 'YES' : 'NO'));
-        error_log("Users exists (raw SQL): " . (count($usersCheck) > 0 ? 'YES' : 'NO'));
-        error_log("Orders exists (raw SQL): " . (count($ordersCheck) > 0 ? 'YES' : 'NO'));
-        error_log("Purchase orders exists (raw SQL): " . (count($purchaseOrdersCheck) > 0 ? 'YES' : 'NO'));
-        
-        // Debug: Check individual tables with CI4 methods
-        error_log("Branches exists (CI4): " . ($this->db->tableExists('branches') ? 'YES' : 'NO'));
-        error_log("Users exists (CI4): " . ($this->db->tableExists('users') ? 'YES' : 'NO'));
-        error_log("Orders exists (CI4): " . ($this->db->tableExists('orders') ? 'YES' : 'NO'));
-        error_log("Purchase orders exists (CI4): " . ($this->db->tableExists('purchase_orders') ? 'YES' : 'NO'));
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     /**

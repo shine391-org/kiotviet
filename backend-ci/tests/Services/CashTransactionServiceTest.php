@@ -295,9 +295,10 @@ class CashTransactionServiceTest extends CIUnitTestCase
 
         // Assert
         $this->assertIsArray($result);
-        $this->assertEquals($transactionId, $result['id']);
-        $this->assertEquals('RECEIPT', $result['type']);
-        $this->assertEquals(500000, $result['amount']);
+        $this->assertTrue($result['success']);
+        $this->assertEquals($transactionId, $result['data']['id']);
+        $this->assertEquals('RECEIPT', $result['data']['type']);
+        $this->assertEquals(500000, $result['data']['amount']);
     }
 
     /** @test */

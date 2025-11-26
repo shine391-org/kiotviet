@@ -9,6 +9,8 @@ trait ProductSchemaTrait
         // Assumes $this->db is initialized and connected to the test database
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
 
+        $this->db->query('DROP TABLE IF EXISTS branches');
+        $this->db->query('DROP TABLE IF EXISTS users');
         $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
         $this->db->query('DROP TABLE IF EXISTS product_images');
         $this->db->query('DROP TABLE IF EXISTS product_category_links');
@@ -48,6 +50,24 @@ trait ProductSchemaTrait
             created_at TEXT,
             updated_at TEXT,
             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE branches (
+            id INTEGER PRIMARY KEY {$auto},
+            name TEXT,
+            code TEXT,
+            status TEXT,
+            created_at TEXT,
+            updated_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE users (
+            id INTEGER PRIMARY KEY {$auto},
+            username TEXT,
+            email TEXT,
+            status TEXT,
+            created_at TEXT,
+            updated_at TEXT
         )");
 
         $this->db->query("CREATE TABLE product_variants_v2 (

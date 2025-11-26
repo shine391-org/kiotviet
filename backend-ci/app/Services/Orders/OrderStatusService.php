@@ -4,9 +4,13 @@ namespace App\Services\Orders;
 
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
+use App\Repositories\Orders\OrderPaymentRepository;
+use App\Models\CashTransactionModel;
+use App\Services\CashTransactions\CashTransactionService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Inventory\InventoryService;
 use App\Services\Webhooks\WebhookDispatcher;
+use App\Validators\CashTransactionReferenceValidator;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -22,6 +26,7 @@ class OrderStatusService
     protected OrderRepository $orders;
     protected OrderStatusTransition $transition;
     protected OrderStatusLogRepository $logs;
+    protected OrderPaymentRepository $orderPayments;
     protected \App\Repositories\Inventory\InventoryRepository $inventoryRepo;
     protected InventoryMovementLogger $movementLogger;
     protected ?WebhookDispatcher $webhooks;
@@ -30,6 +35,7 @@ class OrderStatusService
         ?OrderRepository $orders = null,
         ?OrderStatusTransition $transition = null,
         ?OrderStatusLogRepository $logs = null,
+        ?OrderPaymentRepository $orderPayments = null,
         ?\App\Repositories\Inventory\InventoryRepository $inventoryRepo = null,
         ?InventoryMovementLogger $movementLogger = null,
         ?WebhookDispatcher $webhooks = null
@@ -37,6 +43,7 @@ class OrderStatusService
         $this->orders = $orders ?? new OrderRepository();
         $this->transition = $transition ?? new OrderStatusTransition();
         $this->logs = $logs ?? new OrderStatusLogRepository();
+        $this->orderPayments = $orderPayments ?? new OrderPaymentRepository();
         $this->inventoryRepo = $inventoryRepo ?? new \App\Repositories\Inventory\InventoryRepository();
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
         $this->webhooks = $webhooks;
@@ -80,6 +87,12 @@ class OrderStatusService
         $this->logs->create($orderId, $fromStatus, $toStatus, $userId, $notes);
 
         $updated = $this->orders->findById($orderId);
+
+        // post-status side effects (requires updated status)
+        if ($toStatus === 'completed') {
+            $this->handleCompletedStatus($updated, $userId);
+        }
+
         $this->emitStatus($toStatus, $updated);
         return ['success' => true, 'data' => $updated];
     }
@@ -107,6 +120,50 @@ class OrderStatusService
         // Restore inventory when cancelling after deduction
         if ($to === 'cancelled' && in_array($from, ['processing', 'shipping'], true)) {
             $this->restoreInventory($order, $userId);
+        }
+    }
+
+    /**
+     * Auto-create cash receipt when order completes (CASH only).
+     */
+    protected function handleCompletedStatus(array $order, ?int $userId): void
+    {
+        $db = \Config\Database::connect();
+        $cashService = new CashTransactionService(null, null, new CashTransactionReferenceValidator($db));
+        $creatorId = $userId ?? ($order['created_by'] ?? 1);
+        $payments = $this->orderPayments->findByOrder((int) $order['id']);
+
+        // Fallback: no payment rows yet but order is cash -> treat order total as one payment
+        if (empty($payments) && (($order['payment_method'] ?? '') === 'CASH')) {
+            $payments = [[
+                'id' => null,
+                'payment_method' => 'CASH',
+                'amount' => (float) ($order['total'] ?? 0),
+            ]];
+        }
+
+        foreach ($payments as $payment) {
+            if (($payment['payment_method'] ?? '') !== 'CASH') {
+                continue;
+            }
+            $referenceType = $payment['id'] ? CashTransactionModel::REFERENCE_ORDER_PAYMENT : CashTransactionModel::REFERENCE_ORDER;
+            $referenceId = $payment['id'] ? (int) $payment['id'] : (int) $order['id'];
+            try {
+                $cashService->createReceipt([
+                    'branch_id' => (int) $order['branch_id'],
+                    'category' => CashTransactionModel::CATEGORY_SALES,
+                    'amount' => (float) $payment['amount'],
+                    'payment_method' => 'cash',
+                    'reference_type' => $referenceType,
+                    'reference_id' => $referenceId,
+                    'reference_code' => $order['order_number'] ?? ($order['code'] ?? null),
+                    'description' => 'Thu tiền đơn #' . ($order['order_number'] ?? $order['id']) . ' - phần tiền mặt',
+                    'transaction_date' => date('Y-m-d'),
+                    'created_by' => (int) $creatorId,
+                ]);
+            } catch (\InvalidArgumentException $e) {
+                // skip duplicates/validation errors for already-created receipts
+            }
         }
     }
 

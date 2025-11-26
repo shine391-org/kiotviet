@@ -129,6 +129,7 @@ class ReturnApiTest extends CIUnitTestCase
         $total = array_sum(array_map(fn ($i) => $i['quantity'] * $i['price'], $items));
         $this->db->table('orders')->insert([
             'customer_id' => $customerId,
+            'branch_id' => 1,
             'status' => 'completed',
             'total' => $total,
             'shipping_fee' => $shippingFee,

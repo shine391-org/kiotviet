@@ -24,12 +24,23 @@ class CashTransactionModel extends Model
         'type',
         'amount',
         'category',
+        'payment_method',
+        'status',
+        'account_name',
+        'bank_account',
         'description',
         'reference_type',
         'reference_id',
         'reference_code',
         'branch_id',
         'created_by',
+        'created_by_name',
+        'staff_name',
+        'payer_code',
+        'payer_name',
+        'payer_phone',
+        'payer_address',
+        'transfer_note',
         'transaction_date',
         'note',
     ];
@@ -43,6 +54,7 @@ class CashTransactionModel extends Model
     public const CATEGORY_REFUND = 'refund';
     public const CATEGORY_DEPOSIT = 'deposit';
     public const CATEGORY_OTHER_INCOME = 'other_income';
+    public const CATEGORY_SHIPPING_COD = 'shipping_cod';
 
     // PAYMENT categories (Chi)
     public const CATEGORY_PURCHASE = 'purchase';
@@ -50,10 +62,15 @@ class CashTransactionModel extends Model
     public const CATEGORY_EXPENSE = 'expense';
     public const CATEGORY_WITHDRAWAL = 'withdrawal';
     public const CATEGORY_OTHER_EXPENSE = 'other_expense';
+    public const CATEGORY_REFUND_PAYMENT = 'refund'; // hoàn tiền cho khách (chi)
+    public const CATEGORY_SHIPPING_FEE = 'shipping_fee';
 
     // Reference types
     public const REFERENCE_ORDER = 'order';
+    public const REFERENCE_ORDER_PAYMENT = 'order_payment';
     public const REFERENCE_PURCHASE_ORDER = 'purchase_order';
+    public const REFERENCE_RETURN_ORDER = 'return_order';
+    public const REFERENCE_SHIPPING_SETTLEMENT = 'shipping_settlement';
     public const REFERENCE_EXPENSE = 'expense';
     public const REFERENCE_MANUAL = 'manual';
 
@@ -106,6 +123,7 @@ class CashTransactionModel extends Model
             self::CATEGORY_REFUND,
             self::CATEGORY_DEPOSIT,
             self::CATEGORY_OTHER_INCOME,
+            self::CATEGORY_SHIPPING_COD,
         ];
     }
 
@@ -122,6 +140,8 @@ class CashTransactionModel extends Model
             self::CATEGORY_EXPENSE,
             self::CATEGORY_WITHDRAWAL,
             self::CATEGORY_OTHER_EXPENSE,
+            self::CATEGORY_REFUND_PAYMENT,
+            self::CATEGORY_SHIPPING_FEE,
         ];
     }
 
@@ -136,6 +156,24 @@ class CashTransactionModel extends Model
             self::getReceiptCategories(),
             self::getPaymentCategories()
         );
+    }
+
+    /**
+     * Get all allowed reference types.
+     *
+     * @return array
+     */
+    public static function getAllowedReferenceTypes(): array
+    {
+        return [
+            self::REFERENCE_ORDER,
+            self::REFERENCE_PURCHASE_ORDER,
+            self::REFERENCE_ORDER_PAYMENT,
+            self::REFERENCE_RETURN_ORDER,
+            self::REFERENCE_SHIPPING_SETTLEMENT,
+            self::REFERENCE_EXPENSE,
+            self::REFERENCE_MANUAL,
+        ];
     }
 
     /**

@@ -50,6 +50,7 @@ trait PriceListSchemaTrait
         $this->createOrderItemTables();
         $this->createOrderSequenceTables();
         $this->createInventoryStockTables();
+        $this->createSupportTables();
         
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -207,6 +208,7 @@ trait PriceListSchemaTrait
             total DECIMAL(10,2) DEFAULT 0,
             paid_amount DECIMAL(10,2) DEFAULT 0,
             debt_amount DECIMAL(10,2) DEFAULT 0,
+            payment_status VARCHAR(20) NULL,
             is_paid TINYINT DEFAULT 0,
             applied_price_list_id INT NULL,
             shipping_name VARCHAR(255) NULL,
@@ -274,5 +276,11 @@ trait PriceListSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createSupportTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS branches (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), created_at DATETIME NULL, updated_at DATETIME NULL)");
+        $this->db->query("CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), created_at DATETIME NULL, updated_at DATETIME NULL)");
     }
 }

@@ -7,6 +7,9 @@ use App\Transformers\ReturnTransformer;
 use App\Validators\ReturnValidator;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Webhooks\WebhookDispatcher;
+use App\Services\CashTransactions\CashTransactionService;
+use App\Validators\CashTransactionReferenceValidator;
+use App\Models\CashTransactionModel;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -150,6 +153,12 @@ class ReturnService
             $validated['version']
         );
         $transformed = $this->transformer->transform($updated);
+
+        // Auto create cash payment if refund via cash
+        if ($validated['refund_method'] === 'cash') {
+            $this->createCashRefundTransaction($updated, $order, $refundAmount, $validated['user_id']);
+        }
+
         $this->emit('return.approved', $transformed);
         return ['success' => true, 'data' => $transformed];
     }
@@ -200,6 +209,37 @@ class ReturnService
         $transformed = $this->transformer->transform($updated);
         $this->emit('return.completed', $transformed);
         return ['success' => true, 'data' => $transformed];
+    }
+
+    /**
+     * Create cash payment transaction for refund.
+     */
+    protected function createCashRefundTransaction(array $returnRow, array $order, float $refundAmount, int $userId): void
+    {
+        $branchId = $order['branch_id'] ?? null;
+        if (! $branchId) {
+            throw new InvalidArgumentException('Branch is required for cash refund');
+        }
+
+        $db = \Config\Database::connect();
+        $cashService = new CashTransactionService(
+            null,
+            null,
+            new CashTransactionReferenceValidator($db)
+        );
+
+        $cashService->createPayment([
+            'branch_id' => (int) $branchId,
+            'category' => CashTransactionModel::CATEGORY_REFUND_PAYMENT,
+            'amount' => $refundAmount,
+            'payment_method' => 'cash',
+            'reference_type' => CashTransactionModel::REFERENCE_RETURN_ORDER,
+            'reference_id' => (int) $returnRow['id'],
+            'reference_code' => $returnRow['return_number'] ?? null,
+            'description' => 'Hoàn tiền trả hàng #' . ($returnRow['return_number'] ?? $returnRow['id']),
+            'transaction_date' => date('Y-m-d'),
+            'created_by' => $userId,
+        ]);
     }
 
     private function buildReturnItems(array $order, array $items): array

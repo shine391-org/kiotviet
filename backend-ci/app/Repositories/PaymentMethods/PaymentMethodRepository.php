@@ -135,7 +135,8 @@ class PaymentMethodRepository
      */
     public function usedInOrders(string $code): bool
     {
-        if (! $this->db->tableExists('orders')) {
+        $check = $this->db->query("SHOW TABLES LIKE 'orders'")->getResultArray();
+        if (empty($check)) {
             return false;
         }
         $fields = array_map('strtolower', $this->db->getFieldNames('orders'));

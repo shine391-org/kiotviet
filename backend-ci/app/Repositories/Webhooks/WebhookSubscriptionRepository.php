@@ -27,7 +27,8 @@ class WebhookSubscriptionRepository
     public function isReady(): bool
     {
         try {
-            return $this->db->tableExists('webhook_subscriptions');
+            $check = $this->db->query("SHOW TABLES LIKE 'webhook_subscriptions'")->getResultArray();
+            return ! empty($check);
         } catch (\Throwable $e) {
             return false;
         }
@@ -96,20 +97,10 @@ class WebhookSubscriptionRepository
             'created_at' => $this->now(),
             'updated_at' => $this->now(),
         ];
-        
-        // Debug: Log the payload
-        if (ENVIRONMENT === 'testing') {
-            error_log("WebhookRepository create payload: " . json_encode($payload));
-        }
-        
+
         $this->db->table('webhook_subscriptions')->insert($payload);
         $payload['id'] = (int) $this->db->insertID();
-        
-        // Debug: Log the insert ID
-        if (ENVIRONMENT === 'testing') {
-            error_log("WebhookRepository insert ID: " . $payload['id']);
-        }
-        
+
         return $this->hydrate($payload);
     }
 

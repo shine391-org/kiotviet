@@ -4,6 +4,7 @@ namespace App\Services\Orders;
 
 use App\Repositories\Orders\OrderRepository;
 use App\Services\PriceLists\PriceCalculatorService;
+use App\Services\Orders\OrderPaymentService;
 use App\Validators\OrderValidator;
 use App\Validators\OrderCreateValidator;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -19,6 +20,7 @@ class OrderService
     protected PriceCalculatorService $pricing;
     protected OrderNumberGenerator $numberGen;
     protected ?WebhookDispatcher $webhooks;
+    protected OrderPaymentService $paymentService;
 
     public function __construct(
         ?OrderRepository $orders = null,
@@ -26,7 +28,8 @@ class OrderService
         ?PriceCalculatorService $pricing = null,
         ?OrderCreateValidator $createValidator = null,
         ?OrderNumberGenerator $numberGen = null,
-        ?WebhookDispatcher $webhooks = null
+        ?WebhookDispatcher $webhooks = null,
+        ?OrderPaymentService $paymentService = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
         $this->validator = $validator ?? new OrderValidator();
@@ -34,6 +37,7 @@ class OrderService
         $this->pricing = $pricing ?? new PriceCalculatorService();
         $this->numberGen = $numberGen ?? new OrderNumberGenerator();
         $this->webhooks = $webhooks;
+        $this->paymentService = $paymentService ?? new OrderPaymentService();
     }
 
     /** Preview order totals with price lists applied. @agent-use: POST /api/orders/calculate-preview */
@@ -138,6 +142,23 @@ class OrderService
         $order = $this->orders->create($orderPayload, $itemRows);
         $order['items'] = $itemRows;
 
+        // Handle multiple payments if provided
+        if (!empty($validated['payments']) && is_array($validated['payments'])) {
+            foreach ($validated['payments'] as $payment) {
+                $this->paymentService->addPayment([
+                    'order_id' => $order['id'],
+                    'payment_method' => $payment['payment_method'],
+                    'amount' => $payment['amount'],
+                    'created_by' => $validated['created_by'] ?? 1,
+                ]);
+            }
+            // Refresh order totals after payments
+            $orderRefreshed = $this->orders->findById($order['id']);
+            if ($orderRefreshed) {
+                $order = array_merge($order, $orderRefreshed);
+            }
+        }
+
         // POS đơn hàng auto hoàn tất -> trừ tồn ngay
         if ($validated['order_type'] === 'pos') {
             $this->deductPosInventory($order, (int) ($validated['branch_id'] ?? 0));
@@ -157,9 +178,6 @@ class OrderService
             return;
         }
         $db = Database::connect();
-        if (! $db->tableExists('inventory_stock')) {
-            return;
-        }
         $now = date('Y-m-d H:i:s');
         foreach ($order['items'] as $item) {
             $productId = (int) ($item['product_id'] ?? 0);
@@ -169,35 +187,40 @@ class OrderService
                 continue;
             }
 
-            // Update stock
-            $row = $db->table('inventory_stock')
-                ->where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->get()->getRowArray();
-            if ($row) {
-                $db->table('inventory_stock')
-                    ->where('id', $row['id'])
-                    ->set('quantity_on_hand', 'quantity_on_hand - ' . $qty, false)
-                    ->update();
+            // Update stock using null-safe comparison to handle NULL variant_id
+            $updated = $db->query(
+                "UPDATE inventory_stock 
+                 SET quantity_on_hand = quantity_on_hand - ?
+                 WHERE branch_id = ? AND product_id = ? AND (variant_id <=> ?)
+                 LIMIT 1",
+                [$qty, $branchId, $productId, $variantId]
+            );
+
+            // Fallback: try null variant when variant-specific row not found
+            if ($db->affectedRows() === 0 && $variantId !== null) {
+                $db->query(
+                    "UPDATE inventory_stock 
+                     SET quantity_on_hand = quantity_on_hand - ?
+                     WHERE branch_id = ? AND product_id = ? AND variant_id IS NULL
+                     LIMIT 1",
+                    [$qty, $branchId, $productId]
+                );
             }
 
             // Log movement
-            if ($db->tableExists('inventory_movements')) {
-                $db->table('inventory_movements')->insert([
-                    'branch_id' => $branchId,
-                    'product_id' => $productId,
-                    'variant_id' => $variantId,
-                    'type' => 'sale',
-                    'quantity' => -$qty,
-                    'reference_type' => 'order',
-                    'reference_id' => $order['id'] ?? null,
-                    'notes' => 'POS auto-complete deduction',
-                    'created_by' => $order['created_by'] ?? null,
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
-            }
+            $db->table('inventory_movements')->insert([
+                'branch_id' => $branchId,
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'type' => 'sale',
+                'quantity' => -$qty,
+                'reference_type' => 'order',
+                'reference_id' => $order['id'] ?? null,
+                'notes' => 'POS auto-complete deduction',
+                'created_by' => $order['created_by'] ?? null,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
         }
     }
 

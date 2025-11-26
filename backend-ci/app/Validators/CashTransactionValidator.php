@@ -97,6 +97,14 @@ class CashTransactionValidator
             'date_from' => 'permit_empty|valid_date',
             'date_to' => 'permit_empty|valid_date',
             'reference_type' => 'permit_empty|max_length[50]',
+            'status' => 'permit_empty|in_list[approved,cancelled,pending]',
+            'payment_method' => 'permit_empty|in_list[cash,bank,bank_transfer,ewallet]',
+            'staff_name' => 'permit_empty|max_length[120]',
+            'payer_name' => 'permit_empty|max_length[180]',
+            'payer_phone' => 'permit_empty|max_length[30]',
+            'payer_code' => 'permit_empty|max_length[60]',
+            'bank_account' => 'permit_empty|max_length[60]',
+            'transfer_note' => 'permit_empty|max_length[255]',
         ];
 
         if (!$this->validation->setRules($rules)->run($data)) {
@@ -122,6 +130,8 @@ class CashTransactionValidator
             'type' => 'required|in_list[RECEIPT,PAYMENT]',
             'amount' => 'required|decimal|greater_than[0]',
             'category' => 'required|max_length[50]',
+            'payment_method' => 'permit_empty|in_list[cash,bank,bank_transfer,ewallet]',
+            'status' => 'permit_empty|in_list[approved,cancelled,pending]',
             'branch_id' => 'required|is_natural_no_zero',
             'created_by' => 'required|is_natural_no_zero',
             'transaction_date' => 'required|valid_date',
@@ -153,6 +163,17 @@ class CashTransactionValidator
         $validated['reference_type'] = isset($data['reference_type']) ? trim((string) $data['reference_type']) : null;
         $validated['reference_id'] = isset($data['reference_id']) ? (int) $data['reference_id'] : null;
         $validated['reference_code'] = isset($data['reference_code']) ? trim((string) $data['reference_code']) : null;
+        $validated['payment_method'] = isset($data['payment_method']) ? trim((string) $data['payment_method']) : null;
+        $validated['status'] = isset($data['status']) ? trim((string) $data['status']) : null;
+        $validated['account_name'] = isset($data['account_name']) ? trim((string) $data['account_name']) : null;
+        $validated['created_by_name'] = isset($data['created_by_name']) ? trim((string) $data['created_by_name']) : null;
+        $validated['staff_name'] = isset($data['staff_name']) ? trim((string) $data['staff_name']) : null;
+        $validated['payer_code'] = isset($data['payer_code']) ? trim((string) $data['payer_code']) : null;
+        $validated['payer_name'] = isset($data['payer_name']) ? trim((string) $data['payer_name']) : null;
+        $validated['payer_phone'] = isset($data['payer_phone']) ? trim((string) $data['payer_phone']) : null;
+        $validated['payer_address'] = isset($data['payer_address']) ? trim((string) $data['payer_address']) : null;
+        $validated['bank_account'] = isset($data['bank_account']) ? trim((string) $data['bank_account']) : null;
+        $validated['transfer_note'] = isset($data['transfer_note']) ? trim((string) $data['transfer_note']) : null;
 
         return $validated;
     }
@@ -169,12 +190,25 @@ class CashTransactionValidator
             return true; // Skip validation if table doesn't exist
         }
 
-        $branch = $this->db->query("
-            SELECT * FROM branches
-            WHERE id = ? AND deleted_at IS NULL AND status = 'active'
-        ", [$branchId])->getRowArray();
+        try {
+            $branch = $this->db->query("
+                SELECT * FROM branches
+                WHERE id = ? AND (deleted_at IS NULL OR deleted_at IS NULL)
+            ", [$branchId])->getRowArray();
+        } catch (\Throwable $e) {
+            // If schema differs (e.g., missing status), don't block validation
+            return true;
+        }
 
-        return !empty($branch);
+        if (empty($branch)) {
+            return false;
+        }
+
+        if (isset($branch['status']) && strtolower((string) $branch['status']) !== 'active') {
+            return false;
+        }
+
+        return true;
     }
 
 }

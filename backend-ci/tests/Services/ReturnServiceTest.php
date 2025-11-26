@@ -85,6 +85,44 @@ class ReturnServiceTest extends CIUnitTestCase
     }
 
     /** @test */
+    public function it_creates_cash_payment_when_refund_cash()
+    {
+        $orderId = $this->seedOrderWithItems(1, [
+            ['quantity' => 1, 'price' => 100000],
+        ]);
+
+        $create = $this->service->create([
+            'order_id' => $orderId,
+            'customer_id' => 1,
+            'items' => [
+                ['order_item_id' => 1, 'quantity_returned' => 1, 'condition' => 'new'],
+            ],
+            'reason' => 'defective',
+            'refund_shipping_fee' => false,
+            'refund_method' => 'cash',
+            'created_by' => 1,
+        ]);
+
+        $returnId = $create['data']['id'];
+        $res = $this->service->approve($returnId, [
+            'user_id' => 1,
+            'refund_method' => 'cash',
+            'refund_shipping_fee' => false,
+        ]);
+
+        $this->assertTrue($res['success']);
+
+        $cashRow = $this->db->table('cash_transactions')
+            ->where('reference_type', 'return_order')
+            ->where('reference_id', $returnId)
+            ->get()->getRowArray();
+
+        $this->assertNotNull($cashRow);
+        $this->assertEquals('PAYMENT', $cashRow['type']);
+        $this->assertEquals(100000.00, (float) $cashRow['amount']);
+    }
+
+    /** @test */
     public function it_blocks_uncompleted_orders()
     {
         $orderId = $this->seedOrderWithItems(1, [
@@ -116,7 +154,9 @@ class ReturnServiceTest extends CIUnitTestCase
         $total = array_sum(array_map(fn ($i) => $i['quantity'] * $i['price'], $items));
         $this->db->table('orders')->insert([
             'customer_id' => $customerId,
+            'branch_id' => 1,
             'status' => $status,
+            'payment_method' => 'CASH',
             'total' => $total,
             'created_at' => $now,
             'updated_at' => $now,

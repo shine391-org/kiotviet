@@ -158,6 +158,15 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('cash/report/daily', 'Api\\CashTransactionsController::dailyReport');
     $routes->delete('cash/transactions/(:num)', 'Api\\CashTransactionsController::delete/$1');
 
+    // Shipping COD settlement
+    $routes->post('shipping/settlement', 'Api\\ShippingController::settleCOD');
+
+    // Purchase order receive -> auto cash payment
+    $routes->post('purchase-orders/(:num)/receive', 'Api\\PurchaseOrdersController::receive/$1');
+
+    // Order payments (partial/multi-method)
+    $routes->post('orders/(:num)/payments', 'Api\\OrderPaymentsController::create/$1');
+
     // Webhooks
     $routes->get('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::index');
     $routes->post('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::create');

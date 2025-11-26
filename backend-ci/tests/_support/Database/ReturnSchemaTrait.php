@@ -20,14 +20,15 @@ trait ReturnSchemaTrait
     protected function resetReturnSchema(): void
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-        
-        foreach (['return_items','returns','order_items','orders','customers','users'] as $tbl) {
+
+        foreach (['return_items','returns','order_items','orders','customers','branches','users'] as $tbl) {
             $this->db->query("DROP TABLE IF EXISTS {$tbl}");
         }
 
         // Create tables with MySQL-specific syntax
         $this->createUserTables();
         $this->createCustomerTables();
+        $this->createBranchTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
         $this->createReturnTables();
@@ -44,6 +45,21 @@ trait ReturnSchemaTrait
         $this->db->query('CREATE TABLE users (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50),
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
+    }
+
+    /**
+     * Create branch tables (MySQL-only)
+     */
+    private function createBranchTables(): void
+    {
+        $this->db->query('CREATE TABLE branches (
+            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NULL,
+            code VARCHAR(50) NULL,
+            status VARCHAR(20) DEFAULT \'active\',
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');

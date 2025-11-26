@@ -117,7 +117,7 @@ class CustomerRepository
             $search = $filters['search'];
             $builder->groupStart()
                 ->like('code', $search)
-                ->like('name', $search)
+                ->orLike('name', $search)
                 ->orLike('phone', $search)
                 ->orLike('phone2', $search)
                 ->orLike('email', $search)
