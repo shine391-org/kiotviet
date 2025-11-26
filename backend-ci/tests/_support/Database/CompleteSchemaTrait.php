@@ -94,12 +94,35 @@ trait CompleteSchemaTrait
         $this->db->query("DROP TABLE IF EXISTS customers");
         $this->db->query("CREATE TABLE customers (
             id INT AUTO_INCREMENT PRIMARY KEY,
+            organization_id INT UNSIGNED NOT NULL DEFAULT 1,
             customer_group_id INT NULL,
             name VARCHAR(255) NOT NULL,
             email VARCHAR(255) NULL,
             phone VARCHAR(50) NULL,
+            phone2 VARCHAR(50) NULL,
+            gender ENUM('MALE','FEMALE','OTHER') NULL,
+            facebook VARCHAR(255) NULL,
+            customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL',
+            company_name VARCHAR(255) NULL,
+            tax_code VARCHAR(20) NULL,
+            buyer_name VARCHAR(255) NULL,
+            invoice_company_name VARCHAR(255) NULL,
+            invoice_address VARCHAR(500) NULL,
+            invoice_province VARCHAR(120) NULL,
+            invoice_district VARCHAR(120) NULL,
+            invoice_ward VARCHAR(120) NULL,
+            invoice_email VARCHAR(255) NULL,
+            invoice_phone VARCHAR(50) NULL,
+            cccd_cmnd VARCHAR(50) NULL,
+            id_number VARCHAR(50) NULL,
+            bank_account VARCHAR(50) NULL,
+            bank_name VARCHAR(255) NULL,
+            notes TEXT NULL,
             created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL,
+            UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code),
+            KEY idx_customers_tax_code (tax_code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
@@ -114,6 +137,9 @@ trait CompleteSchemaTrait
             status ENUM('active','inactive') DEFAULT 'active',
             selling_price DECIMAL(10,2) DEFAULT 0,
             wholesale_price DECIMAL(10,2) DEFAULT 0,
+            purchase_price DECIMAL(10,2) DEFAULT 0,
+            stock_quantity INT DEFAULT 0,
+            alert_stock INT DEFAULT 0,
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL,
             deleted_at TIMESTAMP NULL

@@ -21,6 +21,12 @@ related_to:
     description: "Frontend code patterns to copy."
   - id: "FE-TEST-CHECKLIST-01"
     description: "Mandatory checklist for frontend changes."
+  - id: "BACKEND-REFACTOR-PLAN-01"
+    description: "Overall project roadmap and refactoring plan."
+  - id: "DEV-DEMO-SEEDER-01"
+    description: "Demo data seeding for development environment."
+  - id: "DOC-AUDIT-2025-11-26"
+    description: "Documentation audit report with connectivity analysis."
 ---
 
 # AI Agent Guide - LANO CRM

@@ -1,65 +1,77 @@
-<< 'EOF'
-# ====================
-# React / Node.js
-# ====================
+# ========================================
+# LANO CRM - Frontend .gitignore
+# ========================================
+# This file contains React/Node.js specific ignore rules
+# Common rules are in the root .gitignore file
 
+# ========================================
 # Dependencies
+# ========================================
 node_modules/
 /.pnp
 .pnp.js
 
+# ========================================
 # Testing
+# ========================================
 /coverage
+coverage-report.json
 
-# Production builds
+# ========================================
+# Production Builds
+# ========================================
 /build
 /dist
 /.next
 /out
 
-# Environment variables (QUAN TRỌNG - bảo mật)
-.env
+# ========================================
+# Environment Variables
+# ========================================
+# Note: .env files are already in root .gitignore
+# Keeping here for clarity
 .env.local
-.env.development
 .env.development.local
-.env.test
 .env.test.local
-.env.production
 .env.production.local
 
+# ========================================
 # Logs
+# ========================================
+# Note: *.log already in root .gitignore
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-# IDE & Editors
-.vscode/
-.idea/
-*.sublime-project
-*.sublime-workspace
-*.code-workspace
-.history/
-
-# OS Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Optional
+# ========================================
+# Cache & Performance
+# ========================================
+# Note: .cache already in root .gitignore
+.vite
 .eslintcache
 .stylelintcache
 
-# Misc
-*.swp
-*~
-.cache
-EOF
+# ========================================
+# IDE & Editors (Frontend specific)
+# ========================================
+# Note: General IDE files are in root .gitignore
+.history/
+
+# ========================================
+# Testing Frameworks
+# ========================================
 # Playwright
 playwright-report/
 test-results/
+test-output.txt
+
+# Vitest
+coverage/
+
+# ========================================
+# Misc
+# ========================================
+*.swp
+*~

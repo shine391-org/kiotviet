@@ -853,9 +853,7 @@ const ProductTable = ({
           height={50}
           style={{ objectFit: 'cover', borderRadius: '4px' }}
           fallback="/placeholder-product.png"
-          preview={{
-            mask: <EyeOutlined style={{ fontSize: '16px' }} />
-          }}
+          preview={{}}
         />
       ),
     },
@@ -1005,7 +1003,7 @@ const ProductTable = ({
         showTotal: (total, range) => 
           `${range[0]}-${range[1]} của ${total} sản phẩm`,
         pageSizeOptions: ['10', '20', '50', '100'],
-        position: ['bottomRight','topRight'],
+        placement: 'bottomRight',
       }}
       rowClassName={(record) => {
         // ✅ Highlight animation khi product được chọn

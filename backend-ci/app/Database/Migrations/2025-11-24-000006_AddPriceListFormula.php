@@ -9,6 +9,12 @@ class AddPriceListFormula extends Migration
 {
     public function up()
     {
+        // Idempotent: skip if columns already added (common in seeded dev DB)
+        $db = \Config\Database::connect();
+        if ($db->fieldExists('formula', 'price_lists')) {
+            return;
+        }
+
         $this->forge->addColumn('price_lists', [
             'formula' => [
                 'type' => 'TEXT',

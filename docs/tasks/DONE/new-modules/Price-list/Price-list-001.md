@@ -1,3 +1,27 @@
+---
+title: "Price-list-001: Automatic Pricing Formula & Updates"
+id: "PRICE-LIST-001"
+type: "Feature Enhancement"
+priority: "HIGH"
+effort: "3 days"
+status: "Completed"
+completed_date: "2025-11-23"
+assigned_to: "AI Agent"
+tags: ["pricing", "formulas", "auto-update", "price-lists"]
+location: "docs/tasks/DONE/new-modules/Price-list"
+related_to:
+  - id: "AGENT-GUIDE-01"
+    description: "Architecture patterns followed"
+  - id: "TESTING-PATTERNS-01"
+    description: "Testing patterns applied"
+  - id: "BACKEND-REFACTOR-PLAN-01"
+    description: "Part of Phase 2 core modules"
+session_logs:
+  - id: "SESSION-2025-11-23-PRICE-007"
+    file: "docs/archive/session-logs/2025-11-23-PRICE-007.md"
+    description: "Implementation session log"
+---
+
 🔥 PROMPT 1: Công Thức Tính Giá Tự Động & Cập Nhật
 text
 # NHIỆM VỤ: Xây dựng hệ thống tính giá theo công thức

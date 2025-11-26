@@ -12,11 +12,15 @@ use App\Repositories\PaymentMethods\PaymentMethodRepository;
 use App\Repositories\Invoices\InvoiceRepository;
 use App\Repositories\Returns\ReturnRepository;
 use App\Repositories\Inventory\InventoryMovementRepository;
+use App\Repositories\Customers\CustomerRepository;
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
 use App\Repositories\Webhooks\WebhookEventRepository;
 use App\Repositories\Webhooks\WebhookSubscriptionRepository;
+use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
+use App\Services\Products\ProductImportService;
+use App\Services\Products\ProductExportService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
 use App\Services\PriceLists\PriceCalculatorService;
@@ -33,6 +37,7 @@ use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
 use App\Services\Webhooks\WebhookDispatcher;
 use App\Services\Webhooks\WebhookSubscriptionService;
+use App\Transformers\CustomerTransformer;
 use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
@@ -44,6 +49,7 @@ use App\Validators\ReturnValidator;
 use App\Validators\OrderValidator;
 use App\Validators\WebhookSubscriptionValidator;
 use App\Validators\AttributeValidator;
+use App\Validators\CustomerValidator;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Inventory\InventoryService;
 use App\Validators\InventoryValidator;
@@ -70,7 +76,8 @@ class Services extends BaseService
             return static::getSharedInstance('productRepository');
         }
 
-        return new ProductRepository();
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ProductRepository(null, null, null, $db);
     }
 
     public static function productValidator(bool $getShared = true): ProductValidator
@@ -95,13 +102,37 @@ class Services extends BaseService
         );
     }
 
+    public static function productImportService(bool $getShared = true): ProductImportService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('productImportService');
+        }
+
+        return new ProductImportService(
+            static::productService(false),
+            static::productValidator(false)
+        );
+    }
+
+    public static function productExportService(bool $getShared = true): ProductExportService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('productExportService');
+        }
+
+        return new ProductExportService(
+            static::productService(false)
+        );
+    }
+
     public static function productVariantRepository(bool $getShared = true): \App\Repositories\ProductVariants\ProductVariantRepository
     {
         if ($getShared) {
             return static::getSharedInstance('productVariantRepository');
         }
 
-        return new \App\Repositories\ProductVariants\ProductVariantRepository();
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Repositories\ProductVariants\ProductVariantRepository(null, null, $db);
     }
 
     public static function productVariantValidator(bool $getShared = true): \App\Validators\ProductVariantValidator
@@ -233,6 +264,39 @@ class Services extends BaseService
         return new InventoryService(
             static::inventoryRepository(false),
             static::inventoryValidator(false)
+        );
+    }
+
+    public static function customerRepository(bool $getShared = true): CustomerRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('customerRepository');
+        }
+
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CustomerRepository(null, $db);
+    }
+
+    public static function customerValidator(bool $getShared = true): CustomerValidator
+    {
+        return $getShared ? static::getSharedInstance('customerValidator') : new CustomerValidator();
+    }
+
+    public static function customerTransformer(bool $getShared = true): CustomerTransformer
+    {
+        return $getShared ? static::getSharedInstance('customerTransformer') : new CustomerTransformer();
+    }
+
+    public static function customerService(bool $getShared = true): CustomerService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('customerService');
+        }
+
+        return new CustomerService(
+            static::customerRepository(false),
+            static::customerValidator(false),
+            static::customerTransformer(false)
         );
     }
 

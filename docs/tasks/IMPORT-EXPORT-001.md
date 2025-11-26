@@ -236,25 +236,25 @@ curl "http://localhost:8080/api/products/export?status=active" \
 
 ### Code
 
-- [ ]  PHPSpreadsheet in `composer.json`
-- [ ]  `ProductImportService` + `ProductExportService` created
-- [ ]  `ProductsController::import()` + `export()` implemented
-- [ ]  Routes registered
-- [ ]  Import: file validation, row validation, create/update logic
-- [ ]  Export: filters support, Excel generation, download headers
-- [ ]  Temp files cleanup
-- [ ]  Inline `@agent-` docs đầy đủ
+- [x]  PHPSpreadsheet in `composer.json`
+- [x]  `ProductImportService` + `ProductExportService` created
+- [x]  `ProductsController::import()` + `export()` implemented
+- [x]  Routes registered
+- [x]  Import: file validation, row validation, create/update logic
+- [x]  Export: filters support, Excel generation, download headers
+- [x]  Temp files cleanup
+- [x]  Inline `@agent-` docs đầy đủ
 
 ### Tests
 
-- [ ]  Unit tests pass (coverage ≥70%)
-- [ ]  Integration tests pass
+- [x]  Unit tests pass (coverage ≥70%)
+- [x]  Integration tests pass
 - [ ]  Manual import test: Excel → DB OK
 - [ ]  Manual export test: Download file → mở được Excel
 
 ### Docs
 
-- [ ]  Session log: `docs/session-logs/[YYYY-MM-DD-import-export-products.md](http://YYYY-MM-DD-import-export-products.md)`
+- [x]  Session log: `docs/session-logs/[YYYY-MM-DD-import-export-products.md](http://YYYY-MM-DD-import-export-products.md)`
 
 ---
 

@@ -45,6 +45,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('products/check-code', 'Api\\ProductsController::checkCode');
     $routes->post('products/import', 'Api\\ProductsController::import');
     $routes->get('products/export', 'Api\\ProductsController::export');
+    $routes->get('products/import/template', 'Api\\ProductsController::importTemplate');
     $routes->get('products/(:num)/analytics', 'Api\\ProductsController::analytics/$1');
     $routes->get('products/media/library', 'Api\\ProductMediaController::library');
     $routes->get('products/media/by-date', 'Api\\ProductMediaController::byDate');
@@ -61,6 +62,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->put('users/update/(:num)', 'Api\\UsersController::update/$1');
     $routes->delete('users/delete/(:num)', 'Api\\UsersController::delete/$1');
     $routes->put('users/(:num)/change-password', 'Api\\UsersController::changePassword/$1');
+
+    // Customers
+    $routes->get('customers', 'Api\\CustomersController::index');
+    $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
+    $routes->post('customers', 'Api\\CustomersController::create');
+    $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
     $routes->get('variants', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/deleted', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');

@@ -35,6 +35,13 @@ class ProductRepository
         return is_array($product) ? $product : (array) $product;
     }
 
+    /** Find product by code. @agent-use: Import/update @agent-pattern: Find by unique code */
+    public function findByCode(string $code): ?array
+    {
+        $row = $this->products->where('deleted_at', null)->where('code', $code)->first();
+        return $row ? (is_array($row) ? $row : (array) $row) : null;
+    }
+
     /** Create product row. @agent-use: Create flow @agent-pattern: Insert with timestamps */
     public function create(array $data): array { $payload = $data + ['created_at' => $this->now(), 'updated_at' => $this->now()]; $this->products->insert($payload); $payload['id'] = $this->products->getInsertID(); return $payload; }
 

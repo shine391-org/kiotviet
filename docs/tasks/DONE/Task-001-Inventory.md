@@ -1,3 +1,33 @@
+---
+title: "TASK-001: Inventory Module Development"
+id: "TASK-001"
+type: "New Module Development"
+priority: "CRITICAL"
+effort: "5 days"
+status: "In Progress"
+progress_percentage: 70
+start_date: "2025-11-21"
+dependencies:
+  - id: "REFACTOR-001"
+    description: "ProductService refactoring (completed)"
+assigned_to: "AI Agent"
+tags: ["inventory", "warehouse", "stock-management", "new-module"]
+location: "docs/tasks/DONE"
+related_to:
+  - id: "AGENT-GUIDE-01"
+    description: "Clean architecture patterns followed"
+  - id: "TESTING-PATTERNS-01"
+    description: "Testing patterns applied"
+  - id: "BACKEND-REFACTOR-PLAN-01"
+    description: "Part of Phase 1 foundation"
+  - id: "DEV-DEMO-SEEDER-01"
+    description: "Demo data seeding approach"
+session_logs:
+  - id: "SESSION-2025-11-21-TASK-001"
+    file: "docs/archive/session-logs/2025-11-21-TASK-001-Inventory.md"
+    description: "Initial implementation session"
+---
+
 # TASK-001: InventoryModule
 
 **Type:** New Module Development
