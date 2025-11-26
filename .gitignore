@@ -1,2 +1,1 @@
-.clinerules/
-.vscode/
+backend-ci/writable/.phpunit/cache/code-coverage/

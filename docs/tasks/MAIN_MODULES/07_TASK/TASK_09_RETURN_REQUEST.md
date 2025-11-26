@@ -1,335 +1,132 @@
 ---
-title: "TASK 09: Return Request Implementation"
-id: "TASK-09-RETURN-REQUEST-01"
+title: "TASK 09: Return Request Implementation (CodeIgniter 4)"
+id: "TASK-09-RETURN-REQUEST-CI4"
 priority: "P2 (Medium)"
-estimated_effort: "4 days"
-dependencies: "TASK_05"
+estimated_effort: "2 days"
+dependencies: "TASK-05-ORDER-CREATE-CI4"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "returns", "request", "validation", "refund", "API", "backend"]
-purpose: "Implement the creation of customer return requests, including comprehensive validation (order status, return window, item ownership, quantity), return number generation, and initial refund calculation."
+tags: ["task", "returns", "request", "validation", "refund", "API", "backend", "codeigniter"]
+purpose: "Implement the creation of customer return requests in CodeIgniter 4, including comprehensive validation, return number generation, and initial refund calculation."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "RETURN-RULES-01"
-    description: "Defines the validation rules implemented by this task."
-  - id: "RETURN-FLOW-01"
-    description: "Describes the workflow this task is part of."
-  - id: "RETURNS-TABLES-01"
-    description: "Schema used by this task."
-  - id: "TASK-05-ORDER-CREATE-01"
-    description: "Dependency: Order Create implementation."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
 ---
 
-# TASK_09: Return Request Implementation
+# TASK 09: Return Request Implementation (CodeIgniter 4)
 
 **Priority:** P2 (Medium)
-
-**Estimated Effort:** 4 days
-
-**Dependencies:** TASK_05
-
+**Estimated Effort:** 2 days
+**Dependencies:** TASK 05 (Order Create)
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **customer return request** creation with full validation.
+Implement the API endpoint and business logic for creating a **customer return request** using **CodeIgniter 4**. This includes robust validation to ensure the integrity of the return process.
 
 ---
 
 ## 📋 VALIDATION RULES
 
-### **Order Validation**
+A dedicated `ReturnValidator` class enforces the following critical business rules before a return request can be created:
 
-- ✅ Order must exist
-- ✅ Order must be completed
-- ✅ Within return window (30 days from completed_at)
-- ✅ Customer must own the order
+### **Order-Level Validation**
+-   ✅ **Order Exists**: The specified `order_id` must correspond to an existing order.
+-   ✅ **Order Status**: The order must have a status of `completed`.
+-   ✅ **Return Window**: The request must be within the allowed return window (e.g., 30 days from `completed_at`).
+-   ✅ **Customer Ownership**: The user initiating the return must be the customer who placed the order.
 
-### **Items Validation**
-
-- ✅ At least one item to return
-- ✅ Items must belong to order
-- ✅ Cannot return more than purchased
-- ✅ Cannot over-return (considering previous returns)
-
-See [**RETURN_](https://www.notion.so/RETURN_RULES-Return-Validation-Rules-db33c3b127d8446890582464f443d07c?pvs=21)[RULES.md](http://RULES.md)**
+### **Item-Level Validation**
+-   ✅ **At Least One Item**: The request must include at least one item to be returned.
+-   ✅ **Item Belongs to Order**: Each `order_item_id` must belong to the specified `order_id`.
+-   ✅ **Quantity Check**: The `quantity_returned` for an item cannot exceed the original quantity purchased.
+-   ✅ **No Over-Returning**: The system checks previous returns for the same order to prevent returning more items than are available.
 
 ---
 
-## 🏗️ SERVICE IMPLEMENTATION
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
 
-### **ReturnRequestService**
-
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use App\Models\Return;
-use App\Models\ReturnItem;
-use App\Models\OrderItem;
-use Illuminate\Support\Facades\DB;
-use App\Exceptions\ValidationException;
-
-class ReturnRequestService
-{
-    private const RETURN_WINDOW_DAYS = 30;
-
-    public function __construct(
-        private ReturnNumberGenerator $numberGenerator,
-        private RefundCalculator $refundCalculator
-    ) {}
-
-    public function create(array $data): Return
-    {
-        return DB::transaction(function () use ($data) {
-            // Lock order
-            $order = Order::where('id', $data['order_id'])
-                ->lockForUpdate()
-                ->firstOrFail();
-            
-            // Validate
-            $this->validateOrder($order);
-            $this->validateItems($order, $data['items']);
-            
-            // Generate return number
-            $returnNumber = $this->numberGenerator->generate($order->id);
-            
-            // Calculate refund
-            $refund = $this->refundCalculator->calculate(
-                $order,
-                $data['items'],
-                false // refund_shipping_fee will be decided on approval
-            );
-            
-            // Create return
-            $return = Return::create([
-                'return_number' => $returnNumber,
-                'order_id' => $order->id,
-                'customer_id' => $order->customer_id,
-                'reason' => $data['reason'],
-                'reason_detail' => $data['reason_detail'] ?? null,
-                'return_amount' => $refund['return_amount'],
-                'refund_amount' => $refund['refund_amount'],
-                'refund_shipping_fee' => false,
-                'status' => 'pending',
-                'created_by' => auth()->id(),
-            ]);
-            
-            // Create return items
-            foreach ($data['items'] as $itemData) {
-                ReturnItem::create([
-                    'return_id' => $return->id,
-                    'order_item_id' => $itemData['order_item_id'],
-                    'quantity_returned' => $itemData['quantity_returned'],
-                    'condition' => $itemData['condition'] ?? null,
-                ]);
-            }
-            
-            return $return->load(['returnItems.orderItem', 'order']);
-        });
-    }
-
-    private function validateOrder(Order $order): void
-    {
-        // Must be completed
-        if ($order->status !== 'completed') {
-            throw new ValidationException(
-                'Can only return completed orders',
-                'RET_ORDER_NOT_COMPLETED'
-            );
-        }
-        
-        // Within return window
-        if (!$order->completed_at) {
-            throw new ValidationException(
-                'Order has no completion date',
-                'RET_NO_COMPLETION_DATE'
-            );
-        }
-        
-        $daysSinceCompleted = now()->diffInDays($order->completed_at);
-        if ($daysSinceCompleted > self::RETURN_WINDOW_DAYS) {
-            throw new ValidationException(
-                "Return window expired. Orders can only be returned within {$daysSinceCompleted} days",
-                'RET_WINDOW_EXPIRED'
-            );
-        }
-        
-        // Customer owns order
-        if ($order->customer_id !== auth()->user()->customer_id) {
-            throw new ValidationException(
-                'You can only return your own orders',
-                'RET_NOT_YOUR_ORDER'
-            );
-        }
-    }
-
-    private function validateItems(Order $order, array $items): void
-    {
-        if (empty($items)) {
-            throw new ValidationException(
-                'Must specify at least one item to return',
-                'RET_NO_ITEMS'
-            );
-        }
-        
-        foreach ($items as $item) {
-            $this->validateItem($order, $item);
-        }
-    }
-
-    private function validateItem(Order $order, array $item): void
-    {
-        // Item belongs to order
-        $orderItem = OrderItem::where('id', $item['order_item_id'])
-            ->where('order_id', $order->id)
-            ->first();
-        
-        if (!$orderItem) {
-            throw new ValidationException(
-                "Item #{$item['order_item_id']} does not belong to this order",
-                'RET_ITEM_NOT_IN_ORDER'
-            );
-        }
-        
-        // Calculate already returned quantity
-        $alreadyReturned = ReturnItem::whereHas('return', function ($q) use ($order) {
-                $q->where('order_id', $order->id)
-                  ->whereIn('status', ['pending', 'approved', 'completed']);
-            })
-            ->where('order_item_id', $orderItem->id)
-            ->sum('quantity_returned');
-        
-        $remainingQuantity = $orderItem->quantity - $alreadyReturned;
-        
-        // Cannot return more than remaining
-        if ($item['quantity_returned'] > $remainingQuantity) {
-            throw new ValidationException(
-                "Cannot return {$item['quantity_returned']} units. Only {$remainingQuantity} remaining",
-                'RET_QUANTITY_EXCEEDED'
-            );
-        }
-        
-        // Quantity must be positive
-        if ($item['quantity_returned'] <= 0) {
-            throw new ValidationException(
-                'Return quantity must be greater than 0',
-                'RET_INVALID_QUANTITY'
-            );
-        }
-    }
-}
-```
-
----
-
-## 💰 REFUND CALCULATOR
+### **Validator: `ReturnValidator.php`**
+This class is responsible for validating the incoming payload for a new return request. It checks all business rules and throws an `InvalidArgumentException` if any rule is violated.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-
-class RefundCalculator
+// app/Validators/ReturnValidator.php
+class ReturnValidator
 {
-    public function calculate(
-        Order $order,
-        array $returnItems,
-        bool $refundShipping = false
-    ): array {
-        $returnAmount = 0;
-        
-        foreach ($returnItems as $item) {
-            $orderItem = $order->items()->find($item['order_item_id']);
-            $returnAmount += $orderItem->price * $item['quantity_returned'];
-        }
-        
-        $refundAmount = $returnAmount;
-        
-        // Optionally add shipping fee
-        if ($refundShipping) {
-            $refundAmount += $order->shipping_fee;
-        }
-        
-        return [
-            'return_amount' => round($returnAmount, 2),
-            'refund_amount' => round($refundAmount, 2),
+    public function validateCreate(array $input): array
+    {
+        $rules = [
+            'order_id' => 'required|integer|greater_than_equal_to[1]',
+            'customer_id' => 'required|integer|greater_than_equal_to[1]',
+            'items' => 'required',
+            'reason' => 'required|in_list[defective,wrong_item,not_satisfied,other]',
         ];
+        // ... run validation
+        
+        $items = $this->normalizeItems($input['items']);
+        if (empty($items)) {
+            throw new InvalidArgumentException('Return must have at least one item');
+        }
+
+        return [...]; // Sanitized data
     }
 }
 ```
 
----
-
-## 🌐 API CONTROLLER
+### **Service: `ReturnService.php`**
+The `ReturnService` orchestrates the creation of the return request.
 
 ```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Services\ReturnRequestService;
-use Illuminate\Http\Request;
-
-class ReturnController extends Controller
+// app/Services/Returns/ReturnService.php
+class ReturnService
 {
-    public function __construct(
-        private ReturnRequestService $returnService
-    ) {}
-
-    public function store(Request $request)
+    public function create(array $payload): array
     {
-        $validated = $request->validate([
-            'order_id' => 'required|integer|exists:orders,id',
-            'reason' => 'required|string|in:defective,wrong_item,not_satisfied,other',
-            'reason_detail' => 'nullable|string|max:500',
-            'items' => 'required|array|min:1',
-            'items.*.order_item_id' => 'required|integer',
-            'items.*.quantity_returned' => 'required|integer|min:1',
-            'items.*.condition' => 'nullable|string|in:new,used,damaged',
-        ]);
+        // 1. Validate the incoming payload.
+        $validated = $this->validator->validateCreate($payload);
 
-        try {
-            $return = $this->returnService->create($validated);
+        // 2. Fetch the associated order and its items.
+        $order = $this->repo->orderWithItems($validated['order_id']);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Return request created successfully',
-                'data' => [
-                    'id' => $return->id,
-                    'return_number' => $return->return_number,
-                    'order' => [
-                        'id' => $return->order->id,
-                        'order_number' => $return->order->order_number
-                    ],
-                    'items' => $return->returnItems->map(fn($item) => [
-                        'order_item_id' => $item->order_item_id,
-                        'product_name' => $item->orderItem->product_name,
-                        'quantity_returned' => $item->quantity_returned,
-                    ]),
-                    'return_amount' => $return->return_amount,
-                    'refund_amount' => $return->refund_amount,
-                    'status' => $return->status,
-                    'created_at' => $return->created_at->toIso8601String(),
-                ]
-            ], 201);
-        } catch (\App\Exceptions\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error_code' => $e->getCode()
-            ], 400);
-        }
+        // 3. Assert business rules (order completed, within window, customer match).
+        $this->assertOrderCompleted($order);
+        $this->assertWithinWindow($order);
+        // ...
+
+        // 4. Build a list of items to be returned, calculating totals and checking available quantities.
+        $items = $this->buildReturnItems($order, $validated['items']);
+        $returnAmount = array_sum(array_column($items, 'line_total'));
+
+        // 5. Generate a unique return number (e.g., TH-123-1).
+        $number = $this->repo->nextNumber($validated['order_id']);
+
+        // 6. Persist the return request (`returns` and `return_items` tables) in a transaction.
+        $created = $this->repo->create($returnRow, $itemRows);
+
+        // 7. Dispatch a 'return.requested' event.
+        $this->emit('return.requested', $transformed);
+
+        return ['success' => true, 'data' => $transformed];
+    }
+}
+```
+
+### **Controller: `ReturnsController.php`**
+A thin controller that exposes the `POST /api/returns` endpoint.
+
+```php
+// app/Controllers/Api/ReturnsController.php
+class ReturnsController extends BaseController
+{
+    // ... constructor and other methods
+
+    /** Create return. @agent-use: POST /api/returns */
+    public function create()
+    {
+        return $this->wrap(fn () => $this->respondCreated(
+            $this->service->create($this->safeInput())
+        ));
     }
 }
 ```
@@ -338,143 +135,23 @@ class ReturnController extends Controller
 
 ## 🧪 TESTING
 
-```php
-<?php
-
-namespace Tests\Feature\Api;
-
-use Tests\TestCase;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class ReturnRequestTest extends TestCase
-{
-    use RefreshDatabase;
-
-    /** @test */
-    public function it_can_create_return_request()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create([
-            'customer_id' => $user->customer_id,
-            'status' => 'completed',
-            'completed_at' => now()->subDays(5)
-        ]);
-        
-        $item = OrderItem::factory()->create([
-            'order_id' => $order->id,
-            'quantity' => 3,
-            'price' => 100000
-        ]);
-
-        $response = $this->actingAs($user, 'api')
-            ->postJson('/api/returns', [
-                'order_id' => $order->id,
-                'reason' => 'defective',
-                'reason_detail' => 'Product is broken',
-                'items' => [
-                    [
-                        'order_item_id' => $item->id,
-                        'quantity_returned' => 1
-                    ]
-                ]
-            ]);
-
-        $response->assertStatus(201)
-            ->assertJsonStructure([
-                'success',
-                'data' => [
-                    'return_number',
-                    'status',
-                    'return_amount'
-                ]
-            ]);
-
-        $this->assertDatabaseHas('returns', [
-            'order_id' => $order->id,
-            'status' => 'pending',
-            'return_amount' => 100000
-        ]);
-    }
-
-    /** @test */
-    public function it_cannot_return_more_than_purchased()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create([
-            'customer_id' => $user->customer_id,
-            'status' => 'completed',
-            'completed_at' => now()
-        ]);
-        
-        $item = OrderItem::factory()->create([
-            'order_id' => $order->id,
-            'quantity' => 2
-        ]);
-
-        $response = $this->actingAs($user, 'api')
-            ->postJson('/api/returns', [
-                'order_id' => $order->id,
-                'reason' => 'defective',
-                'items' => [
-                    [
-                        'order_item_id' => $item->id,
-                        'quantity_returned' => 5
-                    ]
-                ]
-            ]);
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'error_code' => 'RET_QUANTITY_EXCEEDED'
-            ]);
-    }
-
-    /** @test */
-    public function it_cannot_return_incomplete_order()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create([
-            'customer_id' => $user->customer_id,
-            'status' => 'processing'
-        ]);
-
-        $response = $this->actingAs($user, 'api')
-            ->postJson('/api/returns', [
-                'order_id' => $order->id,
-                'reason' => 'defective',
-                'items' => []
-            ]);
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'error_code' => 'RET_ORDER_NOT_COMPLETED'
-            ]);
-    }
-}
-```
+-   **`ReturnValidatorTest.php`**: Contains unit tests for the validator, ensuring all rules for the creation payload are enforced.
+-   **`ReturnServiceTest.php`**: Unit tests for the service layer, verifying:
+    -   Successful creation of a return request.
+    -   Accurate calculation of `return_amount`.
+    -   Correct generation of the return number.
+    -   Exceptions are thrown for invalid scenarios (e.g., attempting to return an incomplete order or exceeding the purchased quantity).
+-   **Integration Test (`tests/Integration/Returns/ReturnsApiTest.php`)**: A feature test that simulates a real API call to `POST /api/returns` to ensure the entire process works end-to-end.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Return number generated (TH-{order_id}-{counter})
-- [x]  Order must be completed
-- [x]  Within 30-day return window
-- [x]  Cannot return more than purchased
-- [x]  Cannot over-return (multiple returns)
-- [x]  Refund amount calculated
-- [x]  All validations working
-- [x]  Tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**RETURN_](https://www.notion.so/RETURN_RULES-Return-Validation-Rules-db33c3b127d8446890582464f443d07c?pvs=21)[RULES.md](http://RULES.md)**
-- [**RETURN_](https://www.notion.so/RETURN_FLOW-Return-Orders-Workflow-7f5c5a4af4054c22a265d011c56b10e3?pvs=21)[FLOW.md](http://FLOW.md)**
-- [**RETURNS_](https://www.notion.so/RETURNS_TABLES-Returns-Schema-4a31069a3d7f44999f9b01f61ed53b1a?pvs=21)[TABLES.md](http://TABLES.md)**
+- [x] The `POST /api/returns` endpoint is functional.
+- [x] A unique return number (`TH-{order_id}-{counter}`) is generated for each request.
+- [x] The system correctly validates that the order is `completed` and within the 30-day return window.
+- [x] The system prevents returning more items than were originally purchased, accounting for previous returns on the same order.
+- [x] The `return_amount` is calculated correctly based on the prices of the returned items.
+- [x] A new record is created in the `returns` table with a `pending` status.
+- [x] Corresponding records are created in the `return_items` table.
+- [x] All relevant unit and integration tests pass.

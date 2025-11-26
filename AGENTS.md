@@ -11,8 +11,14 @@ related_to:
     description: "Contains mandatory test patterns to be copied."
   - id: "TESTING-GUIDE-01"
     description: "Explains the backend testing philosophy and process."
+  - id: "TESTING-MAIN-DB-01"
+    description: "Main database testing approach with transaction rollback."
+  - id: "TEST-CHECKLIST-01"
+    description: "Mandatory checklist for backend changes."
   - id: "FE-TESTING-GUIDE-01"
     description: "Explains the frontend testing philosophy and process."
+  - id: "FE-TESTING-PATTERNS-01"
+    description: "Frontend code patterns to copy."
   - id: "FE-TEST-CHECKLIST-01"
     description: "Mandatory checklist for frontend changes."
 ---
@@ -380,52 +386,120 @@ public function list() {
 ---
 
 
-## 🧪 Testing (BẮT BUỘC)
+## 🧪 Testing (BẮT BUỘC) - MAIN DATABASE WITH TRANSACTIONS ⚠️
+
+### 🚨 BREAKING CHANGE: Main Database Testing (2025-11-25)
+
+**ALL tests now use main database (`lanocrm_shop`) with transaction rollback. Separate test database removed for simplicity.**
 
 ### Test-Driven Development
 You MUST write tests. No exceptions.
 
 **Order:**
 1. Write test first (RED)
-2. Implement code (GREEN)
+2. Implement code (GREEN)  
 3. Refactor (REFACTOR)
 
-### Test Types
+### Test Types (Main Database + Transactions)
 
-**Unit Tests** (SQLite - Fast)
+**Unit Tests** (Main Database with Transactions - Fast)
 - Service logic
 - Repository queries
 - Validators
-- Run: `vendor/bin/phpunit`
+- Uses: DevDatabaseTrait + Transactions
+- Database: `lanocrm_shop` (main) with auto-rollback
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit`
 
-**Integration Tests** (MySQL - Real)
+**Integration Tests** (Main Database Full Stack)
 - API endpoints
 - Database operations
 - Authentication flows
-- Run: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+- Database: `lanocrm_shop` (main) with real data
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+
+### DevDatabaseTrait Pattern (MANDATORY)
+
+**👉 ALL tests MUST use DevDatabaseTrait:**
+
+```php
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\YourSchemaTrait;
+
+class YourServiceTest extends CIUnitTestCase
+{
+    use DevDatabaseTrait;      // Main database connection + transactions
+    use YourSchemaTrait;       // Schema creation
+    
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpDatabase();     // Auto transaction start
+        $this->resetYourSchema();   // Create tables
+        // Your setup
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();  // Auto rollback - data protection!
+        parent::tearDown();
+    }
+}
+```
+
+**🛡️ Data Protection**: Transaction rollback automatically protects your main database data!
 
 ### Test Patterns (Copy từ đây)
 
 **👉 BẮT BUỘC: Copy patterns từ file sau:**
 `docs/testing/TESTING-PATTERNS.md`
 
+**📖 NEW: Read main database guide:**
+`docs/testing/TESTING-MAIN-DB-GUIDE.md`
+
 File này chứa mẫu chuẩn cho:
-- **Service Test** (Unit - SQLite)
-- **Integration Test** (API - MySQL)
-- **Repository Test** (Database)
+- **Service Test** (Main Database with DevDatabaseTrait)
+- **Integration Test** (API - Main Database Full Stack)
+- **Repository Test** (Main Database)
 
 **Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
+**📗 Documentation Network (YAML-linked):**
+- `docs/testing/TESTING-GUIDE.md` - Main testing guide (links to all others)
+- `docs/testing/TESTING-PATTERNS.md` - Code patterns to copy
+- `docs/testing/TESTING-MAIN-DB-GUIDE.md` - Main database approach
+- `docs/testing/TEST-CHECKLIST.md` - Mandatory PR checklist
+- `docs/testing/FE-TESTING-GUIDE.md` - Frontend testing guide
+- `docs/testing/FE-TESTING-PATTERNS.md` - Frontend code patterns
+- `docs/testing/FE-TEST-CHECKLIST.md` - Frontend PR checklist
+
+All documents are now YAML-linked for easy navigation and reference.
+
 ### Vấn đề thường gặp
 
-**Q: PHPUnit pass nhưng dev server fail?**
-A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
-`docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+**Q: Test bị lỗi "Connection refused"?**
+A: Main database container chưa chạy:
+```bash
+docker-compose up -d db api
+docker exec meomeo2-api-1 php spark db:info
+```
+
+**Q: Test bị lỗi "Table doesn't exist"?**
+A: Chưa gọi resetSchema trong setUp():
+```php
+$this->setUpDatabase();
+$this->resetYourSchema();  // MUST call this!
+```
 
 **Q: Tests pass riêng lẻ, fail khi chạy cùng?**
-A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+A: Thiếu tearDownDatabase(). Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
 
-**Đọc thêm**: `docs/testing/TESTING-GUIDE.md`
+**Q: Data có bị ảnh hưởng sau test không?**
+A: KHÔNG! Transaction rollback tự động khôi phục data.
+
+**Đọc thêm**:
+- `docs/testing/TESTING-GUIDE.md` (MySQL-only, main DB + rollback)
+- `docs/testing/docker-workflow-guide.md` (Docker-only workflow + demo data)
+- `docs/seeding/DEV-DEMO-SEEDER.md` (Quy ước seed demo tự động)
 
 ---
 

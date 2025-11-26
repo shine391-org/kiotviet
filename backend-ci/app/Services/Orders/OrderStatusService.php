@@ -22,7 +22,7 @@ class OrderStatusService
     protected OrderRepository $orders;
     protected OrderStatusTransition $transition;
     protected OrderStatusLogRepository $logs;
-    protected ?InventoryService $inventory;
+    protected \App\Repositories\Inventory\InventoryRepository $inventoryRepo;
     protected InventoryMovementLogger $movementLogger;
     protected ?WebhookDispatcher $webhooks;
 
@@ -30,14 +30,14 @@ class OrderStatusService
         ?OrderRepository $orders = null,
         ?OrderStatusTransition $transition = null,
         ?OrderStatusLogRepository $logs = null,
-        ?InventoryService $inventory = null,
+        ?\App\Repositories\Inventory\InventoryRepository $inventoryRepo = null,
         ?InventoryMovementLogger $movementLogger = null,
         ?WebhookDispatcher $webhooks = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
         $this->transition = $transition ?? new OrderStatusTransition();
         $this->logs = $logs ?? new OrderStatusLogRepository();
-        $this->inventory = $inventory;
+        $this->inventoryRepo = $inventoryRepo ?? new \App\Repositories\Inventory\InventoryRepository();
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
         $this->webhooks = $webhooks;
     }
@@ -141,30 +141,13 @@ class OrderStatusService
             return;
         }
 
-        // Update stock table if exists
-        $db = \Config\Database::connect();
-        if ($db->tableExists('inventory_stock')) {
-            $builder = $db->table('inventory_stock')
-                ->where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId);
-            $builder->getCompiledSelect(); // ensure builder
-            $db->transStart();
-            $row = $builder->get()->getRowArray();
-            if ($row) {
-                $available = ($row['quantity_on_hand'] ?? 0) - ($row['quantity_reserved'] ?? 0);
-                if ($delta < 0 && $available + $delta < 0) {
-                    $db->transComplete();
-                    throw new RuntimeException('Insufficient stock for order processing');
-                }
-                $db->table('inventory_stock')
-                    ->where('id', $row['id'])
-                    ->set('quantity_on_hand', 'quantity_on_hand + ' . $delta, false)
-                    ->update();
-            }
-            $db->transComplete();
+        try {
+            $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta);
+        } catch (\Throwable $e) {
+            // If locking fails or stock is insufficient, rethrow.
+            throw new RuntimeException('Failed to adjust inventory: ' . $e->getMessage(), 0, $e);
         }
-
+        
         // Log movement
         $this->movementLogger->log(
             branchId: (int) $branchId,

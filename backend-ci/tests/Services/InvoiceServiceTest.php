@@ -8,51 +8,28 @@ use App\Services\Invoices\InvoiceService;
 use App\Services\Invoices\VATCalculator;
 use App\Validators\InvoiceValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
-use Tests\Support\Database\InvoiceSchemaTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
-/** @agent-test: InvoiceService @agent-pattern: Standard service test */
+/**
+ * @agent-test: InvoiceService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + InvoiceSchemaTrait (MySQL-only)
+ */
 class InvoiceServiceTest extends CIUnitTestCase
 {
-    use InvoiceSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
-    protected $db;
     private InvoiceService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetInvoiceSchema();
+        $this->setUpDatabase();
+        
+        // Use InvoiceSchemaTrait for comprehensive schema
+        $this->resetCompleteSchema();
         $this->seedLookup();
 
         $repo = new InvoiceRepository(null, null, $this->db);
@@ -60,6 +37,12 @@ class InvoiceServiceTest extends CIUnitTestCase
         $vat = new VATCalculator();
         $pdf = new InvoicePDFGenerator();
         $this->service = new InvoiceService($repo, $validator, null, $vat, $pdf);
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

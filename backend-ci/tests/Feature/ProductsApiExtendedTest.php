@@ -25,13 +25,13 @@ class ProductsApiExtendedTest extends CIUnitTestCase
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-        $this->db->query('DROP TABLE IF EXISTS db_product_images');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS products');
+        $this->db->query('DROP TABLE IF EXISTS product_images');
+        $this->db->query('DROP TABLE IF EXISTS product_attributes');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
 
-        $this->db->query("CREATE TABLE db_products (
+        $this->db->query("CREATE TABLE products (
             id INTEGER PRIMARY KEY {$auto},
             product_type TEXT,
             code TEXT,
@@ -44,7 +44,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
+        $this->db->query("CREATE TABLE product_variants_v2 (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_name TEXT,
@@ -64,7 +64,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_images (
+        $this->db->query("CREATE TABLE product_images (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
@@ -76,7 +76,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_attributes (
+        $this->db->query("CREATE TABLE product_attributes (
             id INTEGER PRIMARY KEY {$auto},
             name TEXT,
             type TEXT,
@@ -118,7 +118,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             tooltip TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_attribute_values (
+        $this->db->query("CREATE TABLE product_attribute_values (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
@@ -145,7 +145,7 @@ class ProductsApiExtendedTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 

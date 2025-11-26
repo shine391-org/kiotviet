@@ -4,12 +4,13 @@ namespace Tests\Services;
 
 use App\Repositories\Inventory\InventoryRepository;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\InventoryStockSchemaTrait;
 
 /** @agent-test: InventoryRepository @agent-pattern: Stock adjust/reserve */
 class InventoryRepositoryTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use InventoryStockSchemaTrait;
 
     protected $db;
@@ -18,22 +19,15 @@ class InventoryRepositoryTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        if (! extension_loaded('sqlite3')) {
-            $this->markTestSkipped('SQLite extension is required for fast inventory repository tests.');
-        }
-        $config = config('Database');
-        $config->tests = [
-            'DBDriver'    => 'SQLite3',
-            'database'    => ':memory:',
-            'DBPrefix'    => 'db_',
-            'foreignKeys' => true,
-            'DBDebug'     => true,
-        ];
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetInventoryStockSchema();
         $this->repo = new InventoryRepository($this->db);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

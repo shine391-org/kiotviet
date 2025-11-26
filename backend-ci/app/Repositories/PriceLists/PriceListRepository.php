@@ -87,7 +87,12 @@ class PriceListRepository
             ->orderBy('priority', 'DESC')
             ->orderBy('start_date', 'ASC');
 
-        $rows = $b->get()->getResultArray();
+        $result = $b->get();
+        if ($result === false) {
+            $err = $this->db->error();
+            throw new \RuntimeException('PriceListRepository query failed: ' . json_encode($err));
+        }
+        $rows = $result->getResultArray();
         $rows = array_map(fn ($r) => $this->hydrate($r), $rows);
 
         if ($groupId === null) { return $rows; }

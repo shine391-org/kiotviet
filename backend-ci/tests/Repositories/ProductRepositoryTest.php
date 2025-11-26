@@ -4,19 +4,22 @@ namespace Tests\Repositories;
 
 use App\Repositories\Products\ProductRepository;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\ProductSchemaTrait;
 
 class ProductRepositoryTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+    use ProductSchemaTrait;
+
     private ProductRepository $repo;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
-        $this->repo = new ProductRepository();
+        $this->repo = new ProductRepository(null, null, null, $this->db);
     }
 
     public function testFindAllWithSearch(): void
@@ -49,23 +52,6 @@ class ProductRepositoryTest extends CIUnitTestCase
         $this->assertFalse($this->repo->codeExists('NEW')); // not exists
     }
 
-    private function resetSchema(): void
-    {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-        $this->db->query("CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY {$auto},
-            product_type TEXT,
-            code TEXT,
-            barcode TEXT,
-            name TEXT,
-            status TEXT,
-            selling_price REAL,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-    }
 
     private function insertProduct(array $data): int
     {
@@ -81,7 +67,7 @@ class ProductRepositoryTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

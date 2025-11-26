@@ -2,113 +2,110 @@
 
 namespace Tests\Support\Database;
 
+/**
+ * SupportingSchemaTrait - Supporting database schema (MySQL-only)
+ * 
+ * @agent-trait: Supporting tables testing schema
+ * @agent-pattern: MySQL-only schema creation (SQLite removed)
+ * @agent-reusable: HIGH
+ */
 trait SupportingSchemaTrait
 {
+    /**
+     * Reset supporting schema for testing (MySQL-only)
+     * 
+     * @agent-pattern: Standard schema reset - COPY THIS
+     * @agent-use: Call this in setUp() for supporting table tests
+     */
     protected function resetSupportingSchema(): void
     {
-        $isSqlite = strtolower($this->db->DBDriver ?? '') === 'sqlite3';
-        $auto = $isSqlite ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $varchar20 = $isSqlite ? 'TEXT' : 'VARCHAR(20)';
-        $varchar50 = $isSqlite ? 'TEXT' : 'VARCHAR(50)';
-        $varchar100 = $isSqlite ? 'TEXT' : 'VARCHAR(100)';
-        $varchar255 = $isSqlite ? 'TEXT' : 'VARCHAR(255)';
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-            foreach ($this->db->listTables() as $table) {
-                $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
-            }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        
+        foreach ($this->db->listTables() as $table) {
+            $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
-        // branches
+        // Create tables with MySQL-specific syntax
+        $this->createBranchTables();
+        $this->createOrderTables();
+        $this->createOrderStatusLogTables();
+        $this->createInventoryMovementTables();
+        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+    
+    /**
+     * Create branch tables (MySQL-only)
+     */
+    private function createBranchTables(): void
+    {
         $this->db->query("CREATE TABLE branches (
-            id INTEGER PRIMARY KEY {$auto},
-            code {$varchar20},
-            name {$varchar255},
-            phone {$varchar20},
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(20),
+            name VARCHAR(255),
+            phone VARCHAR(20),
             address TEXT,
-            ward {$varchar100},
-            district {$varchar100},
-            city {$varchar100},
-            status {$varchar20},
-            is_active INTEGER DEFAULT 1,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        // orders + items minimal
+            ward VARCHAR(100),
+            district VARCHAR(100),
+            city VARCHAR(100),
+            status VARCHAR(20),
+            is_active TINYINT DEFAULT 1,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create order tables (MySQL-only)
+     */
+    private function createOrderTables(): void
+    {
         $this->db->query("CREATE TABLE orders (
-            id INTEGER PRIMARY KEY {$auto},
-            status {$varchar50},
-            branch_id INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-        $this->db->query("CREATE TABLE db_orders (
-            id INTEGER PRIMARY KEY {$auto},
-            status {$varchar50},
-            branch_id INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        // order_status_logs
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            status VARCHAR(50),
+            branch_id INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create order status log tables (MySQL-only)
+     */
+    private function createOrderStatusLogTables(): void
+    {
         $this->db->query("CREATE TABLE order_status_logs (
-            id INTEGER PRIMARY KEY {$auto},
-            order_id INTEGER,
-            from_status {$varchar50},
-            to_status {$varchar50},
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            order_id INT,
+            from_status VARCHAR(50),
+            to_status VARCHAR(50),
             notes TEXT,
-            changed_by INTEGER,
-            changed_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-        $this->db->query("CREATE TABLE db_order_status_logs (
-            id INTEGER PRIMARY KEY {$auto},
-            order_id INTEGER,
-            from_status {$varchar50},
-            to_status {$varchar50},
-            notes TEXT,
-            changed_by INTEGER,
-            changed_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        // inventory_movements
+            changed_by INT,
+            changed_at TIMESTAMP NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create inventory movement tables (MySQL-only)
+     */
+    private function createInventoryMovementTables(): void
+    {
         $this->db->query("CREATE TABLE inventory_movements (
-            id INTEGER PRIMARY KEY {$auto},
-            branch_id INTEGER,
-            product_id INTEGER,
-            variant_id INTEGER,
-            type {$varchar50},
-            quantity REAL,
-            reference_type {$varchar50},
-            reference_id INTEGER,
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            product_id INT,
+            variant_id INT,
+            type VARCHAR(50),
+            quantity DECIMAL(10,2),
+            reference_type VARCHAR(50),
+            reference_id INT,
             notes TEXT,
-            created_by INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-        $this->db->query("CREATE TABLE db_inventory_movements (
-            id INTEGER PRIMARY KEY {$auto},
-            branch_id INTEGER,
-            product_id INTEGER,
-            variant_id INTEGER,
-            type {$varchar50},
-            quantity REAL,
-            reference_type {$varchar50},
-            reference_id INTEGER,
-            notes TEXT,
-            created_by INTEGER,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=1');
-        }
+            created_by INT,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

@@ -2,31 +2,71 @@
 
 namespace Tests\Support\Database;
 
+/**
+ * ReturnSchemaTrait - Return database schema (MySQL-only)
+ * 
+ * @agent-trait: Return tables testing schema
+ * @agent-pattern: MySQL-only schema creation (SQLite removed)
+ * @agent-reusable: HIGH
+ */
 trait ReturnSchemaTrait
 {
+    /**
+     * Reset return schema for testing (MySQL-only)
+     * 
+     * @agent-pattern: Standard schema reset - COPY THIS
+     * @agent-use: Call this in setUp() for return table tests
+     */
     protected function resetReturnSchema(): void
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-        foreach (['db_return_items','return_items','db_returns','returns','db_order_items','order_items','db_orders','orders','db_customers','customers','db_users','users'] as $tbl) {
+        
+        foreach (['return_items','returns','order_items','orders','customers','users'] as $tbl) {
             $this->db->query("DROP TABLE IF EXISTS {$tbl}");
         }
 
+        // Create tables with MySQL-specific syntax
+        $this->createUserTables();
+        $this->createCustomerTables();
+        $this->createOrderTables();
+        $this->createOrderItemTables();
+        $this->createReturnTables();
+        $this->createReturnItemTables();
+        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+    
+    /**
+     * Create user tables (MySQL-only)
+     */
+    private function createUserTables(): void
+    {
         $this->db->query('CREATE TABLE users (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50),
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_users LIKE users');
-
+    }
+    
+    /**
+     * Create customer tables (MySQL-only)
+     */
+    private function createCustomerTables(): void
+    {
         $this->db->query('CREATE TABLE customers (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_customers LIKE customers');
-
+    }
+    
+    /**
+     * Create order tables (MySQL-only)
+     */
+    private function createOrderTables(): void
+    {
         $this->db->query('CREATE TABLE orders (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             customer_id INT,
@@ -38,8 +78,13 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_orders LIKE orders');
-
+    }
+    
+    /**
+     * Create order item tables (MySQL-only)
+     */
+    private function createOrderItemTables(): void
+    {
         $this->db->query('CREATE TABLE order_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             order_id INT,
@@ -51,8 +96,13 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_order_items LIKE order_items');
-
+    }
+    
+    /**
+     * Create return tables (MySQL-only)
+     */
+    private function createReturnTables(): void
+    {
         $this->db->query('CREATE TABLE returns (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             return_number VARCHAR(50) UNIQUE,
@@ -76,8 +126,13 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_returns LIKE returns');
-
+    }
+    
+    /**
+     * Create return item tables (MySQL-only)
+     */
+    private function createReturnItemTables(): void
+    {
         $this->db->query('CREATE TABLE return_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             return_id INT,
@@ -87,8 +142,5 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_return_items LIKE return_items');
-
-        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 }

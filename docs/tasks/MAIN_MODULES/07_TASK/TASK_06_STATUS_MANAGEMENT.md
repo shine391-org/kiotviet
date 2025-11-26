@@ -1,82 +1,63 @@
 ---
-title: "TASK 06: Order Status Management Implementation"
-id: "TASK-06-STATUS-MANAGEMENT-01"
+title: "TASK 06: Order Status Management (CodeIgniter 4)"
+id: "TASK-06-STATUS-MANAGEMENT-CI4"
 priority: "P0 (Blocker)"
-estimated_effort: "6 days"
-dependencies: "TASK_05"
-status: "Blocked"
+estimated_effort: "3 days"
+dependencies: "TASK-05-ORDER-CREATE-CI4"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "order-status", "workflow", "state-machine", "inventory", "API", "backend"]
-purpose: "Implement the complete order status workflow, including valid transitions, inventory side effects (deduction/restoration), timestamp updates, and API endpoints for status changes."
+tags: ["task", "order-status", "workflow", "state-machine", "inventory", "API", "backend", "codeigniter"]
+purpose: "Implement the complete order status workflow in CodeIgniter 4, including valid transitions, inventory side effects (deduction/restoration), timestamp updates, and API endpoints."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "ORDERS-TABLE-01"
-    description: "Schema for order status."
-  - id: "STATE-MACHINE-01"
-    description: "Defines the status transitions."
-  - id: "SHIPPING-FLOW-01"
-    description: "Describes the detailed shipping workflow."
-  - id: "INVENTORY-EDGE-CASES-01"
-    description: "Inventory side effects and challenges."
-  - id: "CONCURRENCY-EDGE-CASES-01"
-    description: "Concurrency challenges for status updates."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
-  - id: "TASK-05-ORDER-CREATE-01"
-    description: "Dependency: Order Create implementation."
 ---
 
-# TASK_06_STATUS_MANAGEMENT - Order Status Management
-
-# TASK_06: Order Status Management
+# TASK 06: Order Status Management (CodeIgniter 4)
 
 **Priority:** P0 (Blocker)
-
-**Estimated Effort:** 6 days
-
-**Dependencies:** TASK_05
-
-**Status:** Blocked
+**Estimated Effort:** 3 days
+**Dependencies:** TASK 05 (Order Create)
+**Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **complete order status workflow** with transitions, validation, and side effects.
+Implement the complete order status workflow using a state machine pattern in **CodeIgniter 4**. This includes validating transitions, handling inventory side-effects (deduction/restoration), and providing a secure API for status updates.
 
 ---
 
 ## 📋 STATUS WORKFLOW
 
-```
-POS Orders:
-draft → completed
+The system defines a clear state machine for handling order statuses, primarily for `shipping` orders.
 
-SHIPPING Orders:
+```
+SHIPPING Orders Workflow:
 draft → confirmed → processing → shipping → delivered → completed
-              ↓           ↓          ↓
-          cancelled   cancelled  cancelled
+      ↓           ↓            ↓          ↓
+  cancelled   cancelled    cancelled  cancelled
 ```
 
-See [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)** for details.
+-   **POS Orders**: These are considered complete upon creation and do not follow this workflow.
+-   **Side Effects**: Key transitions trigger other processes, like inventory adjustments.
 
 ---
 
-## 📑 STATUS TRANSITION VALIDATOR
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
+
+### **State Machine: `OrderStatusTransition.php`**
+
+A dedicated class defines the valid state transitions, acting as a state machine. This centralizes the workflow logic and prevents invalid status changes.
 
 ```php
-<?php
-
-namespace App\Services;
-
+// app/Services/Orders/OrderStatusTransition.php
 class OrderStatusTransition
 {
-    private const VALID_TRANSITIONS = [
+    private const MAP = [
         'draft' => ['confirmed', 'cancelled'],
         'confirmed' => ['processing', 'cancelled'],
         'processing' => ['shipping', 'cancelled'],
-        'shipping' => ['delivered'],
+        'shipping' => ['delivered', 'cancelled'],
         'delivered' => ['completed'],
         'completed' => [],
         'cancelled' => [],
@@ -84,210 +65,91 @@ class OrderStatusTransition
 
     public function isValid(string $from, string $to): bool
     {
-        return in_array($to, self::VALID_TRANSITIONS[$from] ?? []);
-    }
-
-    public function getAllowedTransitions(string $currentStatus): array
-    {
-        return self::VALID_TRANSITIONS[$currentStatus] ?? [];
+        return in_array($to, self::MAP[$from] ?? [], true);
     }
 }
 ```
 
----
+### **Core Logic: `OrderStatusService.php`**
 
-## 🔄 UPDATE STATUS SERVICE
+This service is the heart of the status management system. It orchestrates validation, side effects, and persistence.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use Illuminate\Support\Facades\DB;
-
+// app/Services/Orders/OrderStatusService.php
 class OrderStatusService
 {
-    public function __construct(
-        private OrderStatusTransition $transition,
-        private InventoryService $inventoryService
-    ) {}
-
-    public function updateStatus(
-        int $orderId,
-        string $newStatus,
-        ?string $notes = null
-    ): Order {
-        return DB::transaction(function () use ($orderId, $newStatus, $notes) {
-            $order = Order::where('id', $orderId)
-                ->lockForUpdate()
-                ->firstOrFail();
-            
-            $oldStatus = $order->status;
-            
-            // Validate transition
-            if (!$this->transition->isValid($oldStatus, $newStatus)) {
-                throw new \Exception(
-                    "Cannot transition from {$oldStatus} to {$newStatus}",
-                    'ORD_INVALID_STATUS_TRANSITION'
-                );
-            }
-            
-            // Execute side effects BEFORE update
-            $this->executeSideEffects($order, $oldStatus, $newStatus);
-            
-            // Update status
-            $order->update(['status' => $newStatus]);
-            
-            // Set timestamps
-            $this->updateTimestamps($order, $newStatus);
-            
-            return $order->fresh();
-        });
-    }
-
-    private function executeSideEffects(Order $order, string $from, string $to): void
+    public function updateStatus(int $orderId, string $toStatus, ...): array
     {
-        // Deduct inventory when entering processing
-        if ($to === 'processing' && $from !== 'processing') {
-            $this->inventoryService->deduct($order);
-        }
+        // 1. Fetch the order
+        $order = $this->orders->findById($orderId);
         
-        // Restore inventory when cancelled
-        if ($to === 'cancelled' && in_array($from, ['processing', 'shipping'])) {
-            $this->inventoryService->restore($order);
+        // 2. Validate the transition using OrderStatusTransition
+        if (! $this->transition->isValid($fromStatus, $toStatus)) {
+            throw new InvalidArgumentException(...);
         }
-        
-        // Mark as paid for completed COD orders
-        if ($to === 'completed' && $order->payment_method === 'COD') {
-            $order->update([
-                'paid_amount' => $order->total,
-                'is_paid' => true,
-                'debt_amount' => 0,
-                'cod_collected' => true,
-            ]);
-        }
-    }
 
-    private function updateTimestamps(Order $order, string $status): void
-    {
-        $timestamps = [
-            'confirmed' => 'confirmed_at',
-            'delivered' => 'delivered_at',
-            'completed' => 'completed_at',
-            'cancelled' => 'cancelled_at',
-        ];
-        
-        if (isset($timestamps[$status])) {
-            $order->update([$timestamps[$status] => now()]);
-        }
+        // 3. Apply side-effects (e.g., inventory changes)
+        $this->applySideEffects($order, $fromStatus, $toStatus, $userId);
+
+        // 4. Update the order's status and relevant timestamps
+        $this->orders->updateFields($orderId, $updates);
+
+        // 5. Log the status change for auditing
+        $this->logs->create($orderId, $fromStatus, $toStatus, ...);
+
+        // 6. Emit webhook event (e.g., 'order.confirmed')
+        $this->emitStatus($toStatus, $updated);
+
+        return ['success' => true, 'data' => $updated];
     }
 }
 ```
 
----
+### **Inventory Side-Effects**
 
-## 📦 INVENTORY SERVICE
+The `OrderStatusService` is responsible for triggering inventory changes based on status transitions.
+
+-   **`processing`**: When an order moves to `processing`, the inventory for each item is **deducted**.
+-   **`cancelled`**: If an order is cancelled *after* the `processing` or `shipping` stage, the inventory is **restored**.
+
+This logic is handled within the `applySideEffects` method, which calls a dedicated `InventoryMovementLogger` to ensure all stock changes are tracked.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use App\Models\Inventory;
-use App\Models\InventoryMovement;
-use Illuminate\Support\Facades\DB;
-
-class InventoryService
+// app/Services/Orders/OrderStatusService.php -> applySideEffects()
+private function applySideEffects(array $order, string $from, string $to, ?int $userId): void
 {
-    public function deduct(Order $order): void
-    {
-        DB::transaction(function () use ($order) {
-            foreach ($order->items as $item) {
-                // Deduct from inventory
-                $inventory = Inventory::where('branch_id', $order->branch_id)
-                    ->where('product_id', $item->product_id)
-                    ->where('variant_id', $item->variant_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-                
-                if ($inventory->quantity < $item->quantity) {
-                    throw new \Exception('Insufficient stock');
-                }
-                
-                $inventory->decrement('quantity', $item->quantity);
-                
-                // Log movement
-                InventoryMovement::create([
-                    'branch_id' => $order->branch_id,
-                    'product_id' => $item->product_id,
-                    'variant_id' => $item->variant_id,
-                    'type' => 'sale',
-                    'quantity' => -$item->quantity,
-                    'reference_type' => 'order',
-                    'reference_id' => $order->id,
-                    'created_by' => auth()->id(),
-                ]);
-            }
-        });
+    // Deduct inventory when entering processing
+    if ($to === 'processing' && $from !== 'processing') {
+        $this->deductInventory($order, $userId);
     }
 
-    public function restore(Order $order): void
-    {
-        foreach ($order->items as $item) {
-            Inventory::where('branch_id', $order->branch_id)
-                ->where('product_id', $item->product_id)
-                ->where('variant_id', $item->variant_id)
-                ->increment('quantity', $item->quantity);
-            
-            // Log movement
-            InventoryMovement::create([
-                'branch_id' => $order->branch_id,
-                'product_id' => $item->product_id,
-                'variant_id' => $item->variant_id,
-                'type' => 'adjustment',
-                'quantity' => +$item->quantity,
-                'reference_type' => 'order',
-                'reference_id' => $order->id,
-                'notes' => 'Restored from cancelled order',
-                'created_by' => auth()->id(),
-            ]);
-        }
+    // Restore inventory when cancelling after deduction
+    if ($to === 'cancelled' && in_array($from, ['processing', 'shipping'], true)) {
+        $this->restoreInventory($order, $userId);
     }
 }
 ```
 
----
+### **Controller: `OrderStatusController.php`**
 
-## 🌐 API CONTROLLER
+A thin controller provides the API endpoint for updating the status.
 
 ```php
-public function updateStatus(Request $request, $id)
+// app/Controllers/Api/OrderStatusController.php
+class OrderStatusController extends BaseController
 {
-    $validated = $request->validate([
-        'status' => 'required|string|in:confirmed,processing,shipping,delivered,completed,cancelled',
-        'notes' => 'nullable|string',
-    ]);
+    use ResponseTrait;
+    protected OrderStatusService $service;
 
-    try {
-        $order = $this->statusService->updateStatus(
-            $id,
-            $validated['status'],
-            $validated['notes'] ?? null
-        );
+    public function __construct() { $this->service = service('orderStatusService'); }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Order status updated',
-            'data' => $order
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage(),
-            'error_code' => $e->getCode()
-        ], 400);
+    /** @agent-use: PATCH /api/orders/{id}/status */
+    public function update($id)
+    {
+        $status = $this->request->getJSON(true)['status'] ?? null;
+        return $this->wrap(fn () => $this->respond(
+            $this->service->updateStatus((int) $id, $status, ...)
+        ));
     }
 }
 ```
@@ -296,47 +158,22 @@ public function updateStatus(Request $request, $id)
 
 ## 🧪 TESTING
 
-```php
-/** @test */
-public function it_deducts_inventory_when_processing()
-{
-    $order = Order::factory()->create(['status' => 'confirmed']);
-    $item = OrderItem::factory()->create([
-        'order_id' => $order->id,
-        'product_id' => 1,
-        'quantity' => 5
-    ]);
-    
-    Inventory::create([
-        'branch_id' => $order->branch_id,
-        'product_id' => 1,
-        'quantity' => 10
-    ]);
-    
-    $this->statusService->updateStatus($order->id, 'processing');
-    
-    $this->assertDatabaseHas('inventory', [
-        'product_id' => 1,
-        'quantity' => 5 // 10 - 5
-    ]);
-}
-```
+-   **`OrderStatusTransitionTest.php`**: Unit tests to ensure the state machine logic is correct (e.g., `draft` can go to `confirmed`, but not directly to `shipping`).
+-   **`OrderStatusServiceTest.php`**: Verifies the core service logic, including:
+    -   Correctly identifying valid/invalid transitions.
+    -   Triggering inventory deduction when moving to `processing`.
+    -   Triggering inventory restoration when a `processing` order is `cancelled`.
+    -   Ensuring status logs are created.
+-   **Integration Tests**: Test the `PATCH /api/orders/{id}/status` endpoint to confirm the entire workflow, including authentication, validation, and side-effects, works as expected.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Status transitions validated
-- [x]  Inventory deducted on processing
-- [x]  Inventory restored on cancel
-- [x]  Status logs created automatically
-- [x]  Timestamps updated
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)**
-- [**INVENTORY.md**](http://INVENTORY.md)
-- [**CONCURRENCY.md**](http://CONCURRENCY.md)
+- [x] Status transitions are strictly enforced according to the defined state machine.
+- [x] Inventory is correctly deducted when an order moves to `processing`.
+- [x] Inventory is correctly restored if an order is cancelled from `processing` or `shipping` status.
+- [x] No inventory changes occur for cancellations from `draft` or `confirmed`.
+- [x] An entry is created in `order_status_logs` for every status change.
+- [x] Relevant timestamp fields (e.g., `confirmed_at`, `shipping_at`) are updated on status change.
+- [x] All unit and integration tests for the status workflow are passing.

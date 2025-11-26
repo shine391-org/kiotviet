@@ -39,7 +39,7 @@ class ProductVariantServiceIntegrationTest extends CIUnitTestCase
         $this->assertIsArray($result['data']);
         $this->assertEquals('VAR-001', $result['data']['sku']);
 
-        $inDb = $this->db->table('db_product_variants_v2')->where('sku', 'VAR-001')->get()->getRowArray();
+        $inDb = $this->db->table('product_variants_v2')->where('sku', 'VAR-001')->get()->getRowArray();
         $this->assertNotNull($inDb);
         $this->assertEquals($productId, $inDb['product_id']);
     }
@@ -52,7 +52,7 @@ class ProductVariantServiceIntegrationTest extends CIUnitTestCase
         $result = $this->variantService->update($variantId, ['variant_name' => 'New Name']);
 
         $this->assertTrue($result['success']);
-        $inDb = $this->db->table('db_product_variants_v2')->where('id', $variantId)->get()->getRowArray();
+        $inDb = $this->db->table('product_variants_v2')->where('id', $variantId)->get()->getRowArray();
         $this->assertEquals('New Name', $inDb['variant_name']);
     }
 
@@ -64,13 +64,13 @@ class ProductVariantServiceIntegrationTest extends CIUnitTestCase
         $result = $this->variantService->delete($variantId);
 
         $this->assertTrue($result['success']);
-        $inDb = $this->db->table('db_product_variants_v2')->where('id', $variantId)->get()->getRowArray();
+        $inDb = $this->db->table('product_variants_v2')->where('id', $variantId)->get()->getRowArray();
         $this->assertNotNull($inDb['deleted_at']);
     }
 
     private function seedProduct(): int
     {
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'code' => 'P' . random_int(1000, 9999),
             'name' => 'Parent Product',
             'created_at' => date('Y-m-d H:i:s'),
@@ -91,7 +91,7 @@ class ProductVariantServiceIntegrationTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_product_variants_v2')->insert($payload);
+        $this->db->table('product_variants_v2')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

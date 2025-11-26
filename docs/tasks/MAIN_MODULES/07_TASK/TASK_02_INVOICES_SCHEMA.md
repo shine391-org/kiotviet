@@ -1,14 +1,14 @@
 ---
-title: "TASK 02: Invoices Schema Implementation"
-id: "INV-001"
+title: "TASK 02: Invoices Schema Implementation (CodeIgniter 4)"
+id: "INV-001-CI4"
 priority: "P1 (High)"
-estimated_effort: "3 days"
-dependencies: "TASK_01 (Payment Methods)"
+estimated_effort: "2 days"
+dependencies: "PAY-001-CI4"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "invoices", "database", "schema", "junction-table", "PDF", "VAT", "backend"]
-purpose: "Implement the 'invoices' and 'invoice_orders' tables, including number generation, VAT calculation, and on-demand PDF generation."
+tags: ["task", "invoices", "database", "schema", "junction-table", "PDF", "VAT", "backend", "codeigniter"]
+purpose: "Implement the 'invoices' and 'invoice_orders' tables using CodeIgniter 4, including number generation, VAT calculation, and on-demand PDF generation."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
 related_to:
   - id: "INVOICES-TABLES-01"
@@ -19,25 +19,22 @@ related_to:
     description: "Describes the workflow for invoice generation."
   - id: "ORDER-WORKFLOW-INDEX"
     description: "Task listed in the module index."
-  - id: "PAY-001"
+  - id: "PAY-001-CI4"
     description: "Dependency: Payment Methods implementation."
 ---
 
-# TASK_02: Invoices Schema Implementation
+# TASK_02: Invoices Schema Implementation (CodeIgniter 4)
 
 **Priority:** P1 (High)
-
-**Estimated Effort:** 3 days
-
-**Dependencies:** TASK_01 (Payment Methods)
-
+**Estimated Effort:** 2 days
+**Dependencies:** TASK 01 (Payment Methods)
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **invoices** and **invoice_orders** tables with N:N relationship.
+Implement the **`invoices`** and **`invoice_orders`** tables using **CodeIgniter 4**, establishing a many-to-many relationship between invoices and orders.
 
 ---
 
@@ -45,346 +42,189 @@ Implement **invoices** and **invoice_orders** tables with N:N relationship.
 
 ### **Functional Requirements**
 
-- [x]  Create invoices table
-- [x]  Create invoice_orders junction table
-- [x]  Implement invoice number generation
-- [x]  Support multiple orders per invoice
-- [x]  Calculate VAT automatically
-- [x]  Generate PDF on-demand
+- [x] Create `invoices` table.
+- [x] Create `invoice_orders` junction table.
+- [x] Implement invoice number generation (`HD-{branch_id}-{counter}`).
+- [x] Support linking multiple orders to a single invoice.
+- [x] Automatically calculate VAT based on a given rate.
+- [x] Generate invoice PDFs on-demand.
 
 ### **Non-Functional Requirements**
 
-- [x]  Invoice number must be unique
-- [x]  Support transaction isolation
-- [x]  PDF generation < 3 seconds
+- [x] Ensure invoice numbers are unique.
+- [x] Use database transactions for data integrity.
+- [x] Aim for PDF generation time under 3 seconds.
 
 ---
 
-## 🗄️ DATABASE SCHEMA
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-### **Migration: invoices**
+### **Migration: `2025-11-24-000008_CreateInvoiceTables.php`**
+
+This migration creates both the `invoices` and `invoice_orders` tables.
 
 ```php
 <?php
+namespace App\Database\Migrations;
+use CodeIgniter\Database\Migration;
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
+class CreateInvoiceTables extends Migration
 {
     public function up()
     {
-        Schema::create('invoices', function (Blueprint $table) {
-            $table->id();
-            
-            // Invoice identification
-            $table->string('invoice_number', 50)->unique()->comment('Format: HD-{branch_id}-{counter}');
-            
-            // Relationships
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('restrict');
-            $table->foreignId('branch_id')->constrained('branches')->onDelete('restrict');
-            
-            // Dates
-            $table->date('issue_date')->comment('Invoice issue date');
-            $table->date('due_date')->nullable()->comment('Payment due date');
-            
-            // Financial
-            $table->decimal('subtotal', 15, 2)->comment('Sum of order totals');
-            $table->decimal('vat_rate', 5, 4)->comment('VAT rate (0.10 = 10%)');
-            $table->decimal('vat_amount', 15, 2)->comment('Calculated VAT');
-            $table->decimal('total', 15, 2)->comment('subtotal + vat_amount');
-            
-            // PDF
-            $table->string('pdf_path')->nullable()->comment('Path to generated PDF');
-            
-            // Additional info
-            $table->text('notes')->nullable();
-            
-            // Audit
-            $table->foreignId('created_by')->constrained('users');
-            $table->timestamps();
-            
-            // Indexes
-            $table->index('customer_id');
-            $table->index('branch_id');
-            $table->index('issue_date');
-            $table->index('due_date');
-        });
-    }
-
-    public function down()
-    {
-        Schema::dropIfExists('invoices');
-    }
-};
-```
-
----
-
-### **Migration: invoice_orders**
-
-```php
-<?php
-
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-
-return new class extends Migration
-{
-    public function up()
-    {
-        Schema::create('invoice_orders', function (Blueprint $table) {
-            $table->id();
-            
-            $table->foreignId('invoice_id')->constrained('invoices')->onDelete('cascade');
-            $table->foreignId('order_id')->constrained('orders')->onDelete('restrict');
-            
-            $table->timestamps();
-            
-            // Indexes
-            $table->unique(['invoice_id', 'order_id']);
-            $table->index('order_id');
-        });
-    }
-
-    public function down()
-    {
-        Schema::dropIfExists('invoice_orders');
-    }
-};
-```
-
----
-
-## 🏗️ MODELS
-
-### **Invoice Model**
-
-```php
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-
-class Invoice extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'invoice_number',
-        'customer_id',
-        'branch_id',
-        'issue_date',
-        'due_date',
-        'subtotal',
-        'vat_rate',
-        'vat_amount',
-        'total',
-        'pdf_path',
-        'notes',
-        'created_by',
-    ];
-
-    protected $casts = [
-        'issue_date' => 'date',
-        'due_date' => 'date',
-        'subtotal' => 'decimal:2',
-        'vat_rate' => 'decimal:4',
-        'vat_amount' => 'decimal:2',
-        'total' => 'decimal:2',
-    ];
-
-    // Relationships
-    public function customer()
-    {
-        return $this->belongsTo(Customer::class);
-    }
-
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
-    public function orders()
-    {
-        return $this->belongsToMany(Order::class, 'invoice_orders')
-            ->withTimestamps();
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-
-    // Accessors
-    public function getIsOverdueAttribute()
-    {
-        return $this->due_date && $this->due_date->isPast();
-    }
-
-    public function getDaysOverdueAttribute()
-    {
-        if (!$this->is_overdue) {
-            return 0;
-        }
-        
-        return now()->diffInDays($this->due_date);
-    }
-}
-```
-
----
-
-## 🔢 INVOICE NUMBER GENERATION
-
-### **Service Class**
-
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Invoice;
-use Illuminate\Support\Facades\DB;
-
-class InvoiceNumberGenerator
-{
-    public function generate(int $branchId): string
-    {
-        return DB::transaction(function () use ($branchId) {
-            // Lock invoices for this branch
-            $counter = Invoice::where('branch_id', $branchId)
-                ->lockForUpdate()
-                ->count() + 1;
-            
-            return sprintf("HD-%d-%04d", $branchId, $counter);
-        });
-    }
-}
-```
-
----
-
-## 💰 VAT CALCULATION
-
-### **Service Class**
-
-```php
-<?php
-
-namespace App\Services;
-
-class VATCalculator
-{
-    public function calculate(float $subtotal, float $vatRate): array
-    {
-        $vatAmount = round($subtotal * $vatRate, 2);
-        $total = $subtotal + $vatAmount;
-        
-        return [
-            'vat_amount' => $vatAmount,
-            'total' => $total,
-        ];
-    }
-}
-```
-
----
-
-## 📄 PDF GENERATION
-
-### **Service Class**
-
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Invoice;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-
-class InvoicePDFGenerator
-{
-    public function generate(Invoice $invoice): string
-    {
-        // Check cache
-        if ($invoice->pdf_path && Storage::exists($invoice->pdf_path)) {
-            return $invoice->pdf_path;
-        }
-        
-        // Load relationships
-        $invoice->load(['customer', 'branch', 'orders.items']);
-        
-        // Generate PDF
-        $pdf = PDF::loadView('invoices.template', [
-            'invoice' => $invoice
+        // `invoices` table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'invoice_number' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => false],
+            'customer_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'branch_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'issue_date' => ['type' => 'DATE', 'null' => false],
+            'due_date' => ['type' => 'DATE', 'null' => true],
+            'subtotal' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'null' => false],
+            'vat_rate' => ['type' => 'DECIMAL', 'constraint' => '5,4', 'null' => false],
+            'vat_amount' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'null' => false],
+            'total' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'null' => false],
+            'pdf_path' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true],
+            'notes' => ['type' => 'TEXT', 'null' => true],
+            'meta' => ['type' => 'JSON', 'null' => true],
+            'created_by' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
         ]);
-        
-        // Save to storage
-        $year = $invoice->issue_date->format('Y');
-        $filename = "HD-{$invoice->invoice_number}.pdf";
-        $path = "invoices/{$year}/{$filename}";
-        
-        Storage::put($path, $pdf->output());
-        
-        // Update invoice
-        $invoice->update(['pdf_path' => $path]);
-        
-        return $path;
+        $this->forge->addKey('id', true);
+        $this->forge->addUniqueKey('invoice_number');
+        $this->forge->addKey('customer_id');
+        $this->forge->createTable('invoices', true);
+
+        // `invoice_orders` junction table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'invoice_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'order_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addUniqueKey(['invoice_id', 'order_id']);
+        $this->forge->addKey('order_id');
+        $this->forge->createTable('invoice_orders', true);
+    }
+
+    public function down()
+    {
+        $this->forge->dropTable('invoice_orders', true);
+        $this->forge->dropTable('invoices', true);
     }
 }
 ```
 
 ---
 
-## 🧪 TESTING
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
 
-### **Unit Tests**
+### **Models**
+
+-   **`InvoiceModel.php`**: Defines the schema for the `invoices` table.
+-   **`InvoiceOrderModel.php`**: Defines the schema for the `invoice_orders` junction table.
+
+```php
+// app/Models/InvoiceModel.php
+<?php
+namespace App\Models;
+use CodeIgniter\Model;
+
+class InvoiceModel extends Model
+{
+    protected $table = 'invoices';
+    protected $allowedFields = [
+        'invoice_number', 'customer_id', 'branch_id', 'issue_date', 
+        'due_date', 'subtotal', 'vat_rate', 'vat_amount', 'total', 
+        'pdf_path', 'notes', 'meta', 'created_by'
+    ];
+}
+```
+
+### **Repository: `InvoiceRepository.php`**
+
+Handles complex queries, such as generating the next invoice number within a transaction to prevent race conditions.
+
+```php
+// Example: Generate the next invoice number
+public function nextNumber(int $branchId): string
+{
+    return $this->db->transAction(function () use ($branchId) {
+        $prefix = "HD-{$branchId}-";
+        $builder = $this->model->builder()
+            ->select('invoice_number')
+            ->like('invoice_number', $prefix, 'after')
+            ->orderBy('invoice_number', 'DESC')
+            ->limit(1)
+            ->lockForUpdate(); // Pessimistic locking
+
+        $last = $builder->get()->getRowArray();
+        
+        $counter = $last ? (int)str_replace($prefix, '', $last['invoice_number']) + 1 : 1;
+        return $prefix . str_pad($counter, 4, '0', STR_PAD_LEFT);
+    });
+}
+```
+
+### **Service: `InvoiceService.php`**
+
+Orchestrates the logic for creating invoices from orders, calculating totals, and dispatching events.
+
+```php
+// Example: Creating an invoice from orders
+public function generateFromOrders(array $payload): array
+{
+    // 1. Validate payload (order_ids, branch_id, etc.)
+    // 2. Fetch orders and perform business rule checks
+    // 3. Check if orders are already invoiced
+    // 4. Calculate subtotal and VAT
+    // 5. Generate a new invoice number using the repository
+    // 6. Create the invoice and links in a transaction
+    // 7. Dispatch 'invoice.generated' event
+    // 8. Return transformed data
+}
+```
+
+---
+
+## 🧪 TESTING (CodeIgniter 4)
+
+### **Service Test: `tests/Services/InvoiceServiceTest.php`**
+
+Tests the business logic for invoice creation, validation, and calculations in isolation.
 
 ```php
 <?php
-
-namespace Tests\Unit\Services;
-
-use Tests\TestCase;
-use App\Services\InvoiceNumberGenerator;
-use App\Models\Invoice;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class InvoiceNumberGeneratorTest extends TestCase
+class InvoiceServiceTest extends CIUnitTestCase
 {
-    use RefreshDatabase;
+    use DevDatabaseTrait;
 
-    /** @test */
-    public function it_generates_unique_invoice_numbers()
+    public function test_it_generates_invoice_from_multiple_orders()
     {
-        $generator = new InvoiceNumberGenerator();
-        
-        $num1 = $generator->generate(1);
-        $num2 = $generator->generate(1);
-        
-        $this->assertEquals('HD-1-0001', $num1);
-        $this->assertEquals('HD-1-0002', $num2);
+        // Setup: Create completed orders for the same customer and branch
+        // Execute: Call $invoiceService->generateFromOrders(...)
+        // Assert: Check that `invoices` and `invoice_orders` tables are populated correctly
     }
+}
+```
 
-    /** @test */
-    public function it_handles_concurrent_generation()
+### **Integration Test: `tests/Integration/Invoices/MultiOrderInvoiceIntegrationTest.php`**
+
+Tests the `POST /api/invoices/generate` endpoint to ensure the entire flow works correctly.
+
+```php
+<?php
+class MultiOrderInvoiceIntegrationTest extends CIUnitTestCase
+{
+    use FeatureTestTrait;
+
+    public function test_generate_invoice_for_multiple_orders_success()
     {
-        $generator = new InvoiceNumberGenerator();
-        
-        // Simulate concurrent requests
-        $numbers = [];
-        for ($i = 0; $i < 10; $i++) {
-            $numbers[] = $generator->generate(1);
-        }
-        
-        // All numbers should be unique
-        $this->assertCount(10, array_unique($numbers));
+        // Setup: Create orders in the database
+        // Execute: Call the API endpoint
+        $response = $this->post('api/invoices/generate', [...]);
+        // Assert: Check for 201 status and correct response payload
     }
 }
 ```
@@ -393,19 +233,10 @@ class InvoiceNumberGeneratorTest extends TestCase
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Invoices table created
-- [x]  Invoice_orders junction table created
-- [x]  Invoice number generation thread-safe
-- [x]  VAT calculation accurate to 2 decimal places
-- [x]  PDF generation works
-- [x]  Can link multiple orders to one invoice
-- [x]  Cannot link same order to multiple invoices
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**INVOICES_](https://www.notion.so/INVOICES_TABLES-Invoices-Schema-9ff5db4f3f3a4ea78d2298ecca309a73?pvs=21)[TABLES.md](http://TABLES.md)** - Schema details
-- [**INVOICE_](https://www.notion.so/INVOICE_RULES-Invoice-Validation-Rules-183d4e84332f42398496f1ce0f012935?pvs=21)[RULES.md](http://RULES.md)** - Validation rules
-- [**INVOICE_](https://www.notion.so/INVOICE_FLOW-Invoice-Generation-Workflow-f870e3cf753e4c1abc41b11c6fe4748d?pvs=21)[FLOW.md](http://FLOW.md)** - Workflow
+- [x] `invoices` and `invoice_orders` tables created via CodeIgniter Migration.
+- [x] Invoice number generation is thread-safe and follows the `HD-{branch}-{counter}` format.
+- [x] VAT calculation is accurate to 2 decimal places.
+- [x] PDF generation service is implemented (though PDF content is out of scope for this task).
+- [x] Can link multiple completed orders to one invoice.
+- [x] Business logic prevents linking already-invoiced orders.
+- [x] All unit and integration tests are passing.

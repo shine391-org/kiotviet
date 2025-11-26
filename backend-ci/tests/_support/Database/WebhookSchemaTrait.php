@@ -2,64 +2,66 @@
 
 namespace Tests\Support\Database;
 
+/**
+ * WebhookSchemaTrait - Webhook database schema (MySQL-only)
+ * 
+ * @agent-trait: Webhook tables testing schema
+ * @agent-pattern: MySQL-only schema creation (SQLite removed)
+ * @agent-reusable: HIGH
+ */
 trait WebhookSchemaTrait
 {
+    /**
+     * Reset webhook schema for testing (MySQL-only)
+     * 
+     * @agent-pattern: Standard schema reset - COPY THIS
+     * @agent-use: Call this in setUp() for webhook table tests
+     */
     protected function resetWebhookSchema(): void
     {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $isSqlite = strtolower($this->db->DBDriver ?? '') === 'sqlite3';
-        $jsonType = $isSqlite ? 'TEXT' : 'JSON';
-        $boolType = $isSqlite ? 'INTEGER' : 'TINYINT(1)';
-        $idType = $isSqlite ? 'INTEGER' : 'BIGINT UNSIGNED';
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
 
-        if (! $isSqlite) {
-            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach (['webhook_events', 'webhook_subscriptions'] as $table) {
+            $this->db->query('DROP TABLE IF EXISTS `' . $table . '`');
         }
 
-        foreach (['webhook_events', 'db_webhook_events', 'webhook_subscriptions', 'db_webhook_subscriptions'] as $table) {
-            $this->db->query("DROP TABLE IF EXISTS {$table}");
-        }
-
+        // Create tables with MySQL-specific syntax
+        $this->createWebhookSubscriptionTables();
+        $this->createWebhookEventTables();
+        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+    
+    /**
+     * Create webhook subscription tables (MySQL-only)
+     */
+    private function createWebhookSubscriptionTables(): void
+    {
         $this->db->query("CREATE TABLE webhook_subscriptions (
-            id {$idType} PRIMARY KEY {$auto},
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100) NOT NULL,
             target_url VARCHAR(255) NOT NULL,
             secret VARCHAR(255) NULL,
-            is_active {$boolType} DEFAULT 1,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_webhook_subscriptions (
-            id {$idType} PRIMARY KEY {$auto},
-            event VARCHAR(100) NOT NULL,
-            target_url VARCHAR(255) NOT NULL,
-            secret VARCHAR(255) NULL,
-            is_active {$boolType} DEFAULT 1,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
+            is_active TINYINT(1) DEFAULT 1,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    
+    /**
+     * Create webhook event tables (MySQL-only)
+     */
+    private function createWebhookEventTables(): void
+    {
         $this->db->query("CREATE TABLE webhook_events (
-            id {$idType} PRIMARY KEY {$auto},
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100) NOT NULL,
-            payload {$jsonType},
+            payload JSON,
             status VARCHAR(20) DEFAULT 'pending',
-            attempts INTEGER DEFAULT 0,
+            attempts INT DEFAULT 0,
             last_error TEXT NULL,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_webhook_events (
-            id {$idType} PRIMARY KEY {$auto},
-            event VARCHAR(100) NOT NULL,
-            payload {$jsonType},
-            status VARCHAR(20) DEFAULT 'pending',
-            attempts INTEGER DEFAULT 0,
-            last_error TEXT NULL,
-            created_at TEXT,
-            updated_at TEXT
-        )");
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

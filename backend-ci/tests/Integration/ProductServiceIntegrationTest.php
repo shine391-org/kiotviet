@@ -6,21 +6,22 @@ use App\Services\Products\ProductService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\ProductSchemaTrait;
 
 class ProductServiceIntegrationTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use ProductSchemaTrait;
 
     protected ProductService $productService;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
-        $this->productService = new ProductService();
+        $this->productService = new ProductService(null, null, null, $this->db);
     }
 
     public function test_create_product_success(): void
@@ -38,19 +39,17 @@ class ProductServiceIntegrationTest extends CIUnitTestCase
         $this->assertIsArray($result['data']);
         $this->assertEquals('P001', $result['data']['code']);
 
-        $inDb = $this->db->table('db_products')->where('code', 'P001')->get()->getRowArray();
+        $inDb = $this->db->table('products')->where('code', 'P001')->get()->getRowArray();
         $this->assertNotNull($inDb);
         $this->assertEquals('Test Product', $inDb['name']);
     }
 
     public function test_create_product_duplicate_code_fails(): void
     {
-        $this->db->table('db_products')->insert([
-            'code' => 'P001', 'name' => 'Existing', 'created_at' => date('Y-m-d H:i:s')
-        ]);
+        $this->seedProduct(['code' => 'P001', 'name' => 'Existing']);
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Mã sản phẩm đã tồn tại');
+        $this->expectExceptionMessage('Mã sản phẩm đã tồn tại trong danh sách sản phẩm');
 
         $this->productService->create(['code' => 'P001', 'name' => 'Duplicate']);
     }
@@ -62,7 +61,7 @@ class ProductServiceIntegrationTest extends CIUnitTestCase
         $result = $this->productService->update($id, ['name' => 'New Name']);
 
         $this->assertTrue($result['success']);
-        $inDb = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $inDb = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertEquals('New Name', $inDb['name']);
         $this->assertEquals('P002', $inDb['code']);
     }
@@ -74,7 +73,7 @@ class ProductServiceIntegrationTest extends CIUnitTestCase
         $result = $this->productService->delete($id);
 
         $this->assertTrue($result['success']);
-        $inDb = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $inDb = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertNotNull($inDb);
         $this->assertNotNull($inDb['deleted_at']);
     }
@@ -114,7 +113,7 @@ class ProductServiceIntegrationTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

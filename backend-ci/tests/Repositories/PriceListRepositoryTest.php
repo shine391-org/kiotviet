@@ -118,7 +118,7 @@ class PriceListRepositoryTest extends CIUnitTestCase
     {
         $list = $this->seedList('Soft', 'custom');
         $this->repo->delete($list);
-        $row = $this->db->table('db_price_lists')->where('id', $list)->get()->getRowArray();
+        $row = $this->db->table('price_lists')->where('id', $list)->get()->getRowArray();
         $this->assertNotNull($row);
         $this->assertNotNull($row['deleted_at']);
     }
@@ -135,16 +135,16 @@ class PriceListRepositoryTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $extra);
         $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode($payload['apply_to_groups']) : null;
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedProductsBulk(int $count): void
     {
-        $existing = $this->db->table('db_products')->countAllResults();
+        $existing = $this->db->table('products')->countAllResults();
         if ($existing >= $count) { return; }
         for ($i = 1; $i <= $count; $i++) {
-            $this->db->table('db_products')->insert([
+            $this->db->table('products')->insert([
                 'id' => $i,
                 'code' => 'P' . $i,
                 'name' => 'Product ' . $i,

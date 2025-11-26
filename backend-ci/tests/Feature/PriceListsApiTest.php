@@ -5,22 +5,25 @@ namespace Tests\Feature;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
 use Tests\Support\AuthTestTrait;
 
-/** @agent-test: Price lists API @agent-pattern: Feature test (SQLite) */
+/**
+ * @agent-test: Price lists API
+ * @agent-pattern: MySQL-only feature test with DevDatabaseTrait
+ */
 class PriceListsApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
+    use DevDatabaseTrait;
     use PriceListSchemaTrait;
     use AuthTestTrait;
-
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetPriceListSchema();
         $this->seedProduct(1, 100000);
         $this->setUpAuthToken();
@@ -43,7 +46,7 @@ class PriceListsApiTest extends CIUnitTestCase
         $res->assertJSONFragment(['success' => true]);
         $res->assertJSONPath('data.name', 'Giá VIP');
 
-        $row = $this->db->table('db_price_lists')->where('name', 'Giá VIP')->get()->getRowArray();
+        $row = $this->db->table('price_lists')->where('name', 'Giá VIP')->get()->getRowArray();
         $this->assertNotNull($row);
         $this->assertEquals(3, (int) $row['priority']);
     }
@@ -113,13 +116,13 @@ class PriceListsApiTest extends CIUnitTestCase
             $payload['apply_to_groups'] = json_encode((array) $payload['apply_to_groups']);
         }
 
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedProduct(int $id, float $price): void
     {
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'id' => $id,
             'code' => 'P' . $id,
             'name' => 'Prod ' . $id,

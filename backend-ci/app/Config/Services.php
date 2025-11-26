@@ -385,7 +385,8 @@ class Services extends BaseService
             static::returnValidator(false),
             null,
             static::inventoryMovementLogger(false),
-            static::webhookDispatcher(false)
+            static::webhookDispatcher(false),
+            static::inventoryRepository(false)
         );
     }
 
@@ -402,7 +403,7 @@ class Services extends BaseService
             static::orderRepository(false),
             static::orderStatusTransition(false),
             static::orderStatusLogRepository(false),
-            static::inventoryService(false),
+            static::inventoryRepository(false),
             static::inventoryMovementLogger(false),
             static::webhookDispatcher(false)
         );

@@ -6,55 +6,38 @@ use App\Repositories\Returns\ReturnRepository;
 use App\Services\Returns\ReturnService;
 use App\Validators\ReturnValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
-use Tests\Support\Database\ReturnSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
 
-/** @agent-test: ReturnService @agent-pattern: Standard service test */
+/**
+ * @agent-test: ReturnService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + ReturnSchemaTrait (MySQL-only)
+ */
 class ReturnServiceTest extends CIUnitTestCase
 {
-    use ReturnSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
-    protected $db;
     private ReturnService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetReturnSchema();
+        $this->setUpDatabase();
+        
+        // Use ReturnSchemaTrait for comprehensive schema
+        $this->resetCompleteSchema();
         $this->seedBase();
 
         $repo = new ReturnRepository(null, null, $this->db);
         $this->service = new ReturnService($repo, new ReturnValidator());
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

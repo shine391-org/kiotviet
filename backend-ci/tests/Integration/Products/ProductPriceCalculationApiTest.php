@@ -94,7 +94,7 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
 
     private function ensureAuxTables(): void
     {
-        // products + db_products
+        // products
         $this->db->query('CREATE TABLE IF NOT EXISTS products (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(50),
@@ -104,7 +104,6 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_products LIKE products;');
 
         // price lists
         $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
@@ -125,7 +124,6 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_lists LIKE price_lists;');
 
         $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -138,7 +136,6 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_list_items LIKE price_list_items;');
 
         // Minimal category links table
         $this->db->query('CREATE TABLE IF NOT EXISTS product_category_links (
@@ -147,7 +144,6 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             category_id INT,
             created_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_product_category_links LIKE product_category_links;');
 
         // Minimal variant table for lookup
         $this->db->query('CREATE TABLE IF NOT EXISTS product_variants_v2 (
@@ -159,15 +155,14 @@ class ProductPriceCalculationApiTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_product_variants_v2 LIKE product_variants_v2;');
 
         // truncate clean state
         foreach ([
-            'price_list_items','db_price_list_items',
-            'price_lists','db_price_lists',
-            'products','db_products',
-            'product_variants_v2','db_product_variants_v2',
-            'product_category_links','db_product_category_links'
+            'price_list_items',
+            'price_lists',
+            'products',
+            'product_variants_v2',
+            'product_category_links'
         ] as $tbl) {
             if ($this->db->tableExists($tbl)) {
                 $this->db->table($tbl)->truncate();

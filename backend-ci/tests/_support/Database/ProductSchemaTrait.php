@@ -9,13 +9,15 @@ trait ProductSchemaTrait
         // Assumes $this->db is initialized and connected to the test database
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
 
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS db_product_images');
-        $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS product_images');
+        $this->db->query('DROP TABLE IF EXISTS product_category_links');
+        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS products');
+        $this->db->query('DROP TABLE IF EXISTS attributes');
+        $this->db->query('DROP TABLE IF EXISTS attribute_options');
 
-        $this->db->query("CREATE TABLE db_products (
+        $this->db->query("CREATE TABLE products (
             id INTEGER PRIMARY KEY {$auto},
             product_type VARCHAR(50) DEFAULT 'goods',
             code TEXT,
@@ -48,7 +50,7 @@ trait ProductSchemaTrait
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
+        $this->db->query("CREATE TABLE product_variants_v2 (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_name TEXT,
@@ -68,14 +70,14 @@ trait ProductSchemaTrait
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_category_links (
+        $this->db->query("CREATE TABLE product_category_links (
              id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              category_id INTEGER,
              created_at TEXT
         )");
 
-         $this->db->query("CREATE TABLE db_product_images (
+         $this->db->query("CREATE TABLE product_images (
              id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              variant_id INTEGER,
@@ -89,13 +91,38 @@ trait ProductSchemaTrait
              deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_attribute_values (
+        $this->db->query("CREATE TABLE product_attribute_values (
              id INTEGER PRIMARY KEY {$auto},
              product_id INTEGER,
              variant_id INTEGER,
              attribute_id INTEGER,
              option_id INTEGER,
              value_text TEXT,
+             created_at TEXT,
+             updated_at TEXT,
+             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE attributes (
+             id INTEGER PRIMARY KEY {$auto},
+             name TEXT,
+             code TEXT,
+             type TEXT,
+             options TEXT,
+             is_required INTEGER DEFAULT 0,
+             is_filterable INTEGER DEFAULT 0,
+             sort_order INTEGER DEFAULT 0,
+             status VARCHAR(20) DEFAULT 'active',
+             created_at TEXT,
+             updated_at TEXT,
+             deleted_at TEXT
+        )");
+
+        $this->db->query("CREATE TABLE attribute_options (
+             id INTEGER PRIMARY KEY {$auto},
+             attribute_id INTEGER,
+             value TEXT,
+             sort_order INTEGER DEFAULT 0,
              created_at TEXT,
              updated_at TEXT,
              deleted_at TEXT

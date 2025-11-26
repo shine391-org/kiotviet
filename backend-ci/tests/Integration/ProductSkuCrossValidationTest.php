@@ -5,29 +5,35 @@ namespace Tests\Integration;
 use App\Services\Products\ProductService;
 use App\Services\ProductVariants\ProductVariantService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\ProductSchemaTrait;
 
 /**
- * End-to-end style validation tests for code/SKU cross-checks.
- * Uses SQLite in-memory (tests group) to simulate real flows.
+ * @agent-test: Product SKU cross-validation
+ * @agent-pattern: MySQL-only test with DevDatabaseTrait
  */
 class ProductSkuCrossValidationTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use ProductSchemaTrait;
 
     protected ProductService $productService;
     protected ProductVariantService $variantService;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
         $this->productService = new ProductService();
         $this->variantService = new ProductVariantService();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_product_code_cannot_duplicate_variant_sku(): void
@@ -89,13 +95,13 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedVariant(int $productId, string $sku): int
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'variant_name' => $sku,
             'variant_signature' => $sku,

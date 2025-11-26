@@ -1,49 +1,29 @@
 ---
-title: "TASK 05: Order Create Implementation"
-id: "TASK-05-ORDER-CREATE-01"
+title: "TASK 05: Order Create Implementation (CodeIgniter 4)"
+id: "TASK-05-ORDER-CREATE-CI4"
 priority: "P0 (Blocker)"
-estimated_effort: "5 days"
-dependencies: "TASK_01, TASK_04"
-status: "Ready"
+estimated_effort: "3 days"
+dependencies: "PAY-001-CI4, TASK-04-SUPPORTING-TABLES-CI4"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "orders", "create", "POS", "SHIPPING", "validation", "inventory", "API", "backend"]
-purpose: "Implement the full order creation logic, including order number generation, financial calculations, stock validation, and initial status management for both POS and Shipping order types."
+tags: ["task", "orders", "create", "POS", "SHIPPING", "validation", "inventory", "API", "backend", "codeigniter"]
+purpose: "Implement the full order creation logic in CodeIgniter 4, including order number generation, financial calculations, stock validation, and initial status management for both POS and Shipping order types."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "ORDERS-TABLE-01"
-    description: "Schema implemented by this task."
-  - id: "ORDER-RULES-01"
-    description: "Validation rules implemented by this task."
-  - id: "SHIPPING-FLOW-01"
-    description: "Related workflow for Shipping orders."
-  - id: "POS-FLOW-01"
-    description: "Related workflow for POS orders."
-  - id: "PAY-001"
-    description: "Dependency: Payment Methods implementation (TASK_01)."
-  - id: "TASK-04-SUPPORTING-TABLES-01"
-    description: "Dependency: Supporting Tables implementation for logging and inventory (TASK_04)."
-  - id: "API-PAYLOADS-EXAMPLES-01"
-    description: "Provides API examples for this task."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
 ---
 
-# TASK_05: Order Create Implementation
+# TASK 05: Order Create Implementation (CodeIgniter 4)
 
 **Priority:** P0 (Blocker)
-
-**Estimated Effort:** 5 days
-
-**Dependencies:** TASK_01, TASK_04
-
-**Status:** Ready
+**Estimated Effort:** 3 days
+**Dependencies:** TASK 01, TASK 04
+**Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **full order creation logic** with validation, inventory deduction, and status management.
+Implement the complete order creation logic for both **POS (Point of Sale)** and **SHIPPING** orders using **CodeIgniter 4**, including validation, pricing, and persistence.
 
 ---
 
@@ -51,366 +31,173 @@ Implement **full order creation logic** with validation, inventory deduction, an
 
 ### **Functional Requirements**
 
-- [x]  Create orders table schema
-- [x]  Create order_items table schema
-- [x]  Generate order number automatically
-- [x]  Support 2 order types: POS & SHIPPING
-- [x]  Calculate subtotal, discount, total
-- [x]  Validate stock availability
-- [x]  Deduct inventory on processing
-- [x]  Support partial payment tracking
+- [x] Create `orders` and `order_items` tables via Migrations.
+- [x] Generate a unique, sequential order number (`ORD-000001`).
+- [x] Support two order types: `pos` and `shipping`.
+- [x] Apply pricing rules via `PriceCalculatorService`.
+- [x] Validate input payload, including customer data and items.
+- [x] Validate stock availability before creation.
+- [x] Immediately deduct inventory for `pos` orders.
+- [x] Differentiate initial status: `completed` for `pos`, `draft` for `shipping`.
 
 ### **Non-Functional Requirements**
 
-- [x]  Thread-safe order number generation
-- [x]  Transaction integrity
-- [x]  Response time < 500ms
+- [x] Use database transactions to ensure atomicity.
+- [x] Order number generation must be thread-safe (using `lockForUpdate`).
+- [x] API response time for order creation should be < 500ms.
 
 ---
 
-## 🗄️ DATABASE SCHEMA
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-See [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** for full schema.
+### **Migration: `2025-11-23-000005_CreateOrderTables.php`**
 
----
-
-## 🔢 ORDER NUMBER GENERATION
-
-### **Service Class**
+This migration sets up the initial `orders` and `order_items` tables. Note that subsequent migrations (like `2025-11-24-000011_UpdateOrdersForCreate.php`) add more fields.
 
 ```php
 <?php
+namespace App\Database\Migrations;
+use CodeIgniter\Database\Migration;
 
-namespace App\Services;
-
-use App\Models\Order;
-use Illuminate\Support\Facades\DB;
-
-class OrderNumberGenerator
+class CreateOrderTables extends Migration
 {
-    public function generate(): string
+    public function up()
     {
-        return DB::transaction(function () {
-            $counter = Order::lockForUpdate()->count() + 1;
-            return sprintf("ORD-%06d", $counter);
-        });
+        // `orders` table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'customer_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
+            'status' => ['type' => 'VARCHAR', 'constraint' => 50, 'default' => 'draft'],
+            'total' => ['type' => 'DECIMAL', 'constraint' => '14,2', 'default' => 0],
+            // ...other fields like subtotal, discount_total, timestamps
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->createTable('orders', true);
+
+        // `order_items` table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'order_id' => ['type' => 'BIGINT', 'unsigned' => true],
+            'product_id' => ['type' => 'BIGINT', 'unsigned' => true],
+            'quantity' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'default' => 1],
+            'base_price' => ['type' => 'DECIMAL', 'constraint' => '12,2', 'default' => 0],
+            'final_price' => ['type' => 'DECIMAL', 'constraint' => '12,2', 'default' => 0],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addForeignKey('order_id', 'orders', 'id', 'CASCADE', 'CASCADE');
+        $this->forge->createTable('order_items', true);
+    }
+
+    public function down()
+    {
+        $this->forge->dropTable('order_items', true);
+        $this->forge->dropTable('orders', true);
     }
 }
 ```
 
 ---
 
-## 💰 ORDER CALCULATOR
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
 
-### **Service Class**
+### **Validator: `OrderCreateValidator.php`**
+The first line of defense. It sanitizes and validates the raw input from the API request, ensuring all required fields are present and correctly formatted before any business logic is executed.
 
 ```php
-<?php
-
-namespace App\Services;
-
-class OrderCalculator
+// app/Validators/OrderCreateValidator.php
+class OrderCreateValidator
 {
-    public function calculate(array $items, float $discount, float $shippingFee): array
+    public function validate(array $input): array
     {
-        $subtotal = 0;
-        
-        foreach ($items as $item) {
-            $subtotal += $item['price'] * $item['quantity'];
+        if (empty($input['items'])) {
+            throw new InvalidArgumentException('items is required');
         }
-        
-        $total = $subtotal - $discount + $shippingFee;
-        
-        return [
-            'subtotal' => round($subtotal, 2),
-            'discount' => round($discount, 2),
-            'shipping_fee' => round($shippingFee, 2),
-            'total' => round($total, 2),
-        ];
+        // ... more validation rules for branch, customer, etc.
+        return [...]; // Returns a sanitized and structured array
     }
 }
 ```
 
----
-
-## 🏗️ ORDER SERVICE
-
-### **Create Order**
+### **Service: `OrderService.php`**
+This is the core orchestrator for creating an order. It uses other services and repositories to perform its tasks.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use App\Models\OrderItem;
-use Illuminate\Support\Facades\DB;
-
+// app/Services/Orders/OrderService.php
 class OrderService
 {
-    public function __construct(
-        private OrderNumberGenerator $numberGenerator,
-        private OrderCalculator $calculator,
-        private OrderValidator $validator
-    ) {}
-
-    public function create(array $data): Order
+    public function create(array $payload): array
     {
-        return DB::transaction(function () use ($data) {
-            // Validate
-            $this->validator->validateCreate($data);
-            
-            // Generate order number
-            $orderNumber = $this->numberGenerator->generate();
-            
-            // Calculate financials
-            $calculated = $this->calculator->calculate(
-                $data['items'],
-                $data['discount'] ?? 0,
-                $data['shipping_fee'] ?? 0
-            );
-            
-            // Create order
-            $order = Order::create([
-                'order_number' => $orderNumber,
-                'customer_id' => $data['customer_id'],
-                'branch_id' => $data['branch_id'],
-                'order_type' => $data['order_type'],
-                'payment_method' => $data['payment_method'],
-                'subtotal' => $calculated['subtotal'],
-                'discount' => $calculated['discount'],
-                'shipping_fee' => $calculated['shipping_fee'],
-                'total' => $calculated['total'],
-                'paid_amount' => $data['paid_amount'] ?? 0,
-                'is_paid' => $this->determineIsPaid($data),
-                'debt_amount' => $calculated['total'] - ($data['paid_amount'] ?? 0),
-                'status' => $this->determineInitialStatus($data),
-                // Shipping info
-                'shipping_name' => $data['shipping']['name'] ?? null,
-                'shipping_phone' => $data['shipping']['phone'] ?? null,
-                'shipping_address' => $data['shipping']['address'] ?? null,
-                'shipping_ward' => $data['shipping']['ward'] ?? null,
-                'shipping_district' => $data['shipping']['district'] ?? null,
-                'shipping_city' => $data['shipping']['city'] ?? null,
-                'notes' => $data['notes'] ?? null,
-                'created_by' => auth()->id(),
-            ]);
-            
-            // Create order items
-            foreach ($data['items'] as $itemData) {
-                $this->createOrderItem($order, $itemData);
-            }
-            
-            // Load relationships
-            $order->load(['items', 'customer', 'branch']);
-            
-            return $order;
-        });
-    }
+        // 1. Validate payload using OrderCreateValidator
+        $validated = $this->createValidator->validate($payload);
 
-    private function createOrderItem(Order $order, array $itemData): OrderItem
-    {
-        $product = Product::find($itemData['product_id']);
-        $variant = isset($itemData['variant_id']) 
-            ? Variant::find($itemData['variant_id']) 
-            : null;
-        
-        return OrderItem::create([
-            'order_id' => $order->id,
-            'product_id' => $itemData['product_id'],
-            'variant_id' => $itemData['variant_id'] ?? null,
-            'product_name' => $product->name,
-            'variant_name' => $variant?->name,
-            'sku' => $variant?->sku ?? $product->sku,
-            'price' => $itemData['price'],
-            'quantity' => $itemData['quantity'],
-            'subtotal' => $itemData['price'] * $itemData['quantity'],
-        ]);
-    }
+        // 2. Calculate final prices using PriceCalculatorService
+        $preview = $this->preview($validated);
+        $data = $preview['data'];
 
-    private function determineIsPaid(array $data): bool
-    {
-        $total = $data['total'] ?? 0;
-        $paidAmount = $data['paid_amount'] ?? 0;
-        
-        return abs($total - $paidAmount) < 0.01;
-    }
+        // 3. Generate a unique order number
+        $orderNumber = $this->numberGen->generate();
 
-    private function determineInitialStatus(array $data): string
-    {
-        // POS orders are completed immediately
-        if ($data['order_type'] === 'POS') {
-            return 'completed';
+        // 4. Prepare the final order and item payloads
+        $orderPayload = [...];
+        $itemRows = [...];
+
+        // 5. Create the order and items in a database transaction
+        $order = $this->orders->create($orderPayload, $itemRows);
+
+        // 6. Handle side-effects for POS orders (inventory deduction, logging)
+        if ($validated['order_type'] === 'pos') {
+            $this->deductPosInventory($order, ...);
+            $this->logPosStatus($order);
         }
+
+        // 7. Dispatch 'order.created' event
+        $this->emit('order.created', $order);
         
-        // Shipping orders start as draft
-        return 'draft';
+        return ['success' => true, 'data' => $order];
     }
 }
 ```
 
----
-
-## ✅ ORDER VALIDATOR
+### **Repository: `OrderRepository.php`**
+Handles the direct database interaction for creating the `orders` and `order_items` records within a transaction.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Exceptions\ValidationException;
-
-class OrderValidator
+// app/Repositories/Orders/OrderRepository.php
+public function create(array $orderData, array $itemsData): array
 {
-    public function validateCreate(array $data): void
-    {
-        // Rule: Customer required
-        if (empty($data['customer_id'])) {
-            throw new ValidationException('Customer is required', 'ORD_CUSTOMER_REQUIRED');
-        }
-        
-        // Rule: Branch required
-        if (empty($data['branch_id'])) {
-            throw new ValidationException('Branch is required', 'ORD_BRANCH_REQUIRED');
-        }
-        
-        // Rule: At least one item
-        if (empty($data['items']) || count($data['items']) === 0) {
-            throw new ValidationException('Order must have at least one item', 'ORD_NO_ITEMS');
-        }
-        
-        // Rule: POS orders must use CASH
-        if ($data['order_type'] === 'POS' && $data['payment_method'] !== 'CASH') {
-            throw new ValidationException('POS orders must use CASH payment', 'ORD_POS_MUST_CASH');
-        }
-        
-        // Rule: POS orders must be fully paid
-        if ($data['order_type'] === 'POS') {
-            $total = $this->calculateTotal($data);
-            $paidAmount = $data['paid_amount'] ?? 0;
-            
-            if (abs($total - $paidAmount) > 0.01) {
-                throw new ValidationException('POS orders must be fully paid', 'ORD_POS_UNPAID');
-            }
-        }
-        
-        // Rule: Shipping info required for SHIPPING orders
-        if ($data['order_type'] === 'SHIPPING') {
-            if (empty($data['shipping']['address'])) {
-                throw new ValidationException('Shipping address is required', 'ORD_SHIPPING_ADDRESS_REQUIRED');
-            }
-        }
-        
-        // Validate each item
-        foreach ($data['items'] as $item) {
-            $this->validateItem($item, $data['branch_id']);
-        }
-    }
+    $this->db->transStart();
+    
+    // Insert into `orders` table
+    $this->db->table('orders')->insert($orderData);
+    $orderId = $this->db->insertID();
 
-    private function validateItem(array $item, int $branchId): void
-    {
-        // Rule: Product exists
-        $product = Product::find($item['product_id']);
-        if (!$product) {
-            throw new ValidationException(
-                "Product #{$item['product_id']} not found",
-                'ORD_PRODUCT_NOT_FOUND'
-            );
-        }
-        
-        // Rule: Variant required if product has variants
-        if ($product->has_variants && empty($item['variant_id'])) {
-            throw new ValidationException(
-                "Product #{$product->id} requires variant selection",
-                'ORD_VARIANT_REQUIRED'
-            );
-        }
-        
-        // Rule: Stock available
-        $this->validateStock($item, $branchId);
-    }
+    // Batch insert into `order_items` table
+    $items = array_map(fn($item) => ['order_id' => $orderId] + $item, $itemsData);
+    $this->db->table('order_items')->insertBatch($items);
+    
+    $this->db->transComplete();
 
-    private function validateStock(array $item, int $branchId): void
-    {
-        $inventory = Inventory::where('branch_id', $branchId)
-            ->where('product_id', $item['product_id'])
-            ->where('variant_id', $item['variant_id'] ?? null)
-            ->first();
-        
-        if (!$inventory || $inventory->quantity < $item['quantity']) {
-            throw new ValidationException(
-                "Insufficient stock for product #{$item['product_id']}",
-                'ORD_INSUFFICIENT_STOCK'
-            );
-        }
-    }
+    // ... return created order data
 }
 ```
-
----
-
-## 🌐 API CONTROLLER
-
-```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Services\OrderService;
-use Illuminate\Http\Request;
-
-class OrderController extends Controller
-{
-    public function __construct(
-        private OrderService $orderService
-    ) {}
-
-    public function store(Request $request)
-    {
-        try {
-            $order = $this->orderService->create($request->all());
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Order created successfully',
-                'data' => $order
-            ], 201);
-        } catch (\App\Exceptions\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error_code' => $e->getCode()
-            ], 400);
-        }
-    }
-}
-```
-
 ---
 
 ## 🧪 TESTING
 
-See [**API_](https://www.notion.so/API_PAYLOADS-API-Payloads-Examples-52a881d8585f477db57e4cddabdcc004?pvs=21)[PAYLOADS.md](http://PAYLOADS.md)** for examples.
-
----
+-   **`OrderCreateValidatorTest.php`**: Ensures the validation logic correctly accepts valid payloads and rejects invalid ones.
+-   **`OrderServiceTest.php`**: Mocks dependencies like the repository and pricing service to test the orchestration logic of the `create` method in isolation.
+-   **Integration Tests**:
+    -   `tests/Integration/Orders/OrderCreationTest.php`: Tests the full order creation flow via the API.
+    -   `tests/Integration/Orders/OrderPriceListTest.php`: Specifically tests that pricing rules are correctly applied during order creation.
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Can create POS order
-- [x]  Can create SHIPPING order
-- [x]  Order number generated uniquely
-- [x]  Items saved correctly
-- [x]  Financial calculations accurate
-- [x]  Stock validation works
-- [x]  POS orders auto-completed
-- [x]  All validation rules enforced
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** - Schema
-- [**ORDER_](https://www.notion.so/ORDER_RULES-Order-Validation-Rules-2b69907faaac48bdba1d2159793193c3?pvs=21)[RULES.md](http://RULES.md)** - Validation rules
-- [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)** - Workflow
+- [x] API endpoint `POST /api/orders` successfully creates both `pos` and `shipping` orders.
+- [x] Order numbers are generated uniquely and sequentially.
+- [x] `orders` and `order_items` records are created correctly in a single transaction.
+- [x] Prices are correctly calculated by `PriceCalculatorService`.
+- [x] Input validation is strictly enforced.
+- [x] Stock availability is checked before order creation.
+- [x] `pos` orders are created with `completed` status, and inventory is deducted immediately.
+- [x] `shipping` orders are created with `draft` status.
+- [x] All related tests pass successfully.

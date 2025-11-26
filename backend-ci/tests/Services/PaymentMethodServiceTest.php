@@ -8,57 +8,28 @@ use App\Transformers\PaymentMethodTransformer;
 use App\Validators\PaymentMethodValidator;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use InvalidArgumentException;
-use Tests\Support\Database\PaymentMethodSchemaTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
 /**
  * @agent-test: PaymentMethodService
- * @agent-pattern: Standard service test - COPY THIS
+ * @agent-pattern: MySQL-only test with DevDatabaseTrait
  */
 class PaymentMethodServiceTest extends CIUnitTestCase
 {
-    use PaymentMethodSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
     private PaymentMethodService $service;
     private PaymentMethodRepository $repo;
     private CacheInterface $cache;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            // Fallback to MySQL test DB (docker-compose exposes 3307)
-            $config->tests = [
-                'DSN'       => '',
-                'hostname'  => '127.0.0.1',
-                'port'      => 3307,
-                'username'  => 'lanocrm_user',
-                'password'  => 'KP7n4RjcDbedSE2W8GgA',
-                'database'  => 'lanocrm_test',
-                'DBDriver'  => 'MySQLi',
-                'DBPrefix'  => 'db_',
-                'pConnect'  => false,
-                'DBDebug'   => true,
-                'charset'   => 'utf8mb4',
-                'DBCollat'  => 'utf8mb4_general_ci',
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetPaymentSchema();
+        $this->setUpDatabase();
+        $this->resetCompleteSchema();
 
         $this->repo = new PaymentMethodRepository(null, $this->db);
         $validator = new PaymentMethodValidator();
@@ -67,6 +38,12 @@ class PaymentMethodServiceTest extends CIUnitTestCase
         $this->cache->clean();
 
         $this->service = new PaymentMethodService($this->repo, $validator, $transformer, $this->cache);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -135,7 +112,7 @@ class PaymentMethodServiceTest extends CIUnitTestCase
             'is_active' => true,
         ]);
 
-        $this->db->table('db_orders')->insert([
+        $this->db->table('orders')->insert([
             'payment_method' => 'COD',
             'total' => 100000,
             'created_at' => date('Y-m-d H:i:s'),

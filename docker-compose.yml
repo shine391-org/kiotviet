@@ -5,6 +5,7 @@ services:
     build:
       context: .
       dockerfile: backend-ci/Dockerfile
+    command: ["bash", "/var/www/html/docker-start.sh"]
     ports:
       - "8000:80"
     env_file:
@@ -13,6 +14,21 @@ services:
       - db
     volumes:
       - ./backend-ci:/var/www/html
+
+  fe:
+    build:
+      context: ./lanocrm
+      dockerfile: Dockerfile
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    depends_on:
+      - api
+    volumes:
+      - ./lanocrm:/app
+      - /app/node_modules
 
   db:
     image: mysql:8.4

@@ -29,6 +29,11 @@ class ReturnRepository
         $this->db = $db ?? \Config\Database::connect();
     }
 
+    public function db(): BaseConnection
+    {
+        return $this->db;
+    }
+
     /** Generate next return number per order (TX-safe). */
     public function nextNumber(int $orderId): string
     {

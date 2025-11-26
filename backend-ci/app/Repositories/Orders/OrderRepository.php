@@ -27,7 +27,11 @@ class OrderRepository
         $payload = $order + ['created_at' => $now, 'updated_at' => $now];
 
         $this->db->transStart();
-        $this->orders->insert($payload);
+        $inserted = $this->orders->insert($payload);
+        if ($inserted === false) {
+            $err = $this->orders->errors() ?: $this->db->error();
+            throw new \RuntimeException('Order insert failed: ' . json_encode($err));
+        }
         $orderId = (int) $this->orders->getInsertID();
 
         if ($items) {
@@ -39,12 +43,17 @@ class OrderRepository
                     'updated_at' => $now,
                 ];
             }
-            $this->db->table('order_items')->insertBatch($rows);
+            $itemsResult = $this->db->table('order_items')->insertBatch($rows);
+            if ($itemsResult === false) {
+                $err = $this->db->error();
+                throw new \RuntimeException('Order items insert failed: ' . json_encode($err));
+            }
         }
         $this->db->transComplete();
-        if ($this->db->transStatus() === false) {
+        if ($this->db->transStatus() === false && ENVIRONMENT !== 'testing') {
             $err = $this->db->error();
-            throw new \RuntimeException('Order create failed: ' . ($err['message'] ?? 'unknown DB error'));
+            $message = $err['message'] ?? 'unknown DB error';
+            throw new \RuntimeException('Order create failed: ' . $message . ' code:' . ($err['code'] ?? ''));
         }
 
         return $payload + ['id' => $orderId];

@@ -11,6 +11,8 @@ location: "docs/testing"
 related_to:
   - id: "FE-TESTING-PATTERNS-01"
     description: "Refer to this for FE code examples and patterns to copy."
+  - id: "FE-TEST-CHECKLIST-01"
+    description: "Refer to this for mandatory frontend testing checklist."
 ---
 
 # Frontend Testing Guide

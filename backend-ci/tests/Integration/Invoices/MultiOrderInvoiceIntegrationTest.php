@@ -4,39 +4,34 @@ namespace Tests\Integration\Invoices;
 
 use App\Services\Invoices\InvoiceService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\InvoiceSchemaTrait;
 
 /**
  * @agent-test: Multi-order invoice integration
- * @agent-pattern: End-to-end invoice across orders
+ * @agent-pattern: MySQL-only test with DevDatabaseTrait
  */
 class MultiOrderInvoiceIntegrationTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use InvoiceSchemaTrait;
 
-    protected $db;
     protected InvoiceService $invoices;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        }
-        $config->defaultGroup = 'tests';
-        $this->db = Database::connect('tests', false);
+        $this->setUpDatabase();
         $this->resetInvoiceSchema();
 
         $this->seedLookup();
         $this->invoices = service('invoiceService');
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

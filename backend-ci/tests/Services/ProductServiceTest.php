@@ -8,18 +8,31 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\HTTP\Files\UploadedFile;
 use Config\Database;
 use InvalidArgumentException;
+use Tests\Support\Database\DevDatabaseTrait;
 
+/**
+ * @agent-test: ProductService unified MySQL testing
+ * @agent-pattern: Standard service test with DevDatabaseTrait
+ */
 class ProductServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+    use \Tests\Support\Database\ProductSchemaTrait;
+    
     private ProductService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
         $this->service = new ProductService();
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_list_returns_products_with_categories_and_variants(): void
@@ -43,7 +56,7 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->assertTrue($result['success']);
         $this->assertNotEmpty($result['data']['id']);
-        $row = $this->db->table('db_products')->where('id', $result['data']['id'])->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $result['data']['id'])->get()->getRowArray();
         $this->assertSame('P100', $row['code']);
     }
 
@@ -61,7 +74,7 @@ class ProductServiceTest extends CIUnitTestCase
         $updated = $this->service->update($id, ['name' => 'Updated', 'status' => 'inactive']);
 
         $this->assertTrue($updated['success']);
-        $row = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertSame('inactive', $row['status']);
     }
 
@@ -73,7 +86,7 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->assertTrue($deleted['success']);
 
-        $row = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -153,7 +166,7 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertContains($existingId, $result['skipped_ids']);
         $this->assertContains(9999, $result['missing_ids']);
 
-        $row = $this->db->table('db_product_images')->where('id', $newId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $newId)->get()->getRowArray();
         $this->assertSame($productId, (int) $row['product_id']);
         $this->assertNull($row['deleted_at']);
     }
@@ -254,7 +267,7 @@ class ProductServiceTest extends CIUnitTestCase
         $result = $this->service->deleteImage($imageId, false);
 
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $imageId)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -266,7 +279,7 @@ class ProductServiceTest extends CIUnitTestCase
         $result = $this->service->deleteImage($imageId, true);
 
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $imageId)->get()->getRowArray();
         $this->assertNull($row);
     }
 
@@ -377,131 +390,10 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertSame('Removed attribute from product', $result['message']);
     }
 
-    private function resetSchema(): void
-    {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_images');
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
-        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS product_attributes');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-
-        $this->db->query("CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY {$auto},
-            product_type TEXT,
-            code TEXT,
-            barcode TEXT,
-            name TEXT,
-            status TEXT,
-            selling_price REAL,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_category_links (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            category_id INTEGER,
-            created_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_name TEXT,
-            variant_signature TEXT,
-            sku TEXT,
-            barcode TEXT,
-            price REAL,
-            cost_price REAL,
-            stock_quantity REAL,
-            min_stock REAL,
-            max_stock REAL,
-            image_url TEXT,
-            attributes TEXT,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_attributes (
-            id INTEGER PRIMARY KEY {$auto},
-            name TEXT,
-            attribute_key TEXT,
-            type TEXT,
-            slug TEXT,
-            sort_order INTEGER,
-            status TEXT,
-            is_filterable INTEGER,
-            is_required INTEGER,
-            is_visible INTEGER,
-            attribute_values TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_attribute_values (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            attribute_id INTEGER,
-            variant_id INTEGER,
-            option_id INTEGER,
-            value_text TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        // mirror non-prefixed tables because repositories use them
-        $this->db->query("CREATE TABLE product_attributes (
-            id INTEGER PRIMARY KEY {$auto},
-            name TEXT,
-            attribute_key TEXT,
-            type TEXT,
-            slug TEXT,
-            sort_order INTEGER,
-            status TEXT,
-            is_filterable INTEGER,
-            is_required INTEGER,
-            is_visible INTEGER,
-            attribute_values TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE product_attribute_values (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            attribute_id INTEGER,
-            variant_id INTEGER,
-            option_id INTEGER,
-            value_text TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE db_product_images (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_id INTEGER,
-            image_path TEXT,
-            image_url TEXT,
-            is_primary INTEGER,
-            sort_order INTEGER,
-            file_name TEXT,
-            deleted_at TEXT,
-            created_at TEXT,
-            updated_at TEXT
-        )");
-    }
+    /**
+     * @agent-removed: resetSchema() is no longer needed
+     * @agent-use: DevDatabaseTrait handles schema via migrations
+     */
 
     private function seedProduct(array $data): int
     {
@@ -517,13 +409,13 @@ class ProductServiceTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedCategoryLink(int $productId, int $categoryId): void
     {
-        $this->db->table('db_product_category_links')->insert([
+        $this->db->table('product_category_links')->insert([
             'product_id' => $productId,
             'category_id' => $categoryId,
             'created_at' => date('Y-m-d H:i:s'),
@@ -532,7 +424,7 @@ class ProductServiceTest extends CIUnitTestCase
 
     private function seedVariant(int $productId, string $name): void
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'variant_name' => $name,
             'variant_signature' => $name,
@@ -563,7 +455,7 @@ class ProductServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        $this->db->table('db_product_images')->insert($payload);
+        $this->db->table('product_images')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

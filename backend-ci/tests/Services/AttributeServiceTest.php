@@ -40,7 +40,7 @@ class AttributeServiceTest extends CIUnitTestCase
 
         $this->assertTrue($result['success']);
         $this->assertNotEmpty($result['data']['id']);
-        $row = $this->db->table('db_product_attributes')->where('id', $result['data']['id'])->get()->getRowArray();
+        $row = $this->db->table('product_attributes')->where('id', $result['data']['id'])->get()->getRowArray();
         $this->assertNotEmpty($row['slug']);
         $this->assertNotEmpty($row['attribute_key']);
     }
@@ -52,7 +52,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $updated = $this->service->update($id, ['status' => 'inactive']);
 
         $this->assertTrue($updated['success']);
-        $row = $this->db->table('db_product_attributes')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('product_attributes')->where('id', $id)->get()->getRowArray();
         $this->assertSame('inactive', $row['status']);
     }
 
@@ -60,7 +60,7 @@ class AttributeServiceTest extends CIUnitTestCase
     {
         $id = $this->seedAttribute(['name' => 'To delete']);
         $this->service->delete($id);
-        $row = $this->db->table('db_product_attributes')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('product_attributes')->where('id', $id)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -80,7 +80,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $optionId = $this->seedOption($attrId, ['option_name' => 'Old']);
 
         $this->service->updateOption($optionId, ['option_name' => 'New']);
-        $row = $this->db->table('db_product_attribute_options')->where('id', $optionId)->get()->getRowArray();
+        $row = $this->db->table('product_attribute_options')->where('id', $optionId)->get()->getRowArray();
         $this->assertSame('New', $row['option_name']);
     }
 
@@ -90,7 +90,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $optionId = $this->seedOption($attrId, ['option_name' => 'Remove']);
 
         $this->service->deleteOption($optionId);
-        $row = $this->db->table('db_product_attribute_options')->where('id', $optionId)->get()->getRowArray();
+        $row = $this->db->table('product_attribute_options')->where('id', $optionId)->get()->getRowArray();
         $this->assertNull($row);
     }
 
@@ -99,7 +99,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $attrId = $this->seedAttribute(['name' => 'Color']);
         $result = $this->service->createValue(['attribute_id' => $attrId, 'value_text' => 'Blue']);
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_product_attribute_values')->where('id', $result['data']['id'])->get()->getRowArray();
+        $row = $this->db->table('product_attribute_values')->where('id', $result['data']['id'])->get()->getRowArray();
         $this->assertSame('Blue', $row['value_text']);
     }
 
@@ -107,7 +107,7 @@ class AttributeServiceTest extends CIUnitTestCase
     {
         $attrId = $this->seedAttribute(['name' => 'Color']);
         $optionId = $this->seedOption($attrId, ['option_name' => 'Green']);
-        $this->db->table('db_product_attribute_values')->insert([
+        $this->db->table('product_attribute_values')->insert([
             'product_id' => 10,
             'variant_id' => 0,
             'attribute_id' => $attrId,
@@ -142,7 +142,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $this->assertTrue($result['success']);
         $id = $result['data']['id'];
 
-        $row = $this->db->table('db_product_attributes')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('product_attributes')->where('id', $id)->get()->getRowArray();
 
         $this->assertNotNull($row);
         $this->assertSame('select', $row['type']);
@@ -158,11 +158,11 @@ class AttributeServiceTest extends CIUnitTestCase
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attribute_options');
-        $this->db->query('DROP TABLE IF EXISTS db_product_attributes');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
+        $this->db->query('DROP TABLE IF EXISTS product_attribute_options');
+        $this->db->query('DROP TABLE IF EXISTS product_attributes');
 
-        $this->db->query("CREATE TABLE db_product_attributes (
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (
             id INTEGER PRIMARY KEY {$auto},
             name TEXT,
             slug TEXT,
@@ -178,7 +178,7 @@ class AttributeServiceTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_attribute_options (
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (
             id INTEGER PRIMARY KEY {$auto},
             attribute_id INTEGER,
             option_name TEXT,
@@ -192,7 +192,7 @@ class AttributeServiceTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_attribute_values (
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
@@ -221,7 +221,7 @@ class AttributeServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
             'deleted_at' => null,
         ], $data);
-        $this->db->table('db_product_attributes')->insert($payload);
+        $this->db->table('product_attributes')->insert($payload);
         return (int) $this->db->insertID();
     }
 
@@ -239,7 +239,7 @@ class AttributeServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
             'deleted_at' => null,
         ], $data);
-        $this->db->table('db_product_attribute_options')->insert($payload);
+        $this->db->table('product_attribute_options')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

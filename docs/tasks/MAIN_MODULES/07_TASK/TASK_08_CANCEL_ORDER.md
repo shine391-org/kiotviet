@@ -1,487 +1,144 @@
 ---
-title: "TASK 08: Cancel Order Implementation"
-id: "TASK-08-CANCEL-ORDER-01"
+title: "TASK 08: Cancel Order Implementation (CodeIgniter 4)"
+id: "TASK-08-CANCEL-ORDER-CI4"
 priority: "P1 (High)"
-estimated_effort: "3 days"
-dependencies: "TASK_06"
+estimated_effort: "1 day"
+dependencies: "TASK-06-STATUS-MANAGEMENT-CI4"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "orders", "cancel", "inventory", "status-management", "API", "backend"]
-purpose: "Implement the order cancellation logic, including validating cancellable statuses, conditionally restoring inventory, logging movements and status changes, and providing an API endpoint for cancellation."
+tags: ["task", "orders", "cancel", "inventory", "status-management", "API", "backend", "codeigniter"]
+purpose: "Implement the order cancellation logic in CodeIgniter 4, including validating cancellable statuses, conditionally restoring inventory, and providing a dedicated API endpoint."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "ORDERS-TABLE-01"
-    description: "Schema for orders to be cancelled."
-  - id: "SHIPPING-FLOW-01"
-    description: "Cancellation rules within the shipping workflow."
-  - id: "INVENTORY-EDGE-CASES-01"
-    description: "Inventory restoration during cancellation."
-  - id: "CONCURRENCY-EDGE-CASES-01"
-    description: "Concurrency for order updates."
-  - id: "TASK-06-STATUS-MANAGEMENT-01"
-    description: "Dependency: Status management for core logic."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
 ---
 
-# TASK_08: Cancel Order Implementation
+# TASK 08: Cancel Order Implementation (CodeIgniter 4)
 
 **Priority:** P1 (High)
-
-**Estimated Effort:** 3 days
-
-**Dependencies:** TASK_06
-
+**Estimated Effort:** 1 day
+**Dependencies:** TASK 06 (Status Management)
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **order cancellation** with inventory restoration and refund logic.
+Implement the business logic for **cancelling an order**. This process is handled by delegating to the core `OrderStatusService`, which ensures that all status transition rules and side-effects (like inventory restoration) are correctly applied.
 
 ---
 
-## 📋 CANCEL RULES
+## 📋 CANCELLATION RULES
 
-### **When Can Cancel**
+The ability to cancel an order is determined by its current status.
 
-- ✅ draft → cancelled
-- ✅ confirmed → cancelled
-- ✅ processing → cancelled
-- ✅ shipping → cancelled
-- ❌ delivered (cannot cancel)
-- ❌ completed (cannot cancel)
-- ❌ cancelled (already cancelled)
+-   **Cancellable Statuses**:
+    -   ✅ `draft`
+    -   ✅ `confirmed`
+    -   ✅ `processing`
+    -   ✅ `shipping`
+-   **Non-Cancellable Statuses**:
+    -   ❌ `delivered`
+    -   ❌ `completed`
+    -   ❌ `cancelled`
 
-### **Side Effects**
-
-- Restore inventory if status was `processing` or `shipping`
-- Log inventory movements
-- Update timestamps
-- Auto-log status change
-
-See [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)**
+**Key Side-Effect**: Inventory is automatically restored **only if** the order is cancelled from a `processing` or `shipping` status, as this is when stock has already been deducted.
 
 ---
 
-## 🏗️ SERVICE IMPLEMENTATION
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
 
-### **OrderCancellationService**
+The cancellation logic is implemented as a thin facade over the more generic `OrderStatusService`. This keeps the `OrderCancellationService` simple and focused on its specific task.
+
+### **Service: `OrderCancellationService.php`**
+
+This service's primary role is to validate that an order is in a cancellable state before passing the request to the `OrderStatusService`.
 
 ```php
 <?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use App\Models\Inventory;
-use App\Models\InventoryMovement;
-use Illuminate\Support\Facades\DB;
-use App\Exceptions\ValidationException;
+namespace App\Services\Orders;
+use InvalidArgumentException;
 
 class OrderCancellationService
 {
-    private const CANCELLABLE_STATUSES = [
-        'draft',
-        'confirmed',
-        'processing',
-        'shipping'
-    ];
-    
-    private const INVENTORY_DEDUCTED_STATUSES = [
-        'processing',
-        'shipping'
-    ];
+    private const CANCELLABLE = ['draft', 'confirmed', 'processing', 'shipping'];
 
-    public function __construct(
-        private InventoryMovementLogger $movementLogger
-    ) {}
+    protected OrderStatusService $statusService;
+    protected OrderRepositoryAdapter $orders;
 
-    public function cancel(int $orderId, string $reason): Order
+    public function __construct(...)
     {
-        return DB::transaction(function () use ($orderId, $reason) {
-            // Lock order
-            $order = Order::where('id', $orderId)
-                ->lockForUpdate()
-                ->firstOrFail();
-            
-            // Validate can cancel
-            $this->validateCanCancel($order);
-            
-            $oldStatus = $order->status;
-            
-            // Restore inventory if needed
-            if ($this->shouldRestoreInventory($order)) {
-                $this->restoreInventory($order);
-            }
-            
-            // Update order status
-            $order->update([
-                'status' => 'cancelled',
-                'cancelled_at' => now(),
-                'cancellation_reason' => $reason,
-            ]);
-            
-            // Status log will be created automatically by Observer
-            
-            return $order->fresh(['items', 'customer']);
-        });
+        $this->statusService = service('orderStatusService');
+        // ...
     }
 
-    private function validateCanCancel(Order $order): void
+    public function cancel(int $orderId, ?string $reason = null, ?int $userId = null): array
     {
-        if (!in_array($order->status, self::CANCELLABLE_STATUSES)) {
-            throw new ValidationException(
-                "Cannot cancel order in status: {$order->status}",
-                'ORD_CANNOT_CANCEL'
-            );
+        // 1. Fetch the order
+        $order = $this->orders->find($orderId);
+        
+        // 2. Validate if the current status is in the CANCELLABLE list
+        if (!in_array($order['status'] ?? 'draft', self::CANCELLABLE, true)) {
+            throw new InvalidArgumentException('Order cannot be cancelled from current status');
         }
-    }
 
-    private function shouldRestoreInventory(Order $order): bool
-    {
-        return in_array($order->status, self::INVENTORY_DEDUCTED_STATUSES);
-    }
-
-    private function restoreInventory(Order $order): void
-    {
-        foreach ($order->items as $item) {
-            // Restore inventory
-            $inventory = Inventory::where('branch_id', $order->branch_id)
-                ->where('product_id', $item->product_id)
-                ->where('variant_id', $item->variant_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-            
-            $inventory->increment('quantity', $item->quantity);
-            
-            // Log movement
-            $this->movementLogger->log(
-                branchId: $order->branch_id,
-                productId: $item->product_id,
-                variantId: $item->variant_id,
-                type: 'adjustment',
-                quantity: +$item->quantity,
-                referenceType: 'order',
-                referenceId: $order->id,
-                notes: "Restored from cancelled order #{$order->order_number}"
-            );
-        }
+        // 3. Delegate the actual status update to the core status service
+        return $this->statusService->updateStatus($orderId, 'cancelled', $userId, $reason);
     }
 }
 ```
 
----
+### **Core Logic in `OrderStatusService`**
 
-## 🌐 API CONTROLLER
+The `OrderStatusService` handles the heavy lifting when it receives the `cancelled` status transition:
+1.  It checks if inventory needs to be restored (i.e., if the `from` status was `processing` or `shipping`).
+2.  It calls the `restoreInventory` method, which increases `quantity_on_hand` and logs an `adjustment` movement.
+3.  It updates the order's `status` to `cancelled` and sets the `cancelled_at` timestamp and `cancellation_reason`.
+4.  It logs the status change in `order_status_logs`.
+
+### **Controller: `OrderCancellationController.php`**
+
+A dedicated, thin controller provides the API endpoint.
 
 ```php
-<?php
-
-namespace App\Http\Controllers\Api;
-
-use App\Http\Controllers\Controller;
-use App\Services\OrderCancellationService;
-use Illuminate\Http\Request;
-
-class OrderCancellationController extends Controller
+// app/Controllers/Api/OrderCancellationController.php
+class OrderCancellationController extends BaseController
 {
-    public function __construct(
-        private OrderCancellationService $cancellationService
-    ) {}
+    use ResponseTrait;
+    protected OrderCancellationService $service;
 
-    /**
-     * Cancel an order
-     * 
-     * @param Request $request
-     * @param int $id
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function cancel(Request $request, int $id)
+    public function __construct()
     {
-        $validated = $request->validate([
-            'reason' => 'required|string|max:500',
-        ]);
+        $this->service = service('orderCancellationService');
+    }
 
-        try {
-            $order = $this->cancellationService->cancel(
-                $id,
-                $validated['reason']
-            );
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Order cancelled successfully',
-                'data' => [
-                    'id' => $order->id,
-                    'order_number' => $order->order_number,
-                    'status' => $order->status,
-                    'previous_status' => $order->getOriginal('status'),
-                    'cancelled_at' => $order->cancelled_at->toIso8601String(),
-                    'cancellation_reason' => $order->cancellation_reason,
-                ]
-            ]);
-        } catch (\App\Exceptions\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-                'error_code' => $e->getCode()
-            ], 400);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to cancel order',
-                'error' => $e->getMessage()
-            ], 500);
-        }
+    /** @agent-use: POST /api/orders/{id}/cancel */
+    public function cancel($id)
+    {
+        $reason = $this->request->getJSON(true)['reason'] ?? null;
+        return $this->wrap(fn () => $this->respond(
+            $this->service->cancel((int) $id, $reason, $this->userId())
+        ));
     }
 }
-```
-
----
-
-## 🛣️ ROUTES
-
-```php
-// routes/api.php
-
-Route::prefix('orders')->group(function () {
-    Route::patch('/{id}/cancel', [OrderCancellationController::class, 'cancel']);
-});
 ```
 
 ---
 
 ## 🧪 TESTING
 
-### **Unit Tests**
-
-```php
-<?php
-
-namespace Tests\Unit\Services;
-
-use Tests\TestCase;
-use App\Services\OrderCancellationService;
-use App\Models\Order;
-use App\Models\OrderItem;
-use App\Models\Inventory;
-use App\Models\InventoryMovement;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class OrderCancellationServiceTest extends TestCase
-{
-    use RefreshDatabase;
-
-    private OrderCancellationService $service;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->service = app(OrderCancellationService::class);
-    }
-
-    /** @test */
-    public function it_can_cancel_order_from_draft()
-    {
-        $order = Order::factory()->create(['status' => 'draft']);
-
-        $result = $this->service->cancel($order->id, 'Customer changed mind');
-
-        $this->assertEquals('cancelled', $result->status);
-        $this->assertNotNull($result->cancelled_at);
-        $this->assertEquals('Customer changed mind', $result->cancellation_reason);
-    }
-
-    /** @test */
-    public function it_restores_inventory_when_cancelling_processing_order()
-    {
-        // Setup
-        $order = Order::factory()->create([
-            'status' => 'processing',
-            'branch_id' => 1
-        ]);
-        
-        $item = OrderItem::factory()->create([
-            'order_id' => $order->id,
-            'product_id' => 101,
-            'variant_id' => 201,
-            'quantity' => 5
-        ]);
-        
-        $inventory = Inventory::factory()->create([
-            'branch_id' => 1,
-            'product_id' => 101,
-            'variant_id' => 201,
-            'quantity' => 10 // Already deducted 5
-        ]);
-
-        // Execute
-        $this->service->cancel($order->id, 'Test cancellation');
-
-        // Assert
-        $inventory->refresh();
-        $this->assertEquals(15, $inventory->quantity); // 10 + 5
-        
-        // Check movement logged
-        $this->assertDatabaseHas('inventory_movements', [
-            'branch_id' => 1,
-            'product_id' => 101,
-            'variant_id' => 201,
-            'type' => 'adjustment',
-            'quantity' => 5,
-            'reference_type' => 'order',
-            'reference_id' => $order->id
-        ]);
-    }
-
-    /** @test */
-    public function it_does_not_restore_inventory_when_cancelling_draft_order()
-    {
-        $order = Order::factory()->create(['status' => 'draft']);
-        $item = OrderItem::factory()->create(['order_id' => $order->id]);
-
-        $movementCountBefore = InventoryMovement::count();
-
-        $this->service->cancel($order->id, 'Test');
-
-        $movementCountAfter = InventoryMovement::count();
-        $this->assertEquals($movementCountBefore, $movementCountAfter);
-    }
-
-    /** @test */
-    public function it_cannot_cancel_delivered_order()
-    {
-        $order = Order::factory()->create(['status' => 'delivered']);
-
-        $this->expectException(\App\Exceptions\ValidationException::class);
-        $this->expectExceptionMessage('Cannot cancel order in status: delivered');
-
-        $this->service->cancel($order->id, 'Test');
-    }
-
-    /** @test */
-    public function it_cannot_cancel_completed_order()
-    {
-        $order = Order::factory()->create(['status' => 'completed']);
-
-        $this->expectException(\App\Exceptions\ValidationException::class);
-
-        $this->service->cancel($order->id, 'Test');
-    }
-
-    /** @test */
-    public function it_cannot_cancel_already_cancelled_order()
-    {
-        $order = Order::factory()->create(['status' => 'cancelled']);
-
-        $this->expectException(\App\Exceptions\ValidationException::class);
-
-        $this->service->cancel($order->id, 'Test');
-    }
-}
-```
-
----
-
-### **Feature Tests**
-
-```php
-<?php
-
-namespace Tests\Feature\Api;
-
-use Tests\TestCase;
-use App\Models\Order;
-use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class OrderCancellationApiTest extends TestCase
-{
-    use RefreshDatabase;
-
-    /** @test */
-    public function it_can_cancel_order_via_api()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create(['status' => 'confirmed']);
-
-        $response = $this->actingAs($user, 'api')
-            ->patchJson("/api/orders/{$order->id}/cancel", [
-                'reason' => 'Customer requested cancellation'
-            ]);
-
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'data' => [
-                    'status' => 'cancelled'
-                ]
-            ]);
-
-        $this->assertDatabaseHas('orders', [
-            'id' => $order->id,
-            'status' => 'cancelled',
-            'cancellation_reason' => 'Customer requested cancellation'
-        ]);
-    }
-
-    /** @test */
-    public function it_requires_reason_to_cancel()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create(['status' => 'confirmed']);
-
-        $response = $this->actingAs($user, 'api')
-            ->patchJson("/api/orders/{$order->id}/cancel", []);
-
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['reason']);
-    }
-
-    /** @test */
-    public function it_returns_error_when_cancelling_delivered_order()
-    {
-        $user = User::factory()->create();
-        $order = Order::factory()->create(['status' => 'delivered']);
-
-        $response = $this->actingAs($user, 'api')
-            ->patchJson("/api/orders/{$order->id}/cancel", [
-                'reason' => 'Test'
-            ]);
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'error_code' => 'ORD_CANNOT_CANCEL'
-            ]);
-    }
-}
-```
+-   **`OrderCancellationServiceTest.php`**: Contains unit tests that verify:
+    -   An order in a `processing` state can be cancelled, and that inventory is correctly restored.
+    -   An order in a `completed` state cannot be cancelled and throws the correct exception.
+-   **Integration Tests**: Test the `POST /api/orders/{id}/cancel` endpoint to ensure the entire flow, including validation and side-effects, works correctly through an API call.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Can cancel from draft, confirmed, processing, shipping
-- [x]  Cannot cancel from delivered, completed, cancelled
-- [x]  Inventory restored if status was processing/shipping
-- [x]  Inventory NOT restored if status was draft/confirmed
-- [x]  Timestamps (cancelled_at) updated
-- [x]  Cancellation reason stored
-- [x]  Inventory movements logged
-- [x]  Status logs created automatically
-- [x]  API endpoint works
-- [x]  All unit tests passing
-- [x]  All feature tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)** - Order workflow
-- [**ORDERS_](https://www.notion.so/ORDERS_TABLE-Orders-Table-Schema-36b32ddd5ce6421abd19d92589270881?pvs=21)[TABLE.md](http://TABLE.md)** - Schema
-- [**INVENTORY.md**](http://INVENTORY.md) - Inventory edge cases
-- [**CONCURRENCY.md**](http://CONCURRENCY.md) - Race conditions
+- [x] Orders can be cancelled from `draft`, `confirmed`, `processing`, and `shipping` statuses.
+- [x] Attempting to cancel an order in a `delivered` or `completed` state results in a validation error.
+- [x] Inventory is correctly restored **only if** the order was cancelled from a `processing` or `shipping` status.
+- [x] The `cancellation_reason` and `cancelled_at` fields in the `orders` table are correctly populated.
+- [x] A corresponding status change is logged in `order_status_logs`.
+- [x] The `POST /api/orders/{id}/cancel` endpoint is functional and secure.
+- [x] All relevant unit and integration tests are passing.

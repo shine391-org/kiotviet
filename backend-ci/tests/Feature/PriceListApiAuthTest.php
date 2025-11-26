@@ -57,7 +57,7 @@ class PriceListApiAuthTest extends CIUnitTestCase
             ->withBody(json_encode(['name' => 'A']), 'application/json')
             ->post('api/price-lists');
         $base->assertStatus(201);
-        $idA = (int) $this->db->table('db_price_lists')->where('name', 'A')->get()->getRow('id');
+        $idA = (int) $this->db->table('price_lists')->where('name', 'A')->get()->getRow('id');
         $this->assertNotNull($idA);
 
         // create B referencing A
@@ -65,7 +65,7 @@ class PriceListApiAuthTest extends CIUnitTestCase
             ->withBody(json_encode(['name' => 'B', 'base_price_list_id' => $idA]), 'application/json')
             ->post('api/price-lists');
         $b->assertStatus(201);
-        $idB = (int) $this->db->table('db_price_lists')->where('name', 'B')->get()->getRow('id');
+        $idB = (int) $this->db->table('price_lists')->where('name', 'B')->get()->getRow('id');
         $this->assertNotNull($idB);
 
         // update A to reference B -> should 400

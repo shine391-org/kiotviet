@@ -1,14 +1,14 @@
 ---
-title: "TASK 03: Returns Schema Implementation"
-id: "RETURN-001"
+title: "TASK 03: Returns Schema Implementation (CodeIgniter 4)"
+id: "RETURN-001-CI4"
 priority: "P1 (High)"
-estimated_effort: "3 days"
-dependencies: "TASK_05 (Order Create)"
+estimated_effort: "2 days"
+dependencies: "TASK-05-ORDER-CREATE-01"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "returns", "database", "schema", "workflow", "refund", "backend"]
-purpose: "Implement the 'returns' and 'return_items' tables, including number generation, partial returns, approval workflow, refund calculation, and item condition tracking."
+tags: ["task", "returns", "database", "schema", "workflow", "refund", "backend", "codeigniter"]
+purpose: "Implement the 'returns' and 'return_items' tables using CodeIgniter 4, including number generation, partial returns, approval workflow, and refund calculation."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
 related_to:
   - id: "RETURNS-TABLES-01"
@@ -23,23 +23,18 @@ related_to:
     description: "Dependency: Order Create implementation."
 ---
 
-# TASK_03_RETURNS_SCHEMA - Returns Schema Implementation
-
-# TASK_03: Returns Schema Implementation
+# TASK 03: Returns Schema Implementation (CodeIgniter 4)
 
 **Priority:** P1 (High)
-
-**Estimated Effort:** 3 days
-
+**Estimated Effort:** 2 days
 **Dependencies:** TASK_05 (Order Create)
-
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **returns** and **return_items** tables with return workflow.
+Implement the **`returns`** and **`return_items`** tables to manage the entire return workflow, from request to completion, using **CodeIgniter 4**.
 
 ---
 
@@ -47,258 +42,171 @@ Implement **returns** and **return_items** tables with return workflow.
 
 ### **Functional Requirements**
 
-- [x]  Create returns table
-- [x]  Create return_items table
-- [x]  Generate return number automatically
-- [x]  Support partial returns
-- [x]  Implement approval workflow
-- [x]  Calculate refund amount
-- [x]  Track item condition
+- [x] Create `returns` table for the main return request.
+- [x] Create `return_items` table to track individual items being returned.
+- [x] Automatically generate a unique return number (e.g., `TH-{order_id}-{counter}`).
+- [x] Support partial returns (returning only some items from an order).
+- [x] Implement a status-based approval workflow (`pending` → `approved` → `completed`).
+- [x] Calculate refund amounts dynamically.
+- [x] Track the condition of returned items (`new`, `used`, `damaged`).
 
 ### **Non-Functional Requirements**
 
-- [x]  Return number must be unique
-- [x]  Support optimistic locking
-- [x]  Transaction integrity
+- [x] Ensure return numbers are unique per order.
+- [x] Use optimistic locking (`lock_version`) to prevent race conditions during status updates.
+- [x] Ensure all database operations are wrapped in transactions for data integrity.
 
 ---
 
-## 🗄️ DATABASE SCHEMA
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-See [**RETURNS_](https://www.notion.so/RETURNS_TABLES-Returns-Schema-4a31069a3d7f44999f9b01f61ed53b1a?pvs=21)[TABLES.md](http://TABLES.md)** for full schema.
-
-### **Key Points**
-
-```sql
-CREATE TABLE returns (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    return_number VARCHAR(50) UNIQUE NOT NULL, -- TH-{order_id}-{counter}
-    order_id BIGINT UNSIGNED NOT NULL,
-    customer_id BIGINT UNSIGNED NOT NULL,
-    
-    -- Financial
-    return_amount DECIMAL(15,2) NOT NULL,
-    refund_shipping_fee BOOLEAN DEFAULT FALSE,
-    refund_amount DECIMAL(15,2) NOT NULL,
-    refund_method ENUM('cash', 'bank_transfer') NULL,
-    
-    -- Status workflow
-    status ENUM('pending', 'approved', 'rejected', 'completed') NOT NULL DEFAULT 'pending',
-    
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT,
-    INDEX idx_status (status)
-);
-
-CREATE TABLE return_items (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    return_id BIGINT UNSIGNED NOT NULL,
-    order_item_id BIGINT UNSIGNED NOT NULL,
-    quantity_returned INT NOT NULL,
-    condition ENUM('new', 'used', 'damaged') NULL,
-    
-    FOREIGN KEY (return_id) REFERENCES returns(id) ON DELETE CASCADE
-);
-```
-
----
-
-## 🔢 RETURN NUMBER GENERATION
+### **Migration: `2025-11-24-000009_CreateReturnTables.php`**
 
 ```php
 <?php
+namespace App\Database\Migrations;
+use CodeIgniter\Database\Migration;
 
-namespace App\Services;
-
-use App\Models\Return;
-use Illuminate\Support\Facades\DB;
-
-class ReturnNumberGenerator
+class CreateReturnTables extends Migration
 {
-    public function generate(int $orderId): string
+    public function up()
     {
-        return DB::transaction(function () use ($orderId) {
-            $counter = Return::where('order_id', $orderId)
-                ->lockForUpdate()
-                ->count() + 1;
-            
-            return sprintf("TH-%d-%d", $orderId, $counter);
-        });
+        // `returns` table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'return_number' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => false],
+            'order_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'customer_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'return_amount' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'default' => 0],
+            'refund_shipping_fee' => ['type' => 'TINYINT', 'constraint' => 1, 'default' => 0],
+            'refund_amount' => ['type' => 'DECIMAL', 'constraint' => '15,2', 'null' => true],
+            'refund_method' => ['type' => 'ENUM', 'constraint' => ['cash', 'bank_transfer'], 'null' => true],
+            'reason' => ['type' => 'ENUM', 'constraint' => ['defective', 'wrong_item', 'not_satisfied', 'other'], 'null' => false],
+            'reason_detail' => ['type' => 'TEXT', 'null' => true],
+            'status' => ['type' => 'ENUM', 'constraint' => ['pending', 'approved', 'rejected', 'completed'], 'default' => 'pending'],
+            'lock_version' => ['type' => 'INT', 'constraint' => 10, 'default' => 0],
+            'created_by' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            // ... timestamps and other audit fields
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addUniqueKey('return_number');
+        $this->forge->createTable('returns', true);
+
+        // `return_items` table
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'return_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'order_item_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'quantity_returned' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'null' => false],
+            'item_condition' => ['type' => 'ENUM', 'constraint' => ['new', 'used', 'damaged'], 'null' => true],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey('return_id');
+        $this->forge->createTable('return_items', true);
+    }
+
+    public function down()
+    {
+        $this->forge->dropTable('return_items', true);
+        $this->forge->dropTable('returns', true);
     }
 }
 ```
 
 ---
 
-## 💰 REFUND CALCULATION
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
+
+### **Models**
+-   **`ReturnModel.php`**: Defines the schema for the `returns` table.
+-   **`ReturnItemModel.php`**: Defines the schema for the `return_items` table.
+
+### **Repository: `ReturnRepository.php`**
+Manages data access, including generating the next return number for an order.
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Order;
-use App\Models\Return;
-
-class RefundCalculator
+// Example: Generate the next return number
+public function nextNumber(int $orderId): string
 {
-    public function calculate(Order $order, array $returnItems, bool $refundShipping = false): array
-    {
-        $returnAmount = 0;
-        
-        foreach ($returnItems as $item) {
-            $orderItem = $order->items()->find($item['order_item_id']);
-            $returnAmount += $orderItem->price * $item['quantity_returned'];
-        }
-        
-        $refundAmount = $returnAmount;
-        
-        // Add shipping fee if applicable
-        if ($refundShipping) {
-            $refundAmount += $order->shipping_fee;
-        }
-        
-        return [
-            'return_amount' => $returnAmount,
-            'refund_amount' => $refundAmount,
-        ];
-    }
+    return $this->db->transAction(function () use ($orderId) {
+        $count = $this->model->builder()
+            ->where('order_id', $orderId)
+            ->countAllResults();
+        return "TH-{$orderId}-" . ($count + 1);
+    });
+}
+```
+
+### **Service: `ReturnService.php`**
+Orchestrates the entire return process, from creation to completion.
+
+```php
+// Example: Create a new return request
+public function create(array $payload): array
+{
+    // 1. Validate payload using ReturnValidator
+    // 2. Fetch the order and perform business rule checks (is completed? within window?)
+    // 3. Build return items and calculate return amount
+    // 4. Generate a new return number using the repository
+    // 5. Create the `returns` and `return_items` records in a transaction
+    // 6. Dispatch 'return.requested' event
+    // 7. Return transformed data
+}
+
+// Example: Approve a return
+public function approve(int $id, array $payload): array
+{
+    // 1. Validate payload and check current status
+    // 2. Recalculate refund_amount based on shipping fee decision
+    // 3. Transition status to 'approved' using optimistic locking (version)
+    // 4. Dispatch 'return.approved' event
 }
 ```
 
 ---
 
-## ✅ VALIDATION RULES
+## 🧪 TESTING (CodeIgniter 4)
 
-See [**RETURN_](https://www.notion.so/RETURN_RULES-Return-Validation-Rules-db33c3b127d8446890582464f443d07c?pvs=21)[RULES.md](http://RULES.md)**
-
-**Key Validations:**
-
-- Order must be completed
-- Within return window (30 days)
-- Quantity not exceeding purchased quantity
-- Cannot over-return
-
----
-
-## 🧪 TESTING
-
-### **Unit Test: Return Number Generation**
+### **Service Test: `tests/Services/ReturnServiceTest.php`**
+Tests the business logic of the return workflow.
 
 ```php
 <?php
-
-namespace Tests\Unit\Services;
-
-use Tests\TestCase;
-use App\Services\ReturnNumberGenerator;
-use App\Models\Order;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class ReturnNumberGeneratorTest extends TestCase
+class ReturnServiceTest extends CIUnitTestCase
 {
-    use RefreshDatabase;
+    use DevDatabaseTrait;
 
-    /** @test */
-    public function it_generates_sequential_return_numbers()
+    public function test_it_creates_return_request_successfully()
     {
-        $order = Order::factory()->create();
-        $generator = new ReturnNumberGenerator();
-        
-        $num1 = $generator->generate($order->id);
-        $num2 = $generator->generate($order->id);
-        
-        $this->assertEquals("TH-{$order->id}-1", $num1);
-        $this->assertEquals("TH-{$order->id}-2", $num2);
+        // Setup: Create a completed order
+        // Execute: Call $returnService->create(...)
+        // Assert: Verify `returns` and `return_items` tables have the correct data
+    }
+
+    public function test_it_prevents_returning_more_than_purchased()
+    {
+        // Setup: Create an order with 2 items
+        // Execute: Attempt to return 3 items via $returnService->create(...)
+        // Assert: Expect an InvalidArgumentException
     }
 }
 ```
 
----
-
-### **Feature Test: Create Return**
+### **Integration Test: `tests/Integration/Returns/ReturnsApiTest.php`**
+Tests the API endpoints for creating and managing returns.
 
 ```php
 <?php
-
-namespace Tests\Feature\Api;
-
-use Tests\TestCase;
-use App\Models\Order;
-use App\Models\OrderItem;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class ReturnApiTest extends TestCase
+class ReturnsApiTest extends CIUnitTestCase
 {
-    use RefreshDatabase;
+    use FeatureTestTrait;
 
-    /** @test */
-    public function it_can_create_return_request()
+    public function test_customer_can_create_return_request()
     {
-        $order = Order::factory()->create([
-            'status' => 'completed',
-            'completed_at' => now()->subDays(5)
-        ]);
-        
-        $item = OrderItem::factory()->create([
-            'order_id' => $order->id,
-            'quantity' => 3,
-            'price' => 100000
-        ]);
-        
-        $response = $this->postJson('/api/returns', [
-            'order_id' => $order->id,
-            'reason' => 'defective',
-            'reason_detail' => 'Product is broken',
-            'items' => [
-                [
-                    'order_item_id' => $item->id,
-                    'quantity_returned' => 1
-                ]
-            ]
-        ]);
-        
-        $response->assertStatus(201)
-            ->assertJsonStructure([
-                'success',
-                'data' => [
-                    'return_number',
-                    'status',
-                    'return_amount'
-                ]
-            ]);
-        
-        $this->assertDatabaseHas('returns', [
-            'order_id' => $order->id,
-            'status' => 'pending',
-            'return_amount' => 100000
-        ]);
-    }
-    
-    /** @test */
-    public function it_cannot_return_more_than_purchased()
-    {
-        $order = Order::factory()->create(['status' => 'completed']);
-        $item = OrderItem::factory()->create([
-            'order_id' => $order->id,
-            'quantity' => 2
-        ]);
-        
-        $response = $this->postJson('/api/returns', [
-            'order_id' => $order->id,
-            'reason' => 'defective',
-            'items' => [
-                [
-                    'order_item_id' => $item->id,
-                    'quantity_returned' => 5
-                ]
-            ]
-        ]);
-        
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'error_code' => 'RET_QUANTITY_EXCEEDED'
-            ]);
+        // Setup: Create a user and a completed order
+        // Execute: POST to /api/returns with valid data
+        $response = $this->post('api/returns', [...]);
+        // Assert: Check for 201 status and correct JSON response
     }
 }
 ```
@@ -307,19 +215,11 @@ class ReturnApiTest extends TestCase
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Returns table created
-- [x]  Return_items table created
-- [x]  Return number generation works
-- [x]  Can create return with multiple items
-- [x]  Cannot return more than purchased
-- [x]  Refund calculation correct
-- [x]  Approval workflow implemented
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**RETURNS_](https://www.notion.so/RETURNS_TABLES-Returns-Schema-4a31069a3d7f44999f9b01f61ed53b1a?pvs=21)[TABLES.md](http://TABLES.md)** - Schema details
-- [**RETURN_](https://www.notion.so/RETURN_RULES-Return-Validation-Rules-db33c3b127d8446890582464f443d07c?pvs=21)[RULES.md](http://RULES.md)** - Validation rules
-- [**RETURN_](https://www.notion.so/RETURN_FLOW-Return-Orders-Workflow-7f5c5a4af4054c22a265d011c56b10e3?pvs=21)[FLOW.md](http://FLOW.md)** - Workflow
+- [x]  `returns` and `return_items` tables are created correctly.
+- [x]  Return number is generated uniquely per order (`TH-{order_id}-{counter}`).
+- [x]  Can create a return request for one or more items from a completed order.
+- [x]  Validation prevents returning more items than were purchased.
+- [x]  Validation prevents creating returns for orders that are not `completed`.
+- [x]  Refund amount is calculated correctly based on returned items.
+- [x]  The approval workflow (`pending` -> `approved` -> `completed`) is correctly implemented.
+- [x]  All unit and integration tests pass.

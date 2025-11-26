@@ -8,13 +8,14 @@ use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
-use Tests\Support\Database\StatusSchemaTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
 /** @agent-test: OrderStatusService @agent-pattern: Status workflow test */
 class OrderStatusServiceTest extends CIUnitTestCase
 {
-    use StatusSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
     protected $db;
     private OrderStatusService $service;
@@ -23,33 +24,8 @@ class OrderStatusServiceTest extends CIUnitTestCase
     {
         parent::setUp();
 
-        $config = config('Database');
-        if (extension_loaded('sqlite3')) {
-            $config->tests = [
-                'DBDriver'    => 'SQLite3',
-                'database'    => ':memory:',
-                'DBPrefix'    => 'db_',
-                'foreignKeys' => true,
-                'DBDebug'     => true,
-            ];
-        } else {
-            $config->tests = [
-                'hostname' => '127.0.0.1',
-                'port' => 3307,
-                'username' => 'lanocrm_user',
-                'password' => 'KP7n4RjcDbedSE2W8GgA',
-                'database' => 'lanocrm_test',
-                'DBDriver' => 'MySQLi',
-                'DBPrefix' => '',
-                'charset' => 'utf8mb4',
-                'DBCollat' => 'utf8mb4_general_ci',
-                'DBDebug' => true,
-            ];
-        }
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetStatusSchema();
+        $this->setUpDatabase();
+        $this->resetCompleteSchema();
 
         $orders = new OrderRepository(null, null, $this->db);
         $logs = new OrderStatusLogRepository(null, $this->db);
@@ -147,10 +123,17 @@ class OrderStatusServiceTest extends CIUnitTestCase
     {
         $this->db->table('inventory_stock')->insert([
             'branch_id' => $branchId,
+            'warehouse_id' => $branchId,
             'product_id' => $productId,
             'variant_id' => null,
             'quantity_on_hand' => $qty,
             'quantity_reserved' => 0,
         ]);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }

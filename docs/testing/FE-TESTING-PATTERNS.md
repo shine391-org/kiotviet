@@ -1,3 +1,22 @@
+---
+title: "Frontend Testing Patterns - LANO CRM"
+id: "FE-TESTING-PATTERNS-01"
+version: "1.0"
+status: "Active"
+module: "Frontend Testing"
+type: "Code Patterns"
+tags: ["testing", "patterns", "frontend", "react", "vitest", "playwright", "unit-tests", "integration-tests"]
+purpose: "Provides standard, copy-pasteable code patterns for frontend testing in LANO CRM (React)."
+location: "docs/testing"
+updated: "2025-11-25"
+changes: "Added YAML frontmatter and standardized documentation structure."
+related_to:
+  - id: "FE-TESTING-GUIDE-01"
+    description: "Refer to the main frontend testing guide for process and setup."
+  - id: "FE-TEST-CHECKLIST-01"
+    description: "Refer to this for mandatory frontend testing checklist."
+---
+
 # Frontend Testing Patterns
 
 **COPY THESE PATTERNS TO START FAST**

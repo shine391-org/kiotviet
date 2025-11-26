@@ -25,14 +25,14 @@
     <php>
         <server name="app.baseURL" value="http://localhost:8000/"/>
         
-        <!-- CRITICAL: Test database config (uses db-test on host port 3307) -->
+        <!-- CRITICAL: Test database config (uses main database with transaction rollback) -->
         <env name="database.tests.hostname" value="db-test"/>
         <env name="database.tests.port" value="3306"/>
         <env name="database.tests.database" value="lanocrm_test"/>
         <env name="database.tests.username" value="lanocrm_user"/>
         <env name="database.tests.password" value="KP7n4RjcDbedSE2W8GgA"/>
         <env name="database.tests.DBDriver" value="MySQLi"/>
-        <env name="database.tests.DBPrefix" value="db_"/>
+        <env name="database.tests.DBPrefix" value=""/>
         <env name="ENABLE_API_TESTS" value="1"/>
         
         <const name="HOMEPATH" value="./"/>

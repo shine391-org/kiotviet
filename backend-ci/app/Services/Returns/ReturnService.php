@@ -23,6 +23,7 @@ class ReturnService
     protected ReturnValidator $validator;
     protected ReturnTransformer $transformer;
     protected InventoryMovementLogger $movements;
+    protected \App\Repositories\Inventory\InventoryRepository $inventoryRepo;
     protected ?WebhookDispatcher $webhooks;
     protected int $returnWindowDays = 30;
 
@@ -31,13 +32,15 @@ class ReturnService
         ?ReturnValidator $validator = null,
         ?ReturnTransformer $transformer = null,
         ?InventoryMovementLogger $movements = null,
-        ?WebhookDispatcher $webhooks = null
+        ?WebhookDispatcher $webhooks = null,
+        ?\App\Repositories\Inventory\InventoryRepository $inventoryRepo = null
     ) {
         $this->repo = $repo ?? new ReturnRepository();
         $this->validator = $validator ?? new ReturnValidator();
         $this->transformer = $transformer ?? new ReturnTransformer();
         $this->movements = $movements ?? new InventoryMovementLogger();
         $this->webhooks = $webhooks;
+        $this->inventoryRepo = $inventoryRepo ?? new \App\Repositories\Inventory\InventoryRepository();
     }
 
     /** List returns. @agent-use: GET /api/returns */
@@ -233,45 +236,30 @@ class ReturnService
         $branchId = $order['branch_id'] ?? null;
         if (! $branchId) { return; }
 
-        $db = \Config\Database::connect();
-        if (! $db->tableExists('inventory_stock')) { return; }
+        $db = $this->repo->db(); // Use repo's db connection
 
-        $db->transStart();
         foreach ($return['items'] as $item) {
             $qty = (float) ($item['quantity_returned'] ?? 0);
-            $productId = (int) ($item['order_item_id_product_id'] ?? $item['product_id'] ?? 0);
+            if ($qty <= 0) { continue; }
+
             // When items come from repo they don't include product_id; fetch from order_items table
             $orderItemId = (int) ($item['order_item_id'] ?? 0);
             $orderItem = $db->table('order_items')->where('id', $orderItemId)->get()->getRowArray();
             if (! $orderItem) { continue; }
+            
             $productId = (int) $orderItem['product_id'];
             $variantId = isset($orderItem['variant_id']) ? (int) $orderItem['variant_id'] : null;
 
-            // upsert stock
-            $row = $db->table('inventory_stock')
-                ->where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->get()->getRowArray();
-            if ($row) {
-                $db->table('inventory_stock')
-                    ->where('id', $row['id'])
-                    ->set('quantity_on_hand', 'quantity_on_hand + ' . $qty, false)
-                    ->update();
-            } else {
-                $db->table('inventory_stock')->insert([
-                    'branch_id' => $branchId,
-                    'product_id' => $productId,
-                    'variant_id' => $variantId,
-                    'quantity_on_hand' => $qty,
-                    'quantity_reserved' => 0,
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s'),
-                ]);
+            try {
+                $this->inventoryRepo->adjustStockWithLock($productId, $variantId, (int)$branchId, $qty);
+            } catch (\Throwable $e) {
+                log_message('error', 'Failed to restock item during return completion: ' . $e->getMessage());
+                // Decide if we should re-throw or just log. For now, log and continue.
+                continue;
             }
 
             $this->movements->log(
-                branchId: $branchId,
+                branchId: (int)$branchId,
                 productId: $productId,
                 variantId: $variantId,
                 type: 'return',
@@ -282,7 +270,6 @@ class ReturnService
                 createdBy: $return['approved_by'] ?? null
             );
         }
-        $db->transComplete();
     }
 
     private function assertOrderCompleted(array $order): void

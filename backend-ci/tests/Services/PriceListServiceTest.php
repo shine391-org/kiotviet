@@ -8,33 +8,28 @@ use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
 use App\Validators\PriceListValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
-use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
-/** @agent-test: PriceListService @agent-pattern: Auto-update chain */
+/**
+ * @agent-test: PriceListService unified MySQL testing
+ * @agent-pattern: Service test with DevDatabaseTrait + PriceListSchemaTrait (MySQL-only)
+ */
 class PriceListServiceTest extends CIUnitTestCase
 {
-    use PriceListSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
-    protected $db;
     private PriceListService $service;
     private int $productId;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        $config->tests = [
-            'DBDriver'    => 'SQLite3',
-            'database'    => ':memory:',
-            'DBPrefix'    => 'db_',
-            'foreignKeys' => true,
-            'DBDebug'     => true,
-        ];
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetPriceListSchema();
+        $this->setUpDatabase();
+        
+        // Use PriceListSchemaTrait for comprehensive schema
+        $this->resetCompleteSchema();
 
         $repo = new PriceListRepository(null, $this->db);
         $items = new PriceListItemRepository(null, $this->db);
@@ -53,6 +48,12 @@ class PriceListServiceTest extends CIUnitTestCase
         $productId = (int) $this->db->insertID();
 
         $this->productId = $productId;
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */
@@ -140,7 +141,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function priceOf(int $listId, int $productId): ?float
     {
-        $row = $this->db->table('db_price_list_items')
+        $row = $this->db->table('price_list_items')
             ->where('price_list_id', $listId)
             ->where('product_id', $productId)
             ->get()->getRowArray();
