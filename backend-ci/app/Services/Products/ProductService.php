@@ -217,6 +217,16 @@ class ProductService
         $product = $this->repo->findById($id); if (! $product) { throw new RuntimeException('Product not found'); } return $product;
     }
 
+    /** Find product by code (null if not found). @agent-use: Import flows @agent-pattern: Lookup by unique code */
+    public function findByCode(string $code): ?array
+    {
+        $trimmed = trim($code);
+        if ($trimmed === '') {
+            return null;
+        }
+        return $this->repo->findByCode($trimmed);
+    }
+
     private function formatPagination(array $filters, int $total): array
     {
         $limit = $filters['limit'] ?? 20; $page = $filters['page'] ?? 1; $totalPages = (int) ceil($total / ($limit ?: 1));

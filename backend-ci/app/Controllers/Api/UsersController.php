@@ -17,9 +17,11 @@ class UsersController extends BaseController
     protected RoleModel $roles;
     protected ModelHasRolesModel $userRoles;
     protected PermissionModel $permissions;
+    protected \CodeIgniter\Database\BaseConnection $db;
 
     public function __construct()
     {
+        $this->db = \Config\Database::connect();
         $this->users = new UserModel();
         $this->roles = new RoleModel();
         $this->userRoles = new ModelHasRolesModel();
@@ -126,27 +128,128 @@ class UsersController extends BaseController
         if (empty($data['username']) || empty($data['password'])) {
             return $this->failValidationErrors('username và password bắt buộc');
         }
+        
+        // Extract role_id before creating user
+        $roleId = $data['role_id'] ?? null;
+        
+        // Prepare user payload
         $payload = $data;
         $payload['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
         $payload['created_at'] = date('Y-m-d H:i:s');
         $payload['updated_at'] = date('Y-m-d H:i:s');
-        $this->users->insert($payload);
-        $id = $this->users->getInsertID();
-        return $this->respondCreated(['success' => true, 'data' => ['id' => $id] + $payload]);
+        
+        // Remove role_id from user payload (it goes to separate table)
+        unset($payload['role_id']);
+        
+        // Start transaction
+        $this->db->transStart();
+        
+        try {
+            // Create user
+            $this->users->insert($payload);
+            $userId = $this->users->getInsertID();
+            
+            // Assign role if provided
+            if ($roleId) {
+                // Validate role exists
+                $role = $this->roles->find($roleId);
+                if (!$role) {
+                    $this->db->transRollback();
+                    return $this->failValidationErrors('Invalid role_id');
+                }
+                
+                // Assign role to user
+                $this->userRoles->insert([
+                    'role_id' => $roleId,
+                    'model_type' => 'App\\Models\\User',
+                    'model_id' => $userId
+                ]);
+            }
+            
+            $this->db->transComplete();
+            
+            if ($this->db->transStatus() === false) {
+                return $this->fail('Failed to create user');
+            }
+            
+            return $this->respondCreated([
+                'success' => true,
+                'data' => ['id' => $userId] + $payload
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            return $this->fail('Error: ' . $e->getMessage());
+        }
     }
 
     public function update($id)
     {
         $data = $this->request->getJSON(true);
-        if (!$this->users->find($id)) {
+        $user = $this->users->find($id);
+        
+        if (!$user) {
             return $this->failNotFound('User not found');
         }
+        
+        // Extract role_id before updating user
+        $roleId = $data['role_id'] ?? null;
+        
+        // Prepare user payload
+        $payload = $data;
+        
+        // Handle password if provided
         if (!empty($data['password'])) {
-            $data['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
+            $payload['password'] = password_hash($data['password'], PASSWORD_BCRYPT);
         }
-        $data['updated_at'] = date('Y-m-d H:i:s');
-        $this->users->update($id, $data);
-        return $this->respond(['success' => true]);
+        
+        $payload['updated_at'] = date('Y-m-d H:i:s');
+        
+        // Remove role_id from user payload (it goes to separate table)
+        unset($payload['role_id']);
+        
+        // Start transaction
+        $this->db->transStart();
+        
+        try {
+            // Update user
+            $this->users->update($id, $payload);
+            
+            // Update role assignment if provided
+            if ($roleId !== null) {
+                // Remove existing role assignment
+                $this->userRoles->where('model_id', $id)->delete();
+                
+                // Assign new role if not empty
+                if (!empty($roleId)) {
+                    // Validate role exists
+                    $role = $this->roles->find($roleId);
+                    if (!$role) {
+                        $this->db->transRollback();
+                        return $this->failValidationErrors('Invalid role_id');
+                    }
+                    
+                    // Assign new role to user
+                    $this->userRoles->insert([
+                        'role_id' => $roleId,
+                        'model_type' => 'App\\Models\\User',
+                        'model_id' => $id
+                    ]);
+                }
+            }
+            
+            $this->db->transComplete();
+            
+            if ($this->db->transStatus() === false) {
+                return $this->fail('Failed to update user');
+            }
+            
+            return $this->respond(['success' => true]);
+            
+        } catch (\Exception $e) {
+            $this->db->transRollback();
+            return $this->fail('Error: ' . $e->getMessage());
+        }
     }
 
     public function delete($id)

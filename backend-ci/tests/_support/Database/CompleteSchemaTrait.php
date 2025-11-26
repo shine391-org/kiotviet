@@ -94,17 +94,41 @@ trait CompleteSchemaTrait
         $this->db->query("DROP TABLE IF EXISTS customers");
         $this->db->query("CREATE TABLE customers (
             id INT AUTO_INCREMENT PRIMARY KEY,
+            organization_id INT UNSIGNED NOT NULL DEFAULT 1,
             customer_group_id INT NULL,
             name VARCHAR(255) NOT NULL,
             email VARCHAR(255) NULL,
             phone VARCHAR(50) NULL,
+            phone2 VARCHAR(50) NULL,
+            gender ENUM('MALE','FEMALE','OTHER') NULL,
+            facebook VARCHAR(255) NULL,
+            customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL',
+            company_name VARCHAR(255) NULL,
+            tax_code VARCHAR(20) NULL,
+            buyer_name VARCHAR(255) NULL,
+            invoice_company_name VARCHAR(255) NULL,
+            invoice_address VARCHAR(500) NULL,
+            invoice_province VARCHAR(120) NULL,
+            invoice_district VARCHAR(120) NULL,
+            invoice_ward VARCHAR(120) NULL,
+            invoice_email VARCHAR(255) NULL,
+            invoice_phone VARCHAR(50) NULL,
+            cccd_cmnd VARCHAR(50) NULL,
+            id_number VARCHAR(50) NULL,
+            bank_account VARCHAR(50) NULL,
+            bank_name VARCHAR(255) NULL,
+            notes TEXT NULL,
             created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL,
+            UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code),
+            KEY idx_customers_tax_code (tax_code)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS products");
         $sql = "CREATE TABLE products (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_type VARCHAR(50) NULL,
@@ -114,6 +138,9 @@ trait CompleteSchemaTrait
             status ENUM('active','inactive') DEFAULT 'active',
             selling_price DECIMAL(10,2) DEFAULT 0,
             wholesale_price DECIMAL(10,2) DEFAULT 0,
+            purchase_price DECIMAL(10,2) DEFAULT 0,
+            stock_quantity INT DEFAULT 0,
+            alert_stock INT DEFAULT 0,
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL,
             deleted_at TIMESTAMP NULL
@@ -123,6 +150,7 @@ trait CompleteSchemaTrait
 
     private function createProductCategoryTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS product_categories");
         $sql = "CREATE TABLE product_categories (
             id INT AUTO_INCREMENT PRIMARY KEY,
             parent_id INT NULL,
@@ -142,6 +170,7 @@ trait CompleteSchemaTrait
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
         $this->db->query($sql);
 
+        $this->db->query("DROP TABLE IF EXISTS product_category_links");
         $link = "CREATE TABLE product_category_links (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT,
@@ -153,6 +182,7 @@ trait CompleteSchemaTrait
 
     private function createProductVariantTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS product_variants_v2");
         $sql = "CREATE TABLE product_variants_v2 (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT NOT NULL,
@@ -177,6 +207,7 @@ trait CompleteSchemaTrait
 
     private function createProductImageTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS product_images");
         $sql = "CREATE TABLE product_images (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT NULL,
@@ -247,6 +278,7 @@ trait CompleteSchemaTrait
 
     private function createPriceListTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS price_lists");
         $sql = "CREATE TABLE price_lists (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255) NOT NULL,
@@ -270,6 +302,7 @@ trait CompleteSchemaTrait
 
     private function createPriceListItemTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS price_list_items");
         $sql = "CREATE TABLE price_list_items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             price_list_id INT NOT NULL,
@@ -287,6 +320,7 @@ trait CompleteSchemaTrait
 
     private function createOrderSequenceTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS order_sequences");
         $sql = "CREATE TABLE order_sequences (
             id INT AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
@@ -300,6 +334,7 @@ trait CompleteSchemaTrait
 
     private function createPaymentMethodTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS payment_methods");
         $sql = "CREATE TABLE payment_methods (
             id INT AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(50) UNIQUE,
@@ -317,6 +352,7 @@ trait CompleteSchemaTrait
 
     private function createOrderTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS orders");
         $sql = "CREATE TABLE orders (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             order_number VARCHAR(50) NULL,
@@ -359,6 +395,7 @@ trait CompleteSchemaTrait
 
     private function createOrderItemTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS order_items");
         $sql = "CREATE TABLE order_items (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             order_id BIGINT UNSIGNED NOT NULL,
@@ -378,6 +415,7 @@ trait CompleteSchemaTrait
 
     private function createReturnTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS returns");
         $sql = "CREATE TABLE returns (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             return_number VARCHAR(50) UNIQUE,
@@ -406,6 +444,7 @@ trait CompleteSchemaTrait
 
     private function createReturnItemTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS return_items");
         $sql = "CREATE TABLE return_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             return_id INT,
@@ -420,6 +459,7 @@ trait CompleteSchemaTrait
 
     private function createInvoiceTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS invoices");
         $sql = "CREATE TABLE invoices (
             id INT AUTO_INCREMENT PRIMARY KEY,
             invoice_number VARCHAR(50) UNIQUE,
@@ -443,6 +483,7 @@ trait CompleteSchemaTrait
 
     private function createInvoiceOrderTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS invoice_orders");
         $sql = "CREATE TABLE invoice_orders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             invoice_id INT,
@@ -455,6 +496,7 @@ trait CompleteSchemaTrait
 
     private function createInventoryStockTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS inventory_stock");
         $sql = "CREATE TABLE inventory_stock (
             id INT AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
@@ -473,6 +515,7 @@ trait CompleteSchemaTrait
 
     private function createInventoryMovementTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS inventory_movements");
         $sql = "CREATE TABLE inventory_movements (
             id INT AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
@@ -492,6 +535,7 @@ trait CompleteSchemaTrait
 
     private function createInventoryAlertTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS inventory_alerts");
         $sql = "CREATE TABLE inventory_alerts (
             id INT AUTO_INCREMENT PRIMARY KEY,
             alert_type VARCHAR(50),
@@ -511,6 +555,7 @@ trait CompleteSchemaTrait
 
     private function createOrderStatusLogTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS order_status_logs");
         $sql = "CREATE TABLE order_status_logs (
             id INT AUTO_INCREMENT PRIMARY KEY,
             order_id INT NOT NULL,
@@ -527,6 +572,7 @@ trait CompleteSchemaTrait
 
     private function createWebhookTables(): void
     {
+        $this->db->query("DROP TABLE IF EXISTS webhook_subscriptions");
         $subs = "CREATE TABLE webhook_subscriptions (
             id INT AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100),
@@ -538,6 +584,7 @@ trait CompleteSchemaTrait
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
         $this->db->query($subs);
 
+        $this->db->query("DROP TABLE IF EXISTS webhook_events");
         $events = "CREATE TABLE webhook_events (
             id INT AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100),

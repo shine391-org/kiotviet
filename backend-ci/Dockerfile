@@ -2,9 +2,10 @@ FROM php:8.4-apache
 
 # System deps & PHP extensions
 RUN apt-get update \
- && apt-get install -y git unzip libzip-dev libicu-dev \
- && docker-php-ext-install pdo pdo_mysql mysqli intl zip \
- && docker-php-ext-enable pdo_mysql mysqli intl \
+ && apt-get install -y git unzip libzip-dev libicu-dev libpng-dev libjpeg-dev libfreetype6-dev \
+ && docker-php-ext-configure gd --with-freetype --with-jpeg \
+ && docker-php-ext-install pdo pdo_mysql mysqli intl zip gd \
+ && docker-php-ext-enable pdo_mysql mysqli intl gd \
  && rm -rf /var/lib/apt/lists/*
 
 # Apache config for CI4 public directory

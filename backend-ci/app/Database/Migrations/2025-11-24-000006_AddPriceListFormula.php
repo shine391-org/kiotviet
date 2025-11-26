@@ -9,6 +9,44 @@ class AddPriceListFormula extends Migration
 {
     public function up()
     {
+        // Idempotent: skip if all schema elements already added (common in seeded dev DB)
+        $db = \Config\Database::connect();
+        
+        // Check if all columns exist
+        $columnsExist = $db->fieldExists('formula', 'price_lists') &&
+                       $db->fieldExists('base_price_list_id', 'price_lists') &&
+                       $db->fieldExists('auto_update', 'price_lists') &&
+                       $db->fieldExists('rounding_rule', 'price_lists');
+        
+        // Check if index exists
+        $indexExists = false;
+        if ($columnsExist) {
+            $indexes = $db->getIndexData('price_lists');
+            foreach ($indexes as $index) {
+                if ($index->name === 'idx_base_price_list') {
+                    $indexExists = true;
+                    break;
+                }
+            }
+        }
+        
+        // Check if foreign key exists
+        $foreignKeyExists = false;
+        if ($columnsExist) {
+            $foreignKeys = $db->getForeignKeyData('price_lists');
+            foreach ($foreignKeys as $fk) {
+                if ($fk->constraint_name === 'price_lists_base_price_list_id_foreign') {
+                    $foreignKeyExists = true;
+                    break;
+                }
+            }
+        }
+        
+        // Skip migration if everything already exists
+        if ($columnsExist && $indexExists && $foreignKeyExists) {
+            return;
+        }
+
         $this->forge->addColumn('price_lists', [
             'formula' => [
                 'type' => 'TEXT',

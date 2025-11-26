@@ -1,1 +1,185 @@
-backend-ci/writable/.phpunit/cache/code-coverage/
+# ========================================
+# LANO CRM - Root .gitignore
+# ========================================
+# This file contains common ignore rules for the entire project
+# Module-specific rules are in their respective .gitignore files
+
+# ========================================
+# OS Generated Files
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ========================================
+# Database Files (Dumps & Exports)
+# ========================================
+# Database dumps from local PHP environment
+db_lano*
+*.sql
+*.sql.gz
+*.dump
+*.backup
+
+# ========================================
+# Docker & Environment Files
+# ========================================
+# Environment files (security risk)
+.env
+.env.local
+.env.*.local
+
+# Docker volumes and temporary data
+tmp/
+
+# ========================================
+# Logs & Debug Files
+# ========================================
+*.log
+debug.log
+error.log
+access.log
+
+# ========================================
+# IDE & Editor Files
+# ========================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PHPStorm, WebStorm, etc.)
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ========================================
+# Backup & Temporary Files
+# ========================================
+*.bak
+*.backup
+*.tmp
+*.temp
+*.old
+*.orig
+*.rej
+~*
+
+# ========================================
+# Build & Distribution Files
+# ========================================
+build/
+dist/
+out/
+coverage/
+
+# ========================================
+# Node.js (Common files)
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ========================================
+# PHP (Common files)
+# ========================================
+composer.phar
+/vendor/
+phpunit
+phpunit.xml.dist.backup
+
+# ========================================
+# Testing & Coverage
+# ========================================
+coverage/
+tests/coverage/
+.phpunit/cache/
+test-results/
+playwright-report/
+
+# ========================================
+# Documentation Generated Files
+# ========================================
+/docs/build/
+/docs/_build/
+/site/
+
+# ========================================
+# Cache & Performance
+# ========================================
+.cache/
+.eslintcache
+.stylelintcache
+.phpintel
+
+# ========================================
+# Sensitive Configuration
+# ========================================
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# Configuration with secrets
+config/local.*
+secrets.*
+credentials.*
+
+# ========================================
+# Project Specific
+# ========================================
+# Screenshots and captures
+screenshots/*.png
+screenshots/*.jpg
+screenshots/*.jpeg
+
+# Database exports from development
+db_lano
+db_lano.gz
+
+# Generated documentation
+docs/generated/
+api-docs/
+
+# ========================================
+# Keep these directories but ignore contents
+# ========================================
+# Keep directory structure but ignore files
+logs/*
+!logs/.gitkeep
+temp/*
+!temp/.gitkeep
+tmp/*
+!tmp/.gitkeep
+uploads/*
+!uploads/.gitkeep

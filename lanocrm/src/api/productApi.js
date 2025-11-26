@@ -42,6 +42,7 @@ const ENDPOINTS = {
   // Import/Export
   PRODUCTS_IMPORT: '/products/import',
   PRODUCTS_EXPORT: '/products/export',
+  PRODUCTS_IMPORT_TEMPLATE: '/products/import/template',
 };
 
 /**
@@ -521,6 +522,22 @@ export const exportProducts = async (params = {}) => {
     return response.data;
   } catch (error) {
     console.error('exportProducts Error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Download import template Excel
+ * @returns {Promise<Blob>}
+ */
+export const downloadImportTemplate = async () => {
+  try {
+    const response = await axiosInstance.get(ENDPOINTS.PRODUCTS_IMPORT_TEMPLATE, {
+      responseType: 'blob',
+    });
+    return response.data;
+  } catch (error) {
+    console.error('downloadImportTemplate Error:', error);
     throw error;
   }
 };
@@ -1242,6 +1259,7 @@ const productApi = {
   uploadMultipleProductImages,
   importProducts,
   exportProducts,
+  downloadImportTemplate,
   getProductAnalytics,
   downloadFile,
   getProductsWithVariants,

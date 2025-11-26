@@ -4,6 +4,8 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Services\Products\ProductService;
+use App\Services\Products\ProductImportService;
+use App\Services\Products\ProductExportService;
 use CodeIgniter\API\ResponseTrait;
 
 /** Products API. @agent-controller: Products @agent-pattern: Thin controller - routing only */
@@ -12,7 +14,15 @@ class ProductsController extends BaseController
     use ResponseTrait;
 
     protected ProductService $service;
-    public function __construct() { $this->service = service('productService'); }
+    protected ProductImportService $importService;
+    protected ProductExportService $exportService;
+
+    public function __construct()
+    {
+        $this->service = service('productService');
+        $this->importService = service('productImportService');
+        $this->exportService = service('productExportService');
+    }
 
     /** List products. @agent-use: GET /api/products @agent-pattern: Standard list pattern */
     public function index() { return $this->wrap(fn () => $this->respond($this->service->list($this->request->getGet()))); }
@@ -86,11 +96,81 @@ class ProductsController extends BaseController
     /** Remove attribute from product. @agent-use: DELETE /api/products/{pid}/attribute-values/{aid} @agent-pattern: Delegate delete */
     public function removeAttributeFromProduct($productId, $attributeId) { return $this->wrap(fn () => $this->respond($this->service->removeAttributeFromProduct((int) $productId, (int) $attributeId))); }
 
-    /** Import stub. @agent-use: POST /api/products/import @agent-pattern: File ingest stub */
-    public function import() { $file = $this->request->getFile('file'); return $this->wrap(fn () => $this->respond($this->service->import($file))); }
+    /** Import products from Excel. @agent-endpoint: POST /api/products/import @agent-pattern: File upload delegation */
+    public function import()
+    {
+        $file = $this->request->getFile('file');
+        if (! $file || $file->getError() !== UPLOAD_ERR_OK || $file->hasMoved()) {
+            return $this->failValidationErrors('Invalid file upload');
+        }
+        $ext = strtolower((string) $file->getExtension());
+        if (! in_array($ext, ['xlsx', 'xls'], true)) {
+            return $this->failValidationErrors('Only .xlsx or .xls files are allowed');
+        }
+        if ($file->getSize() > 5 * 1024 * 1024) {
+            return $this->failValidationErrors('File too large (max 5MB)');
+        }
 
-    /** Export CSV. @agent-use: GET /api/products/export @agent-pattern: Simple export */
-    public function export() { return $this->wrap(fn () => $this->response->setHeader('Content-Type', 'text/csv')->setBody($this->service->export())); }
+        $tempDir = WRITEPATH . 'uploads';
+        if (! is_dir($tempDir)) {
+            mkdir($tempDir, 0775, true);
+        }
+        $tempName = $file->getRandomName();
+        $path = $tempDir . DIRECTORY_SEPARATOR . $tempName;
+
+        if ($file->isValid()) {
+            $file->move($tempDir, $tempName, true);
+        } elseif (is_file($file->getTempName())) {
+            // Testing/CLI fallback where is_uploaded_file() fails
+            copy($file->getTempName(), $path);
+        } else {
+            return $this->failValidationErrors('Invalid file upload');
+        }
+
+        try {
+            $result = $this->importService->importFromExcel($path);
+            @unlink($path);
+            return $this->respond($result);
+        } catch (\Throwable $e) {
+            @unlink($path);
+            return $this->failServerError($e->getMessage());
+        }
+    }
+
+    /** Export products to Excel. @agent-endpoint: GET /api/products/export @agent-pattern: Excel download response */
+    public function export()
+    {
+        try {
+            $filters = $this->request->getGet();
+            $path = $this->exportService->exportToExcel($filters);
+            $content = file_get_contents($path);
+            @unlink($path);
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="products_' . date('Ymd_His') . '.xlsx"')
+                ->setBody($content);
+        } catch (\Throwable $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
+
+    /** Download import template. @agent-endpoint: GET /api/products/import/template @agent-pattern: Template download */
+    public function importTemplate()
+    {
+        try {
+            $path = $this->importService->generateTemplate();
+            $content = file_get_contents($path);
+            @unlink($path);
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="products_import_template.xlsx"')
+                ->setBody($content);
+        } catch (\Throwable $e) {
+            return $this->failServerError($e->getMessage());
+        }
+    }
 
     /** Analytics summary. @agent-use: GET /api/products/{id}/analytics @agent-pattern: Delegate analytics */
     public function analytics($id) { return $this->wrap(fn () => $this->respond($this->service->analytics((int) $id))); }

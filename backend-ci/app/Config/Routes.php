@@ -45,6 +45,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('products/check-code', 'Api\\ProductsController::checkCode');
     $routes->post('products/import', 'Api\\ProductsController::import');
     $routes->get('products/export', 'Api\\ProductsController::export');
+    $routes->get('products/import/template', 'Api\\ProductsController::importTemplate');
     $routes->get('products/(:num)/analytics', 'Api\\ProductsController::analytics/$1');
     $routes->get('products/media/library', 'Api\\ProductMediaController::library');
     $routes->get('products/media/by-date', 'Api\\ProductMediaController::byDate');
@@ -61,6 +62,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->put('users/update/(:num)', 'Api\\UsersController::update/$1');
     $routes->delete('users/delete/(:num)', 'Api\\UsersController::delete/$1');
     $routes->put('users/(:num)/change-password', 'Api\\UsersController::changePassword/$1');
+
+    // Customers
+    $routes->get('customers', 'Api\\CustomersController::index');
+    $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
+    $routes->post('customers', 'Api\\CustomersController::create');
+    $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
     $routes->get('variants', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/deleted', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');
@@ -88,7 +95,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->delete('attribute-values/(:num)', 'Api\\AttributesController::deleteValue/$1');
 
     $routes->get('roles', 'Api\\RolesController::index');
+    $routes->get('roles/(:num)', 'Api\\RolesController::show/$1');
     $routes->post('roles/create', 'Api\\RolesController::create');
+    $routes->put('roles/update/(:num)', 'Api\\RolesController::update/$1');
+    $routes->delete('roles/delete/(:num)', 'Api\\RolesController::delete/$1');
+    $routes->get('roles/(:num)/permissions', 'Api\\RolesController::getPermissions/$1');
+    $routes->post('roles/(:num)/assign-permissions', 'Api\\RolesController::assignPermissions/$1');
     $routes->get('permissions', 'Api\\PermissionsController::index');
 
     $routes->get('branches', 'Api\\BranchesController::index');
@@ -133,6 +145,16 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->patch('returns/(:num)/approve', 'Api\\ReturnsController::approve/$1');
     $routes->patch('returns/(:num)/reject', 'Api\\ReturnsController::reject/$1');
     $routes->patch('returns/(:num)/complete', 'Api\\ReturnsController::complete/$1');
+
+    // Cash Transactions
+    $routes->post('cash/receipt', 'Api\\CashTransactionsController::createReceipt');
+    $routes->post('cash/payment', 'Api\\CashTransactionsController::createPayment');
+    $routes->get('cash/transactions', 'Api\\CashTransactionsController::list');
+    $routes->get('cash/transactions/(:num)', 'Api\\CashTransactionsController::show/$1');
+    $routes->get('cash/balance', 'Api\\CashTransactionsController::getBalance');
+    $routes->get('cash/balance/branch/(:num)', 'Api\\CashTransactionsController::getBranchBalance/$1');
+    $routes->get('cash/report/daily', 'Api\\CashTransactionsController::dailyReport');
+    $routes->delete('cash/transactions/(:num)', 'Api\\CashTransactionsController::delete/$1');
 
     // Webhooks
     $routes->get('webhooks/subscriptions', 'Api\\WebhookSubscriptionsController::index');
