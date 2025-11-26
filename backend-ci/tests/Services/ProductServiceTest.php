@@ -390,6 +390,79 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertSame('Removed attribute from product', $result['message']);
     }
 
+    public function test_upload_single_success(): void
+    {
+        $productId = $this->seedProduct(['code' => 'UPLOAD01', 'name' => 'Upload Product']);
+        $mockFile = $this->createMock(UploadedFile::class);
+        $mockFile->method('isValid')->willReturn(true);
+        $mockFile->method('getRandomName')->willReturn('test_upload.jpg');
+        $mockFile->method('getClientName')->willReturn('original_name.jpg');
+        $mockFile->method('move')->willReturn(true);
+
+        $result = $this->service->uploadSingle($productId, $mockFile);
+
+        $this->assertTrue($result['success']);
+        $this->assertNotEmpty($result['data']);
+        $this->assertSame('/uploads/products/test_upload.jpg', $result['data']['image_path']);
+        $this->assertSame('original_name.jpg', $result['data']['file_name']);
+    }
+
+    public function test_upload_single_no_file_throws(): void
+    {
+        $productId = $this->seedProduct(['code' => 'UPLOAD02', 'name' => 'Upload Fail Product']);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('file is required');
+        $this->service->uploadSingle($productId, null);
+    }
+
+    public function test_upload_multiple_success(): void
+    {
+        $productId = $this->seedProduct(['code' => 'UPLOAD03', 'name' => 'Multi Upload']);
+        $mockFile1 = $this->createMock(UploadedFile::class);
+        $mockFile1->method('isValid')->willReturn(true);
+        $mockFile1->method('getRandomName')->willReturn('test_upload1.jpg');
+        $mockFile1->method('getClientName')->willReturn('original1.jpg');
+        $mockFile1->method('move')->willReturn(true);
+        $mockFile2 = $this->createMock(UploadedFile::class);
+        $mockFile2->method('isValid')->willReturn(true);
+        $mockFile2->method('getRandomName')->willReturn('test_upload2.jpg');
+        $mockFile2->method('getClientName')->willReturn('original2.jpg');
+        $mockFile2->method('move')->willReturn(true);
+
+        $result = $this->service->uploadMultiple($productId, [$mockFile1, $mockFile2]);
+
+        $this->assertTrue($result['success']);
+        $this->assertSame(2, $result['uploaded_count']);
+        $this->assertCount(2, $result['data']);
+        $this->assertSame('/uploads/products/test_upload1.jpg', $result['data'][0]['image_path']);
+    }
+
+    public function test_upload_multiple_no_files_throws(): void
+    {
+        $productId = $this->seedProduct(['code' => 'UPLOAD04', 'name' => 'Multi Upload Fail']);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('No files uploaded');
+        $this->service->uploadMultiple($productId, []);
+    }
+
+    public function test_get_product_applies_price_list(): void
+    {
+        $productId = $this->seedProduct(['code' => 'PRICE01', 'name' => 'Price List Product', 'selling_price' => 100]);
+        $variantId = $this->seedVariant($productId, 'Variant', ['price' => 120]);
+        $priceListId = $this->seedPriceList('Test Price List');
+        $this->seedPriceListItem($priceListId, $productId, null, 80);
+        $this->seedPriceListItem($priceListId, $productId, $variantId, 95);
+
+        $result = $this->service->get($productId, true, false, $priceListId);
+
+        $this->assertTrue($result['success']);
+        $product = $result['data'];
+        $this->assertSame(80.0, (float) $product['price_after_discount']);
+        $this->assertNotEmpty($product['variants']);
+        $variant = $product['variants'][0];
+        $this->assertSame(95.0, (float) $variant['price_after_discount']);
+    }
+
     /**
      * @agent-removed: resetSchema() is no longer needed
      * @agent-use: DevDatabaseTrait handles schema via migrations
@@ -422,9 +495,9 @@ class ProductServiceTest extends CIUnitTestCase
         ]);
     }
 
-    private function seedVariant(int $productId, string $name): void
+    private function seedVariant(int $productId, string $name, array $data = []): int
     {
-        $this->db->table('product_variants_v2')->insert([
+        $payload = array_merge([
             'product_id' => $productId,
             'variant_name' => $name,
             'variant_signature' => $name,
@@ -437,7 +510,10 @@ class ProductServiceTest extends CIUnitTestCase
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
             'deleted_at' => null,
-        ]);
+        ], $data);
+
+        $this->db->table('product_variants_v2')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function seedImage(array $data = []): int
@@ -457,5 +533,22 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->db->table('product_images')->insert($payload);
         return (int) $this->db->insertID();
+    }
+
+    private function seedPriceList(string $name): int
+    {
+        $this->db->table('price_lists')->insert(['name' => $name, 'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s')]);
+        return (int) $this->db->insertID();
+    }
+
+    private function seedPriceListItem(int $priceListId, int $productId, ?int $variantId, float $price): void
+    {
+        $this->db->table('price_list_items')->insert([
+            'price_list_id' => $priceListId,
+            'product_id' => $productId,
+            'variant_id' => $variantId,
+            'price' => $price,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
     }
 }
