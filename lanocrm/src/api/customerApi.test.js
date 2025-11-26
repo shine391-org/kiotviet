@@ -32,7 +32,7 @@ describe('customerApi', () => {
     const payload = { data: [] };
     axiosInstance.get.mockResolvedValue({ data: payload });
 
-    const params = { page: 2, limit: 50, search: 'Lan', customer_type: 'COMPANY', gender: 'FEMALE' };
+    const params = { page: 2, limit: 50, search: 'Lan', customer_type: 'COMPANY', gender: 'FEMALE', status: 'ACTIVE' };
     await customerApi.getCustomers(params);
 
     expect(axiosInstance.get).toHaveBeenCalledWith('/customers', {
@@ -69,6 +69,23 @@ describe('customerApi', () => {
     const result = await customerApi.updateCustomer(3, body);
 
     expect(axiosInstance.put).toHaveBeenCalledWith('/customers/3', body);
+    expect(result).toEqual(payload);
+  });
+
+  it('exports customers', async () => {
+    const blobResponse = { data: 'csv', headers: {} };
+    axiosInstance.get.mockResolvedValue(blobResponse);
+    const result = await customerApi.exportCustomers({ search: 'a' });
+    expect(axiosInstance.get).toHaveBeenCalledWith('/customers/export', { params: { search: 'a' }, responseType: 'blob' });
+    expect(result).toEqual(blobResponse);
+  });
+
+  it('imports customers', async () => {
+    const payload = { success: true };
+    axiosInstance.post.mockResolvedValue({ data: payload });
+    const file = new File(['name,phone'], 'customers.csv', { type: 'text/csv' });
+    const result = await customerApi.importCustomers(file);
+    expect(axiosInstance.post).toHaveBeenCalledWith('/customers/import', expect.any(FormData), expect.any(Object));
     expect(result).toEqual(payload);
   });
 });

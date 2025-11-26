@@ -43,36 +43,53 @@ class AddPriceListFormula extends Migration
         }
         
         // Skip migration if everything already exists
-        if ($columnsExist && $indexExists && $foreignKeyExists) {
-            return;
+        if (! $columnsExist) {
+            // Add only missing columns to avoid duplicate errors
+            $columns = [];
+            if (! $db->fieldExists('formula', 'price_lists')) {
+                $columns['formula'] = [
+                    'type' => 'TEXT',
+                    'null' => true,
+                    'comment' => 'Công thức tính giá (VD: base * 0.9)',
+                ];
+            }
+            if (! $db->fieldExists('base_price_list_id', 'price_lists')) {
+                $columns['base_price_list_id'] = [
+                    'type' => 'BIGINT',
+                    'unsigned' => true,
+                    'null' => true,
+                    'comment' => 'Bảng giá gốc dùng làm base',
+                ];
+            }
+            if (! $db->fieldExists('auto_update', 'price_lists')) {
+                $columns['auto_update'] = [
+                    'type' => 'TINYINT',
+                    'constraint' => 1,
+                    'default' => 0,
+                    'comment' => 'Tự động cập nhật khi bảng giá gốc đổi',
+                ];
+            }
+            if (! $db->fieldExists('rounding_rule', 'price_lists')) {
+                $columns['rounding_rule'] = [
+                    'type' => 'ENUM',
+                    'constraint' => ['none', 'thousand', 'ten_thousand', 'hundred'],
+                    'default' => 'none',
+                    'null' => false,
+                    'comment' => 'Quy tắc làm tròn giá',
+                ];
+            }
+
+            if (! empty($columns)) {
+                $this->forge->addColumn('price_lists', $columns);
+            }
         }
 
-        $this->forge->addColumn('price_lists', [
-            'formula' => [
-                'type' => 'TEXT',
-                'null' => true,
-                'comment' => 'Công thức tính giá (VD: base * 0.9)',
-            ],
-            'base_price_list_id' => [
-                'type' => 'BIGINT',
-                'unsigned' => true,
-                'null' => true,
-                'comment' => 'Bảng giá gốc dùng làm base',
-            ],
-            'auto_update' => [
-                'type' => 'TINYINT',
-                'constraint' => 1,
-                'default' => 0,
-                'comment' => 'Tự động cập nhật khi bảng giá gốc đổi',
-            ],
-            'rounding_rule' => [
-                'type' => 'ENUM',
-                'constraint' => ['none', 'thousand', 'ten_thousand', 'hundred'],
-                'default' => 'none',
-                'null' => false,
-                'comment' => 'Quy tắc làm tròn giá',
-            ],
-        ]);
+        if (! $indexExists) {
+            $this->forge->addKey('base_price_list_id', false, false, 'idx_base_price_list');
+        }
+        if (! $foreignKeyExists) {
+            $this->forge->addForeignKey('base_price_list_id', 'price_lists', 'id', 'SET NULL', 'CASCADE');
+        }
 
         $this->forge->addKey('base_price_list_id', false, false, 'idx_base_price_list');
         $this->forge->addForeignKey('base_price_list_id', 'price_lists', 'id', 'SET NULL', 'CASCADE');

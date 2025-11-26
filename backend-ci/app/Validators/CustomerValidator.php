@@ -17,6 +17,7 @@ class CustomerValidator
 {
     private const TYPES = ['INDIVIDUAL', 'COMPANY', 'HOUSEHOLD'];
     private const GENDERS = ['MALE', 'FEMALE', 'OTHER'];
+    private const STATUSES = ['ACTIVE', 'INACTIVE'];
 
     protected Validation $v;
 
@@ -41,6 +42,15 @@ class CustomerValidator
             'search' => 'permit_empty|string|max_length[255]',
             'customer_type' => 'permit_empty|string|max_length[50]',
             'gender' => 'permit_empty|string|max_length[20]',
+            'status' => 'permit_empty|string|max_length[20]',
+            'created_from' => 'permit_empty|valid_date',
+            'created_to' => 'permit_empty|valid_date',
+            'birthday_from' => 'permit_empty|valid_date',
+            'birthday_to' => 'permit_empty|valid_date',
+            'last_transaction_from' => 'permit_empty|valid_date',
+            'last_transaction_to' => 'permit_empty|valid_date',
+            'debt_from' => 'permit_empty|decimal',
+            'debt_to' => 'permit_empty|decimal',
         ];
 
         if (! $this->v->setRules($rules)->run($data)) {
@@ -57,6 +67,9 @@ class CustomerValidator
         }
         if (isset($validated['gender'])) {
             $validated['gender'] = $this->normalizeGender($validated['gender']);
+        }
+        if (isset($validated['status'])) {
+            $validated['status'] = $this->optionalStatus($validated['status']);
         }
 
         return $validated;
@@ -79,6 +92,18 @@ class CustomerValidator
                 : null,
             'name' => $name,
             'customer_type' => $this->normalizeType($input['customer_type'] ?? 'INDIVIDUAL'),
+            'code' => $this->optionalString($input['code'] ?? null, 50),
+            'address' => $this->optionalString($input['address'] ?? null, 500),
+            'province' => $this->optionalString($input['province'] ?? null, 120),
+            'district' => $this->optionalString($input['district'] ?? null, 120),
+            'ward' => $this->optionalString($input['ward'] ?? null, 120),
+            'birthday' => $this->optionalDate($input['birthday'] ?? null, 'birthday'),
+            'created_by' => array_key_exists('created_by', $input) ? $this->positiveInt($input['created_by'], 'created_by') : null,
+            'status' => $this->optionalStatus($input['status'] ?? null),
+            'last_transaction_at' => $this->optionalDateTime($input['last_transaction_at'] ?? null, 'last_transaction_at'),
+            'current_debt' => $this->optionalMoney($input['current_debt'] ?? null),
+            'total_sales' => $this->optionalMoney($input['total_sales'] ?? null),
+            'total_sales_net' => $this->optionalMoney($input['total_sales_net'] ?? null),
         ];
 
         $data['email'] = $this->optionalEmail($input['email'] ?? null, 'email');
@@ -125,6 +150,42 @@ class CustomerValidator
         }
         if (array_key_exists('customer_type', $input)) {
             $data['customer_type'] = $this->normalizeType($input['customer_type']);
+        }
+        if (array_key_exists('code', $input)) {
+            $data['code'] = $this->optionalString($input['code'], 50);
+        }
+        if (array_key_exists('address', $input)) {
+            $data['address'] = $this->optionalString($input['address'], 500);
+        }
+        if (array_key_exists('province', $input)) {
+            $data['province'] = $this->optionalString($input['province'], 120);
+        }
+        if (array_key_exists('district', $input)) {
+            $data['district'] = $this->optionalString($input['district'], 120);
+        }
+        if (array_key_exists('ward', $input)) {
+            $data['ward'] = $this->optionalString($input['ward'], 120);
+        }
+        if (array_key_exists('birthday', $input)) {
+            $data['birthday'] = $this->optionalDate($input['birthday'], 'birthday');
+        }
+        if (array_key_exists('created_by', $input)) {
+            $data['created_by'] = $input['created_by'] === null ? null : $this->positiveInt($input['created_by'], 'created_by');
+        }
+        if (array_key_exists('status', $input)) {
+            $data['status'] = $this->optionalStatus($input['status']);
+        }
+        if (array_key_exists('last_transaction_at', $input)) {
+            $data['last_transaction_at'] = $this->optionalDateTime($input['last_transaction_at'], 'last_transaction_at');
+        }
+        if (array_key_exists('current_debt', $input)) {
+            $data['current_debt'] = $this->optionalMoney($input['current_debt']);
+        }
+        if (array_key_exists('total_sales', $input)) {
+            $data['total_sales'] = $this->optionalMoney($input['total_sales']);
+        }
+        if (array_key_exists('total_sales_net', $input)) {
+            $data['total_sales_net'] = $this->optionalMoney($input['total_sales_net']);
         }
         if (array_key_exists('gender', $input)) {
             $data['gender'] = $this->optionalGender($input['gender']);
@@ -308,6 +369,53 @@ class CustomerValidator
             throw new InvalidArgumentException('customer_type must be one of: ' . implode(',', self::TYPES));
         }
         return $t;
+    }
+
+    private function optionalDate($value, string $field): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $date = date_create($value);
+        if (! $date) {
+            throw new InvalidArgumentException("Invalid date for {$field}");
+        }
+        return $date->format('Y-m-d');
+    }
+
+    private function optionalDateTime($value, string $field): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $dt = date_create($value);
+        if (! $dt) {
+            throw new InvalidArgumentException("Invalid datetime for {$field}");
+        }
+        return $dt->format('Y-m-d H:i:s');
+    }
+
+    private function optionalMoney($value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (! is_numeric($value)) {
+            throw new InvalidArgumentException('Invalid number');
+        }
+        return (float) $value;
+    }
+
+    private function optionalStatus($value): ?string
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+        $status = strtoupper((string) $value);
+        if (! in_array($status, self::STATUSES, true)) {
+            throw new InvalidArgumentException('Invalid status');
+        }
+        return $status;
     }
 
     private function positiveInt($value, string $field, bool $allowZero = true): int

@@ -24,6 +24,8 @@ vi.mock('../../api/customerApi', () => ({
     getCustomer: vi.fn(async () => mockDetail),
     createCustomer: vi.fn(async (body) => ({ data: { id: 3, ...body } })),
     updateCustomer: vi.fn(),
+    exportCustomers: vi.fn(async () => ({ data: 'csv' })),
+    importCustomers: vi.fn(async () => ({ data: { imported: 1, errors: 0 } })),
   },
 }));
 
@@ -71,6 +73,6 @@ describe('CustomerListPage', () => {
     renderWithStore();
 
     await userEvent.click(await screen.findByRole('button', { name: /Khách hàng/i }));
-    expect(await screen.findByText('Thêm khách hàng')).toBeInTheDocument();
+    expect(await screen.findByText('Tạo khách hàng')).toBeInTheDocument();
   });
 });

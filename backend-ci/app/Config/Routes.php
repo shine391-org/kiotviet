@@ -68,6 +68,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
     $routes->post('customers', 'Api\\CustomersController::create');
     $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
+    $routes->get('customers/export', 'Api\\CustomersController::export');
+    $routes->post('customers/import', 'Api\\CustomersController::import');
     $routes->get('variants', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/deleted', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');

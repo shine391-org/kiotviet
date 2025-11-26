@@ -1,42 +1,56 @@
 // src/pages/customers/CustomerListPage.jsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Card,
-  Table,
-  Input,
-  Tag,
-  Space,
-  Button,
-  Typography,
-  Divider,
-  Segmented,
-  Empty,
-  Skeleton,
-  Alert,
-  Modal,
-  Form,
-  Select,
   App,
+  Alert,
+  Button,
+  Card,
+  Checkbox,
+  Col,
+  DatePicker,
+  Drawer,
+  Dropdown,
+  Empty,
+  Form,
+  Input,
+  InputNumber,
+  Row,
+  Select,
+  Space,
+  Table,
+  Tag,
   Tooltip,
+  Typography,
+  Upload,
+  Divider,
+  Skeleton,
 } from 'antd';
 import {
-  PlusOutlined,
-  SearchOutlined,
-  ReloadOutlined,
+  DownloadOutlined,
+  ExportOutlined,
   ImportOutlined,
   MailOutlined,
+  MoreOutlined,
+  PlusOutlined,
+  ReloadOutlined,
+  SearchOutlined,
+  SettingOutlined,
+  UploadOutlined as AntUploadOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
 import {
   fetchCustomers,
   fetchCustomer,
   createCustomer,
   clearCustomerError,
 } from '../../store/slices/customerSlice';
+import customerApi from '../../api/customerApi';
 import styles from './CustomerListPage.module.css';
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const CUSTOMER_TYPES = [
   { label: 'Tất cả', value: null },
@@ -52,6 +66,12 @@ const GENDERS = [
   { label: 'Khác', value: 'OTHER' },
 ];
 
+const STATUSES = [
+  { label: 'Tất cả', value: null },
+  { label: 'Đang hoạt động', value: 'ACTIVE' },
+  { label: 'Ngừng hoạt động', value: 'INACTIVE' },
+];
+
 const typeLabel = {
   INDIVIDUAL: 'Cá nhân',
   COMPANY: 'Công ty',
@@ -64,13 +84,14 @@ const genderLabel = {
   OTHER: 'Khác',
 };
 
+const statusLabel = {
+  ACTIVE: 'Đang hoạt động',
+  INACTIVE: 'Ngừng hoạt động',
+};
+
 const typeTag = (type) => {
   if (!type) return <Tag color="default">Chưa rõ</Tag>;
-  const colorMap = {
-    INDIVIDUAL: 'blue',
-    COMPANY: 'gold',
-    HOUSEHOLD: 'green',
-  };
+  const colorMap = { INDIVIDUAL: 'blue', COMPANY: 'gold', HOUSEHOLD: 'green' };
   return <Tag color={colorMap[type] || 'default'}>{typeLabel[type] || type}</Tag>;
 };
 
@@ -79,6 +100,17 @@ const genderTag = (gender) => {
   const colorMap = { MALE: 'blue', FEMALE: 'magenta', OTHER: 'purple' };
   return <Tag color={colorMap[gender] || 'default'}>{genderLabel[gender] || gender}</Tag>;
 };
+
+const statusTag = (status) => {
+  if (!status) return <Tag>Chưa rõ</Tag>;
+  const color = status === 'ACTIVE' ? 'green' : 'red';
+  return <Tag color={color}>{statusLabel[status] || status}</Tag>;
+};
+
+const moneyFormat = (value) =>
+  typeof value === 'number'
+    ? value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+    : '—';
 
 const CustomerListPage = () => {
   const dispatch = useDispatch();
@@ -94,10 +126,24 @@ const CustomerListPage = () => {
     search: '',
     customer_type: null,
     gender: null,
+    status: null,
   });
   const [searchText, setSearchText] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [visibleCols, setVisibleCols] = useState([
+    'code',
+    'name',
+    'customer_type',
+    'phone',
+    'gender',
+    'email',
+    'facebook',
+    'tax_code',
+    'status',
+    'current_debt',
+  ]);
   const [form] = Form.useForm();
 
   // Fetch customers on filters change
@@ -130,45 +176,58 @@ const CustomerListPage = () => {
     return () => clearTimeout(timer);
   }, [searchText]);
 
-  const columns = [
-    { title: 'Mã KH', dataIndex: 'id', key: 'id', width: 90 },
-    {
-      title: 'Tên khách hàng',
-      dataIndex: 'name',
-      key: 'name',
-      render: (value) => <Text strong>{value || 'Chưa có tên'}</Text>,
-    },
-    {
-      title: 'Loại khách hàng',
-      dataIndex: 'customer_type',
-      key: 'customer_type',
-      render: (value) => typeTag(value),
-      width: 140,
-    },
-    { title: 'Điện thoại', dataIndex: 'phone', key: 'phone', width: 140 },
-    {
-      title: 'Giới tính',
-      dataIndex: 'gender',
-      key: 'gender',
-      width: 120,
-      render: (value) => genderTag(value),
-    },
-    { title: 'Email', dataIndex: 'email', key: 'email', ellipsis: true },
-    {
-      title: 'Facebook',
-      dataIndex: 'facebook',
-      key: 'facebook',
-      ellipsis: true,
-      render: (value) =>
-        value ? (
-          <a href={value} target="_blank" rel="noreferrer">
-            {value}
-          </a>
-        ) : (
-          '—'
-        ),
-    },
-  ];
+  const allColumns = useMemo(
+    () => [
+      { key: 'code', title: 'Mã khách hàng', dataIndex: 'code', width: 130, render: (v, r) => v || `KH${r.id}` },
+      { key: 'name', title: 'Tên khách hàng', dataIndex: 'name', render: (v) => <Text strong>{v || 'Chưa có tên'}</Text> },
+      { key: 'customer_type', title: 'Loại khách hàng', dataIndex: 'customer_type', width: 140, render: typeTag },
+      { key: 'phone', title: 'Điện thoại', dataIndex: 'phone', width: 140 },
+      { key: 'phone2', title: 'Điện thoại 2', dataIndex: 'phone2', width: 140 },
+      { key: 'customer_group_id', title: 'Nhóm khách hàng', dataIndex: 'customer_group_id', render: (v) => v || 'Chưa có' },
+      { key: 'gender', title: 'Giới tính', dataIndex: 'gender', width: 120, render: genderTag },
+      { key: 'birthday', title: 'Ngày sinh', dataIndex: 'birthday', width: 140, render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '—') },
+      { key: 'email', title: 'Email', dataIndex: 'email', ellipsis: true },
+      {
+        key: 'facebook',
+        title: 'Facebook',
+        dataIndex: 'facebook',
+        ellipsis: true,
+        render: (value) =>
+          value ? (
+            <a href={value} target="_blank" rel="noreferrer">
+              {value}
+            </a>
+          ) : (
+            '—'
+          ),
+      },
+      { key: 'company_name', title: 'Công ty', dataIndex: 'company_name' },
+      { key: 'tax_code', title: 'Mã số thuế', dataIndex: 'tax_code' },
+      { key: 'cccd_cmnd', title: 'Số CCCD/CMND', dataIndex: 'cccd_cmnd' },
+      { key: 'address', title: 'Địa chỉ', dataIndex: 'address', ellipsis: true },
+      { key: 'province', title: 'Khu vực giao hàng', dataIndex: 'province' },
+      { key: 'ward', title: 'Phường/Xã', dataIndex: 'ward' },
+      { key: 'created_by', title: 'Người tạo', dataIndex: 'created_by' },
+      { key: 'created_at', title: 'Ngày tạo', dataIndex: 'created_at', render: (v) => (v ? dayjs(v).format('DD/MM/YYYY') : '—') },
+      { key: 'notes', title: 'Ghi chú', dataIndex: 'notes', ellipsis: true },
+      {
+        key: 'last_transaction_at',
+        title: 'Ngày giao dịch cuối',
+        dataIndex: 'last_transaction_at',
+        render: (v) => (v ? dayjs(v).format('DD/MM/YYYY HH:mm') : '—'),
+      },
+      { key: 'current_debt', title: 'Nợ hiện tại', dataIndex: 'current_debt', render: moneyFormat },
+      { key: 'total_sales', title: 'Tổng bán', dataIndex: 'total_sales', render: moneyFormat },
+      { key: 'total_sales_net', title: 'Tổng bán trừ trả hàng', dataIndex: 'total_sales_net', render: moneyFormat },
+      { key: 'status', title: 'Trạng thái', dataIndex: 'status', render: statusTag },
+    ],
+    []
+  );
+
+  const columns = useMemo(
+    () => allColumns.filter((c) => visibleCols.includes(c.key)),
+    [allColumns, visibleCols]
+  );
 
   const onRowClick = (record) => {
     setSelectedId(record.id);
@@ -183,14 +242,6 @@ const CustomerListPage = () => {
     }));
   };
 
-  const handleTypeChange = (value) => {
-    setFilters((prev) => ({ ...prev, customer_type: value || null, page: 1 }));
-  };
-
-  const handleGenderChange = (value) => {
-    setFilters((prev) => ({ ...prev, gender: value || null, page: 1 }));
-  };
-
   const handleRefresh = () => {
     dispatch(fetchCustomers(filters));
     if (selectedId) {
@@ -198,23 +249,60 @@ const CustomerListPage = () => {
     }
   };
 
-  const handleCreate = async () => {
+  const handleExport = async () => {
     try {
-      const values = await form.validateFields();
-      await dispatch(createCustomer(values)).unwrap();
-      message.success('Tạo khách hàng thành công');
-      setCreateModalOpen(false);
-      form.resetFields();
-      dispatch(fetchCustomers(filters));
+      const response = await customerApi.exportCustomers(filters);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'customers.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      message.success('Đã xuất file CSV');
     } catch (err) {
-      const msg = typeof err === 'string' ? err : err?.message || 'Không thể tạo khách hàng';
-      modal.error({ title: 'Tạo khách hàng thất bại', content: msg });
+      modal.error({ title: 'Xuất file thất bại', content: err?.message || 'Không thể xuất' });
     }
+  };
+
+  const handleImport = async ({ file }) => {
+    setUploading(true);
+    try {
+      await customerApi.importCustomers(file);
+      message.success('Import thành công');
+      handleRefresh();
+    } catch (err) {
+      modal.error({ title: 'Import thất bại', content: err?.message || 'Không thể import' });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const columnMenu = {
+    items: allColumns.map((c) => ({
+      key: c.key,
+      label: (
+        <Checkbox
+          checked={visibleCols.includes(c.key)}
+          onChange={(e) => {
+            setVisibleCols((prev) =>
+              e.target.checked ? [...prev, c.key] : prev.filter((k) => k !== c.key)
+            );
+          }}
+        >
+          {c.title}
+        </Checkbox>
+      ),
+    })),
+  };
+
+  const onFilterChange = (key, value) => {
+    setFilters((prev) => ({ ...prev, [key]: value, page: 1 }));
   };
 
   const renderDetail = () => {
     if (currentLoading) {
-      return <Skeleton active paragraph={{ rows: 5 }} />;
+      return <Skeleton active paragraph={{ rows: 6 }} />;
     }
     if (!current) {
       return (
@@ -223,13 +311,6 @@ const CustomerListPage = () => {
         </div>
       );
     }
-
-    const initials = (current.name || '?')
-      .split(' ')
-      .map((p) => p[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
 
     const infoRow = (label, value) => (
       <div className={styles.infoItem}>
@@ -241,7 +322,14 @@ const CustomerListPage = () => {
     return (
       <>
         <div className={styles.detailHeader}>
-          <div className={styles.avatarPlaceholder}>{initials}</div>
+          <div className={styles.avatarPlaceholder}>
+            {(current.name || '?')
+              .split(' ')
+              .map((p) => p[0])
+              .join('')
+              .slice(0, 2)
+              .toUpperCase()}
+          </div>
           <div>
             <Title level={5} style={{ marginBottom: 2 }}>
               {current.name}
@@ -249,30 +337,44 @@ const CustomerListPage = () => {
             <Space size={8}>
               <Tag color="blue">KH#{current.id}</Tag>
               {typeTag(current.customer_type)}
+              {statusTag(current.status)}
             </Space>
           </div>
         </div>
 
-        <Divider />
-
-        <div className={styles.infoGrid}>
-          {infoRow('Điện thoại', current.phone)}
-          {infoRow('Email', current.email)}
-          {infoRow('Giới tính', genderLabel[current.gender] || 'Chưa có')}
-          {infoRow('Facebook', current.facebook)}
-          {infoRow('Mã số thuế', current.tax_code)}
-          {infoRow('Công ty', current.company_name)}
-          {infoRow('Ghi chú', current.notes)}
-          {infoRow('Người mua hàng', current.buyer_name)}
-        </div>
-
-        <Divider />
-        <Space>
-          <Button type="primary">Chỉnh sửa</Button>
-          <Button danger ghost>Ngưng hoạt động</Button>
-        </Space>
+        <Row gutter={[12, 12]} style={{ marginTop: 12 }}>
+          <Col span={12}>{infoRow('Điện thoại', current.phone)}</Col>
+          <Col span={12}>{infoRow('Email', current.email)}</Col>
+          <Col span={12}>{infoRow('Giới tính', genderLabel[current.gender] || 'Chưa có')}</Col>
+          <Col span={12}>{infoRow('Sinh nhật', current.birthday ? dayjs(current.birthday).format('DD/MM/YYYY') : 'Chưa có')}</Col>
+          <Col span={12}>{infoRow('Địa chỉ', current.address)}</Col>
+          <Col span={12}>{infoRow('Phường/Xã', current.ward)}</Col>
+          <Col span={12}>{infoRow('Tỉnh/TP', current.province)}</Col>
+          <Col span={12}>{infoRow('Công ty', current.company_name)}</Col>
+          <Col span={12}>{infoRow('Mã số thuế', current.tax_code)}</Col>
+          <Col span={12}>{infoRow('Nợ hiện tại', moneyFormat(current.current_debt))}</Col>
+        </Row>
       </>
     );
+  };
+
+  const onCreate = async () => {
+    try {
+      const values = await form.validateFields();
+      const payload = {
+        ...values,
+        birthday: values.birthday ? values.birthday.format('YYYY-MM-DD') : null,
+      };
+      await dispatch(createCustomer(payload)).unwrap();
+      message.success('Tạo khách hàng thành công');
+      setCreateOpen(false);
+      form.resetFields();
+      handleRefresh();
+    } catch (err) {
+      if (err?.message) {
+        modal.error({ title: 'Tạo khách hàng thất bại', content: err.message });
+      }
+    }
   };
 
   return (
@@ -281,26 +383,37 @@ const CustomerListPage = () => {
         <Input
           className={styles.searchBar}
           prefix={<SearchOutlined />}
-          placeholder="Tìm theo mã, tên, số điện thoại..."
+          placeholder="Theo mã, tên, số điện thoại"
           allowClear
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
         />
 
         <Space className={styles.actions} wrap>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
             Khách hàng
           </Button>
-          <Tooltip title="Tính năng gửi tin nhắn sẽ sớm có">
+          <Tooltip title="Gửi tin nhắn (sắp ra mắt)">
             <Button icon={<MailOutlined />} disabled>
               Gửi tin nhắn
             </Button>
           </Tooltip>
-          <Tooltip title="Import khách hàng (đang chuẩn bị)">
-            <Button icon={<ImportOutlined />} disabled>
+          <Upload
+            accept=".csv"
+            showUploadList={false}
+            customRequest={handleImport}
+            disabled={uploading}
+          >
+            <Button icon={<ImportOutlined />} loading={uploading}>
               Import file
             </Button>
-          </Tooltip>
+          </Upload>
+          <Button icon={<ExportOutlined />} onClick={handleExport}>
+            Export
+          </Button>
+          <Dropdown menu={columnMenu} trigger={['click']}>
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
           <Button icon={<ReloadOutlined />} onClick={handleRefresh}>
             Làm mới
           </Button>
@@ -320,35 +433,103 @@ const CustomerListPage = () => {
 
       <div className={styles.layout}>
         <Card title="Bộ lọc" className={styles.filterCard} size="small">
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Loại khách hàng</span>
-            <Segmented
-              block
-              size="middle"
-              options={CUSTOMER_TYPES.map((t) => ({ label: t.label, value: t.value || 'ALL' }))}
-              value={filters.customer_type || 'ALL'}
-              onChange={(val) => handleTypeChange(val === 'ALL' ? null : val)}
-            />
-          </div>
-
-          <Divider style={{ margin: '12px 0' }} />
-
-          <div className={styles.filterGroup}>
-            <span className={styles.filterLabel}>Giới tính</span>
-            <Segmented
-              block
-              size="middle"
-              options={GENDERS.map((g) => ({ label: g.label, value: g.value || 'ALL' }))}
-              value={filters.gender || 'ALL'}
-              onChange={(val) => handleGenderChange(val === 'ALL' ? null : val)}
-            />
-          </div>
+          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+            <div>
+              <Text className={styles.filterLabel}>Loại khách hàng</Text>
+              <Select
+                value={filters.customer_type}
+                onChange={(val) => onFilterChange('customer_type', val)}
+                options={CUSTOMER_TYPES}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Giới tính</Text>
+              <Select
+                value={filters.gender}
+                onChange={(val) => onFilterChange('gender', val)}
+                options={GENDERS}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Trạng thái</Text>
+              <Select
+                value={filters.status}
+                onChange={(val) => onFilterChange('status', val)}
+                options={STATUSES}
+                style={{ width: '100%' }}
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Ngày tạo</Text>
+              <RangePicker
+                style={{ width: '100%' }}
+                onChange={(vals) =>
+                  onFilterChange('created_from', vals ? vals[0].format('YYYY-MM-DD') : null) ||
+                  onFilterChange('created_to', vals ? vals[1].format('YYYY-MM-DD') : null)
+                }
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Sinh nhật</Text>
+              <RangePicker
+                style={{ width: '100%' }}
+                onChange={(vals) =>
+                  onFilterChange('birthday_from', vals ? vals[0].format('YYYY-MM-DD') : null) ||
+                  onFilterChange('birthday_to', vals ? vals[1].format('YYYY-MM-DD') : null)
+                }
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Giao dịch cuối</Text>
+              <RangePicker
+                style={{ width: '100%' }}
+                onChange={(vals) =>
+                  onFilterChange('last_transaction_from', vals ? vals[0].format('YYYY-MM-DD') : null) ||
+                  onFilterChange('last_transaction_to', vals ? vals[1].format('YYYY-MM-DD') : null)
+                }
+              />
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Nợ hiện tại (từ / đến)</Text>
+              <Space>
+                <InputNumber
+                  style={{ width: 110 }}
+                  placeholder="Từ"
+                  onChange={(v) => onFilterChange('debt_from', v)}
+                />
+                <InputNumber
+                  style={{ width: 110 }}
+                  placeholder="Đến"
+                  onChange={(v) => onFilterChange('debt_to', v)}
+                />
+              </Space>
+            </div>
+            <div>
+              <Text className={styles.filterLabel}>Tổng bán (từ / đến)</Text>
+              <Space>
+                <InputNumber
+                  style={{ width: 110 }}
+                  placeholder="Từ"
+                  onChange={(v) => onFilterChange('total_sales_from', v)}
+                />
+                <InputNumber
+                  style={{ width: 110 }}
+                  placeholder="Đến"
+                  onChange={(v) => onFilterChange('total_sales_to', v)}
+                />
+              </Space>
+            </div>
+          </Space>
         </Card>
 
         <div className={styles.tableStack}>
           <Card
             className={styles.tableCard}
             styles={{ body: { padding: 0 } }}
+            title={false}
+            extra={null}
           >
             <Table
               rowKey="id"
@@ -371,6 +552,7 @@ const CustomerListPage = () => {
               onRow={(record) => ({
                 onClick: () => onRowClick(record),
               })}
+              scroll={{ x: true }}
             />
           </Card>
 
@@ -380,50 +562,152 @@ const CustomerListPage = () => {
         </div>
       </div>
 
-      <Modal
-        title="Thêm khách hàng"
-        open={createModalOpen}
-        onCancel={() => setCreateModalOpen(false)}
-        onOk={handleCreate}
-        confirmLoading={saving}
-        okText="Lưu"
-        cancelText="Hủy"
+      <Drawer
+        title="Tạo khách hàng"
+        width={640}
+        onClose={() => setCreateOpen(false)}
+        open={createOpen}
+        extra={
+          <Space>
+            <Button onClick={() => setCreateOpen(false)}>Bỏ qua</Button>
+            <Button type="primary" loading={saving} onClick={onCreate}>
+              Lưu
+            </Button>
+          </Space>
+        }
       >
-        <Form layout="vertical" form={form} initialValues={{ customer_type: 'INDIVIDUAL' }}>
-          <Form.Item
-            label="Tên khách hàng"
-            name="name"
-            rules={[{ required: true, message: 'Vui lòng nhập tên khách hàng' }]}
-          >
-            <Input placeholder="Nhập tên" />
-          </Form.Item>
+        <Form layout="vertical" form={form} initialValues={{ customer_type: 'INDIVIDUAL', status: 'ACTIVE' }}>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item
+                label="Tên khách hàng"
+                name="name"
+                rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
+              >
+                <Input placeholder="Bắt buộc" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Mã khách hàng" name="code">
+                <Input placeholder="Tự động nếu để trống" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Điện thoại 1" name="phone">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Điện thoại 2" name="phone2">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Email" name="email">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Facebook" name="facebook">
+                <Input placeholder="facebook.com/username" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Sinh nhật" name="birthday">
+                <DatePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Giới tính" name="gender">
+                <Select allowClear options={GENDERS.filter((g) => g.value)} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Loại khách hàng" name="customer_type">
+                <Select options={CUSTOMER_TYPES.filter((c) => c.value)} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Trạng thái" name="status">
+                <Select options={STATUSES.filter((s) => s.value)} />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item label="Số điện thoại" name="phone">
-            <Input placeholder="Nhập số điện thoại" />
+          <Divider />
+          <Title level={5}>Địa chỉ</Title>
+          <Form.Item label="Địa chỉ" name="address">
+            <Input placeholder="Nhập địa chỉ" />
           </Form.Item>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item label="Tỉnh/Thành phố" name="province">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Phường/Xã" name="ward">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item label="Loại khách hàng" name="customer_type">
-            <Select
-              aria-label="Loại khách hàng"
-              options={CUSTOMER_TYPES.filter((t) => t.value).map((t) => ({
-                label: t.label,
-                value: t.value,
-              }))}
-            />
-          </Form.Item>
+          <Divider />
+          <Title level={5}>Thông tin xuất hoá đơn</Title>
+          <Row gutter={12}>
+            <Col span={12}>
+              <Form.Item label="Tên người mua" name="buyer_name">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Mã số thuế" name="tax_code">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Công ty" name="company_name">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Email xuất hoá đơn" name="invoice_email">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Số điện thoại hoá đơn" name="invoice_phone">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Số CCCD/CMND" name="cccd_cmnd">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Số hộ chiếu" name="id_number">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Ngân hàng" name="bank_name">
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Số tài khoản ngân hàng" name="bank_account">
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
 
-          <Form.Item label="Giới tính" name="gender">
-            <Select
-              aria-label="Giới tính"
-              allowClear
-              options={GENDERS.filter((g) => g.value).map((g) => ({
-                label: g.label,
-                value: g.value,
-              }))}
-            />
+          <Divider />
+          <Form.Item label="Ghi chú" name="notes">
+            <Input.TextArea rows={3} />
           </Form.Item>
         </Form>
-      </Modal>
+      </Drawer>
     </div>
   );
 };

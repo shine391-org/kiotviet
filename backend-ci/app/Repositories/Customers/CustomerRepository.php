@@ -116,6 +116,7 @@ class CustomerRepository
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $builder->groupStart()
+                ->like('code', $search)
                 ->like('name', $search)
                 ->orLike('phone', $search)
                 ->orLike('phone2', $search)
@@ -138,6 +139,53 @@ class CustomerRepository
             $builder->where('organization_id', $filters['organization_id']);
         }
 
+        if (! empty($filters['status'])) {
+            $builder->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['customer_group_id'])) {
+            $builder->where('customer_group_id', $filters['customer_group_id']);
+        }
+
+        if (! empty($filters['created_by'])) {
+            $builder->where('created_by', $filters['created_by']);
+        }
+
+        if (! empty($filters['created_from'])) {
+            $builder->where('created_at >=', $filters['created_from'] . ' 00:00:00');
+        }
+        if (! empty($filters['created_to'])) {
+            $builder->where('created_at <=', $filters['created_to'] . ' 23:59:59');
+        }
+
+        if (! empty($filters['birthday_from'])) {
+            $builder->where('birthday >=', $filters['birthday_from']);
+        }
+        if (! empty($filters['birthday_to'])) {
+            $builder->where('birthday <=', $filters['birthday_to']);
+        }
+
+        if (! empty($filters['last_transaction_from'])) {
+            $builder->where('last_transaction_at >=', $filters['last_transaction_from']);
+        }
+        if (! empty($filters['last_transaction_to'])) {
+            $builder->where('last_transaction_at <=', $filters['last_transaction_to']);
+        }
+
+        if (isset($filters['debt_from']) && $filters['debt_from'] !== null && $filters['debt_from'] !== '') {
+            $builder->where('current_debt >=', $filters['debt_from']);
+        }
+        if (isset($filters['debt_to']) && $filters['debt_to'] !== null && $filters['debt_to'] !== '') {
+            $builder->where('current_debt <=', $filters['debt_to']);
+        }
+
+        if (isset($filters['total_sales_from']) && $filters['total_sales_from'] !== null && $filters['total_sales_from'] !== '') {
+            $builder->where('total_sales >=', $filters['total_sales_from']);
+        }
+        if (isset($filters['total_sales_to']) && $filters['total_sales_to'] !== null && $filters['total_sales_to'] !== '') {
+            $builder->where('total_sales <=', $filters['total_sales_to']);
+        }
+
         return $builder;
     }
 
@@ -149,6 +197,10 @@ class CustomerRepository
         $row['id'] = isset($row['id']) ? (int) $row['id'] : null;
         $row['organization_id'] = isset($row['organization_id']) ? (int) $row['organization_id'] : 1;
         $row['customer_group_id'] = isset($row['customer_group_id']) ? (int) $row['customer_group_id'] : null;
+        $row['created_by'] = isset($row['created_by']) ? (int) $row['created_by'] : null;
+        $row['current_debt'] = isset($row['current_debt']) ? (float) $row['current_debt'] : 0.0;
+        $row['total_sales'] = isset($row['total_sales']) ? (float) $row['total_sales'] : 0.0;
+        $row['total_sales_net'] = isset($row['total_sales_net']) ? (float) $row['total_sales_net'] : 0.0;
         return $row;
     }
 

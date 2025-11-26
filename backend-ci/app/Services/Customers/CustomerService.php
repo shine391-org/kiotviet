@@ -120,4 +120,41 @@ class CustomerService
             'total_pages' => $totalPages,
         ];
     }
+
+    /**
+     * Export customers as array (CSV handled in controller).
+     *
+     * @agent-use: GET /api/customers/export
+     */
+    public function export(array $filters): array
+    {
+        $validated = $this->validator->validateListFilters($filters);
+        $rows = $this->repo->findAll($validated);
+        return $this->transformer->transformList($rows);
+    }
+
+    /**
+     * Import customers from parsed rows.
+     *
+     * @param array<int,array<string,mixed>> $rows
+     * @return array{imported:int,errors:int}
+     *
+     * @agent-use: POST /api/customers/import
+     */
+    public function import(array $rows): array
+    {
+        $imported = 0;
+        $errors = 0;
+
+        foreach ($rows as $row) {
+            try {
+                $this->create($row);
+                $imported++;
+            } catch (\Throwable $e) {
+                $errors++;
+            }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
+    }
 }
