@@ -11,6 +11,8 @@ location: "docs/testing"
 related_to:
   - id: "FE-TESTING-GUIDE-01"
     description: "Refer to the comprehensive frontend testing guide."
+  - id: "FE-TESTING-PATTERNS-01"
+    description: "Refer to this for frontend code examples and patterns to copy."
   - id: "AGENT-GUIDE-01"
     description: "The main AI Agent Guide that mandates this checklist."
 ---

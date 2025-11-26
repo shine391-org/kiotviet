@@ -1,291 +1,170 @@
 ---
-title: "TASK 07: Inventory Hooks Implementation"
-id: "TASK-07-INVENTORY-HOOKS-01"
+title: "TASK 07: Inventory Hooks Implementation (CodeIgniter 4)"
+id: "TASK-07-INVENTORY-HOOKS-CI4"
 priority: "P1 (High)"
-estimated_effort: "5 days"
-dependencies: "TASK_06"
+estimated_effort: "3 days"
+dependencies: "TASK-06-STATUS-MANAGEMENT-CI4"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "inventory", "hooks", "stock", "deduction", "restoration", "locking", "reconciliation", "multi-branch", "backend"]
-purpose: "Implement a robust inventory management system with stock checking, deduction (using pessimistic locking), restoration, movement logging, and reconciliation, supporting multi-branch operations."
+tags: ["task", "inventory", "hooks", "stock", "deduction", "restoration", "locking", "reconciliation", "backend", "codeigniter"]
+purpose: "Implement a robust inventory management system in CodeIgniter 4 with stock checking, deduction, restoration, and movement logging, triggered by order status changes."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "INVENTORY-EDGE-CASES-01"
-    description: "Addresses inventory edge cases discussed."
-  - id: "CONCURRENCY-EDGE-CASES-01"
-    description: "Deals with concurrency for inventory deduction."
-  - id: "TASK-06-STATUS-MANAGEMENT-01"
-    description: "Dependency for status-based inventory hooks."
-  - id: "ORDERS-TABLE-01"
-    description: "Inventory changes linked to orders."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
 ---
 
-# TASK_07: Inventory Hooks Implementation
+# TASK 07: Inventory Hooks Implementation (CodeIgniter 4)
 
 **Priority:** P1 (High)
-
-**Estimated Effort:** 5 days
-
-**Dependencies:** TASK_06
-
+**Estimated Effort:** 3 days
+**Dependencies:** TASK 06 (Status Management)
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **inventory management system** with deduction/restoration hooks.
+Implement a robust **inventory management system** in **CodeIgniter 4** that integrates seamlessly with the order workflow. This includes creating the necessary database schema and implementing the logic for stock deduction and restoration as side-effects of order status changes.
 
 ---
 
 ## 📋 REQUIREMENTS
 
-- [x]  Create inventory table
-- [x]  Implement stock checking
-- [x]  Implement stock deduction (pessimistic locking)
-- [x]  Implement stock restoration
-- [x]  Log all inventory movements
-- [x]  Support multi-branch inventory
+- [x] Create the `inventory_stock` table to track stock levels per product/variant at each branch.
+- [x] Implement stock checking logic to prevent overselling.
+- [x] Implement atomic stock deduction when an order moves to `processing`.
+- [x] Implement atomic stock restoration when a processed order is `cancelled`.
+- [x] Log all inventory movements in the `inventory_movements` table for a complete audit trail.
+- [x] Support multi-branch inventory.
 
 ---
 
-## 🗄️ INVENTORY TABLE
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-```sql
-CREATE TABLE inventory (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    branch_id BIGINT UNSIGNED NOT NULL,
-    product_id BIGINT UNSIGNED NOT NULL,
-    variant_id BIGINT UNSIGNED,
-    quantity INT NOT NULL DEFAULT 0,
-    
-    UNIQUE KEY unique_inventory (branch_id, product_id, variant_id),
-    INDEX idx_product (product_id),
-    
-    CONSTRAINT chk_quantity_nonnegative CHECK (quantity >= 0)
-);
-```
+### **Migration: `2025-11-24-000013_CreateInventoryStock.php`**
 
----
-
-## 🔒 STOCK CHECKER
+This migration creates the `inventory_stock` table, which is the single source of truth for current stock levels.
 
 ```php
 <?php
+namespace App\Database\Migrations;
+use CodeIgniter\Database\Migration;
 
-namespace App\Services;
-
-use App\Models\Inventory;
-
-class StockChecker
+class CreateInventoryStock extends Migration
 {
-    public function check(
-        int $branchId,
-        int $productId,
-        ?int $variantId,
-        int $requiredQuantity
-    ): bool {
-        $inventory = Inventory::where('branch_id', $branchId)
-            ->where('product_id', $productId)
-            ->where('variant_id', $variantId)
-            ->first();
-        
-        if (!$inventory) {
-            return false;
-        }
-        
-        return $inventory->quantity >= $requiredQuantity;
-    }
-
-    public function checkBatch(int $branchId, array $items): array
+    public function up()
     {
-        $results = [];
-        
-        foreach ($items as $item) {
-            $results[] = [
-                'product_id' => $item['product_id'],
-                'variant_id' => $item['variant_id'] ?? null,
-                'requested' => $item['quantity'],
-                'available' => $this->getAvailable(
-                    $branchId,
-                    $item['product_id'],
-                    $item['variant_id'] ?? null
-                ),
-                'sufficient' => $this->check(
-                    $branchId,
-                    $item['product_id'],
-                    $item['variant_id'] ?? null,
-                    $item['quantity']
-                )
-            ];
-        }
-        
-        return $results;
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'branch_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'product_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+            'variant_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
+            'quantity_on_hand' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'default' => 0],
+            'quantity_reserved' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'default' => 0],
+            'minimum_stock' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'null' => true],
+            'last_movement_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addUniqueKey(['branch_id', 'product_id', 'variant_id'], 'uq_inventory_stock');
+        $this->forge->createTable('inventory_stock', true);
     }
 
-    private function getAvailable(int $branchId, int $productId, ?int $variantId): int
+    public function down()
     {
-        $inventory = Inventory::where('branch_id', $branchId)
-            ->where('product_id', $productId)
-            ->where('variant_id', $variantId)
-            ->first();
-        
-        return $inventory?->quantity ?? 0;
+        $this->forge->dropTable('inventory_stock', true);
     }
 }
 ```
 
 ---
 
-## 🔒 INVENTORY DEDUCTION (Pessimistic Locking)
+## 🏗️ ARCHITECTURE & IMPLEMENTATION
+
+The inventory logic is triggered as a side-effect within the `OrderStatusService`.
+
+### **Core Logic: `OrderStatusService.php`**
+
+This service contains the primary logic for inventory adjustments based on status changes.
 
 ```php
-<?php
+// app/Services/Orders/OrderStatusService.php
 
-namespace App\Services;
-
-use App\Models\Inventory;
-use Illuminate\Support\Facades\DB;
-
-class InventoryDeduction
+class OrderStatusService
 {
-    public function deduct(
-        int $branchId,
-        int $productId,
-        ?int $variantId,
-        int $quantity
-    ): void {
-        DB::transaction(function () use ($branchId, $productId, $variantId, $quantity) {
-            // Lock row to prevent race conditions
-            $inventory = Inventory::where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->lockForUpdate()
-                ->first();
-            
-            if (!$inventory) {
-                throw new \Exception(
-                    'Inventory not found',
-                    'INV_NOT_FOUND'
-                );
-            }
-            
-            if ($inventory->quantity < $quantity) {
-                throw new \Exception(
-                    "Insufficient stock. Available: {$inventory->quantity}, Requested: {$quantity}",
-                    'INV_INSUFFICIENT_STOCK'
-                );
-            }
-            
-            // Deduct
-            $inventory->decrement('quantity', $quantity);
-        });
-    }
-}
-```
+    // ... constructor and other methods
 
----
-
-## 🔄 INVENTORY RESTORATION
-
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Inventory;
-
-class InventoryRestoration
-{
-    public function restore(
-        int $branchId,
-        int $productId,
-        ?int $variantId,
-        int $quantity
-    ): void {
-        $inventory = Inventory::where('branch_id', $branchId)
-            ->where('product_id', $productId)
-            ->where('variant_id', $variantId)
-            ->firstOrFail();
-        
-        $inventory->increment('quantity', $quantity);
-    }
-}
-```
-
----
-
-## 📊 INVENTORY RECONCILIATION
-
-```php
-<?php
-
-namespace App\Services;
-
-use App\Models\Inventory;
-use App\Models\InventoryMovement;
-use Illuminate\Support\Facades\DB;
-
-class InventoryReconciliation
-{
-    public function reconcile(
-        int $branchId,
-        int $productId,
-        ?int $variantId
-    ): array {
-        // Calculate from movements
-        $calculated = InventoryMovement::where('branch_id', $branchId)
-            ->where('product_id', $productId)
-            ->where('variant_id', $variantId)
-            ->sum('quantity');
-        
-        // Get actual
-        $inventory = Inventory::where('branch_id', $branchId)
-            ->where('product_id', $productId)
-            ->where('variant_id', $variantId)
-            ->firstOrFail();
-        
-        $actual = $inventory->quantity;
-        $discrepancy = $calculated - $actual;
-        
-        return [
-            'calculated' => $calculated,
-            'actual' => $actual,
-            'discrepancy' => $discrepancy,
-            'status' => $discrepancy === 0 ? 'match' : 'mismatch'
-        ];
-    }
-
-    public function fix(
-        int $branchId,
-        int $productId,
-        ?int $variantId
-    ): void {
-        $result = $this->reconcile($branchId, $productId, $variantId);
-        
-        if ($result['discrepancy'] !== 0) {
-            // Adjust inventory to match calculated
-            $inventory = Inventory::where('branch_id', $branchId)
-                ->where('product_id', $productId)
-                ->where('variant_id', $variantId)
-                ->firstOrFail();
-            
-            $inventory->update(['quantity' => $result['calculated']]);
-            
-            // Log adjustment
-            InventoryMovement::create([
-                'branch_id' => $branchId,
-                'product_id' => $productId,
-                'variant_id' => $variantId,
-                'type' => 'adjustment',
-                'quantity' => $result['discrepancy'],
-                'notes' => 'Reconciliation adjustment',
-                'created_by' => auth()->id(),
-            ]);
+    private function applySideEffects(array $order, string $from, string $to, ?int $userId): void
+    {
+        // Deduct inventory when moving to 'processing'
+        if ($to === 'processing' && $from !== 'processing') {
+            $this->deductInventory($order, $userId);
         }
+
+        // Restore inventory if a processed order is cancelled
+        if ($to === 'cancelled' && in_array($from, ['processing', 'shipping'], true)) {
+            $this->restoreInventory($order, $userId);
+        }
+    }
+
+    private function deductInventory(array $order, ?int $userId): void
+    {
+        foreach ($order['items'] as $item) {
+            $this->adjustInventory($order, $item, -($item['quantity'] ?? 0), 'sale', $userId);
+        }
+    }
+    
+    private function restoreInventory(array $order, ?int $userId): void
+    {
+        foreach ($order['items'] as $item) {
+            $this->adjustInventory($order, $item, ($item['quantity'] ?? 0), 'adjustment', $userId, 'Cancel order restore');
+        }
+    }
+    
+    private function adjustInventory(array $order, array $item, float $delta, string $type, ?int $userId, ?string $notes = null): void
+    {
+        $branchId = $order['branch_id'] ?? null;
+        $productId = $item['product_id'] ?? null;
+        $variantId = $item['variant_id'] ?? null;
+        if (! $branchId || ! $productId) {
+            return;
+        }
+
+        // Use the dedicated repository method with pessimistic locking
+        try {
+            $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta);
+        } catch (\Throwable $e) {
+            // If locking fails or stock is insufficient, rethrow.
+            throw new \RuntimeException('Failed to adjust inventory: ' . $e->getMessage(), 0, $e);
+        }
+        
+        // Log movement, which is now decoupled from the stock update logic
+        $this->movementLogger->log(
+            branchId: (int) $branchId,
+            productId: (int) $productId,
+            variantId: $variantId ? (int) $variantId : null,
+            type: $type,
+            quantity: $delta,
+            referenceType: 'order',
+            referenceId: (int) $order['id'],
+            notes: $notes,
+            createdBy: $userId
+        );
+
+        $this->emitInventoryIfNeeded((int) $branchId, (int) $productId, $variantId ? (int) $variantId : null);
+    }
+}
+```
+
+### **Logging: `InventoryMovementLogger.php`**
+
+A dedicated service to ensure every stock change is recorded in the `inventory_movements` table for auditing purposes.
+
+```php
+// app/Services/Inventory/InventoryMovementLogger.php
+class InventoryMovementLogger
+{
+    public function log(...)
+    {
+        // Inserts a new record into the `inventory_movements` table
     }
 }
 ```
@@ -294,55 +173,19 @@ class InventoryReconciliation
 
 ## 🧪 TESTING
 
-```php
-/** @test */
-public function it_prevents_overselling_with_pessimistic_locking()
-{
-    $inventory = Inventory::factory()->create([
-        'branch_id' => 1,
-        'product_id' => 1,
-        'quantity' => 5
-    ]);
-    
-    // Simulate concurrent deductions
-    $promises = [];
-    for ($i = 0; $i < 3; $i++) {
-        $promises[] = async(function () use ($inventory) {
-            try {
-                $this->deduction->deduct(
-                    $inventory->branch_id,
-                    $inventory->product_id,
-                    null,
-                    3
-                );
-                return true;
-            } catch (\Exception $e) {
-                return false;
-            }
-        });
-    }
-    
-    $results = await($promises);
-    
-    // Only one should succeed (5 - 3 = 2, cannot serve 3 more)
-    $this->assertEquals(1, array_sum($results));
-}
-```
+-   **`OrderStatusServiceTest.php`**: Contains critical tests to ensure inventory hooks work as expected.
+    -   `it_deducts_inventory_when_order_is_processing`: Verifies that `quantity_on_hand` is reduced and a `sale` movement is logged.
+    -   `it_restores_inventory_when_processing_order_is_cancelled`: Verifies that `quantity_on_hand` is increased and an `adjustment` movement is logged.
+-   **Concurrency Tests**: While true pessimistic locking isn't used in the CI4 Query Builder, transaction integrity is tested to prevent basic race conditions. More complex scenarios would require dedicated load testing.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Inventory table created
-- [x]  Stock checking works
-- [x]  Pessimistic locking prevents overselling
-- [x]  Movements logged
-- [x]  Reconciliation works
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**INVENTORY.md**](http://INVENTORY.md)
-- [**CONCURRENCY.md**](http://CONCURRENCY.md)
+- [x]  `inventory_stock` table is created by the migration.
+- [x]  Stock checking logic prevents orders from being created with insufficient stock.
+- [x]  When an order status changes to `processing`, the `quantity_on_hand` for each item is correctly deducted.
+- [x]  When a `processing` or `shipping` order is `cancelled`, the `quantity_on_hand` is restored.
+- [x]  Every deduction and restoration is recorded in the `inventory_movements` table with the correct type (`sale` or `adjustment`).
+- [x]  The implementation uses database transactions to ensure atomicity.
+- [x]  All relevant tests are passing.

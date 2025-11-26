@@ -44,13 +44,13 @@ class ProductVariantServiceTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedVariant(int $productId, string $sku): int
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'variant_name' => $sku,
             'variant_signature' => $sku,
@@ -101,7 +101,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $result = $this->service->create($productIdA, $data);
 
         $this->assertTrue($result['success']);
-        $createdVariant = $this->db->table('db_product_variants_v2')
+        $createdVariant = $this->db->table('product_variants_v2')
                                    ->where('id', $result['data']['id'])
                                    ->get()
                                    ->getRowArray();
@@ -123,7 +123,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $result = $this->service->update($vid, ['variant_name' => 'New Name']);
         $this->assertTrue($result['success']);
 
-        $row = $this->db->table('db_product_variants_v2')->where('id', $vid)->get()->getRowArray();
+        $row = $this->db->table('product_variants_v2')->where('id', $vid)->get()->getRowArray();
         $this->assertEquals('New Name', $row['variant_name']);
     }
 
@@ -145,7 +145,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $result = $this->service->delete($vid);
         $this->assertTrue($result['success']);
 
-        $row = $this->db->table('db_product_variants_v2')->where('id', $vid)->get()->getRowArray();
+        $row = $this->db->table('product_variants_v2')->where('id', $vid)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -158,7 +158,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $result = $this->service->restore($vid);
         $this->assertTrue($result['success']);
 
-        $row = $this->db->table('db_product_variants_v2')->where('id', $vid)->get()->getRowArray();
+        $row = $this->db->table('product_variants_v2')->where('id', $vid)->get()->getRowArray();
         $this->assertNull($row['deleted_at']);
     }
 
@@ -170,7 +170,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $result = $this->service->hardDelete($vid);
         $this->assertTrue($result['success']);
 
-        $row = $this->db->table('db_product_variants_v2')->where('id', $vid)->get()->getRowArray();
+        $row = $this->db->table('product_variants_v2')->where('id', $vid)->get()->getRowArray();
         $this->assertNull($row);
     }
 
@@ -204,12 +204,12 @@ class ProductVariantServiceTest extends CIUnitTestCase
         $vid = $this->seedVariant($pid, 'SKU1');
 
         // Seed images
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'product_id' => $pid, 'variant_id' => null, 'image_url' => 'img1.jpg', 'created_at' => date('Y-m-d')
         ]);
         $img1 = $this->db->insertID();
 
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'product_id' => $pid, 'variant_id' => $vid, 'image_url' => 'img2.jpg', 'created_at' => date('Y-m-d')
         ]);
         $img2 = $this->db->insertID();
@@ -229,7 +229,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
     //     $vid = $this->seedVariant($pid, 'SKU1');
 
     //     // Seed Attribute
-    //     $this->db->table('db_attributes')->insert([
+    //     $this->db->table('attributes')->insert([
     //         'name' => 'Color', 'code' => 'color', 'type' => 'select', 'created_at' => date('Y-m-d H:i:s')
     //     ]);
     //     $attrId = $this->db->insertID();

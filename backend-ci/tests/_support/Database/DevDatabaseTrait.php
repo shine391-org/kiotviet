@@ -7,19 +7,13 @@ use Config\Database;
 
 trait DevDatabaseTrait
 {
-    protected static bool $schemaMigrated = false;
-    
     protected $db;
+    protected static bool $schemaMigrated = false;
     
     protected function setUpDatabase(): void
     {
-        if (!self::$schemaMigrated) {
-            $this->freshMigrateSchema();
-            self::$schemaMigrated = true;
-        }
-        
+        $this->freshMigrateSchema();
         $this->db = \Config\Database::connect('tests');
-        
         $this->db->transBegin();
     }
     
@@ -33,19 +27,14 @@ trait DevDatabaseTrait
     
     private function freshMigrateSchema(): void
     {
-        $db = \Config\Database::connect('tests');
+        $this->db = \Config\Database::connect('tests');
 
-        $db->query('SET FOREIGN_KEY_CHECKS=0');
-        $tables = $db->listTables();
-        foreach ($tables as $table) {
-            $db->query("DROP TABLE IF EXISTS `{$table}`");
-        }
-        $db->query('SET FOREIGN_KEY_CHECKS=1');
-        
-        $this->createBasicTestSchema($db);
-        
-        $this->createAttributesSchema($db);
-        
+        $builder = new class($this->db) {
+            use CompleteSchemaTrait;
+            public function __construct($db) { $this->db = $db; }
+            public function build(): void { $this->resetCompleteSchema(); }
+        };
+        $builder->build();
         if (defined('TEST_DEBUG') && TEST_DEBUG) {
             log_message('info', 'Database migrated for testing: ' . date('Y-m-d H:i:s'));
         }

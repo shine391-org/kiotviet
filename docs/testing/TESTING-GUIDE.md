@@ -11,6 +11,8 @@ location: "docs/testing"
 related_to:
   - id: "TESTING-PATTERNS-01"
     description: "Refer to this for code examples and patterns to copy."
+  - id: "TEST-CHECKLIST-01"
+    description: "Refer to this for mandatory testing checklist."
 updated: "2025-11-25"
 changes: "Migrated from SQLite to MySQL-only testing. All tests now use real MySQL database."
 ---
@@ -18,6 +20,8 @@ changes: "Migrated from SQLite to MySQL-only testing. All tests now use real MyS
 # Testing Guide
 
 ## 🚨 BREAKING CHANGE: MySQL-Only Testing
+
+> **Note (2025-11-25):** Nội dung từ `TESTING-MAIN-DB-GUIDE.md` đã được gộp vào tài liệu này để tránh trùng lặp. Tham chiếu cũ `TESTING-MAIN-DB-01` nay trỏ về đây.
 
 **As of 2025-11-25, all tests use MySQL-only architecture. SQLite in-memory testing has been removed.**
 
@@ -75,11 +79,11 @@ docker-compose up -d db-test
 docker exec meomeo2-api-1 php spark db:info tests
 ```
 
-### MySQL-Only Configuration
-- **Database**: MySQL 8.4 (lanocrm_test)
-- **Connection**: Configured in `backend-ci/app/Config/Database.php`
-- **Test Config**: `phpunit.xml.dist` (uses 'tests' group)
-- **Auto-migration**: DevDatabaseTrait automatically creates schema
+### MySQL-Only Configuration (Main DB + rollback)
+- **Database**: MySQL 8.4 (`lanocrm_shop`) – dùng **main database** cho test, rollback bảo vệ dữ liệu
+- **Connection**: `backend-ci/app/Config/Database.php` group `tests` trỏ về main DB, `DBPrefix` rỗng
+- **Test Config**: `phpunit.xml.dist` (group `tests`)
+- **Auto-migration**: DevDatabaseTrait + các *SchemaTrait* tự tạo schema trong transaction
 
 ### Running Tests
 
@@ -140,7 +144,20 @@ class YourServiceTest extends CIUnitTestCase
 - ✅ No SQLite fallback complexity
 - ✅ Consistent with production environment
 
-## Section 5: Common Issues & Solutions
+### Naming conventions (IMPORTANT)
+- **Không dùng prefix `db_` cho bảng test**. Tất cả schema traits (CompleteSchemaTrait, PriceListSchemaTrait, WebhookSchemaTrait, …) tạo bảng với tên gốc: `products`, `orders`, `webhook_subscriptions`, v.v.
+- Model/Repository cũng phải trỏ về tên gốc. Nếu thấy `db_*` trong code hoặc test, xem lại và sửa ngay.
+
+## Section 5: Main Database + Transaction Rollback (tóm tắt)
+
+- Mọi test chạy trên **main DB `lanocrm_shop`** nhưng luôn nằm trong transaction, rollback ở `tearDownDatabase()` ⇒ không làm bẩn dữ liệu thật.
+- Cấu hình bắt buộc:
+  - `app/Config/Database.php` group `tests`: hostname `db`, database `lanocrm_shop`, `DBPrefix` rỗng.
+  - `phpunit.xml.dist`: env `database.tests.*` khớp với config trên.
+- Quy trình: `setUpDatabase()` mở kết nối + `transBegin()`, `tearDownDatabase()` rollback. Luôn gọi cả hai.
+- Không dùng database/schema phụ; mọi *SchemaTrait* tạo bảng ngay trên main DB trong transaction.
+
+## Section 6: Common Issues & Solutions
 
 ### ISSUE 1: "Connection refused" or "Database not found"
 **Cause**: MySQL test container not running.
@@ -181,7 +198,7 @@ protected function tearDown(): void {
 - Schema is cached per test class
 - Only data changes are rolled back (fast)
 
-## Section 6: Migration from SQLite (For Reference)
+## Section 7: Migration from SQLite (For Reference)
 
 If you encounter old tests using SQLite, convert them:
 
@@ -208,7 +225,7 @@ protected function setUp(): void {
 
 **Important**: Remove all `if (extension_loaded('sqlite3'))` checks!
 
-## Section 7: Coverage Requirements (Unchanged)
+## Section 8: Coverage Requirements (Unchanged)
 - **Minimum 70%** for all new Services and Repositories
 - **100%** for critical business logic (Calculations, Permissions)
 - **Tools**: Xdebug with PHPUnit for coverage reports
@@ -218,7 +235,7 @@ protected function setUp(): void {
 docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-html build/coverage
 ```
 
-## Section 8: CI/CD Integration
+## Section 9: CI/CD Integration
 - All tests run against MySQL in CI/CD
 - Test database automatically provisioned
 - Pre-merge hooks block commits if tests fail
@@ -236,7 +253,7 @@ services:
       MYSQL_PASSWORD: test_password
 ```
 
-## Section 9: Best Practices
+## Section 10: Best Practices
 
 ### DO:
 ✅ Use DevDatabaseTrait for all tests

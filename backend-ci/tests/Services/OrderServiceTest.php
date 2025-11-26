@@ -4,8 +4,8 @@ namespace Tests\Services;
 
 use App\Services\Orders\OrderService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
 use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\PriceListSchemaTrait;
 
 /**
  * @agent-test: OrderService unified MySQL testing
@@ -14,6 +14,7 @@ use Tests\Support\Database\DevDatabaseTrait;
 class OrderServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
+    use PriceListSchemaTrait;
 
     private OrderService $service;
 
@@ -22,8 +23,8 @@ class OrderServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         
-        // Force fresh migration to get new tables
-        $this->forceFreshMigrate();
+        // Use PriceListSchemaTrait for comprehensive schema including order_sequences
+        $this->resetPriceListSchema();
         
         // Seed order sequences for OrderNumberGenerator
         $this->seedOrderSequences();
@@ -152,7 +153,7 @@ class OrderServiceTest extends CIUnitTestCase
 
     private function seedProduct(float $price): int
     {
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'code' => 'P' . random_int(100, 999),
             'name' => 'Prod',
             'selling_price' => $price,
@@ -173,13 +174,13 @@ class OrderServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
         $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode((array) $payload['apply_to_groups']) : null;
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
     {
-        $this->db->table('db_price_list_items')->insert([
+        $this->db->table('price_list_items')->insert([
             'price_list_id' => $listId,
             'product_id' => $productId,
             'variant_id' => $variantId,
@@ -193,7 +194,7 @@ class OrderServiceTest extends CIUnitTestCase
 
     private function seedOrderSequences(): void
     {
-        $this->db->table('db_order_sequences')->insert([
+        $this->db->table('order_sequences')->insert([
             'branch_id' => 1,
             'sequence_number' => 1,
             'prefix' => 'ORD',

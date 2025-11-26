@@ -8,7 +8,7 @@ use App\Validators\ReturnValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use InvalidArgumentException;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\ReturnSchemaTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
 
 /**
  * @agent-test: ReturnService unified MySQL testing
@@ -17,7 +17,7 @@ use Tests\Support\Database\ReturnSchemaTrait;
 class ReturnServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
-    use ReturnSchemaTrait;
+    use CompleteSchemaTrait;
 
     private ReturnService $service;
 
@@ -27,7 +27,7 @@ class ReturnServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         
         // Use ReturnSchemaTrait for comprehensive schema
-        $this->resetReturnSchema();
+        $this->resetCompleteSchema();
         $this->seedBase();
 
         $repo = new ReturnRepository(null, null, $this->db);
@@ -106,15 +106,15 @@ class ReturnServiceTest extends CIUnitTestCase
     private function seedBase(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('db_customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('db_users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 
     private function seedOrderWithItems(int $customerId, array $items, string $status = 'completed'): int
     {
         $now = date('Y-m-d H:i:s');
         $total = array_sum(array_map(fn ($i) => $i['quantity'] * $i['price'], $items));
-        $this->db->table('db_orders')->insert([
+        $this->db->table('orders')->insert([
             'customer_id' => $customerId,
             'status' => $status,
             'total' => $total,
@@ -124,7 +124,7 @@ class ReturnServiceTest extends CIUnitTestCase
         $orderId = (int) $this->db->insertID();
         $id = 1;
         foreach ($items as $item) {
-            $this->db->table('db_order_items')->insert([
+            $this->db->table('order_items')->insert([
                 'id' => $id,
                 'order_id' => $orderId,
                 'product_id' => 1,

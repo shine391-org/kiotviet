@@ -27,19 +27,12 @@ trait InvoiceSchemaTrait
         }
 
         // Drop invoice-related tables
-        $this->db->query('DROP TABLE IF EXISTS db_activity_logs');
         $this->db->query('DROP TABLE IF EXISTS activity_logs');
-        $this->db->query('DROP TABLE IF EXISTS db_invoice_orders');
         $this->db->query('DROP TABLE IF EXISTS invoice_orders');
-        $this->db->query('DROP TABLE IF EXISTS db_invoices');
         $this->db->query('DROP TABLE IF EXISTS invoices');
-        $this->db->query('DROP TABLE IF EXISTS db_orders');
         $this->db->query('DROP TABLE IF EXISTS orders');
-        $this->db->query('DROP TABLE IF EXISTS db_customers');
         $this->db->query('DROP TABLE IF EXISTS customers');
-        $this->db->query('DROP TABLE IF EXISTS db_branches');
         $this->db->query('DROP TABLE IF EXISTS branches');
-        $this->db->query('DROP TABLE IF EXISTS db_users');
         $this->db->query('DROP TABLE IF EXISTS users');
 
         // Create tables with MySQL-specific syntax
@@ -62,13 +55,6 @@ trait InvoiceSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_users (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            username VARCHAR(50),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         $this->db->query("CREATE TABLE branches (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -76,22 +62,8 @@ trait InvoiceSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_branches (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
         $this->db->query("CREATE TABLE customers (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_customers (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
             created_at TIMESTAMP NULL,
@@ -105,17 +77,6 @@ trait InvoiceSchemaTrait
     private function createOrderTables(): void
     {
         $this->db->query("CREATE TABLE orders (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            customer_id INT,
-            branch_id INT,
-            order_date DATE,
-            total DECIMAL(10,2),
-            status VARCHAR(50),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_orders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             customer_id INT,
             branch_id INT,
@@ -150,25 +111,6 @@ trait InvoiceSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_invoices (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            invoice_number VARCHAR(50) UNIQUE,
-            customer_id INT,
-            branch_id INT,
-            issue_date DATE,
-            due_date DATE,
-            subtotal DECIMAL(10,2),
-            vat_rate DECIMAL(5,2),
-            vat_amount DECIMAL(10,2),
-            total DECIMAL(10,2),
-            pdf_path VARCHAR(255),
-            notes TEXT,
-            meta JSON,
-            created_by INT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**
@@ -177,14 +119,6 @@ trait InvoiceSchemaTrait
     private function createInvoiceOrderTables(): void
     {
         $this->db->query("CREATE TABLE invoice_orders (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            invoice_id INT,
-            order_id INT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_invoice_orders (
             id INT AUTO_INCREMENT PRIMARY KEY,
             invoice_id INT,
             order_id INT,

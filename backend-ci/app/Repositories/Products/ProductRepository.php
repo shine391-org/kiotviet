@@ -42,7 +42,12 @@ class ProductRepository
     public function update(int $id, array $data): bool { $payload = $data + ['updated_at' => $this->now()]; return (bool) $this->products->update($id, $payload); }
 
     /** Soft delete. @agent-use: Delete flow @agent-pattern: Soft delete aware */
-    public function delete(int $id): bool { return (bool) $this->products->delete($id); }
+    public function delete(int $id): bool {
+        if ($id <= 0) {
+            return false;
+        }
+        return (bool) $this->products->delete($id);
+    }
 
     /** Check duplicate code inside products only. @agent-use: Code uniqueness @agent-pattern: Exists check */
     public function codeExists(string $code, ?int $excludeId = null): bool

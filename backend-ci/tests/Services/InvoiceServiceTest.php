@@ -9,8 +9,8 @@ use App\Services\Invoices\VATCalculator;
 use App\Validators\InvoiceValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use InvalidArgumentException;
+use Tests\Support\Database\CompleteSchemaTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\InvoiceSchemaTrait;
 
 /**
  * @agent-test: InvoiceService unified MySQL testing
@@ -19,7 +19,7 @@ use Tests\Support\Database\InvoiceSchemaTrait;
 class InvoiceServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
-    use InvoiceSchemaTrait;
+    use CompleteSchemaTrait;
 
     private InvoiceService $service;
 
@@ -29,7 +29,7 @@ class InvoiceServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         
         // Use InvoiceSchemaTrait for comprehensive schema
-        $this->resetInvoiceSchema();
+        $this->resetCompleteSchema();
         $this->seedLookup();
 
         $repo = new InvoiceRepository(null, null, $this->db);
@@ -118,15 +118,15 @@ class InvoiceServiceTest extends CIUnitTestCase
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
-        $this->db->table('db_orders')->insert($row);
+        $this->db->table('orders')->insert($row);
         return (int) $this->db->insertID();
     }
 
     private function seedLookup(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('db_customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('db_branches')->insert(['id' => 1, 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('db_users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 }

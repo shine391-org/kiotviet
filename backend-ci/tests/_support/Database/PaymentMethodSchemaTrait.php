@@ -21,11 +21,8 @@ trait PaymentMethodSchemaTrait
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
 
-        $this->db->query('DROP TABLE IF EXISTS `db_payment_methods`');
         $this->db->query('DROP TABLE IF EXISTS `payment_methods`');
-        $this->db->query('DROP TABLE IF EXISTS `db_order_items`');
         $this->db->query('DROP TABLE IF EXISTS `order_items`');
-        $this->db->query('DROP TABLE IF EXISTS `db_orders`');
         $this->db->query('DROP TABLE IF EXISTS `orders`');
 
         // Create tables with MySQL-specific syntax
@@ -40,19 +37,6 @@ trait PaymentMethodSchemaTrait
      */
     private function createPaymentMethodTables(): void
     {
-        $this->db->query("CREATE TABLE db_payment_methods (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(50) UNIQUE,
-            name VARCHAR(255),
-            name_translations JSON,
-            description TEXT,
-            is_active TINYINT(1) DEFAULT 1,
-            display_order INT DEFAULT 0,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE payment_methods (
             id INT AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(50) UNIQUE,
@@ -72,16 +56,6 @@ trait PaymentMethodSchemaTrait
      */
     private function createOrderTables(): void
     {
-        $this->db->query("CREATE TABLE db_orders (
-            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            customer_id INT,
-            payment_method VARCHAR(50),
-            total DECIMAL(10,2),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE orders (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             customer_id INT,

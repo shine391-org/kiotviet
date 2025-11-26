@@ -26,15 +26,9 @@ class WebhookSubscriptionRepository
     /** Whether tables exist. */
     public function isReady(): bool
     {
-        // Check both table existence and that we have a valid connection
         try {
-            $exists = $this->db->tableExists('db_webhook_subscriptions');
-            // In testing environment, assume tables exist if we can connect
-            if (ENVIRONMENT === 'testing') {
-                return true;
-            }
-            return $exists;
-        } catch (\Exception $e) {
+            return $this->db->tableExists('webhook_subscriptions');
+        } catch (\Throwable $e) {
             return false;
         }
     }
@@ -42,7 +36,7 @@ class WebhookSubscriptionRepository
     /** List subscriptions with filters + pagination. */
     public function findAll(array $filters): array
     {
-        $builder = $this->db->table('db_webhook_subscriptions');
+        $builder = $this->db->table('webhook_subscriptions');
 
         if (! empty($filters['event'])) {
             $builder->where('event', $filters['event']);
@@ -68,7 +62,7 @@ class WebhookSubscriptionRepository
 
     public function count(array $filters): int
     {
-        $builder = $this->db->table('db_webhook_subscriptions');
+        $builder = $this->db->table('webhook_subscriptions');
         if (! empty($filters['event'])) {
             $builder->where('event', $filters['event']);
         }
@@ -84,7 +78,7 @@ class WebhookSubscriptionRepository
         if (! $this->isReady()) {
             return null;
         }
-        $query = $this->db->table('db_webhook_subscriptions')
+        $query = $this->db->table('webhook_subscriptions')
             ->where('id', $id)
             ->get();
             
@@ -108,7 +102,7 @@ class WebhookSubscriptionRepository
             error_log("WebhookRepository create payload: " . json_encode($payload));
         }
         
-        $this->db->table('db_webhook_subscriptions')->insert($payload);
+        $this->db->table('webhook_subscriptions')->insert($payload);
         $payload['id'] = (int) $this->db->insertID();
         
         // Debug: Log the insert ID
@@ -122,7 +116,7 @@ class WebhookSubscriptionRepository
     public function update(int $id, array $data): bool
     {
         $payload = $this->encode($data) + ['updated_at' => $this->now()];
-        $result = $this->db->table('db_webhook_subscriptions')
+        $result = $this->db->table('webhook_subscriptions')
             ->where('id', $id)
             ->update($payload);
         return (bool) $result;
@@ -144,7 +138,7 @@ class WebhookSubscriptionRepository
         if (! $this->isReady()) {
             return [];
         }
-        $query = $this->db->table('db_webhook_subscriptions')
+        $query = $this->db->table('webhook_subscriptions')
             ->where('event', $event)
             ->where('is_active', 1)
             ->get();

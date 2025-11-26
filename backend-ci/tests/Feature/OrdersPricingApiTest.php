@@ -25,6 +25,7 @@ class OrdersPricingApiTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetPriceListSchema();
+        $this->seedCustomer(10, 2);
         $this->seedProduct(1, 100000);
         $listId = $this->seedPriceList(['name' => 'VIP', 'priority' => 5, 'apply_to_groups' => [2]]);
         $this->seedItem($listId, 1, null, 80000, 0, 0);
@@ -46,6 +47,9 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
+        if ($res->getStatusCode() !== 200) {
+            fwrite(STDERR, "Response body: " . $res->getBody() . "\n");
+        }
         $res->assertStatus(200);
         $res->assertJSONPath('data.total', 160000.0);
         $res->assertJSONPath('data.applied_price_list_name', 'VIP');
@@ -56,7 +60,9 @@ class OrdersPricingApiTest extends CIUnitTestCase
         $payload = [
             'customer_id' => 10,
             'customer_group_id' => 2,
+            'branch_id' => 1,
             'order_date' => date('Y-m-d'),
+            'order_number' => 'ORD-TEST-1',
             'payment_method' => 'CASH',
             'shipping' => [
                 'name' => 'John Doe',
@@ -76,6 +82,9 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders');
 
+        if ($res->getStatusCode() !== 201) {
+            fwrite(STDERR, "Response body: " . $res->getBody() . "\n");
+        }
         $res->assertStatus(201);
         $res->assertJSONFragment(['success' => true]);
     }
@@ -124,6 +133,9 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
+        if ($res->getStatusCode() !== 200) {
+            fwrite(STDERR, "Response body: " . $res->getBody() . "\n");
+        }
         $res->assertStatus(200);
         $res->assertJSONPath('data.items.0.final_price', 90000.0);
         $res->assertJSONPath('data.applied_price_list_name', 'GroupB');
@@ -157,7 +169,7 @@ class OrdersPricingApiTest extends CIUnitTestCase
 
     private function seedProduct(int $id, float $price): void
     {
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'id' => $id,
             'code' => 'P' . $id,
             'name' => 'Prod ' . $id,
@@ -178,19 +190,31 @@ class OrdersPricingApiTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
         $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode((array) $payload['apply_to_groups']) : null;
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedItem(int $listId, int $productId, ?int $variantId, float $price, float $discountPercent, float $discountAmount): void
     {
-        $this->db->table('db_price_list_items')->insert([
+        $this->db->table('price_list_items')->insert([
             'price_list_id' => $listId,
             'product_id' => $productId,
             'variant_id' => $variantId,
             'price' => $price,
             'discount_percent' => $discountPercent,
             'discount_amount' => $discountAmount,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
+    private function seedCustomer(int $id, ?int $groupId): void
+    {
+        $this->db->table('customers')->insert([
+            'id' => $id,
+            'customer_group_id' => $groupId,
+            'name' => 'Customer ' . $id,
+            'phone' => '090000000' . $id,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

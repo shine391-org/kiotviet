@@ -76,7 +76,7 @@ class InventoryServiceTest extends CIUnitTestCase
         ]);
 
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_inventory_stock')->where('warehouse_id', $wh)->where('product_id', 1)->get()->getRowArray();
+        $row = $this->db->table('inventory_stock')->where('warehouse_id', $wh)->where('product_id', 1)->get()->getRowArray();
         $this->assertEquals(5.0, (float) $row['quantity_on_hand']);
     }
 
@@ -108,8 +108,8 @@ class InventoryServiceTest extends CIUnitTestCase
             'quantity' => 3,
         ]);
 
-        $fromRow = $this->db->table('db_inventory_stock')->where('warehouse_id', $from)->where('product_id', 1)->get()->getRowArray();
-        $toRow = $this->db->table('db_inventory_stock')->where('warehouse_id', $to)->where('product_id', 1)->get()->getRowArray();
+        $fromRow = $this->db->table('inventory_stock')->where('warehouse_id', $from)->where('product_id', 1)->get()->getRowArray();
+        $toRow = $this->db->table('inventory_stock')->where('warehouse_id', $to)->where('product_id', 1)->get()->getRowArray();
         $this->assertEquals(7.0, (float) $fromRow['quantity_on_hand']);
         $this->assertEquals(3.0, (float) $toRow['quantity_on_hand']);
     }
@@ -126,7 +126,7 @@ class InventoryServiceTest extends CIUnitTestCase
             'quantity' => 1,
         ]);
 
-        $alert = $this->db->table('db_inventory_alerts')->get()->getRowArray();
+        $alert = $this->db->table('inventory_alerts')->get()->getRowArray();
         $this->assertNotNull($alert);
         $this->assertSame('OUT_OF_STOCK', $alert['alert_type']);
     }
@@ -143,7 +143,7 @@ class InventoryServiceTest extends CIUnitTestCase
             'valuation_method' => 'FIFO',
         ]);
 
-        $row = $this->db->table('db_inventory_valuation')->get()->getRowArray();
+        $row = $this->db->table('inventory_valuation')->get()->getRowArray();
         $this->assertSame('FIFO', $row['valuation_method']);
         $this->assertEquals(4.0, (float) $row['quantity']);
         $this->assertEquals(5.0, (float) $row['unit_cost']);
@@ -179,10 +179,10 @@ class InventoryServiceTest extends CIUnitTestCase
             'from_warehouse_id' => $wh,
             'quantity' => 1,
         ]);
-        $alert = $this->db->table('db_inventory_alerts')->get()->getRowArray();
+        $alert = $this->db->table('inventory_alerts')->get()->getRowArray();
 
         $this->service->ignoreAlert($alert['id'], 99);
-        $row = $this->db->table('db_inventory_alerts')->where('id', $alert['id'])->get()->getRowArray();
+        $row = $this->db->table('inventory_alerts')->where('id', $alert['id'])->get()->getRowArray();
         $this->assertSame('ignored', $row['status']);
         $this->assertEquals(99, (int) $row['resolved_by']);
     }
@@ -202,13 +202,13 @@ class InventoryServiceTest extends CIUnitTestCase
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_inventory_alerts');
-        $this->db->query('DROP TABLE IF EXISTS db_inventory_valuation');
-        $this->db->query('DROP TABLE IF EXISTS db_inventory_movements');
-        $this->db->query('DROP TABLE IF EXISTS db_inventory_stock');
-        $this->db->query('DROP TABLE IF EXISTS db_warehouses');
+        $this->db->query('DROP TABLE IF EXISTS inventory_alerts');
+        $this->db->query('DROP TABLE IF EXISTS inventory_valuation');
+        $this->db->query('DROP TABLE IF EXISTS inventory_movements');
+        $this->db->query('DROP TABLE IF EXISTS inventory_stock');
+        $this->db->query('DROP TABLE IF EXISTS warehouses');
 
-        $this->db->query("CREATE TABLE db_warehouses (
+        $this->db->query("CREATE TABLE warehouses (
             id INTEGER PRIMARY KEY {$auto},
             code TEXT,
             name TEXT,
@@ -222,7 +222,7 @@ class InventoryServiceTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_inventory_stock (
+        $this->db->query("CREATE TABLE inventory_stock (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
@@ -236,7 +236,7 @@ class InventoryServiceTest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_inventory_movements (
+        $this->db->query("CREATE TABLE inventory_movements (
             id INTEGER PRIMARY KEY {$auto},
             reference_code TEXT,
             movement_type TEXT,
@@ -251,7 +251,7 @@ class InventoryServiceTest extends CIUnitTestCase
             created_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_inventory_alerts (
+        $this->db->query("CREATE TABLE inventory_alerts (
             id INTEGER PRIMARY KEY {$auto},
             alert_type TEXT,
             product_id INTEGER,
@@ -265,7 +265,7 @@ class InventoryServiceTest extends CIUnitTestCase
             created_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_inventory_valuation (
+        $this->db->query("CREATE TABLE inventory_valuation (
             id INTEGER PRIMARY KEY {$auto},
             warehouse_id INTEGER,
             product_id INTEGER,
@@ -281,7 +281,7 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function seedWarehouse(string $code): int
     {
-        $this->db->table('db_warehouses')->insert([
+        $this->db->table('warehouses')->insert([
             'code' => $code,
             'name' => $code,
             'status' => 'active',
@@ -295,7 +295,7 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function seedStock(int $productId, ?int $variantId, int $warehouseId, float $qty, float $minStock = 0): void
     {
-        $this->db->table('db_inventory_stock')->insert([
+        $this->db->table('inventory_stock')->insert([
             'product_id' => $productId,
             'variant_id' => $variantId,
             'warehouse_id' => $warehouseId,

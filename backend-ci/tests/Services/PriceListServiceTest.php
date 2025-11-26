@@ -8,8 +8,8 @@ use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
 use App\Validators\PriceListValidator;
 use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Database\CompleteSchemaTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\PriceListSchemaTrait;
 
 /**
  * @agent-test: PriceListService unified MySQL testing
@@ -18,7 +18,7 @@ use Tests\Support\Database\PriceListSchemaTrait;
 class PriceListServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
-    use PriceListSchemaTrait;
+    use CompleteSchemaTrait;
 
     private PriceListService $service;
     private int $productId;
@@ -29,7 +29,7 @@ class PriceListServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         
         // Use PriceListSchemaTrait for comprehensive schema
-        $this->resetPriceListSchema();
+        $this->resetCompleteSchema();
 
         $repo = new PriceListRepository(null, $this->db);
         $items = new PriceListItemRepository(null, $this->db);
@@ -39,7 +39,7 @@ class PriceListServiceTest extends CIUnitTestCase
         $this->service = new PriceListService($repo, $items, $validator, $formula, $products);
 
         // seed product (DB prefix handles actual table name)
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'code' => 'P1',
             'name' => 'Prod 1',
             'selling_price' => 200,
@@ -110,7 +110,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function seedList(string $name, ?int $baseId, bool $autoUpdate, ?string $formula): int
     {
-        $this->db->table('db_price_lists')->insert([
+        $this->db->table('price_lists')->insert([
             'name' => $name,
             'type' => 'custom',
             'priority' => 0,
@@ -127,7 +127,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
     {
-        $this->db->table('db_price_list_items')->insert([
+        $this->db->table('price_list_items')->insert([
             'price_list_id' => $listId,
             'product_id' => $productId,
             'variant_id' => $variantId,
@@ -141,7 +141,7 @@ class PriceListServiceTest extends CIUnitTestCase
 
     private function priceOf(int $listId, int $productId): ?float
     {
-        $row = $this->db->table('db_price_list_items')
+        $row = $this->db->table('price_list_items')
             ->where('price_list_id', $listId)
             ->where('product_id', $productId)
             ->get()->getRowArray();

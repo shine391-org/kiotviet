@@ -22,24 +22,24 @@ class ProductMediaServiceTest extends CIUnitTestCase
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_images');
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
+        $this->db->query('DROP TABLE IF EXISTS product_images');
+        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS products');
 
-        $this->db->query("CREATE TABLE db_products (
+        $this->db->query("CREATE TABLE products (
             id INTEGER PRIMARY KEY {$auto},
             code TEXT,
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
+        $this->db->query("CREATE TABLE product_variants_v2 (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             sku TEXT,
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_images (
+        $this->db->query("CREATE TABLE product_images (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_id INTEGER,
@@ -53,7 +53,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     public function test_library_returns_images(): void
     {
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'image_url' => 'img1.jpg',
             'created_at' => '2023-01-01 10:00:00',
             'is_primary' => 0,
@@ -69,7 +69,7 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     public function test_library_marks_attached(): void
     {
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'image_url' => 'img1.jpg',
             'product_id' => 1,
             'created_at' => '2023-01-01 10:00:00'
@@ -81,11 +81,11 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     public function test_byDate_filters(): void
     {
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'image_url' => 'img1.jpg',
             'created_at' => '2023-01-01 10:00:00'
         ]);
-        $this->db->table('db_product_images')->insert([
+        $this->db->table('product_images')->insert([
             'image_url' => 'img2.jpg',
             'created_at' => '2023-02-01 10:00:00'
         ]);
@@ -104,8 +104,8 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     public function test_searchSku_finds_match(): void
     {
-        $this->db->table('db_products')->insert(['code' => 'PROD1', 'id' => 1]);
-        $this->db->table('db_product_images')->insert(['product_id' => 1, 'image_url' => 'found.jpg']);
+        $this->db->table('products')->insert(['code' => 'PROD1', 'id' => 1]);
+        $this->db->table('product_images')->insert(['product_id' => 1, 'image_url' => 'found.jpg']);
 
         $result = $this->service->searchSku(['sku' => 'PROD1']);
         $this->assertTrue($result['success']);

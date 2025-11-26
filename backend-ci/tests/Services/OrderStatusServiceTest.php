@@ -8,14 +8,14 @@ use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Database\CompleteSchemaTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\StatusSchemaTrait;
 
 /** @agent-test: OrderStatusService @agent-pattern: Status workflow test */
 class OrderStatusServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
-    use StatusSchemaTrait;
+    use CompleteSchemaTrait;
 
     protected $db;
     private OrderStatusService $service;
@@ -25,7 +25,7 @@ class OrderStatusServiceTest extends CIUnitTestCase
         parent::setUp();
 
         $this->setUpDatabase();
-        $this->resetStatusSchema();
+        $this->resetCompleteSchema();
 
         $orders = new OrderRepository(null, null, $this->db);
         $logs = new OrderStatusLogRepository(null, $this->db);
@@ -123,6 +123,7 @@ class OrderStatusServiceTest extends CIUnitTestCase
     {
         $this->db->table('inventory_stock')->insert([
             'branch_id' => $branchId,
+            'warehouse_id' => $branchId,
             'product_id' => $productId,
             'variant_id' => null,
             'quantity_on_hand' => $qty,

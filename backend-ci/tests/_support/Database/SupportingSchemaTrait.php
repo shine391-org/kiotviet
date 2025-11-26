@@ -68,14 +68,6 @@ trait SupportingSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_orders (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            status VARCHAR(50),
-            branch_id INT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**
@@ -94,18 +86,6 @@ trait SupportingSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_order_status_logs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT,
-            from_status VARCHAR(50),
-            to_status VARCHAR(50),
-            notes TEXT,
-            changed_by INT,
-            changed_at TIMESTAMP NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**
@@ -114,21 +94,6 @@ trait SupportingSchemaTrait
     private function createInventoryMovementTables(): void
     {
         $this->db->query("CREATE TABLE inventory_movements (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            branch_id INT,
-            product_id INT,
-            variant_id INT,
-            type VARCHAR(50),
-            quantity DECIMAL(10,2),
-            reference_type VARCHAR(50),
-            reference_id INT,
-            notes TEXT,
-            created_by INT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_inventory_movements (
             id INT AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
             product_id INT,

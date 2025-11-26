@@ -233,8 +233,6 @@ class OrderPriceListTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_products LIKE products');
-
         $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
@@ -253,8 +251,6 @@ class OrderPriceListTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_lists LIKE price_lists');
-
         $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             price_list_id INT,
@@ -266,9 +262,7 @@ class OrderPriceListTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_list_items LIKE price_list_items');
-
-        foreach (['price_list_items','db_price_list_items','price_lists','db_price_lists','products','db_products'] as $tbl) {
+        foreach (['price_list_items','price_lists','products'] as $tbl) {
             if ($this->db->tableExists($tbl)) {
                 $this->db->table($tbl)->truncate();
             }

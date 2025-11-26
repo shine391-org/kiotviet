@@ -21,7 +21,7 @@ trait ReturnSchemaTrait
     {
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         
-        foreach (['db_return_items','return_items','db_returns','returns','db_order_items','order_items','db_orders','orders','db_customers','customers','db_users','users'] as $tbl) {
+        foreach (['return_items','returns','order_items','orders','customers','users'] as $tbl) {
             $this->db->query("DROP TABLE IF EXISTS {$tbl}");
         }
 
@@ -47,8 +47,6 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_users LIKE users');
     }
     
     /**
@@ -62,8 +60,6 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_customers LIKE customers');
     }
     
     /**
@@ -82,8 +78,6 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_orders LIKE orders');
     }
     
     /**
@@ -102,8 +96,6 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_order_items LIKE order_items');
     }
     
     /**
@@ -134,8 +126,6 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_returns LIKE returns');
     }
     
     /**
@@ -152,7 +142,5 @@ trait ReturnSchemaTrait
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        
-        $this->db->query('CREATE TABLE db_return_items LIKE return_items');
     }
 }

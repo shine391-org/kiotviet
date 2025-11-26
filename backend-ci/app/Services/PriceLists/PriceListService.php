@@ -237,17 +237,20 @@ class PriceListService
     /** Detect circular reference: current -> base -> ... -> current */
     private function assertNoCircular(?int $currentId, ?int $baseId): void
     {
-        if (! $currentId || ! $baseId) { return; }
+        $currentId = $currentId ? (int) $currentId : 0;
+        $baseId = $baseId ? (int) $baseId : 0;
+        if ($currentId <= 0 || $baseId <= 0) { return; }
         $visited = [];
         $check = $baseId;
         while ($check !== null) {
+            log_message('info', 'assertNoCircular current=' . $currentId . ' checking=' . $check);
             if ($check === $currentId) {
                 throw new InvalidArgumentException('Circular price list reference detected');
             }
             if (in_array($check, $visited, true)) { break; }
             $visited[] = $check;
             $row = $this->repo->findById($check);
-            $check = $row['base_price_list_id'] ?? null;
+            $check = $row ? (int) ($row['base_price_list_id'] ?? 0) : null;
         }
     }
 

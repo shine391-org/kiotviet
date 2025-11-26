@@ -10,6 +10,11 @@ purpose: "Provides standard, copy-pasteable code patterns for MySQL-only testing
 location: "docs/testing"
 updated: "2025-11-25"
 changes: "Migrated from SQLite to MySQL-only. All patterns now use DevDatabaseTrait + MySQL."
+related_to:
+  - id: "TESTING-GUIDE-01"
+    description: "Refer to the main testing guide for process and setup."
+  - id: "TEST-CHECKLIST-01"
+    description: "Refer to this for mandatory testing checklist."
 ---
 
 # Testing Patterns
@@ -48,7 +53,7 @@ class ProductServiceTest extends CIUnitTestCase
         $this->setUpDatabase();          // Connect to MySQL + start transaction
         
         // Create product schema
-        $this->resetProductSchema();     // Creates db_products table in MySQL
+        $this->resetProductSchema();     // Creates products table in MySQL
         
         $this->service = new ProductService();
     }
@@ -89,7 +94,7 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertNotEmpty($result['data']['id']);
         
         // Verify in MySQL database
-        $row = $this->db->table('db_products')
+        $row = $this->db->table('products')
             ->where('code', 'NEW001')
             ->get()->getRowArray();
         $this->assertNotNull($row);
@@ -126,7 +131,7 @@ class ProductServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 }
@@ -207,7 +212,7 @@ class ProductsApiTest extends FeatureTestCase
         ]);
 
         // Assert MySQL Database (real database writes)
-        $this->seeInDatabase('your_products', [
+        $this->seeInDatabase('products', [
             'code' => 'TEST001',
             'name' => 'Test Product'
         ]);
@@ -288,13 +293,13 @@ class ProductsApiTest extends FeatureTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        return (int) $this->db->table('db_products')->insert($payload);
+        return (int) $this->db->table('products')->insert($payload);
     }
 
     private function cleanupTestData(): void
     {
         // Clean test data using MySQL
-        $this->db->table('db_products')
+        $this->db->table('products')
             ->like('code', 'TEST', 'after')
             ->delete();
     }
@@ -367,7 +372,7 @@ class ComplexFeatureTest extends CIUnitTestCase
         $this->assertEquals(400000, $result['data']['total']); // 100k*2 + 200k*1
         
         // Verify in MySQL
-        $order = $this->db->table('db_orders')
+        $order = $this->db->table('orders')
             ->where('id', $result['data']['id'])
             ->get()->getRowArray();
         
@@ -391,7 +396,7 @@ class ComplexFeatureTest extends CIUnitTestCase
         
         // Assert - Price list đã áp dụng trong MySQL
         $this->assertEquals(80000, $result['data']['total']); // Discount applied
-        $this->assertInDatabase('db_order_items', [
+        $this->assertInDatabase('order_items', [
             'product_id' => $product,
             'final_price' => 80000,
             'price_list_id' => $priceList

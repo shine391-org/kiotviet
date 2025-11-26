@@ -75,11 +75,11 @@ class ProductsApiE2ETest extends CIUnitTestCase
     private function resetSchema(): void
     {
         $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS db_product_category_links');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
+        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
+        $this->db->query('DROP TABLE IF EXISTS product_category_links');
+        $this->db->query('DROP TABLE IF EXISTS products');
 
-        $this->db->query("CREATE TABLE db_products (
+        $this->db->query("CREATE TABLE products (
             id INTEGER PRIMARY KEY {$auto},
             product_type TEXT,
             code TEXT,
@@ -92,14 +92,14 @@ class ProductsApiE2ETest extends CIUnitTestCase
             deleted_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_category_links (
+        $this->db->query("CREATE TABLE product_category_links (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             category_id INTEGER,
             created_at TEXT
         )");
 
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
+        $this->db->query("CREATE TABLE product_variants_v2 (
             id INTEGER PRIMARY KEY {$auto},
             product_id INTEGER,
             variant_name TEXT,
@@ -135,6 +135,6 @@ class ProductsApiE2ETest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
     }
 }

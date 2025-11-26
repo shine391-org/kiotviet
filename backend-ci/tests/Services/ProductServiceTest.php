@@ -56,7 +56,7 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->assertTrue($result['success']);
         $this->assertNotEmpty($result['data']['id']);
-        $row = $this->db->table('db_products')->where('id', $result['data']['id'])->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $result['data']['id'])->get()->getRowArray();
         $this->assertSame('P100', $row['code']);
     }
 
@@ -74,7 +74,7 @@ class ProductServiceTest extends CIUnitTestCase
         $updated = $this->service->update($id, ['name' => 'Updated', 'status' => 'inactive']);
 
         $this->assertTrue($updated['success']);
-        $row = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertSame('inactive', $row['status']);
     }
 
@@ -86,7 +86,7 @@ class ProductServiceTest extends CIUnitTestCase
 
         $this->assertTrue($deleted['success']);
 
-        $row = $this->db->table('db_products')->where('id', $id)->get()->getRowArray();
+        $row = $this->db->table('products')->where('id', $id)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -166,7 +166,7 @@ class ProductServiceTest extends CIUnitTestCase
         $this->assertContains($existingId, $result['skipped_ids']);
         $this->assertContains(9999, $result['missing_ids']);
 
-        $row = $this->db->table('db_product_images')->where('id', $newId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $newId)->get()->getRowArray();
         $this->assertSame($productId, (int) $row['product_id']);
         $this->assertNull($row['deleted_at']);
     }
@@ -267,7 +267,7 @@ class ProductServiceTest extends CIUnitTestCase
         $result = $this->service->deleteImage($imageId, false);
 
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $imageId)->get()->getRowArray();
         $this->assertNotNull($row['deleted_at']);
     }
 
@@ -279,7 +279,7 @@ class ProductServiceTest extends CIUnitTestCase
         $result = $this->service->deleteImage($imageId, true);
 
         $this->assertTrue($result['success']);
-        $row = $this->db->table('db_product_images')->where('id', $imageId)->get()->getRowArray();
+        $row = $this->db->table('product_images')->where('id', $imageId)->get()->getRowArray();
         $this->assertNull($row);
     }
 
@@ -409,13 +409,13 @@ class ProductServiceTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedCategoryLink(int $productId, int $categoryId): void
     {
-        $this->db->table('db_product_category_links')->insert([
+        $this->db->table('product_category_links')->insert([
             'product_id' => $productId,
             'category_id' => $categoryId,
             'created_at' => date('Y-m-d H:i:s'),
@@ -424,7 +424,7 @@ class ProductServiceTest extends CIUnitTestCase
 
     private function seedVariant(int $productId, string $name): void
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'variant_name' => $name,
             'variant_signature' => $name,
@@ -455,7 +455,7 @@ class ProductServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        $this->db->table('db_product_images')->insert($payload);
+        $this->db->table('product_images')->insert($payload);
         return (int) $this->db->insertID();
     }
 }

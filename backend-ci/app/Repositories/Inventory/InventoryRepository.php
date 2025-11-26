@@ -94,6 +94,69 @@ class InventoryRepository
         return $payload;
     }
 
+    /**
+     * Adjust stock with pessimistic lock.
+     * @throws \RuntimeException
+     */
+    public function adjustStockWithLock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty): array
+    {
+        $this->db->transStart();
+
+        // Use raw SQL with FOR UPDATE to lock the row
+        $table = $this->db->prefixTable('inventory_stock');
+        $params = [$productId];
+        if ($warehouseId === null) {
+            $warehouseClause = "warehouse_id IS NULL";
+        } else {
+            $warehouseClause = "(warehouse_id = ? OR warehouse_id IS NULL)";
+            $params[] = $warehouseId;
+        }
+        if ($variantId === null) {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND {$warehouseClause} AND variant_id IS NULL";
+        } else {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND {$warehouseClause} AND variant_id = ?";
+            $params[] = $variantId;
+        }
+        if (strtolower($this->db->DBDriver) !== 'sqlite3') {
+            $sql .= " FOR UPDATE";
+        }
+        $row = $this->db->query($sql, $params)->getRowArray();
+
+        if (!$row) {
+             // If row doesn't exist, create it
+            $payload = [
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'warehouse_id' => $warehouseId,
+                'quantity_on_hand' => $deltaQty,
+                'quantity_reserved' => 0,
+                'last_movement_at' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+            $this->db->table('inventory_stock')->insert($payload);
+            $payload['id'] = $this->db->insertID();
+            $this->db->transComplete();
+            return $payload;
+        }
+
+        $newQty = ($row['quantity_on_hand'] ?? 0) + $deltaQty;
+        if ($newQty < 0) {
+            $this->db->transRollback();
+            throw new \RuntimeException('Insufficient stock for adjustment');
+        }
+
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+            'quantity_on_hand' => $newQty,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        
+        $row['quantity_on_hand'] = $newQty;
+        $this->db->transComplete();
+
+        return $row;
+    }
+
     /** Create movement record. */
     public function createMovement(array $data): array
     {

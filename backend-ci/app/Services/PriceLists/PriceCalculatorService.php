@@ -6,6 +6,7 @@ use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
 use App\Repositories\ProductVariants\ProductVariantRepository;
 use App\Repositories\Products\ProductRepository;
+use CodeIgniter\Database\BaseConnection;
 use RuntimeException;
 
 /** Price calculation based on price lists. @agent-service: Price calculator @agent-pattern: Pricing engine @agent-reusable: HIGH */
@@ -20,13 +21,18 @@ class PriceCalculatorService
     public function __construct(
         ?PriceListRepository $priceLists = null,
         ?PriceListItemRepository $items = null,
-        ?ProductRepository $products = null,
+        ProductRepository|BaseConnection|null $products = null,
         ?ProductVariantRepository $variants = null,
         ?PriceFormulaService $formula = null
     ) {
         $this->priceLists = $priceLists ?? new PriceListRepository();
         $this->items = $items ?? new PriceListItemRepository();
-        $this->products = $products ?? new ProductRepository();
+        // allow passing a DB connection in place of ProductRepository for tests
+        if ($products instanceof BaseConnection) {
+            $this->products = new ProductRepository(null, null, null, $products);
+        } else {
+            $this->products = $products ?? new ProductRepository();
+        }
         $this->variants = $variants ?? new ProductVariantRepository();
         $this->formula = $formula ?? new PriceFormulaService();
     }

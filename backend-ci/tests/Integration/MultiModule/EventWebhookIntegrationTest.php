@@ -24,7 +24,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
     private function resetProducts(): void
     {
         $this->db->query('DROP TABLE IF EXISTS products');
-        $this->db->query('DROP TABLE IF EXISTS db_products');
         $this->db->query('CREATE TABLE products (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(50),
@@ -34,8 +33,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE db_products LIKE products');
-
         // minimal price list tables to satisfy pricing service
         $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -50,8 +47,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_lists LIKE price_lists');
-
         $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             price_list_id INT,
@@ -63,8 +58,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_price_list_items LIKE price_list_items');
-
         $this->db->query('CREATE TABLE IF NOT EXISTS customers (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
@@ -72,9 +65,7 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS db_customers LIKE customers');
-
-        foreach (['price_list_items','db_price_list_items','price_lists','db_price_lists','products','db_products','customers','db_customers'] as $tbl) {
+        foreach (['price_list_items','price_lists','products','customers'] as $tbl) {
             if ($this->db->tableExists($tbl)) {
                 $this->db->table($tbl)->truncate();
             }
@@ -100,7 +91,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS db_webhook_subscriptions LIKE webhook_subscriptions");
         $this->db->query("CREATE TABLE IF NOT EXISTS webhook_events (
             id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             event VARCHAR(100),
@@ -111,7 +101,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             created_at DATETIME NULL,
             updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS db_webhook_events LIKE webhook_events");
         $this->db->table('webhook_subscriptions')->insert([
             'event' => 'order.created',
             'target_url' => 'https://hooks.test/order-created',
@@ -120,15 +109,6 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
-        $this->db->table('db_webhook_subscriptions')->insert([
-            'event' => 'order.created',
-            'target_url' => 'https://hooks.test/order-created',
-            'secret' => 'secret',
-            'is_active' => 1,
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
-
         $now = date('Y-m-d H:i:s');
         $this->db->table('products')->insert([
             'code' => 'P' . random_int(100, 999),

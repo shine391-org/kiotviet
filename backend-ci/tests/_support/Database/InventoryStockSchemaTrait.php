@@ -50,20 +50,6 @@ trait InventoryStockSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_inventory_stock (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            branch_id INT,
-            warehouse_id INT,
-            product_id INT,
-            variant_id INT,
-            quantity_on_hand DECIMAL(10,2),
-            quantity_reserved DECIMAL(10,2),
-            minimum_stock DECIMAL(10,2),
-            last_movement_at TIMESTAMP NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     
     /**
@@ -72,21 +58,6 @@ trait InventoryStockSchemaTrait
     private function createInventoryAlertTables(): void
     {
         $this->db->query("CREATE TABLE inventory_alerts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            alert_type VARCHAR(50),
-            product_id INT,
-            variant_id INT,
-            warehouse_id INT,
-            current_quantity DECIMAL(10,2),
-            threshold_quantity DECIMAL(10,2),
-            status VARCHAR(50),
-            resolved_by INT,
-            resolved_at TIMESTAMP NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        
-        $this->db->query("CREATE TABLE db_inventory_alerts (
             id INT AUTO_INCREMENT PRIMARY KEY,
             alert_type VARCHAR(50),
             product_id INT,

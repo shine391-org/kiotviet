@@ -23,19 +23,15 @@ trait PriceListSchemaTrait
 
         // Drop all tables
         $tables = [
-            'db_order_items', 'order_items', 'db_orders', 'orders',
-            'db_price_list_items', 'price_list_items', 'db_price_lists', 'price_lists',
-            'db_product_images', 'product_images', 'inventory_movement_items', 'invoice_items',
-            'invoices', 'db_invoice_items', 'db_invoices', 'product_attribute_values',
-            'db_product_attribute_values', 'inventory_stock', 'db_inventory_stock', 'stock',
-            'db_stock', 'inventory_movements', 'db_inventory_movements',
-            'db_inventory_movement_items', 'product_branch_stock', 'db_product_branch_stock',
-            'product_stock_by_branch', 'db_product_stock_by_branch', 'stock_transactions',
-            'db_stock_transactions', 'stock_transactions_v2', 'db_stock_transactions_v2',
-            'product_categories', 'db_product_categories', 'product_category_links',
-            'db_product_category_links', 'db_product_variants_v2', 'product_variants_v2',
-            'db_product_attributes', 'product_attributes', 'db_products', 'products',
-            'db_order_sequences', 'order_sequences'
+            'order_items', 'orders',
+            'price_list_items', 'price_lists',
+            'product_images', 'inventory_movement_items', 'invoice_items',
+            'invoices', 'product_attribute_values',
+            'inventory_stock', 'stock', 'inventory_movements', 'product_branch_stock',
+            'product_stock_by_branch', 'stock_transactions', 'stock_transactions_v2',
+            'product_categories', 'product_category_links', 'product_variants_v2',
+            'product_attributes', 'products',
+            'order_sequences'
         ];
 
         foreach ($tables as $table) {
@@ -53,6 +49,7 @@ trait PriceListSchemaTrait
         $this->createOrderTables();
         $this->createOrderItemTables();
         $this->createOrderSequenceTables();
+        $this->createInventoryStockTables();
         
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -62,17 +59,6 @@ trait PriceListSchemaTrait
      */
     private function createProductTables(): void
     {
-        $this->db->query("CREATE TABLE db_products (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(100),
-            name VARCHAR(255),
-            selling_price DECIMAL(10,2) DEFAULT 0,
-            wholesale_price DECIMAL(10,2),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE products (
             id INT AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(100),
@@ -90,16 +76,6 @@ trait PriceListSchemaTrait
      */
     private function createProductVariantTables(): void
     {
-        $this->db->query("CREATE TABLE db_product_variants_v2 (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            product_id INT,
-            sku VARCHAR(100),
-            price DECIMAL(10,2),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE product_variants_v2 (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT,
@@ -116,15 +92,6 @@ trait PriceListSchemaTrait
      */
     private function createProductImageTables(): void
     {
-        $this->db->query("CREATE TABLE db_product_images (
-             id INT AUTO_INCREMENT PRIMARY KEY,
-             product_id INT,
-             variant_id INT,
-             image_path VARCHAR(500),
-             created_at TIMESTAMP NULL,
-             updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE product_images (
              id INT AUTO_INCREMENT PRIMARY KEY,
              product_id INT,
@@ -140,23 +107,6 @@ trait PriceListSchemaTrait
      */
     private function createProductAttributeTables(): void
     {
-        $this->db->query("CREATE TABLE db_product_attributes (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            attribute_key VARCHAR(100),
-            type VARCHAR(50),
-            attribute_values TEXT,
-            slug VARCHAR(100),
-            sort_order INT,
-            status VARCHAR(20),
-            is_filterable TINYINT DEFAULT 0,
-            is_required TINYINT DEFAULT 0,
-            is_visible TINYINT DEFAULT 1,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE product_attributes (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
@@ -180,18 +130,6 @@ trait PriceListSchemaTrait
      */
     private function createProductAttributeValueTables(): void
     {
-        $this->db->query("CREATE TABLE db_product_attribute_values (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            product_id INT,
-            variant_id INT,
-            attribute_id INT,
-            option_id INT,
-            value_text TEXT,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE product_attribute_values (
             id INT AUTO_INCREMENT PRIMARY KEY,
             product_id INT,
@@ -210,25 +148,6 @@ trait PriceListSchemaTrait
      */
     private function createPriceListTables(): void
     {
-        $this->db->query("CREATE TABLE db_price_lists (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            type VARCHAR(50),
-            description TEXT,
-            apply_to_groups TEXT,
-            start_date DATE NULL,
-            end_date DATE NULL,
-            priority INT DEFAULT 0,
-            is_active TINYINT DEFAULT 1,
-            formula TEXT,
-            base_price_list_id INT,
-            auto_update TINYINT DEFAULT 0,
-            rounding_rule VARCHAR(50),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE price_lists (
             id INT AUTO_INCREMENT PRIMARY KEY,
             name VARCHAR(255),
@@ -254,18 +173,6 @@ trait PriceListSchemaTrait
      */
     private function createPriceListItemTables(): void
     {
-        $this->db->query("CREATE TABLE db_price_list_items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            price_list_id INT,
-            product_id INT,
-            variant_id INT,
-            price DECIMAL(10,2),
-            discount_percent DECIMAL(5,2) DEFAULT 0,
-            discount_amount DECIMAL(10,2) DEFAULT 0,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE price_list_items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             price_list_id INT,
@@ -315,7 +222,6 @@ trait PriceListSchemaTrait
             deleted_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
 
-        $this->db->query(sprintf($schema, 'db_orders'));
         $this->db->query(sprintf($schema, 'orders'));
     }
     
@@ -324,20 +230,6 @@ trait PriceListSchemaTrait
      */
     private function createOrderItemTables(): void
     {
-        $this->db->query("CREATE TABLE db_order_items (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            order_id INT,
-            product_id INT,
-            variant_id INT,
-            quantity DECIMAL(10,2),
-            base_price DECIMAL(10,2),
-            final_price DECIMAL(10,2),
-            price_list_id INT,
-            price_list_name VARCHAR(255),
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-
         $this->db->query("CREATE TABLE order_items (
             id INT AUTO_INCREMENT PRIMARY KEY,
             order_id INT,
@@ -366,12 +258,19 @@ trait PriceListSchemaTrait
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
 
-        $this->db->query("CREATE TABLE db_order_sequences (
+    private function createInventoryStockTables(): void
+    {
+        $this->db->query("CREATE TABLE inventory_stock (
             id INT AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
-            sequence_number INT DEFAULT 1,
-            prefix VARCHAR(20) DEFAULT 'ORD',
+            warehouse_id INT NULL,
+            product_id INT,
+            variant_id INT NULL,
+            quantity_on_hand DECIMAL(10,2) DEFAULT 0,
+            quantity_reserved DECIMAL(10,2) DEFAULT 0,
+            minimum_stock DECIMAL(10,2) DEFAULT 0,
             created_at TIMESTAMP NULL,
             updated_at TIMESTAMP NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

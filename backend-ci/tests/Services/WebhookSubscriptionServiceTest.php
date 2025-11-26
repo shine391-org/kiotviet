@@ -52,14 +52,7 @@ class WebhookSubscriptionServiceTest extends CIUnitTestCase
         $this->assertEquals('order.created', $created['data']['event']);
         $this->assertTrue($created['data']['is_active']);
 
-        // Debug: Check if data was actually inserted
-        $directQuery = $this->db->table('db_webhook_subscriptions')->get();
-        $directResult = $directQuery ? $directQuery->getResultArray() : [];
-        echo "Direct query result: " . json_encode($directResult) . "\n";
-
         $list = $this->service->list(['event' => 'order.created']);
-        echo "List result: " . json_encode($list) . "\n";
-        
         $this->assertCount(1, $list['data']);
         $this->assertEquals('https://example.com/webhook', $list['data'][0]['target_url']);
     }

@@ -1,13 +1,13 @@
 ---
-title: "TASK 01: Payment Methods Implementation"
-id: "PAY-001"
+title: "TASK 01: Payment Methods Implementation (CodeIgniter 4)"
+id: "PAY-001-CI4"
 priority: "P0 (Blocker)"
-estimated_effort: "2 days"
+estimated_effort: "1 day"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "payment-methods", "CRUD", "backend", "database", "API"]
-purpose: "Implement the payment_methods master data table and its associated CRUD operations, including seeding, validation, and API endpoints."
+tags: ["task", "payment-methods", "CRUD", "backend", "database", "API", "codeigniter"]
+purpose: "Implement the payment_methods master data table and its associated CRUD operations, including seeding, validation, and API endpoints using CodeIgniter 4."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
 related_to:
   - id: "PAYMENT-METHODS-TABLE-01"
@@ -20,11 +20,11 @@ related_to:
     description: "Task listed in the module index."
 ---
 
-# TASK_01: Payment Methods Implementation
+# TASK_01: Payment Methods Implementation (CodeIgniter 4)
 
 **Priority:** P0 (Blocker)
 
-**Estimated Effort:** 2 days
+**Estimated Effort:** 1 day
 
 **Dependencies:** None
 
@@ -34,7 +34,7 @@ related_to:
 
 ## 🎯 OBJECTIVE
 
-Implement **payment_methods** master data table and CRUD operations.
+Implement **payment_methods** master data table and CRUD operations using **CodeIgniter 4**, following the project's Clean Architecture patterns.
 
 ---
 
@@ -42,463 +42,249 @@ Implement **payment_methods** master data table and CRUD operations.
 
 ### **Functional Requirements**
 
-- [x]  Create payment_methods table
-- [x]  Seed 5 default payment methods
-- [x]  Create API endpoints for CRUD
-- [x]  Implement validation rules
-- [x]  Add payment method activation/deactivation
+- [x]  Create `payment_methods` table using CodeIgniter 4 Migrations.
+- [x]  Seed 5 default payment methods.
+- [x]  Create API endpoints for CRUD operations.
+- [x]  Implement validation rules in a dedicated Validator class.
+- [x]  Implement activation/deactivation logic.
 
 ### **Non-Functional Requirements**
 
-- [x]  Response time < 100ms for list
-- [x]  Support multi-language names
-- [x]  Cache payment methods
+- [x]  API response time for list operations should be under 100ms.
+- [x]  Support multi-language names via a JSON field (`name_translations`).
+- [x]  Utilize CodeIgniter's caching for the active payment methods list.
 
 ---
 
-## 🗄️ DATABASE SCHEMA
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-### **Migration**
+### **Migration: `2025-11-24-000007_CreatePaymentMethodTables.php`**
 
 ```php
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Database\Migrations;
 
-return new class extends Migration
+use CodeIgniter\Database\Migration;
+
+class CreatePaymentMethodTables extends Migration
 {
     public function up()
     {
-        Schema::create('payment_methods', function (Blueprint $table) {
-            $table->id();
-            $table->string('code', 50)->unique()->comment('UPPERCASE code: CASH, BANK_TRANSFER, etc.');
-            $table->string('name')->comment('Display name');
-            $table->text('description')->nullable()->comment('Description for customers');
-            $table->boolean('is_active')->default(true)->comment('Is method available?');
-            $table->integer('display_order')->default(0)->comment('Display order in UI');
-            $table->timestamps();
-            
-            // Indexes
-            $table->index('is_active');
-            $table->index('display_order');
-        });
+        $jsonType = strtolower($this->db->DBDriver) === 'sqlite3' ? 'TEXT' : 'JSON';
+
+        $this->forge->addField([
+            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+            'code' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => false, 'comment' => 'UPPERCASE code'],
+            'name' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => false],
+            'name_translations' => ['type' => $jsonType, 'null' => true, 'comment' => 'Optional i18n names'],
+            'description' => ['type' => 'TEXT', 'null' => true],
+            'is_active' => ['type' => 'TINYINT', 'constraint' => 1, 'default' => 1],
+            'display_order' => ['type' => 'INT', 'default' => 0],
+            'created_at' => ['type' => 'DATETIME', 'null' => true],
+            'updated_at' => ['type' => 'DATETIME', 'null' => true],
+            'deleted_at' => ['type' => 'DATETIME', 'null' => true],
+        ]);
+        $this->forge->addKey('id', true);
+        $this->forge->addKey('is_active');
+        $this->forge->addKey('display_order');
+        $this->forge->addUniqueKey('code');
+        $this->forge->createTable('payment_methods', true);
     }
 
     public function down()
     {
-        Schema::dropIfExists('payment_methods');
-    }
-};
-```
-
----
-
-### **Seeder**
-
-```php
-<?php
-
-namespace Database\Seeders;
-
-use Illuminate\Database\Seeder;
-use App\Models\PaymentMethod;
-
-class PaymentMethodSeeder extends Seeder
-{
-    public function run()
-    {
-        $methods = [
-            [
-                'code' => 'CASH',
-                'name' => 'Tiền mặt',
-                'description' => 'Thanh toán bằng tiền mặt tại cửa hàng',
-                'is_active' => true,
-                'display_order' => 1
-            ],
-            [
-                'code' => 'BANK_TRANSFER',
-                'name' => 'Chuyển khoản ngân hàng',
-                'description' => 'Chuyển khoản qua tài khoản ngân hàng',
-                'is_active' => true,
-                'display_order' => 2
-            ],
-            [
-                'code' => 'CARD',
-                'name' => 'Thẻ tín dụng/ghi nợ',
-                'description' => 'Thanh toán bằng thẻ Visa/Mastercard/JCB',
-                'is_active' => true,
-                'display_order' => 3
-            ],
-            [
-                'code' => 'COD',
-                'name' => 'Thu hộ (COD)',
-                'description' => 'Thanh toán khi nhận hàng. Phí COD: 15,000đ',
-                'is_active' => true,
-                'display_order' => 4
-            ],
-            [
-                'code' => 'E_WALLET',
-                'name' => 'Ví điện tử',
-                'description' => 'Thanh toán qua MoMo, ZaloPay, VNPay',
-                'is_active' => true,
-                'display_order' => 5
-            ],
-        ];
-
-        foreach ($methods as $method) {
-            PaymentMethod::create($method);
-        }
+        $this->forge->dropTable('payment_methods', true);
     }
 }
 ```
 
 ---
 
-## 🏗️ MODEL
+### **Seeder: `PaymentMethodSeeder.php`**
+
+```php
+<?php
+
+namespace App\Database\Seeds;
+
+use CodeIgniter\Database\Seeder;
+use CodeIgniter\I18n\Time;
+
+class PaymentMethodSeeder extends Seeder
+{
+    public function run()
+    {
+        $now = Time::now();
+        $methods = [
+            [
+                'code' => 'CASH',
+                'name' => 'Tiền mặt',
+                'is_active' => 1,
+                'display_order' => 1,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            // ... other methods
+        ];
+
+        $this->db->table('payment_methods')->ignore(true)->insertBatch($methods);
+    }
+}
+```
+
+---
+
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
+
+### **Model: `PaymentMethodModel.php`**
 
 ```php
 <?php
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use CodeIgniter\Model;
 
-class PaymentMethod extends Model
+class PaymentMethodModel extends Model
 {
-    use HasFactory;
-
-    protected $fillable = [
-        'code',
-        'name',
-        'description',
-        'is_active',
-        'display_order',
+    protected $table = 'payment_methods';
+    protected $primaryKey = 'id';
+    protected $returnType = 'array';
+    protected $useSoftDeletes = true;
+    protected $allowedFields = [
+        'code', 'name', 'name_translations', 'description', 
+        'is_active', 'display_order', 'created_at', 
+        'updated_at', 'deleted_at',
     ];
+}
+```
 
-    protected $casts = [
-        'is_active' => 'boolean',
-        'display_order' => 'integer',
-    ];
+### **Repository: `PaymentMethodRepository.php`**
 
-    // Relationships
-    public function orders()
-    {
-        return $this->hasMany(Order::class, 'payment_method', 'code');
+Handles all database queries using CodeIgniter's Query Builder.
+
+```php
+// Example: Find all active methods
+public function activeOrdered(): array
+{
+    $rows = $this->model->builder()
+        ->where('deleted_at', null)
+        ->where('is_active', 1)
+        ->orderBy('display_order', 'ASC')
+        ->get()->getResultArray();
+    
+    return array_map(fn ($row) => $this->hydrate($row), $rows);
+}
+```
+
+### **Service: `PaymentMethodService.php`**
+
+Contains business logic, caching, and orchestration.
+
+```php
+// Example: Listing methods with cache logic
+public function list(array $filters): array
+{
+    if ($this->shouldUseCache($validated)) {
+        $cached = $this->cache->get(self::CACHE_ACTIVE_KEY);
+        if (is_array($cached)) {
+            // return from cache
+        }
     }
-
-    // Scopes
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeOrdered($query)
-    {
-        return $query->orderBy('display_order');
-    }
-
-    // Accessors
-    public function getIsUsedAttribute()
-    {
-        return $this->orders()->exists();
-    }
+    // ... fetch from repo and save to cache
 }
 ```
 
 ---
 
-## 🌐 API ENDPOINTS
+## 🌐 API ENDPOINTS (CodeIgniter 4)
 
-### **Routes**
+### **Routes: `app/Config/Routes.php`**
 
 ```php
-// routes/api.php
-Route::prefix('payment-methods')->group(function () {
-    Route::get('/', [PaymentMethodController::class, 'index']);
-    Route::get('/{id}', [PaymentMethodController::class, 'show']);
-    Route::post('/', [PaymentMethodController::class, 'store']);
-    Route::put('/{id}', [PaymentMethodController::class, 'update']);
-    Route::delete('/{id}', [PaymentMethodController::class, 'destroy']);
-    Route::patch('/{id}/activate', [PaymentMethodController::class, 'activate']);
-    Route::patch('/{id}/deactivate', [PaymentMethodController::class, 'deactivate']);
+$routes->group('api', ['filter' => 'jwtAuth'], function ($routes) {
+    $routes->resource('payment-methods', [
+        'controller' => 'PaymentMethodsController',
+        'only' => ['index', 'show', 'create', 'update', 'delete']
+    ]);
+    $routes->patch('payment-methods/(:num)/activate', 'PaymentMethodsController::activate/$1');
+    $routes->patch('payment-methods/(:num)/deactivate', 'PaymentMethodsController::deactivate/$1');
 });
 ```
 
----
+### **Controller: `PaymentMethodsController.php`**
 
-### **Controller**
+A thin controller that delegates all work to the `PaymentMethodService`.
 
 ```php
 <?php
+namespace App\Controllers\Api;
 
-namespace App\Http\Controllers\Api;
+use App\Services\PaymentMethods\PaymentMethodService;
+use CodeIgniter\API\ResponseTrait;
 
-use App\Http\Controllers\Controller;
-use App\Models\PaymentMethod;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-
-class PaymentMethodController extends Controller
+class PaymentMethodsController extends BaseController
 {
+    use ResponseTrait;
+    protected PaymentMethodService $service;
+
+    public function __construct()
+    {
+        $this->service = service('paymentMethodService');
+    }
+
     public function index()
     {
-        $methods = Cache::remember('payment_methods', 3600, function () {
-            return PaymentMethod::active()
-                ->ordered()
-                ->get();
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $methods
-        ]);
+        return $this->wrap(fn () => $this->respond($this->service->list($this->request->getGet())));
     }
-
-    public function show($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-
-        return response()->json([
-            'success' => true,
-            'data' => $method
-        ]);
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'code' => 'required|string|max:50|regex:/^[A-Z_]+$/|unique:payment_methods,code',
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'display_order' => 'integer|min:0',
-        ]);
-
-        $method = PaymentMethod::create($validated);
-
-        Cache::forget('payment_methods');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment method created successfully',
-            'data' => $method
-        ], 201);
-    }
-
-    public function update(Request $request, $id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-
-        $validated = $request->validate([
-            'code' => 'string|max:50|regex:/^[A-Z_]+$/|unique:payment_methods,code,' . $id,
-            'name' => 'string|max:255',
-            'description' => 'nullable|string',
-            'is_active' => 'boolean',
-            'display_order' => 'integer|min:0',
-        ]);
-
-        $method->update($validated);
-
-        Cache::forget('payment_methods');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment method updated successfully',
-            'data' => $method
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-
-        // Check if used in orders
-        if ($method->is_used) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cannot delete payment method that is used in orders',
-                'error_code' => 'PAY_METHOD_IN_USE'
-            ], 400);
-        }
-
-        $method->delete();
-
-        Cache::forget('payment_methods');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment method deleted successfully'
-        ]);
-    }
-
-    public function activate($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-        $method->update(['is_active' => true]);
-
-        Cache::forget('payment_methods');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment method activated',
-            'data' => $method
-        ]);
-    }
-
-    public function deactivate($id)
-    {
-        $method = PaymentMethod::findOrFail($id);
-        $method->update(['is_active' => false]);
-
-        Cache::forget('payment_methods');
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Payment method deactivated',
-            'data' => $method
-        ]);
-    }
+    // ... other methods delegate to $this->service
 }
 ```
 
 ---
 
-## ✅ VALIDATION RULES
+## 🧪 TESTING (CodeIgniter 4)
 
-See [**PAYMENT_](https://www.notion.so/PAYMENT_RULES-Payment-Validation-Rules-d0f287e7743c4a30b777f120adf93cb5?pvs=21)[RULES.md](http://RULES.md)**
+### **Unit Test: `tests/Services/PaymentMethodServiceTest.php`**
 
----
-
-## 🧪 TESTING
-
-### **Unit Tests**
+Focuses on the business logic within the service layer.
 
 ```php
 <?php
+namespace Tests\Services;
 
-namespace Tests\Unit\Models;
+use CodeIgniter\Test\CIUnitTestCase;
+use Tests\Support\Database\DevDatabaseTrait;
 
-use Tests\TestCase;
-use App\Models\PaymentMethod;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class PaymentMethodTest extends TestCase
+class PaymentMethodServiceTest extends CIUnitTestCase
 {
-    use RefreshDatabase;
+    use DevDatabaseTrait;
 
-    /** @test */
-    public function it_can_create_payment_method()
-    {
-        $method = PaymentMethod::create([
-            'code' => 'TEST_METHOD',
-            'name' => 'Test Method',
-            'is_active' => true,
-            'display_order' => 10
-        ]);
-
-        $this->assertDatabaseHas('payment_methods', [
-            'code' => 'TEST_METHOD',
-            'name' => 'Test Method'
-        ]);
-    }
-
-    /** @test */
-    public function code_must_be_uppercase()
-    {
-        $this->expectException(\Exception::class);
-
-        PaymentMethod::create([
-            'code' => 'lowercase',
-            'name' => 'Test'
-        ]);
-    }
-
-    /** @test */
-    public function it_has_orders_relationship()
-    {
-        $method = PaymentMethod::factory()->create(['code' => 'CASH']);
-
-        $this->assertInstanceOf(
-            \Illuminate\Database\Eloquent\Relations\HasMany::class,
-            $method->orders()
-        );
-    }
+    // ... tests for create, update, delete, business rules
 }
 ```
 
----
+### **Integration Test: `tests/Integration/Payments/PaymentMethodsApiTest.php`**
 
-### **Feature Tests**
+Performs full-stack tests on the API endpoints.
 
 ```php
 <?php
+namespace Tests\Integration\Payments;
 
-namespace Tests\Feature\Api;
+use CodeIgniter\Test\CIUnitTestCase;
+use CodeIgniter\Test\FeatureTestTrait;
 
-use Tests\TestCase;
-use App\Models\PaymentMethod;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class PaymentMethodApiTest extends TestCase
+class PaymentMethodsApiTest extends CIUnitTestCase
 {
-    use RefreshDatabase;
-
-    /** @test */
-    public function it_can_list_payment_methods()
+    use FeatureTestTrait;
+    
+    public function test_list_returns_active_methods_only_and_sorted(): void
     {
-        PaymentMethod::factory()->count(3)->create(['is_active' => true]);
-
-        $response = $this->getJson('/api/payment-methods');
-
-        $response->assertStatus(200)
-            ->assertJsonStructure([
-                'success',
-                'data' => [
-                    '*' => ['id', 'code', 'name', 'is_active']
-                ]
-            ]);
-    }
-
-    /** @test */
-    public function it_can_create_payment_method()
-    {
-        $data = [
-            'code' => 'NEW_METHOD',
-            'name' => 'New Method',
-            'description' => 'Test description',
-            'is_active' => true,
-            'display_order' => 10
-        ];
-
-        $response = $this->postJson('/api/payment-methods', $data);
-
-        $response->assertStatus(201)
-            ->assertJson([
-                'success' => true,
-                'data' => [
-                    'code' => 'NEW_METHOD'
-                ]
-            ]);
-    }
-
-    /** @test */
-    public function it_cannot_delete_used_payment_method()
-    {
-        $method = PaymentMethod::factory()->create();
-        // Create order using this method
-        Order::factory()->create(['payment_method' => $method->code]);
-
-        $response = $this->deleteJson("/api/payment-methods/{$method->id}");
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'message' => 'Cannot delete payment method that is used in orders',
-                'error_code' => 'PAY_METHOD_IN_USE'
-            ]);
+        $res = $this->withHeaders($this->authHeaders())->get('api/payment-methods');
+        $res->assertStatus(200);
+        // ... more assertions
     }
 }
 ```
@@ -507,19 +293,11 @@ class PaymentMethodApiTest extends TestCase
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  Payment methods table created with all fields
-- [x]  5 default methods seeded
-- [x]  API returns only active methods by default
-- [x]  Methods ordered by display_order
-- [x]  Cannot delete method used in orders
-- [x]  Code must be UPPERCASE
-- [x]  Cache invalidated on changes
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**PAYMENT_METHODS_](https://www.notion.so/PAYMENT_METHODS_TABLE-Payment-Methods-Schema-ac2e0402fa7b48099e71738e419ccff5?pvs=21)[TABLE.md](http://TABLE.md)** - Schema details
-- [**PAYMENT_](https://www.notion.so/PAYMENT_RULES-Payment-Validation-Rules-d0f287e7743c4a30b777f120adf93cb5?pvs=21)[RULES.md](http://RULES.md)** - Validation rules
-- [**SAMPLE_](https://www.notion.so/SAMPLE_DATA-Sample-Data-Examples-5baed5e554654be785e562c63b5d42e5?pvs=21)[DATA.md](http://DATA.md)** - Sample data
+- [x]  `payment_methods` table created via CodeIgniter Migration.
+- [x]  5 default methods seeded.
+- [x]  API returns only active methods by default.
+- [x]  Methods are ordered by `display_order`.
+- [x]  Cannot delete a method that is already used in an order.
+- `code` must be unique and uppercase.
+- [x]  Cache is properly invalidated on `create`, `update`, and `delete`.
+- [x]  All unit and integration tests are passing.

@@ -3,24 +3,22 @@
 namespace Tests\Services;
 
 use App\Services\PriceLists\PriceCalculatorService;
+use App\Services\PriceLists\PriceCalculatorService as CalculatorService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
-use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
 /** @agent-test: PriceCalculatorService tests @agent-pattern: Pricing engine test */
 class PriceCalculatorServiceTest extends CIUnitTestCase
 {
-    use PriceListSchemaTrait;
+    use DevDatabaseTrait;
 
-    private PriceCalculatorService $service;
-    protected $db;
+    private CalculatorService $service;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
-        $this->resetPriceListSchema();
-        $this->service = new PriceCalculatorService();
+        $this->setUpDatabase();
+        $this->service = new CalculatorService(null, null, $this->db);
     }
 
     /** @test */
@@ -246,7 +244,7 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
 
     private function seedProduct(float $price): int
     {
-        $this->db->table('db_products')->insert([
+        $this->db->table('products')->insert([
             'code' => 'P' . random_int(100, 999),
             'name' => 'P',
             'selling_price' => $price,
@@ -257,7 +255,7 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
 
     private function seedVariant(int $productId, float $price): int
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'sku' => 'V' . random_int(100, 999),
             'price' => $price,
@@ -279,13 +277,13 @@ class PriceCalculatorServiceTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
         $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode((array) $payload['apply_to_groups']) : null;
-        $this->db->table('db_price_lists')->insert($payload);
+        $this->db->table('price_lists')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedItem(int $listId, int $productId, ?int $variantId, float $price, float $discountPercent = 0, float $discountAmount = 0): void
     {
-        $this->db->table('db_price_list_items')->insert([
+        $this->db->table('price_list_items')->insert([
             'price_list_id' => $listId,
             'product_id' => $productId,
             'variant_id' => $variantId,

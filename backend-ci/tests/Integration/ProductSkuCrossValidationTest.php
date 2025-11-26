@@ -95,13 +95,13 @@ class ProductSkuCrossValidationTest extends CIUnitTestCase
             'deleted_at' => null,
         ], $data);
 
-        $this->db->table('db_products')->insert($payload);
+        $this->db->table('products')->insert($payload);
         return (int) $this->db->insertID();
     }
 
     private function seedVariant(int $productId, string $sku): int
     {
-        $this->db->table('db_product_variants_v2')->insert([
+        $this->db->table('product_variants_v2')->insert([
             'product_id' => $productId,
             'variant_name' => $sku,
             'variant_signature' => $sku,

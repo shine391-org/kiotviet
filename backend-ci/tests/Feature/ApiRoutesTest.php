@@ -15,9 +15,9 @@ class ApiRoutesTest extends TestCase
     /** @test */
     public function expected_routes_are_registered()
     {
-        // Chuẩn bị MySQL test connection để tránh lỗi prefix db_
+        // Chuẩn bị MySQL test connection
         $db = Database::connect('tests');
-        $db->query("CREATE TABLE IF NOT EXISTS db_products (id INT AUTO_INCREMENT PRIMARY KEY)");
+        $db->query("CREATE TABLE IF NOT EXISTS products (id INT AUTO_INCREMENT PRIMARY KEY)");
 
         // Dùng bộ routes đã nạp (đọc từ /backend-ci/app/Config/Routes.php)
         $routes = Services::routes(true);

@@ -1,14 +1,14 @@
 ---
-title: "TASK 04: Supporting Tables Implementation"
-id: "TASK-04-SUPPORTING-TABLES-01"
+title: "TASK 04: Supporting Tables Implementation (CodeIgniter 4)"
+id: "TASK-04-SUPPORTING-TABLES-CI4"
 priority: "P1 (High)"
-estimated_effort: "2 days"
+estimated_effort: "1.5 days"
 dependencies: "None"
 status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "database", "schema", "logs", "inventory", "branches", "auditing", "tracking", "backend"]
-purpose: "Implement three critical supporting tables: order_status_logs, inventory_movements, and branches, enabling automatic status change logging, comprehensive inventory tracking, and multi-branch operations."
+tags: ["task", "database", "schema", "logs", "inventory", "branches", "auditing", "tracking", "backend", "codeigniter"]
+purpose: "Implement three critical supporting tables (order_status_logs, inventory_movements, branches) using CodeIgniter 4 to enable auditing, inventory tracking, and multi-branch support."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
 related_to:
   - id: "SUPPORTING-TABLES-01"
@@ -17,25 +17,20 @@ related_to:
     description: "Related to inventory tracking and management."
   - id: "ORDER-WORKFLOW-INDEX"
     description: "Task listed in the module index."
-  - id: "ORDERS-TABLE-01"
-    description: "Core table that order status logs reference."
 ---
 
-# TASK_04: Supporting Tables Implementation
+# TASK 04: Supporting Tables Implementation (CodeIgniter 4)
 
 **Priority:** P1 (High)
-
-**Estimated Effort:** 2 days
-
+**Estimated Effort:** 1.5 days
 **Dependencies:** None
-
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **3 supporting tables**: order_status_logs, inventory_movements, branches.
+Implement three critical supporting tables using **CodeIgniter 4 Migrations**: **`branches`**, **`order_status_logs`**, and **`inventory_movements`**. These tables form the foundation for auditing, multi-branch functionality, and accurate inventory tracking.
 
 ---
 
@@ -43,220 +38,130 @@ Implement **3 supporting tables**: order_status_logs, inventory_movements, branc
 
 ### **Functional Requirements**
 
-- [x]  Create order_status_logs table
-- [x]  Create inventory_movements table
-- [x]  Create branches table
-- [x]  Auto-log status changes
-- [x]  Track all inventory movements
-- [x]  Support multi-branch operations
+- [x] Create `branches` table to support multi-location operations.
+- [x] Create `order_status_logs` table for a complete audit trail of order status changes.
+- [x] Create `inventory_movements` table to track every stock change (sale, return, adjustment).
+- [x] Automatically log every order status change.
+- [x] Ensure all inventory adjustments are recorded as movements.
 
 ---
 
-## 🗄️ DATABASE SCHEMAS
+## 🗄️ DATABASE SCHEMA (CodeIgniter 4)
 
-See [**SUPPORTING_](https://www.notion.so/SUPPORTING_TABLES-Supporting-Tables-Schema-88f443621e234de7a42f404439a5ac57?pvs=21)[TABLES.md](http://TABLES.md)** for full details.
+### **Migration: `2025-11-24-000010_CreateSupportingTables.php`**
 
-### **1. branches**
-
-```sql
-CREATE TABLE branches (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    code VARCHAR(20) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    phone VARCHAR(20),
-    address TEXT,
-    ward VARCHAR(100),
-    district VARCHAR(100),
-    city VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE,
-    INDEX idx_active (is_active)
-);
-```
-
----
-
-### **2. order_status_logs**
-
-```sql
-CREATE TABLE order_status_logs (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    order_id BIGINT UNSIGNED NOT NULL,
-    from_status VARCHAR(50),
-    to_status VARCHAR(50) NOT NULL,
-    notes TEXT,
-    changed_by BIGINT UNSIGNED NOT NULL,
-    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
-    INDEX idx_order (order_id, changed_at)
-);
-```
-
----
-
-### **3. inventory_movements**
-
-```sql
-CREATE TABLE inventory_movements (
-    id BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    branch_id BIGINT UNSIGNED NOT NULL,
-    product_id BIGINT UNSIGNED NOT NULL,
-    variant_id BIGINT UNSIGNED,
-    type ENUM('sale', 'return', 'adjustment', 'transfer_in', 'transfer_out') NOT NULL,
-    quantity INT NOT NULL,
-    reference_type VARCHAR(50),
-    reference_id BIGINT UNSIGNED,
-    notes TEXT,
-    created_by BIGINT UNSIGNED NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    INDEX idx_branch_product (branch_id, product_id, created_at)
-);
-```
-
----
-
-## 🏗️ MODELS
-
-### **OrderStatusLog Model**
+This single migration file is responsible for creating all three tables.
 
 ```php
 <?php
+namespace App\Database\Migrations;
+use CodeIgniter\Database\Migration;
 
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Model;
-
-class OrderStatusLog extends Model
+class CreateSupportingTables extends Migration
 {
-    const UPDATED_AT = null; // Only created_at
-    
-    protected $fillable = [
-        'order_id',
-        'from_status',
-        'to_status',
-        'notes',
-        'changed_by',
-    ];
-
-    protected $casts = [
-        'changed_at' => 'datetime',
-    ];
-
-    public function order()
+    public function up()
     {
-        return $this->belongsTo(Order::class);
+        // branches table
+        $this->forge->addField([...]);
+        $this->forge->createTable('branches', true);
+
+        // order_status_logs table
+        $this->forge->addField([...]);
+        $this->forge->createTable('order_status_logs', true);
+
+        // inventory_movements table
+        $this->forge->addField([...]);
+        $this->forge->createTable('inventory_movements', true);
     }
 
-    public function changedBy()
+    public function down()
     {
-        return $this->belongsTo(User::class, 'changed_by');
+        $this->forge->dropTable('inventory_movements', true);
+        $this->forge->dropTable('order_status_logs', true);
+        $this->forge->dropTable('branches', true);
     }
 }
 ```
 
----
-
-### **InventoryMovement Model**
+### **1. `branches` Table Schema**
 
 ```php
-<?php
+$this->forge->addField([
+    'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+    'code' => ['type' => 'VARCHAR', 'constraint' => 20, 'null' => false, 'unique' => true],
+    'name' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => false],
+    'is_active' => ['type' => 'TINYINT', 'constraint' => 1, 'default' => 1],
+    // ... other fields and timestamps
+]);
+```
 
-namespace App\Models;
+### **2. `order_status_logs` Table Schema**
 
-use Illuminate\Database\Eloquent\Model;
+```php
+$this->forge->addField([
+    'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+    'order_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+    'from_status' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true],
+    'to_status' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => false],
+    'notes' => ['type' => 'TEXT', 'null' => true],
+    'changed_by' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
+    'changed_at' => ['type' => 'DATETIME', 'null' => true],
+]);
+```
 
-class InventoryMovement extends Model
-{
-    const UPDATED_AT = null; // Only created_at
-    
-    protected $fillable = [
-        'branch_id',
-        'product_id',
-        'variant_id',
-        'type',
-        'quantity',
-        'reference_type',
-        'reference_id',
-        'notes',
-        'created_by',
-    ];
+### **3. `inventory_movements` Table Schema**
 
-    protected $casts = [
-        'quantity' => 'integer',
-    ];
-
-    public function branch()
-    {
-        return $this->belongsTo(Branch::class);
-    }
-
-    public function product()
-    {
-        return $this->belongsTo(Product::class);
-    }
-
-    public function variant()
-    {
-        return $this->belongsTo(Variant::class);
-    }
-
-    public function createdBy()
-    {
-        return $this->belongsTo(User::class, 'created_by');
-    }
-}
+```php
+$this->forge->addField([
+    'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
+    'branch_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+    'product_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
+    'variant_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
+    'type' => ['type' => 'ENUM', 'constraint' => ['sale', 'return', 'adjustment', 'transfer_in', 'transfer_out'], 'null' => false],
+    'quantity' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'default' => 0],
+    'reference_type' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true], // e.g., 'order', 'return'
+    'reference_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],   // e.g., order_id, return_id
+    'created_by' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
+]);
 ```
 
 ---
 
-## 🔍 AUTO-LOGGING STATUS CHANGES
+## 🏗️ ARCHITECTURE & IMPLEMENTATION (CodeIgniter 4)
 
-### **Observer Pattern**
+### **Models**
+-   **`BranchModel.php`**
+-   **`OrderStatusLogModel.php`**
+-   **`InventoryMovementModel.php`**
+
+These are standard CodeIgniter models defining table names and allowed fields.
+
+### **Automatic Status Logging**
+
+Status change logging is handled automatically within the `OrderStatusService`. After a status is successfully updated, a log entry is created.
 
 ```php
-<?php
+// app/Services/Orders/OrderStatusService.php
 
-namespace App\Observers;
-
-use App\Models\Order;
-use App\Models\OrderStatusLog;
-
-class OrderObserver
+public function updateStatus(int $orderId, string $toStatus, ...): array
 {
-    public function updating(Order $order)
-    {
-        // Check if status changed
-        if ($order->isDirty('status')) {
-            OrderStatusLog::create([
-                'order_id' => $order->id,
-                'from_status' => $order->getOriginal('status'),
-                'to_status' => $order->status,
-                'changed_by' => auth()->id(),
-            ]);
-        }
-    }
-}
+    // ... (status transition logic)
 
-// Register in AppServiceProvider
-public function boot()
-{
-    Order::observe(OrderObserver::class);
+    $this->orders->updateFields($orderId, $updates);
+
+    // Log status change AFTER the update is successful
+    $this->logs->create($orderId, $fromStatus, $toStatus, $userId, $notes);
+
+    // ...
 }
 ```
 
----
+### **Inventory Movement Tracking**
 
-## 📦 INVENTORY MOVEMENT TRACKING
-
-### **Service Class**
+A dedicated `InventoryMovementLogger` service is used to create movement records. This service is called whenever stock levels change (e.g., during order processing, cancellation, or returns).
 
 ```php
-<?php
-
-namespace App\Services;
-
-use App\Models\InventoryMovement;
+// app/Services/Inventory/InventoryMovementLogger.php
 
 class InventoryMovementLogger
 {
@@ -265,23 +170,32 @@ class InventoryMovementLogger
         int $productId,
         ?int $variantId,
         string $type,
-        int $quantity,
+        float $quantity,
         ?string $referenceType = null,
         ?int $referenceId = null,
-        ?string $notes = null
-    ): InventoryMovement {
-        return InventoryMovement::create([
-            'branch_id' => $branchId,
-            'product_id' => $productId,
-            'variant_id' => $variantId,
-            'type' => $type,
-            'quantity' => $quantity,
-            'reference_type' => $referenceType,
-            'reference_id' => $referenceId,
-            'notes' => $notes,
-            'created_by' => auth()->id(),
-        ]);
+        ...
+    ): void {
+        // Creates a new record in the `inventory_movements` table
     }
+}
+```
+This logger is then used within other services, such as `OrderStatusService`:
+```php
+// app/Services/Orders/OrderStatusService.php
+
+private function deductInventory(array $order, ?int $userId): void
+{
+    // ... (stock deduction logic) ...
+
+    $this->movementLogger->log(
+        branchId: ...,
+        productId: ...,
+        type: 'sale',
+        quantity: -($item['quantity']),
+        referenceType: 'order',
+        referenceId: $order['id'],
+        ...
+    );
 }
 ```
 
@@ -289,57 +203,16 @@ class InventoryMovementLogger
 
 ## 🧪 TESTING
 
-### **Test: Status Logging**
-
-```php
-<?php
-
-namespace Tests\Feature;
-
-use Tests\TestCase;
-use App\Models\Order;
-use App\Models\OrderStatusLog;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class OrderStatusLoggingTest extends TestCase
-{
-    use RefreshDatabase;
-
-    /** @test */
-    public function it_logs_status_changes_automatically()
-    {
-        $order = Order::factory()->create(['status' => 'draft']);
-        
-        $this->assertDatabaseHas('order_status_logs', [
-            'order_id' => $order->id,
-            'to_status' => 'draft'
-        ]);
-        
-        $order->update(['status' => 'confirmed']);
-        
-        $this->assertDatabaseHas('order_status_logs', [
-            'order_id' => $order->id,
-            'from_status' => 'draft',
-            'to_status' => 'confirmed'
-        ]);
-    }
-}
-```
+-   **`OrderStatusServiceTest.php`**: Includes tests to verify that a log entry is created in `order_status_logs` whenever an order's status changes.
+-   **`InventoryMovementLoggerTest.php`**: Unit tests for the logger service itself.
+-   **Integration Tests** for services like `ReturnService` and `OrderStatusService` confirm that the correct inventory movements are logged during complex workflows like returns and cancellations.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  All 3 tables created
-- [x]  Status changes auto-logged
-- [x]  Inventory movements tracked
-- [x]  Branch operations supported
-- [x]  Cascade deletes configured correctly
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [**SUPPORTING_](https://www.notion.so/SUPPORTING_TABLES-Supporting-Tables-Schema-88f443621e234de7a42f404439a5ac57?pvs=21)[TABLES.md](http://TABLES.md)** - Schema details
-- [**INVENTORY.md**](http://INVENTORY.md) - Inventory edge cases
+- [x] All three tables (`branches`, `order_status_logs`, `inventory_movements`) are created by the migration.
+- [x] Any change in an order's status is automatically recorded in `order_status_logs`.
+- [x] Any change in inventory quantity (sale, return, manual adjustment) is recorded in `inventory_movements`.
+- [x] The system is architected to support multi-branch inventory and operations.
+- [x] All relevant unit and integration tests are passing.

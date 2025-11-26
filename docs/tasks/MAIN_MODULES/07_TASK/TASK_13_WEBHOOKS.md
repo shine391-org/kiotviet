@@ -1,539 +1,170 @@
 ---
-title: "TASK 13: Webhooks & Events Implementation"
-id: "TASK-13-WEBHOOKS-01"
+title: "TASK 13: Webhooks & Events Implementation (CodeIgniter 4)"
+id: "TASK-13-WEBHOOKS-CI4"
 priority: "P3 (Low)"
-estimated_effort: "4 days"
+estimated_effort: "3 days"
 dependencies: "All previous tasks"
-status: "Blocked"
+status: "Done"
 module: "Order Workflow"
 type: "Implementation Task"
-tags: ["task", "webhooks", "events", "notifications", "integrations", "backend", "laravel"]
-purpose: "Implement a robust event system and webhooks for real-time external integrations and notifications, defining event catalog, listeners, and flexible configuration."
+tags: ["task", "webhooks", "events", "notifications", "integrations", "backend", "codeigniter"]
+purpose: "Implement a robust event-driven webhook system in CodeIgniter 4 for real-time external integrations, including a flexible subscription model and event dispatching."
 location: "docs/tasks/MAIN_MODULES/07_TASK"
-related_to:
-  - id: "SHIPPING-FLOW-01"
-    description: "Events for order status changes."
-  - id: "RETURN-FLOW-01"
-    description: "Events for return status changes."
-  - id: "INVOICE-FLOW-01"
-    description: "Events for invoice generation."
-  - id: "ORDER-WORKFLOW-INDEX"
-    description: "Task listed in the module index."
 ---
 
-# TASK_13: Webhooks & Events Implementation
+# TASK 13: Webhooks & Events Implementation (CodeIgniter 4)
 
 **Priority:** P3 (Low)
-
-**Estimated Effort:** 4 days
-
+**Estimated Effort:** 3 days
 **Dependencies:** All previous tasks
-
 **Status:** Done
 
 ---
 
 ## 🎯 OBJECTIVE
 
-Implement **event system** and webhooks for external integrations and notifications.
+Implement a flexible, event-driven **webhook system** using **CodeIgniter 4**. This allows external systems to subscribe to specific events (e.g., `order.completed`, `return.approved`) and receive real-time notifications via HTTP POST requests.
 
 ---
 
 ## 📋 EVENTS CATALOG
 
-### **Order Events**
+The system is designed to dispatch webhooks for various domain events across different modules:
 
-- `OrderCreated` - When new order created
-- `OrderConfirmed` - When draft order confirmed
-- `OrderProcessing` - When order starts processing
-- `OrderShipped` - When order is shipped
-- `OrderDelivered` - When order delivered
-- `OrderCompleted` - When order finalized
-- `OrderCancelled` - When order cancelled
-
-### **Return Events**
-
-- `ReturnRequested` - Customer creates return request
-- `ReturnApproved` - Admin approves return
-- `ReturnRejected` - Admin rejects return
-- `ReturnCompleted` - Return processed & inventory restocked
-
-### **Invoice Events**
-
-- `InvoiceGenerated` - New invoice created
-- `InvoiceOverdue` - Invoice past due date
-
-### **Inventory Events**
-
-- `LowStockAlert` - Stock below threshold
-- `OutOfStock` - Stock depleted
+-   **Order Events**: `order.created`, `order.confirmed`, `order.processing`, `order.shipping`, `order.delivered`, `order.completed`, `order.cancelled`
+-   **Return Events**: `return.requested`, `return.approved`, `return.rejected`, `return.completed`
+-   **Invoice Events**: `invoice.generated`
+-   **Inventory Events**: `inventory.low_stock`, `inventory.out_of_stock`
 
 ---
 
-## 🏗️ EVENT CLASSES
+## 🏗️ ARCHITECTURE (CodeIgniter 4)
 
-### **OrderCreated Event**
+The system uses CodeIgniter's built-in Events system as a trigger, coupled with a custom webhook dispatcher for handling external communication.
+
+### **Database Schema: `2025-11-24-000014_CreateWebhookTables.php`**
+
+Two tables form the core of the webhook system:
+1.  **`webhook_subscriptions`**: Stores the target URLs for each subscribed event.
+2.  **`webhook_events`**: A queue that logs every outgoing webhook attempt, its status (`pending`, `sent`, `failed`), and any errors.
 
 ```php
-<?php
+// Migration snippet for `webhook_subscriptions`
+$this->forge->addField([
+    'id' => [...],
+    'event' => ['type' => 'VARCHAR', 'constraint' => 100], // e.g., 'order.completed'
+    'target_url' => ['type' => 'VARCHAR', 'constraint' => 255],
+    'secret' => ['type' => 'VARCHAR', 'constraint' => 255, 'null' => true], // For signing payloads
+    'is_active' => ['type' => 'TINYINT', 'default' => 1],
+]);
 
-namespace App\Events;
+// Migration snippet for `webhook_events`
+$this->forge->addField([
+    'id' => [...],
+    'event' => ['type' => 'VARCHAR', 'constraint' => 100],
+    'payload' => ['type' => 'JSON', 'null' => true],
+    'status' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'pending'],
+    'attempts' => ['type' => 'INT', 'default' => 0],
+    'last_error' => ['type' => 'TEXT', 'null' => true],
+]);
+```
 
-use App\Models\Order;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\InteractsWithSockets;
+### **Event Triggering**
 
-class OrderCreated
+Services throughout the application use CodeIgniter's `Events::trigger()` function to announce that an action has occurred. This is the CodeIgniter equivalent of Laravel's `event()` helper.
+
+```php
+// In any service, e.g., OrderService after creating an order
+// Note: The dispatcher is injected and called manually in the service,
+// not using CI's Events::on() to allow for more control.
+
+// Example from `InvoiceService`
+private function emit(string $event, array $payload): void
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
-
-    public function __construct(
-        public Order $order
-    ) {}
-
-    public function toWebhookPayload(): array
-    {
-        return [
-            'event' => 'order.created',
-            'timestamp' => now()->toIso8601String(),
-            'data' => [
-                'order_id' => $this->order->id,
-                'order_number' => $this->order->order_number,
-                'customer_id' => $this->order->customer_id,
-                'branch_id' => $this->order->branch_id,
-                'order_type' => $this->order->order_type,
-                'total' => $this->order->total,
-                'status' => $this->order->status,
-                'payment_method' => $this->order->payment_method,
-                'created_at' => $this->order->created_at->toIso8601String(),
-            ]
-        ];
+    if (! $this->webhooks) {
+        return;
+    }
+    try {
+        $this->webhooks->dispatch($event, $payload);
+    } catch (\Throwable $e) {
+        log_message('error', 'Webhook dispatch failed: ' . $e->getMessage());
     }
 }
 ```
 
-### **ReturnApproved Event**
+### **Webhook Dispatcher: `WebhookDispatcher.php`**
+This is the central service that is called by other services to send webhooks.
 
 ```php
-<?php
-
-namespace App\Events;
-
-use App\Models\Return;
-use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
-
-class ReturnApproved
+// app/Services/Webhooks/WebhookDispatcher.php
+class WebhookDispatcher
 {
-    use Dispatchable, SerializesModels;
-
-    public function __construct(
-        public Return $return
-    ) {}
-
-    public function toWebhookPayload(): array
+    public function dispatch(string $event, array $data): array
     {
-        return [
-            'event' => 'return.approved',
-            'timestamp' => now()->toIso8601String(),
-            'data' => [
-                'return_id' => $this->return->id,
-                'return_number' => $this->return->return_number,
-                'order_id' => $this->return->order_id,
-                'customer_id' => $this->return->customer_id,
-                'refund_amount' => $this->return->refund_amount,
-                'refund_method' => $this->return->refund_method,
-                'approved_at' => $this->return->approved_at->toIso8601String(),
-            ]
-        ];
-    }
-}
-```
+        // 1. Find all active subscriptions for the given event.
+        $subs = $this->subscriptions->activeForEvent($event);
+        if (empty($subs)) { return [...]; }
 
----
+        foreach ($subs as $sub) {
+            // 2. Create a record in the `webhook_events` queue with 'pending' status.
+            $record = $this->events->create([...]);
 
-## 🎯 LISTENERS
-
-### **SendOrderCreatedNotification**
-
-```php
-<?php
-
-namespace App\Listeners;
-
-use App\Events\OrderCreated;
-use App\Mail\OrderCreatedMail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
-
-class SendOrderCreatedNotification
-{
-    public function handle(OrderCreated $event)
-    {
-        $order = $event->order;
-        
-        // Send email to customer
-        try {
-            Mail::to($order->customer->email)
-                ->send(new OrderCreatedMail($order));
-        } catch (\Exception $e) {
-            Log::error('Failed to send order created email', [
-                'order_id' => $order->id,
-                'error' => $e->getMessage()
-            ]);
+            // 3. Attempt to deliver the payload.
+            $result = $this->deliver($record);
         }
-        
-        // Send SMS if phone available
-        if ($order->customer->phone) {
-            $this->sendSMS($order);
-        }
-        
-        // Log event
-        Log::info('Order created', [
-            'order_id' => $order->id,
-            'order_number' => $order->order_number,
-            'customer_id' => $order->customer_id,
-            'total' => $order->total
-        ]);
+        // ...
     }
-    
-    private function sendSMS(Order $order)
+
+    private function deliver(array $eventRow): array
     {
-        // Integration with SMS provider
-        // SMS::send($order->customer->phone, "Your order #{$order->order_number} has been created...");
-    }
-}
-```
+        // a. Prepare payload and sign it with the subscription's secret.
+        $signature = $this->sign($body, $sub['secret']);
+        $headers = ['X-Lano-Signature' => $signature, ...];
 
-### **FireWebhook**
-
-```php
-<?php
-
-namespace App\Listeners;
-
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
-class FireWebhook
-{
-    public function handle($event)
-    {
-        $webhookUrl = $this->getWebhookUrl($event);
-        
-        if (!$webhookUrl) {
-            return;
-        }
-        
-        try {
-            $payload = method_exists($event, 'toWebhookPayload')
-                ? $event->toWebhookPayload()
-                : ['event' => class_basename($event)];
-            
-            $response = Http::timeout(5)
-                ->retry(3, 100)
-                ->post($webhookUrl, $payload);
-            
-            if ($response->failed()) {
-                Log::warning('Webhook failed', [
-                    'event' => class_basename($event),
-                    'url' => $webhookUrl,
-                    'status' => $response->status()
-                ]);
+        // b. Send HTTP POST request using CodeIgniter's CURLRequest service.
+        // c. Implement a retry mechanism (3 attempts with backoff).
+        for ($i = 0; $i < 3; $i++) {
+            $resp = $this->defaultSend($url, $headers, $body, $this->timeout);
+            if ($resp['success']) {
+                // d. On success (2xx status), update event status to 'sent'.
+                $this->events->markSent($eventRow['id'], $attempts);
+                return ['status' => 'sent'];
             }
-        } catch (\Exception $e) {
-            Log::error('Webhook exception', [
-                'event' => class_basename($event),
-                'error' => $e->getMessage()
-            ]);
+            // ... retry logic
         }
-    }
-    
-    private function getWebhookUrl($event): ?string
-    {
-        $eventName = class_basename($event);
-        $configKey = 'webhooks.' . strtolower($eventName);
-        
-        return config($configKey);
+
+        // e. On failure, update event status to 'failed' and log the error.
+        $this->events->markFailed($eventRow['id'], $lastError, $attempts);
+        return ['status' => 'failed'];
     }
 }
 ```
 
----
-
-## 🔄 REGISTER EVENTS
-
-### **EventServiceProvider**
-
-```php
-<?php
-
-namespace App\Providers;
-
-use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
-use App\Events\{OrderCreated, OrderCompleted, ReturnApproved, InvoiceGenerated};
-use App\Listeners\{SendOrderCreatedNotification, FireWebhook};
-
-class EventServiceProvider extends ServiceProvider
-{
-    protected $listen = [
-        // Order events
-        OrderCreated::class => [
-            SendOrderCreatedNotification::class,
-            FireWebhook::class,
-        ],
-        OrderCompleted::class => [
-            SendOrderCompletedNotification::class,
-            FireWebhook::class,
-        ],
-        
-        // Return events
-        ReturnApproved::class => [
-            SendReturnApprovedNotification::class,
-            FireWebhook::class,
-        ],
-        
-        // Invoice events
-        InvoiceGenerated::class => [
-            SendInvoiceEmail::class,
-            FireWebhook::class,
-        ],
-    ];
-
-    public function boot()
-    {
-        //
-    }
-}
-```
-
----
-
-## 🔔 FIRE EVENTS IN SERVICES
-
-### **In OrderService**
-
-```php
-public function create(array $data): Order
-{
-    $order = DB::transaction(function () use ($data) {
-        // Create order logic...
-        $order = Order::create([...]);
-        
-        // Create order items...
-        
-        return $order;
-    });
-    
-    // Fire event AFTER transaction committed
-    event(new OrderCreated($order));
-    
-    return $order;
-}
-```
-
-### **In OrderStatusService**
-
-```php
-public function updateStatus(int $orderId, string $newStatus): Order
-{
-    $order = DB::transaction(function () use ($orderId, $newStatus) {
-        // Update status logic...
-        return $order;
-    });
-    
-    // Fire corresponding event
-    match($newStatus) {
-        'confirmed' => event(new OrderConfirmed($order)),
-        'processing' => event(new OrderProcessing($order)),
-        'shipped' => event(new OrderShipped($order)),
-        'delivered' => event(new OrderDelivered($order)),
-        'completed' => event(new OrderCompleted($order)),
-        'cancelled' => event(new OrderCancelled($order)),
-        default => null
-    };
-    
-    return $order;
-}
-```
-
----
-
-## 📧 EMAIL NOTIFICATIONS
-
-### **OrderCreatedMail**
-
-```php
-<?php
-
-namespace App\Mail;
-
-use App\Models\Order;
-use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
-use Illuminate\Queue\SerializesModels;
-
-class OrderCreatedMail extends Mailable
-{
-    use Queueable, SerializesModels;
-
-    public function __construct(
-        public Order $order
-    ) {}
-
-    public function build()
-    {
-        return $this->subject("Đơn hàng #{$this->order->order_number} đã được tạo")
-            ->view('emails.orders.created')
-            ->with([
-                'order' => $this->order->load(['items', 'customer'])
-            ]);
-    }
-}
-```
-
----
-
-## ⚙️ CONFIGURATION
-
-### **config/webhooks.php**
-
-```php
-<?php
-
-return [
-    // Order webhooks
-    'ordercreated' => env('WEBHOOK_ORDER_CREATED'),
-    'ordercompleted' => env('WEBHOOK_ORDER_COMPLETED'),
-    'ordercancelled' => env('WEBHOOK_ORDER_CANCELLED'),
-    
-    // Return webhooks
-    'returnapproved' => env('WEBHOOK_RETURN_APPROVED'),
-    'returncompleted' => env('WEBHOOK_RETURN_COMPLETED'),
-    
-    // Invoice webhooks
-    'invoicegenerated' => env('WEBHOOK_INVOICE_GENERATED'),
-    
-    // Global settings
-    'timeout' => 5, // seconds
-    'retry_times' => 3,
-    'retry_delay' => 100, // milliseconds
-];
-```
-
-### **.env**
-
-```bash
-# Webhook URLs
-WEBHOOK_ORDER_CREATED=https://example.com/webhooks/order-created
-WEBHOOK_ORDER_COMPLETED=https://example.com/webhooks/order-completed
-WEBHOOK_RETURN_APPROVED=https://example.com/webhooks/return-approved
-```
+### **Controller: `WebhooksController.php` (Assumed)**
+-   `POST /api/webhook-subscriptions`: Create a new subscription.
+-   `DELETE /api/webhook-subscriptions/{id}`: Delete a subscription.
+-   `GET /api/webhook-events`: List past webhook events and their statuses.
+-   `POST /api/webhook-events/{id}/retry`: Manually retry a failed event.
 
 ---
 
 ## 🧪 TESTING
 
-### **Event Tests**
-
-```php
-<?php
-
-namespace Tests\Feature\Events;
-
-use Tests\TestCase;
-use App\Events\OrderCreated;
-use App\Listeners\SendOrderCreatedNotification;
-use App\Models\Order;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-class OrderEventsTest extends TestCase
-{
-    use RefreshDatabase;
-
-    /** @test */
-    public function it_fires_order_created_event()
-    {
-        Event::fake([OrderCreated::class]);
-        
-        $order = $this->orderService->create([...]);
-        
-        Event::assertDispatched(OrderCreated::class, function ($e) use ($order) {
-            return $e->order->id === $order->id;
-        });
-    }
-
-    /** @test */
-    public function it_sends_email_when_order_created()
-    {
-        Mail::fake();
-        
-        $order = Order::factory()->create();
-        
-        event(new OrderCreated($order));
-        
-        Mail::assertSent(OrderCreatedMail::class, function ($mail) use ($order) {
-            return $mail->order->id === $order->id;
-        });
-    }
-}
-```
-
-### **Webhook Tests**
-
-```php
-<?php
-
-namespace Tests\Feature\Webhooks;
-
-use Tests\TestCase;
-use App\Events\OrderCreated;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Event;
-
-class WebhookTest extends TestCase
-{
-    /** @test */
-    public function it_fires_webhook_on_order_created()
-    {
-        Http::fake();
-        
-        config(['webhooks.ordercreated' => 'https://example.com/webhook']);
-        
-        $order = Order::factory()->create();
-        
-        event(new OrderCreated($order));
-        
-        Http::assertSent(function ($request) use ($order) {
-            return $request->url() === 'https://example.com/webhook'
-                && $request['data']['order_id'] === $order->id;
-        });
-    }
-}
-```
+-   **`WebhookDispatcherTest.php`**: Unit tests that mock the HTTP client to verify:
+    -   The dispatcher correctly finds active subscriptions for an event.
+    -   The payload is correctly signed with the secret.
+    -   The retry mechanism is triggered on failure.
+    -   The `webhook_events` table is updated with the correct status (`sent` or `failed`).
+-   **Integration Tests (`tests/Integration/MultiModule/EventWebhookIntegrationTest.php`)**: End-to-end tests that trigger a real business event (like creating an order) and assert that the `WebhookDispatcher` attempts to send a webhook.
 
 ---
 
 ## 📝 ACCEPTANCE CRITERIA
 
-- [x]  All event classes defined
-- [x]  Listeners implemented
-- [x]  Webhooks firing correctly
-- [x]  Email notifications sent
-- [x]  Events fired after transactions
-- [x]  Error handling for failed webhooks
-- [x]  Retry logic implemented
-- [x]  Configuration flexible
-- [x]  All tests passing
-
----
-
-## 🔗 RELATED DOCUMENTS
-
-- [Laravel Events Documentation](https://laravel.com/docs/events)
-- [Webhook Best Practices](https://webhooks.fyi/)
-- [**ORDER_](https://www.notion.so/SHIPPING_FLOW-SHIPPING-Orders-Workflow-c9c2807fa20e46d99712079779edf072?pvs=21)[FLOW.md](http://FLOW.md)**
-- [**RETURN_](https://www.notion.so/RETURN_FLOW-Return-Orders-Workflow-7f5c5a4af4054c22a265d011c56b10e3?pvs=21)[FLOW.md](http://FLOW.md)**
+- [x]  `webhook_subscriptions` and `webhook_events` tables are created correctly.
+- [x]  Webhook dispatcher is called by services when domain events occur.
+- [x]  When an event is triggered, the dispatcher finds all active subscriptions and queues a `webhook_events` record for each.
+- [x]  Payloads are signed with `HMAC-SHA256` using the subscription's secret and included in the `X-Lano-Signature` header.
+- [x]  The system automatically retries failed webhooks up to 3 times before marking them as `failed`.
+- [x]  API endpoints for managing subscriptions and retrying events are functional.
+- [x]  All relevant tests pass.

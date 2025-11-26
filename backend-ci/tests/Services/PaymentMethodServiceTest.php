@@ -9,8 +9,8 @@ use App\Validators\PaymentMethodValidator;
 use CodeIgniter\Cache\CacheInterface;
 use CodeIgniter\Test\CIUnitTestCase;
 use InvalidArgumentException;
+use Tests\Support\Database\CompleteSchemaTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\PaymentMethodSchemaTrait;
 
 /**
  * @agent-test: PaymentMethodService
@@ -19,7 +19,7 @@ use Tests\Support\Database\PaymentMethodSchemaTrait;
 class PaymentMethodServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
-    use PaymentMethodSchemaTrait;
+    use CompleteSchemaTrait;
 
     private PaymentMethodService $service;
     private PaymentMethodRepository $repo;
@@ -29,7 +29,7 @@ class PaymentMethodServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->resetPaymentSchema();
+        $this->resetCompleteSchema();
 
         $this->repo = new PaymentMethodRepository(null, $this->db);
         $validator = new PaymentMethodValidator();
@@ -112,7 +112,7 @@ class PaymentMethodServiceTest extends CIUnitTestCase
             'is_active' => true,
         ]);
 
-        $this->db->table('db_orders')->insert([
+        $this->db->table('orders')->insert([
             'payment_method' => 'COD',
             'total' => 100000,
             'created_at' => date('Y-m-d H:i:s'),
