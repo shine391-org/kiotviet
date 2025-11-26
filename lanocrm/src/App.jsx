@@ -30,6 +30,9 @@ import AttributeListPage from './pages/products/AttributeListPage';
 import AttributeCreatePage from './pages/products/AttributeCreatePage';
 import AttributeEditPage from './pages/products/AttributeEditPage';
 
+// Customers
+import CustomerListPage from './pages/customers/CustomerListPage';
+
 // Layout
 import MainLayout from './components/Layout/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -236,6 +239,12 @@ function App() {
                           <AttributeEditPage />
                         </ProtectedRoute>
                       }
+                    />
+
+                    {/* 🆕 Customers */}
+                    <Route
+                      path="/customers"
+                      element={<CustomerListPage />}
                     />
 
                     {/* ========== 404 PAGE ========== */}

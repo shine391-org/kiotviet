@@ -7,6 +7,7 @@ import productReducer from './slices/productSlice';     // 🆕 NEW
 import categoryReducer from './slices/categorySlice';   // 🆕 NEW
 import variantReducer from './slices/variantSlice';     // 🆕 ADD variantSlice
 import priceListReducer from './slices/priceListSlice';
+import customerReducer from './slices/customerSlice';
 
 const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ const store = configureStore({
     category: categoryReducer,     // 🆕 NEW
     variant: variantReducer,       // 🆕 NEW 
     priceList: priceListReducer,
+    customer: customerReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
