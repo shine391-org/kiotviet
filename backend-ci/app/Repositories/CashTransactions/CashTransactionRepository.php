@@ -100,13 +100,21 @@ class CashTransactionRepository
      * @param int|null $branchId Filter by branch (null = all branches)
      * @return float Current balance
      */
-    public function calculateBalance(?int $branchId = null): float
+    public function calculateBalance(?int $branchId = null, ?array $filters = null): float
     {
         $builder = $this->db->table('cash_transactions')
             ->where('deleted_at', null);
 
         if ($branchId !== null) {
             $builder->where('branch_id', $branchId);
+        }
+
+        // Apply date filters if provided
+        if (!empty($filters['date_from'])) {
+            $builder->where('transaction_date >=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $builder->where('transaction_date <=', $filters['date_to']);
         }
 
         // Calculate RECEIPT total

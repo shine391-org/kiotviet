@@ -17,6 +17,7 @@ import Dashboard from './pages/Dashboard';
 import BranchPage from './pages/BranchPage';
 import RolePermissionsPage from './pages/RolePermissionsPage';
 import PlaceholderPage from './pages/PlaceholderPage';
+import CashBookPage from './pages/cash/CashBookPage';
 
 // 🆕 PRODUCT PAGES
 import ProductListPage from './pages/products/ProductListPage';
@@ -74,7 +75,7 @@ function App() {
                     {/* Dashboard - Default Route */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/cash" element={<PlaceholderPage title="Sổ quỹ" description="Trang Sổ quỹ sẽ được kết nối backend sau." />} />
+                    <Route path="/cash" element={<CashBookPage />} />
                     <Route path="/orders/*" element={<PlaceholderPage title="Đơn hàng" />} />
                     <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
                     <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />

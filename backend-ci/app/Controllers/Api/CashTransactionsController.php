@@ -7,6 +7,7 @@ use App\Services\CashTransactions\CashTransactionService;
 use App\Validators\CashTransactionReferenceValidator;
 use CodeIgniter\Database\BaseConnection;
 use CodeIgniter\API\ResponseTrait;
+use RuntimeException;
 
 /**
  * Cash transactions API.
@@ -109,7 +110,17 @@ class CashTransactionsController extends BaseController
     public function getBalance()
     {
         return $this->wrap(function () {
-            $result = $this->service->getBalance();
+            $filters = $this->request->getGet();
+            $branchId = $filters['branch_id'] ?? null;
+
+            // Remove branch_id from filters to avoid double-applying
+            $balanceFilters = $filters;
+            unset($balanceFilters['branch_id']);
+
+            $result = $this->service->getBalance(
+                $branchId !== null ? (int) $branchId : null,
+                $balanceFilters
+            );
             return $this->respond($result);
         });
     }
@@ -123,7 +134,8 @@ class CashTransactionsController extends BaseController
     public function getBranchBalance($branchId)
     {
         return $this->wrap(function () use ($branchId) {
-            $result = $this->service->getBalance((int) $branchId);
+            $filters = $this->request->getGet();
+            $result = $this->service->getBalance((int) $branchId, $filters);
             return $this->respond($result);
         });
     }
@@ -169,6 +181,13 @@ class CashTransactionsController extends BaseController
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
         } catch (\RuntimeException $e) {
+            $code = $e->getCode();
+            if ($code === 401) {
+                return $this->failUnauthorized($e->getMessage());
+            }
+            if ($code === 403) {
+                return $this->failForbidden($e->getMessage());
+            }
             return $this->failNotFound($e->getMessage());
         } catch (\Throwable $e) {
             return $this->failServerError($e->getMessage());
@@ -195,12 +214,28 @@ class CashTransactionsController extends BaseController
 
     /**
      * Get current user ID from JWT token.
-     * TODO: Implement proper JWT parsing
      */
     private function getCurrentUserId(): int
     {
-        // For now, return 1 - implement proper JWT parsing later
-        // TODO: Parse JWT token to get user ID
-        return 1;
+        $request = service('request');
+        $authHeader = $request->getHeaderLine('Authorization');
+
+        if (empty($authHeader) || !preg_match('/Bearer\\s+(.*)$/i', $authHeader, $matches)) {
+            throw new RuntimeException('Authorization token required', 401);
+        }
+
+        $token = trim($matches[1]);
+
+        try {
+            $jwt = new \App\Libraries\JwtService();
+            $payload = $jwt->decode($token);
+            $userId = $payload->data->id ?? $payload->sub ?? null;
+            if (!$userId) {
+                throw new RuntimeException('Invalid token payload', 401);
+            }
+            return (int) $userId;
+        } catch (\Throwable $e) {
+            throw new RuntimeException('Invalid or expired token', 401);
+        }
     }
 }

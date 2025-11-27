@@ -9,6 +9,7 @@ import variantReducer from './slices/variantSlice';     // 🆕 ADD variantSlice
 import priceListReducer from './slices/priceListSlice';
 import customerReducer from './slices/customerSlice';
 import dashboardReducer from './slices/dashboardSlice';
+import cashReducer from './slices/cashSlice';
 
 const store = configureStore({
   reducer: {
@@ -22,6 +23,7 @@ const store = configureStore({
     priceList: priceListReducer,
     customer: customerReducer,
     dashboard: dashboardReducer,
+    cash: cashReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

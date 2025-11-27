@@ -17,7 +17,7 @@ trait AuthTestTrait
     {
         $jwt = new JwtService();
         $this->authToken = $jwt->generateToken([
-            'id'       => 'test-user',
+            'id'       => 1,
             'username' => 'tester',
             'role'     => 'admin',
         ]);

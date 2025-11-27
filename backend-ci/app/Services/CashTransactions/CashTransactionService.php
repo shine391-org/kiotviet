@@ -6,6 +6,8 @@ use App\Models\CashTransactionModel;
 use App\Repositories\CashTransactions\CashTransactionRepository;
 use App\Validators\CashTransactionValidator;
 use App\Validators\CashTransactionReferenceValidator;
+use App\Models\ModelHasRolesModel;
+use App\Models\PermissionModel;
 use CodeIgniter\I18n\Time;
 use InvalidArgumentException;
 use RuntimeException;
@@ -169,10 +171,10 @@ class CashTransactionService
      * @agent-use: GET /api/cash/balance
      * @agent-pattern: Real-time balance calculation
      */
-    public function getBalance(?int $branchId = null): array
+    public function getBalance(?int $branchId = null, array $filters = []): array
     {
-        // Calculate real-time balance
-        $balance = $this->repo->calculateBalance($branchId);
+        // Calculate real-time balance with filters (date range)
+        $balance = $this->repo->calculateBalance($branchId, $filters);
 
         return [
             'success' => true,
@@ -258,9 +260,24 @@ class CashTransactionService
      */
     public function checkPermission(int $userId, string $permission): bool
     {
-        // For now, return true - implement actual permission checking later
-        // TODO: Implement proper RBAC check using user roles/permissions
-        return true;
+        // Basic RBAC using model_has_roles and role_has_permissions
+        $userRole = (new ModelHasRolesModel())
+            ->where('model_id', $userId)
+            ->first();
+
+        if (!$userRole) {
+            return false;
+        }
+
+        $perm = (new PermissionModel())
+            ->select('permissions.id')
+            ->join('role_has_permissions rp', 'rp.permission_id = permissions.id')
+            ->where('rp.role_id', $userRole['role_id'])
+            ->where('permissions.name', $permission)
+            ->where('permissions.deleted_at', null)
+            ->first();
+
+        return (bool) $perm;
     }
 
     /**
