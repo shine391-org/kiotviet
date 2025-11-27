@@ -81,7 +81,7 @@ const roleApi = {
   getRolePermissions: async (roleId) => {
     try {
       const response = await axiosInstance.get(`/roles/${roleId}/permissions`);
-      return response.data;
+      return response.data?.data || [];
     } catch (error) {
       console.error('Error fetching role permissions:', error);
       throw error;
@@ -112,7 +112,7 @@ const roleApi = {
   getAllPermissions: async () => {
     try {
       const response = await axiosInstance.get('/permissions');
-      const list = response.data.data || [];
+      const list = response.data?.data || [];
       // Group by module for FE accordion
       const grouped = list.reduce((acc, p) => {
         const module = p.module || 'other';

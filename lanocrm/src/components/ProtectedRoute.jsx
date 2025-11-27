@@ -34,7 +34,8 @@ const ProtectedRoute = ({
   }
 
   // ========== SUPER-ADMIN BYPASS ==========
-  if (user?.role && ['super-admin', 'superadmin'].includes(user.role.toLowerCase())) {
+  const isSuperAdmin = user?.role && ['super-admin', 'superadmin', 'admin'].includes(user.role.toLowerCase());
+  if (isSuperAdmin) {
     return children;
   }
 
@@ -47,6 +48,8 @@ const ProtectedRoute = ({
    */
   const hasPermission = (perm) => {
     if (!effectivePermissions || !Array.isArray(effectivePermissions)) return false;
+    // wildcard
+    if (effectivePermissions.includes('*')) return true;
     return effectivePermissions.some(p => {
       // Support cả string và object format
       const permName = typeof p === 'string' ? p : p.name;

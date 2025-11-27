@@ -140,6 +140,15 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    {/* Alias cho đường dẫn thiếu 's' để tránh 404 */}
+                    <Route
+                      path="/roles/:id/permission"
+                      element={
+                        <ProtectedRoute requiredPermission="roles.assign-permissions">
+                          <RolePermissionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* ========== BRANCH ROUTES ========== */}
                     <Route

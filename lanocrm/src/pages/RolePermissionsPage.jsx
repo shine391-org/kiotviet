@@ -89,8 +89,8 @@ const RolePermissionsPage = () => {
       // 3. Load role's current permissions
       const rolePermsResponse = await roleApi.getRolePermissions(id);
       console.log('Role permissions:', rolePermsResponse);
-      const currentPermIds = rolePermsResponse.permissions 
-        ? rolePermsResponse.permissions.map(p => p.id) 
+      const currentPermIds = Array.isArray(rolePermsResponse)
+        ? rolePermsResponse.map(p => p.id)
         : [];
       setSelectedPermissions(currentPermIds);
 
