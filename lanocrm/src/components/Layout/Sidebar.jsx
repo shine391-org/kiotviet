@@ -71,7 +71,7 @@ const Sidebar = ({ collapsed, onClose }) => {
     'customer_groups': '/customer-groups',
     'orders': '/orders',
     'shipments': '/shipments',
-    'returns': '/returns',
+    'returns': '/orders/returns',
     'invoices': '/invoices',
     'reports': '/reports',
     'users': '/users',

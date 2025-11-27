@@ -10,6 +10,9 @@ import priceListReducer from './slices/priceListSlice';
 import customerReducer from './slices/customerSlice';
 import dashboardReducer from './slices/dashboardSlice';
 import cashReducer from './slices/cashSlice';
+import ordersReducer from './slices/orderSlice';
+import invoiceReducer from './slices/invoiceSlice';
+import returnReducer from './slices/returnSlice';
 
 const store = configureStore({
   reducer: {
@@ -24,6 +27,9 @@ const store = configureStore({
     customer: customerReducer,
     dashboard: dashboardReducer,
     cash: cashReducer,
+    orders: ordersReducer,
+    invoices: invoiceReducer,
+    returns: returnReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

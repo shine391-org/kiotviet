@@ -29,8 +29,18 @@ const cashApi = {
 
   getBalance: async (branchId = null, filters = {}) => {
     const params = { ...filters };
-    if (branchId) params.branch_id = branchId;
-    const response = await axiosInstance.get('/cash/balance', { params });
+    if (branchId) {
+      const config = Object.keys(params).length ? { params } : undefined;
+      const response = config
+        ? await axiosInstance.get(`/cash/balance/branch/${branchId}`, config)
+        : await axiosInstance.get(`/cash/balance/branch/${branchId}`);
+      return response.data;
+    }
+
+    const config = Object.keys(params).length ? { params } : undefined;
+    const response = config
+      ? await axiosInstance.get('/cash/balance', config)
+      : await axiosInstance.get('/cash/balance');
     return response.data;
   },
 

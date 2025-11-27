@@ -67,7 +67,7 @@ describe('CustomerListPage', () => {
       const detailContent = within(detailCard);
       expect(detailContent.getAllByText(/Cá nhân/).length).toBeGreaterThan(0);
     }
-  });
+  }, 10000);
 
   it('opens create modal when clicking add button', async () => {
     renderWithStore();

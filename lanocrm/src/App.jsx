@@ -34,6 +34,9 @@ import AttributeEditPage from './pages/products/AttributeEditPage';
 
 // Customers
 import CustomerListPage from './pages/customers/CustomerListPage';
+import OrderListPage from './pages/orders/OrderListPage';
+import InvoiceListPage from './pages/invoices/InvoiceListPage';
+import ReturnListPage from './pages/returns/ReturnListPage';
 
 // Layout
 import MainLayout from './components/Layout/MainLayout';
@@ -76,7 +79,11 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/cash" element={<CashBookPage />} />
-                    <Route path="/orders/*" element={<PlaceholderPage title="Đơn hàng" />} />
+                    <Route path="/orders/*" element={<OrderListPage />} />
+                    <Route path="/invoices" element={<InvoiceListPage />} />
+                    <Route path="/orders/invoices" element={<InvoiceListPage />} />
+                    <Route path="/orders/returns" element={<ReturnListPage />} />
+                    <Route path="/returns" element={<ReturnListPage />} />
                     <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
                     <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />
                     <Route path="/online" element={<PlaceholderPage title="Bán online" />} />
