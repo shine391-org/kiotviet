@@ -13,6 +13,8 @@ import cashReducer from './slices/cashSlice';
 import ordersReducer from './slices/orderSlice';
 import invoiceReducer from './slices/invoiceSlice';
 import returnReducer from './slices/returnSlice';
+import deliveryPartnerReducer from './slices/deliveryPartnerSlice';
+import shipmentReducer from './slices/shipmentSlice';
 
 const store = configureStore({
   reducer: {
@@ -30,6 +32,8 @@ const store = configureStore({
     orders: ordersReducer,
     invoices: invoiceReducer,
     returns: returnReducer,
+    deliveryPartners: deliveryPartnerReducer,
+    shipments: shipmentReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

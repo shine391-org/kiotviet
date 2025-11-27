@@ -37,6 +37,8 @@ import CustomerListPage from './pages/customers/CustomerListPage';
 import OrderListPage from './pages/orders/OrderListPage';
 import InvoiceListPage from './pages/invoices/InvoiceListPage';
 import ReturnListPage from './pages/returns/ReturnListPage';
+import DeliveryPartnerPage from './pages/orders/DeliveryPartnerPage';
+import ShipmentListPage from './pages/orders/ShipmentListPage';
 
 // Layout
 import MainLayout from './components/Layout/MainLayout';
@@ -79,6 +81,8 @@ function App() {
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/cash" element={<CashBookPage />} />
+                    <Route path="/orders/delivery-partners" element={<DeliveryPartnerPage />} />
+                    <Route path="/orders/shipments" element={<ShipmentListPage />} />
                     <Route path="/orders/*" element={<OrderListPage />} />
                     <Route path="/invoices" element={<InvoiceListPage />} />
                     <Route path="/orders/invoices" element={<InvoiceListPage />} />
