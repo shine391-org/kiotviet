@@ -17,10 +17,19 @@ const MENU_CONFIG = [
     name: 'Hàng hóa',
     path: '/products',
     subItems: [
-      { key: 'products_list', label: 'Danh sách sản phẩm', path: '/products' },
-      { key: 'categories', label: 'Danh mục', path: '/product-categories' },
-      { key: 'attributes', label: 'Thuộc tính', path: '/products/attributes' },
-      { key: 'price_lists', label: 'Bảng giá', path: '/price-lists' },
+      { key: 'products_list', label: 'Danh sách hàng hóa', path: '/products', section: 'Hàng hóa' },
+      { key: 'price_lists', label: 'Thiết lập giá', path: '/price-lists', section: 'Hàng hóa' },
+
+      { key: 'inventory_transfer', label: 'Chuyển hàng', path: '/inventory/transfer', section: 'Kho hàng' },
+      { key: 'inventory_audit', label: 'Kiểm kho', path: '/inventory/audit', section: 'Kho hàng' },
+      { key: 'inventory_dispose', label: 'Xuất hủy', path: '/inventory/dispose', section: 'Kho hàng' },
+
+      { key: 'suppliers', label: 'Nhà cung cấp', path: '/partners/suppliers', section: 'Nhập hàng' },
+      { key: 'purchase_orders', label: 'Nhập hàng', path: '/inventory/purchase', section: 'Nhập hàng' },
+      { key: 'purchase_returns', label: 'Trả hàng nhập', path: '/inventory/purchase-returns', section: 'Nhập hàng' },
+
+      { key: 'categories', label: 'Danh mục', path: '/product-categories', section: 'Khác' },
+      { key: 'attributes', label: 'Thuộc tính', path: '/products/attributes', section: 'Khác' },
     ],
   },
   {
@@ -172,6 +181,56 @@ const TopMenu = () => {
     setMobileMenuOpen(false);  // ← Close mobile menu on submenu click
   };
 
+  const renderGroupedSubmenu = (menuItem) => {
+    const groups = (menuItem.subItems || []).reduce((acc, item) => {
+      const section = item.section || 'Khác';
+      if (!acc[section]) acc[section] = [];
+      acc[section].push(item);
+      return acc;
+    }, {});
+
+    const columns = Object.entries(groups);
+
+    return (
+      <ul
+        className={`${styles.topSubmenu} ${isSubmenuOpen(menuItem) ? styles.visible : ''}`}
+      >
+        <div className={styles.topSubmenuColumns}>
+          {columns.map(([section, items]) => (
+            <div key={section} className={styles.topSubmenuColumn}>
+              {section !== 'Khác' && <div className={styles.topSubmenuSection}>{section}</div>}
+              <div
+                className={`${styles.topSubmenuItems} ${
+                  section === 'Khác' ? styles.topSubmenuItemsWithDivider : ''
+                }`}
+              >
+                {items.map((subItem) => (
+                  <div key={subItem.key} className={styles.topSubmenuItem}>
+                    {subItem.path ? (
+                      <NavLink
+                        to={subItem.path}
+                        className={({ isActive }) =>
+                          `${styles.topSubmenuLink} ${isActive ? styles.active : ''}`
+                        }
+                        onClick={handleSubmenuClick}
+                        title={subItem.label}
+                        end
+                      >
+                        {subItem.label}
+                      </NavLink>
+                    ) : (
+                      <span className={styles.topSubmenuLinkDisabled}>{subItem.label}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ul>
+    );
+  };
+
   return (
     <nav className={styles.topMenu} ref={menuRef}>
       <ul className={`${styles.topMenuList} ${mobileMenuOpen ? styles.mobileOpen : ''}`}>
@@ -197,31 +256,7 @@ const TopMenu = () => {
                   </span>
                 </button>
 
-                <ul
-                  className={`${styles.topSubmenu} ${
-                    isSubmenuOpen(menuItem) ? styles.visible : ''
-                  }`}
-                >
-                  {menuItem.subItems.map((subItem) => (
-                    <li key={subItem.key} className={styles.topSubmenuItem}>
-                      {subItem.path ? (
-                        <NavLink
-                          to={subItem.path}
-                          className={({ isActive }) =>
-                            `${styles.topSubmenuLink} ${isActive ? styles.active : ''}`
-                          }
-                          onClick={handleSubmenuClick}
-                          title={subItem.label}
-                          end
-                        >
-                          {subItem.label}
-                        </NavLink>
-                      ) : (
-                        <span className={styles.topSubmenuLinkDisabled}>{subItem.label}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+              {renderGroupedSubmenu(menuItem)}
               </div>
             ) : (
               <>
