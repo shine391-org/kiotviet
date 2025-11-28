@@ -35,7 +35,6 @@
   padding: 0;
   gap: 0;
   align-items: center;
-  height: 56px;
   width: auto;
   flex: 1;
 }
@@ -561,11 +560,6 @@
 
   .topMenuLink:hover {
     background: #f6f8fc;
-    color: #1890ff;
-  }
-
-  .topMenuLink.active {
-    background: #e6f7ff;
     color: #1890ff;
   }
 
