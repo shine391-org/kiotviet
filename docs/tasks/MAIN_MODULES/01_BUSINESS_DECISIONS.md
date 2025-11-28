@@ -40,7 +40,7 @@ LanoCRM có **2 LOẠI ĐƠN HÀNG** hoàn toàn khác nhau:
 
 ### 2. SHIPPING Orders (Giao hàng)
 - Có status workflow phức tạp
-- Trừ kho khi chuyển sang trạng thái SHIPPING
+- Trừ kho khi chuyển sang trạng thái **shipping**
 - Hỗ trợ COD, theo dõi vận chuyển
 - Có thể return, cancel
 
@@ -48,11 +48,11 @@ LanoCRM có **2 LOẠI ĐƠN HÀNG** hoàn toàn khác nhau:
 
 ## PHẦN 1: ORDER STATUS & INVENTORY (7 quyết định)
 
-### Decision #1: POS Orders - Không có status
+### Decision #1: POS Orders - Không có status workflow (chuẩn hóa completed)
 
 **Rule:**
 - POS orders KHÔNG CÓ status workflow
-- Có thể để status = null HOẶC status = 'COMPLETED'
+- Luôn set `status = 'completed'` ngay khi tạo
 - Không bao giờ transition sang status khác
 
 **Why:**
@@ -61,28 +61,26 @@ LanoCRM có **2 LOẠI ĐƠN HÀNG** hoàn toàn khác nhau:
 - Không cần tracking intermediate states
 
 **Implementation:**
-- Khi tạo POS order: set status = null hoặc 'COMPLETED'
+- Khi tạo POS order: set status = 'completed'
 - Không cho phép update status của POS orders
 - API status update: check order type trước
 
 ---
 
-### Decision #2: SHIPPING Orders - Có status workflow
+### Decision #2: SHIPPING Orders - Có status workflow (enum chữ thường)
 
 **Rule:**
-Status workflow đầy đủ:
+Status workflow đầy đủ (lowercase):
 ```
-
-DRAFT → CONFIRMED → PROCESSING → SHIPPING → DELIVERED → COMPLETED
-
+draft → confirmed → processing → shipping → delivered → completed
 ```
 
 **Intermediate paths:**
 ```
 
-Any status (except COMPLETED) → CANCELLED (admin only)
+Any status (except completed) → cancelled (admin only)
 
-SHIPPING → FAILED → RETURN → RETURN_CONFIRMED
+shipping → failed → return → return_confirmed
 
 ```
 
@@ -98,24 +96,24 @@ SHIPPING → FAILED → RETURN → RETURN_CONFIRMED
 
 ---
 
-### Decision #3: Trừ kho khi SHIPPING
+### Decision #3: Trừ kho khi shipping
 
 **Rule:**
-- Inventory chỉ được deduct khi order chuyển sang status = **SHIPPING**
-- Không trừ kho ở DRAFT, CONFIRMED, hay PROCESSING
-- Khi SHIPPING: loop qua order_items và giảm inventory.quantity
+- Inventory chỉ được deduct khi order chuyển sang status = **shipping**
+- Không trừ kho ở draft, confirmed, hay processing
+- Khi shipping: loop qua order_items và giảm inventory.quantity
 
 **Why:**
-- SHIPPING = đã bắt đầu fulfill order (đóng gói, giao shipper)
-- CONFIRMED/PROCESSING = chưa chắc có đủ hàng, chưa đóng gói
+- shipping = đã bắt đầu fulfill order (đóng gói, giao shipper)
+- confirmed/processing = chưa chắc có đủ hàng, chưa đóng gói
 - Tránh lock inventory quá sớm
 
 **Edge cases:**
-- Nếu không đủ stock khi SHIPPING: reject transition (422 error)
+- Nếu không đủ stock khi shipping: reject transition (422 error)
 - Partial fulfillment: Phase 1 không hỗ trợ (all or nothing)
 
 **Implementation:**
-- Hook: AFTER status updated to SHIPPING
+- Hook: AFTER status updated to shipping
 - Transaction: status update + inventory update cùng transaction
 - Log vào inventory_movements (type = 'sale')
 
@@ -125,52 +123,50 @@ SHIPPING → FAILED → RETURN → RETURN_CONFIRMED
 
 **Rule:**
 ```
-
-SHIPPING → FAILED (giao hàng thất bại)
-
-↓
-
-RETURN (hàng đang về kho)
+shipping → failed (giao hàng thất bại)
 
 ↓
 
-RETURN_CONFIRMED (hàng đã về kho) → Rollback inventory
+return (hàng đang về kho)
 
+↓
+
+return_confirmed (hàng đã về kho) → Rollback inventory
 ```
 
 **Why:**
-- FAILED: shipper báo không giao được (khách từ chối, sai địa chỉ...)
+- failed: shipper báo không giao được (khách từ chối, sai địa chỉ...)
 - Hàng phải về kho mới cộng lại inventory
-- Không cộng ngay khi FAILED (hàng còn đang trên đường về)
+- Không cộng ngay khi failed (hàng còn đang trên đường về)
 
 **Implementation:**
-- FAILED: không rollback inventory
-- RETURN_CONFIRMED: rollback inventory + log movement (type = 'return')
+- failed: không rollback inventory
+- return_confirmed: rollback inventory + log movement (type = 'return')
 - Manual transition (staff confirm hàng về kho)
 
 ---
 
-### Decision #5: Cancel order - Admin only, rollback inventory
+### Decision #5: Cancel order - Admin only, rollback inventory (chỉ trước delivered)
 
 **Rule:**
 - **Chỉ admin** có quyền cancel order
 - Staff/Customer: không có quyền cancel
-- Cancel được từ bất kỳ status nào **TRỪ COMPLETED**
+- Chỉ được cancel khi status < **delivered**
 - Rollback inventory nếu đã trừ
 
 **Rollback conditions:**
-- Status < SHIPPING: không cần rollback (chưa trừ kho)
-- Status >= SHIPPING: phải rollback (đã trừ kho)
+- Status < shipping: không cần rollback (chưa trừ kho)
+- Status >= shipping: phải rollback (đã trừ kho)
 
 **Why:**
 - Cancel là quyết định nghiêm trọng (ảnh hưởng inventory, revenue)
 - Chỉ admin đủ authority
-- COMPLETED: đã hoàn tất, không cho cancel (dùng return thay)
+- delivered/completed: đã giao hàng → dùng flow return thay vì cancel
 
 **Implementation:**
 - Permission check: user.role === 'admin' (Phase 1 hard-code)
-- Cancel endpoint: POST /orders/:id/cancel
-- Hook: rollback inventory nếu status >= SHIPPING
+- Cancel endpoint: POST /orders/:id/cancel (reject nếu status >= delivered)
+- Hook: rollback inventory nếu status >= shipping
 
 ---
 
@@ -260,21 +256,18 @@ orders.shipping_partner VARCHAR   -- 'GHN', 'GHTK', 'manual', etc
 
 ---
 
-### Decision #9: Partial Payment - Track paid_amount & debt_amount
+### Decision #9: Nhiều lần thanh toán - Track paid_amount & debt_amount
 
 **Rule:**
 ```
-
-[orders.total](http://orders.total) DECIMAL(15,2)           -- Tổng giá trị đơn
-
-orders.paid_amount DECIMAL(15,2)     -- Số tiền đã trả
-
+orders.total DECIMAL(15,2)           -- Tổng giá trị đơn
+orders.paid_amount DECIMAL(15,2)     -- Tổng đã trả (SUM order_payments)
 orders.debt_amount DECIMAL(15,2)     -- = total - paid_amount
-
+order_payments table                -- Ghi nhận nhiều lần thanh toán, nhiều phương thức
 ```
 
 **Use cases:**
-- Customer đặt cọc 30%, ship thu 70%
+- Customer đặt cọc 30%, ship thu 70% (nhiều lần, khác phương thức)
 - Customer trả góp
 - B2B: trả sau 30 ngày
 
@@ -284,36 +277,31 @@ orders.debt_amount DECIMAL(15,2)     -- = total - paid_amount
 - Support multiple payment installments
 
 **Implementation:**
-- Create order: paid_amount = 0 (hoặc deposit amount)
-- Update paid_amount: POST /orders/:id/payment
-- Validation: paid_amount <= total
+- order_payments: (order_id, method, amount, paid_at, ref_code, notes)
+- Create order: paid_amount mặc định 0 (hoặc deposit amount)
+- Mỗi lần thanh toán: POST /orders/:id/payments (append record, recalc totals)
+- Validation: SUM(payments.amount) <= total
 
 ---
 
-### Decision #10: Payment Methods - 1 method per order
+### Decision #10: Payment Methods - Cho phép nhiều phương thức trên cùng đơn
 
 **Rule:**
-- Mỗi order chỉ có **1 payment method**
-- Không split payment (50% cash + 50% card)
+- Một order có thể thanh toán nhiều lần với **nhiều phương thức khác nhau**
+- Các phương thức lưu tại order_payments.method, không hạn chế split
 
 **Methods:**
 ```
-
-orders.payment_method ENUM('CASH', 'BANK_TRANSFER', 'CARD', 'COD', 'E_WALLET')
-
+order_payments.method ENUM('CASH', 'BANK_TRANSFER', 'CARD', 'COD', 'E_WALLET')
 ```
 
 **Why:**
-- Simplicity (Phase 1)
-- Dễ tracking
-- Most use cases chỉ cần 1 method
-
-**Future:**
-- Phase 2 có thể thêm table order_payments cho split
+- Phù hợp use case đặt cọc + COD, hoặc mix tiền mặt/chuyển khoản
+- Tracking chi tiết cho đối soát
 
 **Implementation:**
-- payment_method: required field
-- Validation: must be in allowed list
+- Không dùng field đơn lẻ payment_method trên orders (optional: giữ để lưu primary nếu cần hiển thị)
+- Validate mỗi payment.method thuộc danh sách cho phép
 
 ---
 
@@ -365,15 +353,11 @@ debt_amount = 0
 ### Decision #13: SHIPPING Orders - Thường là COD
 
 **Rule:**
-SHIPPING orders thường:
+shipping orders thường:
 ```
-
-payment_method = 'COD' (hoặc methods khác nếu pre-paid)
-
-paid_amount = 0 (hoặc deposit amount)
-
-debt_amount = total (hoặc remaining)
-
+payment_method ưu tiên: 'COD' (hoặc methods khác nếu pre-paid)
+paid_amount ban đầu = 0 (hoặc deposit amount)
+debt_amount = total - paid_amount
 ```
 
 **Flexibility:**
@@ -382,8 +366,8 @@ debt_amount = total (hoặc remaining)
 - Tùy business model
 
 **Implementation:**
-- payment_method: required khi tạo order
-- paid_amount: default 0, có thể override
+- Trường hợp giao hàng: default method = COD, nhưng cho phép chọn phương thức khác
+- paid_amount: default 0, có thể override theo deposit
 - debt_amount: auto calculate
 
 ---
@@ -393,7 +377,7 @@ debt_amount = total (hoặc remaining)
 **Rule:**
 Khi staff tự giao hàng (không qua GHN/GHTK):
 - Staff click "Confirm Delivery"
-- Status: SHIPPING → DELIVERED
+- Status: shipping → delivered
 - COD collected: staff confirm đã thu tiền
 
 **Fields:**
@@ -415,14 +399,12 @@ shipping_partner = 'manual'
 
 ---
 
-### Decision #15: Manual Confirm → DELIVERED
+### Decision #15: Manual Confirm → delivered
 
 **Rule:**
 Manual confirm chuyển status trực tiếp:
 ```
-
-SHIPPING → DELIVERED (không qua intermediate status)
-
+shipping → delivered (không qua intermediate status)
 ```
 
 **Why:**
@@ -586,11 +568,11 @@ invoices.pdf_path VARCHAR  -- NULL cho đến khi generate
 
 ---
 
-### Decision #22: Invoice chỉ cho Orders COMPLETED
+### Decision #22: Invoice chỉ cho Orders completed
 
 **Rule:**
-- Chỉ tạo invoice cho orders có status = **COMPLETED**
-- Không invoice cho DRAFT, CONFIRMED, PROCESSING...
+- Chỉ tạo invoice cho orders có status = **completed**
+- Không invoice cho draft, confirmed, processing...
 
 **Why:**
 - Invoice = chứng từ tài chính chính thức
@@ -599,7 +581,7 @@ invoices.pdf_path VARCHAR  -- NULL cho đến khi generate
 
 **Validation:**
 - Check tất cả orders trong request
-- Reject nếu bất kỳ order nào chưa COMPLETED
+- Reject nếu bất kỳ order nào chưa completed
 
 **Implementation:**
 - Query: WHERE status = 'completed'
@@ -688,7 +670,7 @@ refund_amount = return_amount + (shipping_fee IF refund_shipping_fee)
 ### Decision #26: Restock - LUÔN LUÔN restock
 
 **Rule:**
-- Khi return APPROVED và hàng về kho (RETURN_CONFIRMED)
+- Khi return approved và hàng về kho (return_confirmed)
 - **LUÔN LUÔN** cộng lại inventory
 - KHÔNG check condition (new/used/damaged)
 
@@ -765,16 +747,16 @@ returns.refund_method ENUM('cash', 'bank_transfer')
 
 ---
 
-### Decision #29: Return từ DELIVERED trở lên
+### Decision #29: Return từ delivered trở lên
 
 **Rule:**
-- Chỉ cho return orders có status >= **DELIVERED**
-- Không cho return DRAFT, CONFIRMED, PROCESSING
+- Chỉ cho return orders có status >= **delivered**
+- Không cho return draft, confirmed, processing
 
 **Why:**
 - Customer chưa nhận hàng → không thể return
-- CANCELLED: không cần return
-- DELIVERED/COMPLETED: đã nhận hàng → có thể return
+- cancelled: không cần return
+- delivered/completed: đã nhận hàng → có thể return
 
 **Implementation:**
 - Validation: order.status IN ('delivered', 'completed')
@@ -847,15 +829,15 @@ returns.reason_detail TEXT  -- Mô tả chi tiết
 Workflow:
 ```
 
-Customer request → PENDING
+Customer request → pending
 
 ↓
 
-Admin approve → APPROVED (chưa refund)
+Admin approve → approved (chưa refund)
 
 ↓
 
-Hàng về kho → Staff confirm → RETURN_CONFIRMED
+Hàng về kho → Staff confirm → return_confirmed
 
 ↓
 
@@ -869,8 +851,8 @@ Execute refund
 - Avoid fraud (customer claim return nhưng không gửi hàng)
 
 **Implementation:**
-- APPROVED: update returns.status, chưa refund
-- RETURN_CONFIRMED: restock + mark ready for refund
+- approved: update returns.status, chưa refund
+- return_confirmed: restock + mark ready for refund
 - Refund execution: Phase 2 (payment integration)
 
 ---
@@ -1063,7 +1045,7 @@ Input:
 - Admin có quyền
 
 **Action:**
-- Update status: SHIPPING → DELIVERED
+- Update status: shipping → delivered
 - Update cod_collected nếu COD order
 - Log status change
 

@@ -15,7 +15,8 @@ class OrderNumberGenerator
 {
     public function generate(): string
     {
-        $db = Database::connect();
+        $group = ENVIRONMENT === 'testing' ? 'tests' : null;
+        $db = Database::connect($group);
         $db->transStart();
         $sql = 'SELECT COUNT(*) AS cnt FROM ' . $db->protectIdentifiers('orders');
         if (strtolower($db->DBDriver) !== 'sqlite3') {

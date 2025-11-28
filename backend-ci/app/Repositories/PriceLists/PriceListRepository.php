@@ -13,8 +13,9 @@ class PriceListRepository
 
     public function __construct(?PriceListModel $lists = null, ?BaseConnection $db = null)
     {
-        $this->lists = $lists ?? new PriceListModel();
-        $this->db = $db ?? \Config\Database::connect();
+        $group = ENVIRONMENT === 'testing' ? 'tests' : null;
+        $this->db = $db ?? \Config\Database::connect($group);
+        $this->lists = $lists ?? new PriceListModel($this->db);
     }
 
     /** List price lists with filters + pagination. */

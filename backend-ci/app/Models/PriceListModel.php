@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use CodeIgniter\Database\ConnectionInterface;
 
 /** Price list schema model. @agent-model: price_lists */
 class PriceListModel extends Model
@@ -11,6 +12,7 @@ class PriceListModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $useSoftDeletes = true;
+    protected $DBGroup = 'default';
     protected $allowedFields = [
         'name','type','description','apply_to_groups',
         'start_date','end_date','priority','is_active',
@@ -18,4 +20,12 @@ class PriceListModel extends Model
         'created_at','updated_at','deleted_at',
     ];
     protected $useTimestamps = false;
+
+    public function __construct(?ConnectionInterface $db = null)
+    {
+        if (ENVIRONMENT === 'testing') {
+            $this->DBGroup = 'tests';
+        }
+        parent::__construct($db);
+    }
 }

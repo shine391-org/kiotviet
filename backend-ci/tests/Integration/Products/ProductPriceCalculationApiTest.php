@@ -4,21 +4,20 @@ namespace Tests\Integration\Products;
 
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
-use Config\Database;
 use Tests\Support\AuthTestTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 
 /** @agent-test: Product price calculation API (MySQL) @agent-pattern: API integration test */
 class ProductPriceCalculationApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
     use AuthTestTrait;
-
-    protected $db;
+    use DevDatabaseTrait;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->ensureAuxTables();
         $this->truncateTables();
         $this->setUpAuthToken();

@@ -34,6 +34,9 @@ class InvoiceValidator
             'issue_date_from' => 'permit_empty|valid_date',
             'issue_date_to' => 'permit_empty|valid_date',
             'search' => 'permit_empty|string|max_length[100]',
+            'invoice_status' => 'permit_empty|in_list[draft,processing,completed,failed_delivery,cancelled,void]',
+            'invoice_type' => 'permit_empty|in_list[standard,return]',
+            'e_invoice_status' => 'permit_empty|in_list[pending,processing,issued,rejected,canceled]',
         ];
         if (! $this->v->setRules($rules)->run($data)) {
             throw new InvalidArgumentException(implode('; ', array_filter($this->v->getErrors())) ?: 'Invalid filters');
@@ -58,6 +61,7 @@ class InvoiceValidator
             'order_ids' => 'required',
             'notes' => 'permit_empty|string',
             'created_by' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'invoice_type' => 'permit_empty|in_list[standard,return]',
         ];
         if (! $this->v->setRules($rules)->run($input)) {
             throw new InvalidArgumentException(implode('; ', array_filter($this->v->getErrors())) ?: 'Invalid data');
@@ -88,6 +92,7 @@ class InvoiceValidator
             'notes' => isset($input['notes']) ? trim((string) $input['notes']) : null,
             'order_ids' => $orderIds,
             'created_by' => isset($input['created_by']) ? (int) $input['created_by'] : null,
+            'invoice_type' => $input['invoice_type'] ?? 'standard',
         ];
     }
 

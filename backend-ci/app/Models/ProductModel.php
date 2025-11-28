@@ -3,12 +3,14 @@
 namespace App\Models;
 
 use CodeIgniter\Model;
+use CodeIgniter\Database\ConnectionInterface;
 
 class ProductModel extends Model
 {
     protected $table = 'products';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
+    protected $DBGroup = 'default';
     protected $useSoftDeletes = true;
     protected $allowedFields = [
         'product_type','code','barcode','name','slug','brand','unit',
@@ -19,4 +21,12 @@ class ProductModel extends Model
         'created_at','updated_at','deleted_at'
     ];
     protected $useTimestamps = false;
+
+    public function __construct(?ConnectionInterface $db = null)
+    {
+        if (ENVIRONMENT === 'testing') {
+            $this->DBGroup = 'tests';
+        }
+        parent::__construct($db);
+    }
 }

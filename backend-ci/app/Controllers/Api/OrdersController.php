@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Services\Orders\OrderService;
+use App\Services\Orders\OrderQueryService;
 use CodeIgniter\API\ResponseTrait;
 
 /** Orders API. @agent-controller: Orders @agent-pattern: Thin controller - routing only */
@@ -12,7 +13,25 @@ class OrdersController extends BaseController
     use ResponseTrait;
 
     protected OrderService $service;
-    public function __construct() { $this->service = service('orderService'); }
+    protected OrderQueryService $query;
+    public function __construct()
+    {
+        $this->service = service('orderService');
+        $this->query = service('orderQueryService');
+    }
+
+    /** List orders. @agent-use: GET /api/orders @agent-pattern: Thin list */
+    public function index()
+    {
+        $filters = $this->request->getGet();
+        return $this->wrap(fn () => $this->respond(['success' => true] + $this->query->list($filters)));
+    }
+
+    /** Order detail. @agent-use: GET /api/orders/{id} */
+    public function show($id)
+    {
+        return $this->wrap(fn () => $this->respond(['success' => true, 'data' => $this->query->detail((int) $id)]));
+    }
 
     /** Preview pricing. @agent-use: POST /api/orders/calculate-preview @agent-pattern: Delegate to service */
     public function calculatePreview()

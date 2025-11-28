@@ -6,7 +6,6 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\PriceListSchemaTrait;
 use Tests\Support\AuthTestTrait;
 
 /**
@@ -17,19 +16,59 @@ class OrdersPricingApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
     use DevDatabaseTrait;
-    use PriceListSchemaTrait;
     use AuthTestTrait;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setUpDatabase();
-        $this->resetPriceListSchema();
+        $this->forceFreshMigrate();
+        // Defensive: ensure pricing tables exist (some traits may drop them).
+        $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            type VARCHAR(50) DEFAULT 'custom',
+            description TEXT NULL,
+            apply_to_groups JSON NULL,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            priority INT DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            formula TEXT NULL,
+            base_price_list_id INT NULL,
+            auto_update TINYINT(1) DEFAULT 0,
+            rounding_rule VARCHAR(50) DEFAULT 'none',
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS price_list_items (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            price_list_id INT NOT NULL,
+            product_id INT NULL,
+            variant_id INT NULL,
+            price DECIMAL(10,2) NOT NULL,
+            discount_percent DECIMAL(5,2) DEFAULT 0,
+            discount_amount DECIMAL(10,2) DEFAULT 0,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        \Config\Services::reset(true);
+        $config = config('Database');
+        $config->defaultGroup = 'tests';
         $this->seedCustomer(10, 2);
         $this->seedProduct(1, 100000);
         $listId = $this->seedPriceList(['name' => 'VIP', 'priority' => 5, 'apply_to_groups' => [2]]);
         $this->seedItem($listId, 1, null, 80000, 0, 0);
         $this->setUpAuthToken();
+        // Commit seed data so it is visible to HTTP requests (FeatureTestTrait uses separate DB connection).
+        $this->db->transCommit();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_calculate_preview_applies_price_list(): void
@@ -107,6 +146,9 @@ class OrdersPricingApiTest extends CIUnitTestCase
             ->withBody(json_encode($payload), 'application/json')
             ->post('api/orders/calculate-preview');
 
+        if ($res->getStatusCode() !== 200) {
+            fwrite(STDERR, "Response body: " . $res->getBody() . "\n");
+        }
         $res->assertStatus(200);
         $res->assertJSONPath('data.items.0.final_price', 60000.0);
         $res->assertJSONPath('data.applied_price_list_name', 'BF');

@@ -372,6 +372,17 @@ class Services extends BaseService
         );
     }
 
+    public static function orderQueryService(bool $getShared = true): \App\Services\Orders\OrderQueryService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderQueryService'); }
+
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Services\Orders\OrderQueryService(
+            new \App\Repositories\Orders\OrderQueryRepository($db),
+            new \App\Validators\OrderListValidator()
+        );
+    }
+
     public static function paymentMethodRepository(bool $getShared = true): PaymentMethodRepository
     {
         if ($getShared) { return static::getSharedInstance('paymentMethodRepository'); }

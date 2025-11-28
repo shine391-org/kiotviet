@@ -119,6 +119,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('price-lists/(:num)/items', 'Api\\PriceListsController::saveItems/$1');
 
     // Orders
+    $routes->get('orders', 'Api\\OrdersController::index');
+    $routes->get('orders/(:num)', 'Api\\OrdersController::show/$1');
     $routes->post('orders/calculate-preview', 'Api\\OrdersController::calculatePreview');
     $routes->post('orders', 'Api\\OrdersController::create');
     $routes->patch('orders/(:num)/status', 'Api\\OrderStatusController::update/$1');

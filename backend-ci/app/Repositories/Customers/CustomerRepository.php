@@ -116,8 +116,7 @@ class CustomerRepository
         if (! empty($filters['search'])) {
             $search = $filters['search'];
             $builder->groupStart()
-                ->like('code', $search)
-                ->orLike('name', $search)
+                ->like('name', $search)
                 ->orLike('phone', $search)
                 ->orLike('phone2', $search)
                 ->orLike('email', $search)

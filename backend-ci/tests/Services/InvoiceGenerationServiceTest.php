@@ -61,9 +61,9 @@ class InvoiceGenerationServiceTest extends CIUnitTestCase
     private function seedLookup(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('customers')->insert(['id' => 2, 'name' => 'Another', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'tax_code' => '0101234567', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 2, 'name' => 'Another', 'tax_code' => '0201234567', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('branches')->insert(['id' => 1, 'code' => 'HAN01', 'name' => 'Branch', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 

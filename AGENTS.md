@@ -470,6 +470,7 @@ File này chứa mẫu chuẩn cho:
 **Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
 **📗 Documentation Network (YAML-linked):**
+- `docs/DOCUMENTATION_INDEX.md` - **CENTRAL INDEX** cho tất cả documentation
 - `docs/testing/TESTING-GUIDE.md` - Main testing guide (links to all others)
 - `docs/testing/TESTING-PATTERNS.md` - Code patterns to copy
 - `docs/testing/TESTING-MAIN-DB-GUIDE.md` - Main database approach
@@ -477,6 +478,11 @@ File này chứa mẫu chuẩn cho:
 - `docs/testing/FE-TESTING-GUIDE.md` - Frontend testing guide
 - `docs/testing/FE-TESTING-PATTERNS.md` - Frontend code patterns
 - `docs/testing/FE-TEST-CHECKLIST.md` - Frontend PR checklist
+
+**📋 Audit Reports (Latest):**
+- `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` - Comprehensive FE/BE test coverage analysis
+- `docs/audits/2025-11-27-DOCUMENTATION-CONSOLIDATION-PLAN.md` - Documentation consolidation strategy
+- `docs/audits/2025-11-27-CASH-FLOW-AUDIT-REPORT.md` - Cash flow module audit
 
 All documents are now YAML-linked for easy navigation and reference.
 

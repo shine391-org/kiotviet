@@ -16,9 +16,15 @@ Dự án đã chuyển sang kiến trúc test MySQL-only. SQLite đã bị loạ
 
 TÀI LIỆU CHÍNH:
 1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow (ĐÃ CẬP NHẬT MySQL-only)
-2. docs/testing/TESTING-GUIDE.md - Testing Guide MySQL-only (DevDatabaseTrait)
-3. docs/testing/TESTING-PATTERNS.md - Patterns MySQL-only (copy-paste)
-4. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
+2. docs/DOCUMENTATION_INDEX.md - **CENTRAL INDEX** cho tất cả documentation
+3. docs/testing/TESTING-GUIDE.md - Testing Guide MySQL-only (DevDatabaseTrait)
+4. docs/testing/TESTING-PATTERNS.md - Patterns MySQL-only (copy-paste)
+5. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
+
+**📋 Audit Reports (Latest):**
+- docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md - Comprehensive FE/BE test coverage analysis
+- docs/audits/2025-11-27-DOCUMENTATION-CONSOLIDATION-PLAN.md - Documentation consolidation strategy
+- docs/audits/2025-11-27-CASH-FLOW-AUDIT-REPORT.md - Cash flow module audit
 
 ---
 

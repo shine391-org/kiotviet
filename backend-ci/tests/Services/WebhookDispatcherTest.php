@@ -2,43 +2,25 @@
 
 namespace Tests\Services;
 
-use App\Repositories\Webhooks\WebhookEventRepository;
-use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Services\Webhooks\WebhookDispatcher;
 use CodeIgniter\Test\CIUnitTestCase;
-use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\WebhookSchemaTrait;
+use Tests\Support\Fakes\FakeWebhookSubscriptionRepository;
+use Tests\Support\Fakes\FakeWebhookEventRepository;
 
 /**
  * @agent-test: WebhookDispatcher
- * @agent-pattern: MySQL-only test with DevDatabaseTrait
+ * @agent-pattern: In-memory fakes
  */
 class WebhookDispatcherTest extends CIUnitTestCase
 {
-    use DevDatabaseTrait;
-    use WebhookSchemaTrait;
-
-    private WebhookSubscriptionRepository $subs;
-    private WebhookEventRepository $events;
+    private FakeWebhookSubscriptionRepository $subs;
+    private FakeWebhookEventRepository $events;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setUpDatabase();
-        $this->resetWebhookSchema();
-        
-        // Create database connection without prefix for webhook tables
-        $dbWithoutPrefix = \Config\Database::connect('tests');
-        $dbWithoutPrefix->setPrefix('');
-        
-        $this->subs = new WebhookSubscriptionRepository(null, $dbWithoutPrefix);
-        $this->events = new WebhookEventRepository(null, $dbWithoutPrefix);
-    }
-
-    protected function tearDown(): void
-    {
-        $this->tearDownDatabase();
-        parent::tearDown();
+        $this->subs = new FakeWebhookSubscriptionRepository();
+        $this->events = new FakeWebhookEventRepository();
     }
 
     /** @test */
@@ -48,6 +30,7 @@ class WebhookDispatcherTest extends CIUnitTestCase
             'event' => 'order.completed',
             'target_url' => 'https://example.com/hook',
             'secret' => 'secret-key',
+            'is_active' => 1,
         ]);
 
         $requests = [];
@@ -76,6 +59,7 @@ class WebhookDispatcherTest extends CIUnitTestCase
         $this->subs->create([
             'event' => 'invoice.generated',
             'target_url' => 'https://hooks.test/invoice',
+            'is_active' => 1,
         ]);
 
         $sender = function (string $url, array $headers, array $body, int $timeout = 5) {
@@ -86,8 +70,9 @@ class WebhookDispatcherTest extends CIUnitTestCase
         $dispatcher->dispatch('invoice.generated', ['invoice_id' => 99]);
 
         $events = $this->events->findAll(['event' => 'invoice.generated', 'limit' => 5, 'page' => 1]);
+        $this->assertNotEmpty($events);
         $this->assertEquals('failed', $events[0]['status']);
-        $this->assertGreaterThanOrEqual(1, $events[0]['attempts']); // retries allowed
+        $this->assertGreaterThanOrEqual(1, $events[0]['attempts']);
         $this->assertNotEmpty($events[0]['last_error']);
     }
 }

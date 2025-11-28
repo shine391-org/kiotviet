@@ -13,8 +13,9 @@ class PriceListItemRepository
 
     public function __construct(?PriceListItemModel $items = null, ?BaseConnection $db = null)
     {
-        $this->items = $items ?? new PriceListItemModel();
-        $this->db = $db ?? \Config\Database::connect();
+        $group = ENVIRONMENT === 'testing' ? 'tests' : null;
+        $this->db = $db ?? \Config\Database::connect($group);
+        $this->items = $items ?? new PriceListItemModel($this->db);
     }
 
     /** Items for one price list. */

@@ -5,14 +5,14 @@ namespace Tests\Feature;
 use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
-use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\AuthTestTrait;
 
 /** @agent-test: Price list API auth/validation */
 class PriceListApiAuthTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
-    use PriceListSchemaTrait;
+    use DevDatabaseTrait;
     use AuthTestTrait;
 
     protected $db;
@@ -20,9 +20,19 @@ class PriceListApiAuthTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
-        $this->resetPriceListSchema();
+        $this->forceFreshMigrate();
+        \Config\Services::reset(true);
+        $config = config('Database');
+        $config->defaultGroup = 'tests';
         $this->setUpAuthToken();
+        // FeatureTestTrait issues HTTP calls on a separate DB connection, so commit seeds/schema.
+        $this->db->transCommit();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     /** @test */

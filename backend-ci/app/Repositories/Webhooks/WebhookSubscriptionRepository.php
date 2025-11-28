@@ -20,7 +20,7 @@ class WebhookSubscriptionRepository
     public function __construct(?WebhookSubscriptionModel $model = null, ?BaseConnection $db = null)
     {
         $this->db = $db ?? \Config\Database::connect();
-        $this->model = $model ?? new WebhookSubscriptionModel();
+        $this->model = $model ?? new WebhookSubscriptionModel($this->db);
     }
 
     /** Whether tables exist. */

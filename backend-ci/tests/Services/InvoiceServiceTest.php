@@ -64,7 +64,7 @@ class InvoiceServiceTest extends CIUnitTestCase
         $this->assertEquals(200000.0, $res['data']['subtotal']);
         $this->assertEquals(20000.0, $res['data']['vat_amount']);
         $this->assertEquals(220000.0, $res['data']['total']);
-        $this->assertEquals('HD-1-0001', $res['data']['invoice_number']);
+        $this->assertStringStartsWith('HAN01251124', $res['data']['invoice_number']);
         $this->assertCount(2, $res['data']['orders']);
     }
 
@@ -114,7 +114,7 @@ class InvoiceServiceTest extends CIUnitTestCase
             'customer_id' => $customerId,
             'branch_id' => $branchId,
             'total' => $total,
-            'status' => 'confirmed',
+            'status' => 'completed',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -125,8 +125,8 @@ class InvoiceServiceTest extends CIUnitTestCase
     private function seedLookup(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'created_at' => $now, 'updated_at' => $now]);
-        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ACME', 'tax_code' => '0101234567', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('branches')->insert(['id' => 1, 'code' => 'HAN01', 'name' => 'Branch 1', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
 }

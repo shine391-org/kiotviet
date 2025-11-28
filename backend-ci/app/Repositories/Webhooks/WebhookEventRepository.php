@@ -20,7 +20,7 @@ class WebhookEventRepository
     public function __construct(?WebhookEventModel $model = null, ?BaseConnection $db = null)
     {
         $this->db = $db ?? \Config\Database::connect();
-        $this->model = $model ?? new WebhookEventModel();
+        $this->model = $model ?? new WebhookEventModel($this->db);
     }
 
     /** Whether table exists. */

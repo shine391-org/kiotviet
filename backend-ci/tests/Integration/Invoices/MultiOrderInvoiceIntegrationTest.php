@@ -71,7 +71,13 @@ class MultiOrderInvoiceIntegrationTest extends CIUnitTestCase
     private function seedLookup(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('customers')->insert(['id' => 1, 'name' => 'ABC', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'ABC',
+            'tax_code' => '0123456789',
+            'created_at' => $now,
+            'updated_at' => $now
+        ]);
         $this->db->table('branches')->insert(['id' => 1, 'name' => 'Main', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
     }
