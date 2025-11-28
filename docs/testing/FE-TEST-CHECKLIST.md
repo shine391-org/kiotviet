@@ -57,6 +57,7 @@ related_to:
 - [ ] Coverage >= 70% (`npm run test:coverage`)
 - [ ] `npm test` passes locally
 - [ ] `npm run lint` passes (no ESLint errors)
+- [ ] FE checklist validated (CI gate will fail if unchecked)
 - [ ] No hardcoded strings (use constants/i18n)
 - [ ] No `console.log` left in code
 - [ ] Unused imports removed

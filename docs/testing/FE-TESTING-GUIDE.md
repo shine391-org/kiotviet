@@ -23,6 +23,7 @@ We follow a balanced testing strategy for the Frontend (React):
 - **Unit Tests (Vitest)**: Test individual components, hooks, and utility functions in isolation.
 - **Integration Tests (Vitest + RTL)**: Test how components interact with each other and the store/API.
 - **E2E Tests (Playwright)**: Test full user flows (Login, Checkout) on a real browser.
+- **Smoke + Checklist (CI Gate)**: FE checklist is auto-validated in CI; coverage threshold 70% enforced.
 
 ## 2. Test Types & Tools
 
@@ -67,7 +68,7 @@ test('user can login', async ({ page }) => {
 ```
 
 ## 3. Coverage Requirements
-- **Target**: >= 70% Statements/Branches.
+- **Target (CI gate)**: >= 70% Statements/Branches (PR sẽ fail nếu thấp hơn).
 - **Critical Components**: 100% (Auth, Payments, Utils).
 - **Check Coverage**:
 ```bash
@@ -80,7 +81,8 @@ npm run test:coverage
 ### Running Tests
 - **Unit/Integration**: `npm test` (Fast, watch mode)
 - **Coverage**: `npm run test:coverage` (Full report)
-- **E2E**: `npm run test:e2e` (Real browser)
+- **E2E (Playwright)**: `npm run test:e2e` (Headless by default). Đặt `PWDEBUG=1` để debug.
+- **MSW**: Luôn bật MSW trong tests; không gọi API thật. Reset handlers bằng `server.resetHandlers()` trong `afterEach`.
 
 ### Manual Smoke Test (Required before PR)
 1. **UI Check**: Open app in Chrome. Verify layout, fonts, images.
@@ -94,5 +96,7 @@ npm run test:coverage
 - **Mock Externalities**: Mock API calls using MSW or `vi.mock`. Never call real APIs in Unit/Integration tests.
 - **Keep it Simple**: Tests should be readable documentation.
 - **Clean Up**: Reset mocks in `afterEach`.
+- **Stateful flows**: Khi test Redux/RTK Query, wrap component với store provider stub; seed store state qua preloadedState.
+- **Data shape**: Bám sát backend golden schema/seed (DevDemoSeeder) để tránh mismatch field names.
 
 **See Patterns**: [FE-TESTING-PATTERNS.md](./FE-TESTING-PATTERNS.md)

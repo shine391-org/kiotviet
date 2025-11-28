@@ -9,7 +9,7 @@ tags: ["testing", "patterns", "frontend", "react", "vitest", "playwright", "unit
 purpose: "Provides standard, copy-pasteable code patterns for frontend testing in LANO CRM (React)."
 location: "docs/testing"
 updated: "2025-11-25"
-changes: "Added YAML frontmatter and standardized documentation structure."
+changes: "Added YAML frontmatter and standardized documentation structure. Updated MSW/vitest patterns (2025-11-28)."
 related_to:
   - id: "FE-TESTING-GUIDE-01"
     description: "Refer to the main frontend testing guide for process and setup."
@@ -74,15 +74,17 @@ test('should increment counter', () => {
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LoginPage } from './LoginPage';
-import { vi } from 'vitest';
-
-// Mock API
-vi.mock('../../api/auth', () => ({
-  login: vi.fn().mockResolvedValue({ token: 'fake-token' })
-}));
+import { server } from '../../test/msw/server';
+import { http, HttpResponse } from 'msw';
 
 describe('LoginPage', () => {
+  beforeEach(() => server.resetHandlers());
+
   it('handles successful login', async () => {
+    server.use(http.post('/api/auth/login', () =>
+      HttpResponse.json({ token: 'fake-token' })
+    ));
+
     render(<LoginPage />);
 
     // Fill form
@@ -104,6 +106,17 @@ describe('LoginPage', () => {
     await userEvent.click(screen.getByRole('button', { name: /login/i }));
     
     expect(await screen.findByText(/email is required/i)).toBeInTheDocument();
+  });
+
+  it('shows API error', async () => {
+    server.use(http.post('/api/auth/login', () =>
+      HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+    ));
+    render(<LoginPage />);
+    await userEvent.type(screen.getByLabelText(/email/i), 'a@b.com');
+    await userEvent.type(screen.getByLabelText(/password/i), 'wrong');
+    await userEvent.click(screen.getByRole('button', { name: /login/i }));
+    expect(await screen.findByText(/unauthorized/i)).toBeInTheDocument();
   });
 });
 ```
@@ -148,13 +161,23 @@ expect(input.files).toHaveLength(1);
 
 ### Test Error State
 ```tsx
-// Mock error response
 server.use(
-  http.get('/api/products', () => {
-    return HttpResponse.json({ message: 'Server Error' }, { status: 500 })
-  })
+  http.get('/api/products', () =>
+    HttpResponse.json({ message: 'Server Error' }, { status: 500 })
+  )
 );
 
 render(<ProductList />);
 expect(await screen.findByText(/server error/i)).toBeInTheDocument();
+```
+
+### Redux store helper (RTK)
+```tsx
+import { Provider } from 'react-redux';
+import { setupStore } from '../../store';
+
+const renderWithStore = (ui, { preloadedState } = {}) => {
+  const store = setupStore(preloadedState);
+  return render(<Provider store={store}>{ui}</Provider>);
+};
 ```
