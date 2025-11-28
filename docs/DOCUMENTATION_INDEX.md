@@ -26,7 +26,7 @@ complexity: "Low"
 risk_level: "Low"
 
 # Documentation Network
-links_to: ["AGENT-GUIDE-01", "TESTING-GUIDE-01", "BUSINESS-DECISIONS-01"]
+links_to: ["AGENT-GUIDE-01", "TESTING-GUIDE-01", "BUSINESS-DECISIONS-01", "TESTING-PATTERNS-01", "TESTING-MAIN-DB-01"]
 linked_from: []
 ---
 
@@ -51,8 +51,9 @@ linked_from: []
 - **[Frontend Tasks](./tasks/FEOrder.md)** - Frontend requirements
 
 ### 🧪 Testing Documentation
-- **[Testing Guide](./testing/TESTING-GUIDE.md)** - MySQL-only testing approach
-- **[Test Patterns](./testing/TESTING-PATTERNS.md)** - Copy-pasteable test patterns
+- **[Testing Guide](./testing/TESTING-GUIDE.md)** - MySQL-only testing approach (main DB + rollback)
+- **[Test Patterns](./testing/TESTING-PATTERNS.md)** - Copy-pasteable test patterns (DevDatabaseTrait + truncate-only)
+- **[Main DB Guide](./testing/TESTING-MAIN-DB-GUIDE.md)** - Golden schema & transaction model
 - **[Test Checklist](./testing/TEST-CHECKLIST.md)** - Mandatory testing checklist
 - **[Frontend Testing](./testing/FE-TESTING-GUIDE.md)** - Frontend testing strategy
 
@@ -79,7 +80,8 @@ linked_from: []
 | Document | ID | Status | Coverage |
 |----------|-----|--------|----------|
 | [Testing Guide](./testing/TESTING-GUIDE.md) | TESTING-GUIDE-01 | ✅ Active | MySQL-only approach |
-| [Test Patterns](./testing/TESTING-PATTERNS.md) | TESTING-PATTERNS-01 | ✅ Active | Copy-pasteable patterns |
+| [Test Patterns](./testing/TESTING-PATTERNS.md) | TESTING-PATTERNS-01 | ✅ Active | Copy-pasteable patterns (DevDatabaseTrait + truncate-only) |
+| [Main DB Guide](./testing/TESTING-MAIN-DB-GUIDE.md) | TESTING-MAIN-DB-01 | ✅ Active | Golden migration + rollback |
 | [Frontend Testing](./testing/FE-TESTING-GUIDE.md) | FE-TESTING-GUIDE-01 | ✅ Active | FE testing strategy |
 | [Test Checklist](./testing/TEST-CHECKLIST.md) | TEST-CHECKLIST-01 | ✅ Active | Mandatory checklist |
 
@@ -89,6 +91,8 @@ linked_from: []
 | [Documentation Audit](./audits/2025-11-26_Documentation_Audit_Report.md) | DOC-AUDIT-2025-11-26 | ✅ Complete | Documentation connectivity |
 | [Cash Flow Audit](./audits/2025-11-27-CASH-FLOW-AUDIT-REPORT.md) | CASH-AUDIT-2025-11-27 | ✅ Complete | Cash management module |
 | [Integration Audit](./audits/2025-11-27-CASH-FLOW-INTEGRATION-AUDIT-REPORT.md) | INT-AUDIT-2025-11-27 | ✅ Complete | FE-BE integration |
+| [Final Test Coverage](./audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md) | COVERAGE-2025-11-27 | ✅ Complete | Coverage checkpoint |
+| [Test Schema Debug](./audits/2025-11-27-TEST-SCHEMA-INSTABILITY-DEBUG-REPORT.md) | TEST-SCHEMA-2025-11-27 | ✅ Complete | Schema instability analysis |
 
 ---
 

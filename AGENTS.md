@@ -397,6 +397,8 @@ public function list() {
 ### 🚨 BREAKING CHANGE: Main Database Testing (2025-11-25)
 
 **ALL tests now use main database (`lanocrm_shop`) with transaction rollback. Separate test database removed for simplicity.**
+**Schema source of truth:** `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php` (golden migration).  
+**Patterns:** truncate-only schema traits + `DevDatabaseTrait` autoloads golden migration.
 
 ### Test-Driven Development
 You MUST write tests. No exceptions.
@@ -461,6 +463,7 @@ class YourServiceTest extends CIUnitTestCase
 
 **📖 NEW: Read main database guide:**
 `docs/testing/TESTING-MAIN-DB-GUIDE.md`
+**📖 NEW: Golden schema:** `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php`
 
 File này chứa mẫu chuẩn cho:
 - **Service Test** (Main Database with DevDatabaseTrait)
@@ -512,6 +515,7 @@ A: KHÔNG! Transaction rollback tự động khôi phục data.
 - `docs/testing/TESTING-GUIDE.md` (MySQL-only, main DB + rollback)
 - `docs/testing/docker-workflow-guide.md` (Docker-only workflow + demo data)
 - `docs/seeding/DEV-DEMO-SEEDER.md` (Quy ước seed demo tự động)
+- `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` (Coverage checkpoint)
 
 ---
 

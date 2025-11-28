@@ -1,25 +1,26 @@
 # AI Agent Instructions - LANO CRM Backend
 
-VERSION: 3.0
-UPDATED: 2025-11-25
+VERSION: 3.1
+UPDATED: 2025-11-28
 PROJECT: LANO CRM (KiotViet Clone)
 TECH STACK: PHP 8.4 + CodeIgniter 4.5 + MySQL 8.4
 
 ---
 
-## QUAN TRỌNG: ĐỌC ĐẦU TIÊN (MySQL-Only)
+## QUAN TRỌNG: ĐỌC ĐẦU TIÊN (MySQL-Only + Golden Schema)
 
-Dự án đã chuyển sang kiến trúc test MySQL-only. SQLite đã bị loại bỏ hoàn toàn.
-- Tất cả Unit/Integration tests chạy trên MySQL thật
-- Dùng DevDatabaseTrait cho kết nối + transaction isolation
-- Dùng Schema Traits để tạo schema MySQL theo module
+- Tất cả Unit/Integration tests chạy trên **MySQL thật** (DB group `tests` -> `lanocrm_shop`).
+- `DevDatabaseTrait` tự chạy **golden migration** `app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php` và truncate-only schema traits.
+- Không còn SQLite. Không tạo/drop bảng trong test; chỉ truncate.
+- Webhook tests dùng **fake repositories in-memory** (tests/_support/Fakes) để tránh lệ thuộc DB/transactions.
 
 TÀI LIỆU CHÍNH:
-1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow (ĐÃ CẬP NHẬT MySQL-only)
-2. docs/DOCUMENTATION_INDEX.md - **CENTRAL INDEX** cho tất cả documentation
-3. docs/testing/TESTING-GUIDE.md - Testing Guide MySQL-only (DevDatabaseTrait)
-4. docs/testing/TESTING-PATTERNS.md - Patterns MySQL-only (copy-paste)
-5. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
+1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow (MySQL-only)
+2. docs/DOCUMENTATION_INDEX.md - **Central index** tất cả docs
+3. docs/testing/TESTING-GUIDE.md - MySQL-only (DevDatabaseTrait)
+4. docs/testing/TESTING-PATTERNS.md - Patterns (DevDatabaseTrait + truncate-only)
+5. docs/testing/TESTING-MAIN-DB-GUIDE.md - Golden schema + rollback
+6. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
 
 **📋 Audit Reports (Latest):**
 - docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md - Comprehensive FE/BE test coverage analysis
@@ -46,8 +47,8 @@ KHÔNG trộn logic giữa các layers!
 2. VIẾT TESTS TRƯỚC (TDD) theo patterns MySQL-only
 3. IMPLEMENT theo thứ tự: Validator → Repository → Service → Controller
 4. CHẠY TESTS (MySQL-only):
-   - Unit (transactions): `docker exec meomeo2-api-1 vendor/bin/phpunit`
-   - Integration (full stack): `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+   - Full: `docker exec meomeo2-api-1 vendor/bin/phpunit`
+   - Integration (legacy file): `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml` (dùng khi cần)
 5. TỰ KIỂM TRA:
    - `docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text`
    - `bash scripts/validate-checklist.sh`
@@ -187,6 +188,11 @@ class YourServiceTest extends CIUnitTestCase
     }
 }
 ```
+
+### Webhook tests (in-memory)
+- Dùng `FakeWebhookSubscriptionRepository` và `FakeWebhookEventRepository` (tests/_support/Fakes).
+- Không DevDatabaseTrait, không DB.  
+- Inject fakes vào `WebhookDispatcher` trong setUp test.
 
 ---
 
