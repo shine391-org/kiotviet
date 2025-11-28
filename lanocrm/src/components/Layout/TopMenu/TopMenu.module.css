@@ -1,12 +1,6 @@
 /**
  * TopMenu Styles - CSS Modules
  * KiotViet Horizontal Menu - Responsive with Mobile Hamburger
- * Desktop: Full horizontal menu
- * Mobile (< 990px): Hamburger menu on LEFT, dropdown from top
- * 
- * ✅ No duplicate classes
- * ✅ All unique selectors
- * ✅ Responsive 990px breakpoint
  */
 
 /* ===== MAIN CONTAINER ===== */
@@ -14,11 +8,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 56px;           /* match header-bottom */
-  background: white;
+  height: 56px;
+  background: #0d7bff;
   gap: 0;
   position: relative;
-  padding: 0 20px;
+  padding: 0 24px;                 /* desktop >= 1201: có padding ngoài */
+  border-bottom: 1px solid #0d66d0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 8px;
+  min-width: 0;
+  padding-right: 160px;            /* chừa chỗ cho CTA ở desktop lớn */
 }
 
 /* ===== MENU LIST ===== */
@@ -34,37 +40,42 @@
   flex: 1;
 }
 
+/* ===== CTA BUTTON (Bán hàng) ===== */
 .ctaButton {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 0 16px;
-  height: 36px;
-  margin-left: 16px;
-  background: #0d7bff;
-  color: #ffffff;
-  border-radius: 10px;
+  height: 32px;
+  background: #ffffff;
+  color: #0d7bff;
+  border-radius: 16px;
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  box-shadow: 0 4px 12px rgba(13, 123, 255, 0.35);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   transition: transform 120ms ease, box-shadow 150ms ease, background 150ms ease;
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  flex-shrink: 0;
 }
 
 .ctaButton:hover {
-  background: #0b6ad9;
-  box-shadow: 0 6px 16px rgba(13, 123, 255, 0.45);
-  transform: translateY(-1px);
+  background: #f2f6ff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+  transform: translateY(-52%);
 }
 
 .ctaButton:active {
-  transform: translateY(0);
-  box-shadow: 0 3px 10px rgba(13, 123, 255, 0.3);
+  transform: translateY(-50%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* ===== MENU ITEM ===== */
 .topMenuItem {
-  margin: 0;
+  margin: 0 6px;
   padding: 0;
   height: 100%;
   display: flex;
@@ -76,38 +87,36 @@
 .topMenuLink {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 0 18px;
-  height: 100%;
-  color: #595959;
+  height: 40px;
+  margin-top: 8px;
+  margin-bottom: 8px;
+  color: #ffffff;
   text-decoration: none;
   cursor: pointer;
   transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 14px;
-  font-weight: 500;
-  background: none;
+  font-weight: 600;
+  background: transparent;
   border: none;
-  border-bottom: 3px solid transparent;
+  border-radius: 6px;
   font-family: inherit;
   white-space: nowrap;
   position: relative;
-  line-height: 1;         /* unify baseline */
+  line-height: 1;
 }
 
 .topMenuLink:hover {
-  color: #1890ff;
-  background: #fafafa;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.08);
 }
 
-.topMenuLink.active {
-  color: white;
-  background: #1890ff;
-  border-bottom-color: transparent;
-}
-
+.topMenuLink.active,
 .topMenuLink.hasActiveChild {
-  color: #1890ff;
-  background: #f6f8fc;
+  color: #ffffff;
+  background: #005bdb;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 /* ===== MENU ICON ===== */
@@ -123,7 +132,7 @@
   display: inline;
 }
 
-/* ===== DROPDOWN ARROW ===== */
+/* Arrow (nếu còn dùng) */
 .topMenuArrow {
   font-size: 12px;
   display: flex;
@@ -149,19 +158,21 @@
   position: absolute;
   top: 100%;
   left: 0;
-  background: white;
+  background: #ffffff;
   list-style: none;
   margin: 0;
-  padding: 12px;
-  min-width: 320px;
+  padding: 16px 24px;
+  min-width: 260px;
+  max-width: calc(100vw - 80px);
+  width: max-content;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
   opacity: 0;
   visibility: hidden;
-  transform: translateY(-10px);
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10;
-  border: 1px solid #f0f0f0;
+  transform: translateY(8px);
+  transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  border: none;
 }
 
 .topSubmenu.visible {
@@ -172,32 +183,36 @@
 
 .topSubmenuColumns {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  grid-auto-rows: auto;
+  column-gap: 32px;
+  row-gap: 16px;
 }
 
 .topSubmenuColumn {
-  min-width: 180px;
+  min-width: 160px;
 }
 
 .topSubmenuSection {
   font-size: 12px;
   font-weight: 700;
   color: #8c8c8c;
-  margin-bottom: 8px;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #f0f0f0;
+  margin-bottom: 10px;
 }
 
 .topSubmenuItems {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .topSubmenuItemsWithDivider {
-  border-top: 1px solid #f0f0f0;
-  padding-top: 8px;
+  border-top: none;
+  padding-top: 0;
 }
 
 /* ===== SUBMENU ITEM ===== */
@@ -211,25 +226,20 @@
 .topSubmenuLink {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  color: #595959;
-  text-decoration: none;
-  cursor: pointer;
+  justify-content: flex-start;
+  padding: 6px 0;
+  border-radius: 4px;
+  color: #262626;
   font-size: 14px;
-  font-weight: 500;
-  transition: all 150ms;
-  background: none;
-  border: none;
-  font-family: inherit;
-  width: 100%;
-  text-align: left;
+  font-weight: 400;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, padding-left 120ms ease;
 }
 
 .topSubmenuLink:hover {
-  background: #f6f8fc;
+  background: #f5f7ff;
   color: #1890ff;
-  padding-left: 20px;
+  padding-left: 4px;
 }
 
 .topSubmenuLink.active {
@@ -237,19 +247,15 @@
   color: #1890ff;
   font-weight: 600;
   border-left: 3px solid #1890ff;
-  padding-left: 13px;
+  padding-left: 6px;
 }
 
 .topSubmenuLinkDisabled {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  padding: 6px 0;
   color: #bfbfbf;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   cursor: default;
-  background: white;
 }
 
 /* ===== HAMBURGER BUTTON - Hidden on desktop ===== */
@@ -261,7 +267,7 @@
   height: 40px;
   background: none;
   border: none;
-  color: #1890ff;
+  color: #ffffff;
   font-size: 20px;
   cursor: pointer;
   border-radius: 4px;
@@ -273,7 +279,7 @@
 }
 
 .mobileMenuToggle:hover {
-  background: #f0f0f0;
+  background: rgba(255, 255, 255, 0.15);
   transform: scale(1.05);
 }
 
@@ -293,70 +299,250 @@
   z-index: 99;
 }
 
-/* ===== TABLET: Hide text, keep icons (1024px) ===== */
+/* ===== DESKTOP CO GIÃN THEO MÀN HÌNH ===== */
+@media (max-width: 1366px) {
+  .topMenuLink {
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  .menuRow {
+    padding-right: 140px;
+  }
+}
+
+/* 1025–1200: vẫn có padding nhưng nhỏ hơn */
+@media (max-width: 1200px) and (min-width: 1025px) {
+  .topMenu {
+    padding: 0 16px;
+  }
+
+  .menuRow {
+    padding-right: 120px;
+  }
+
+  .ctaButton {
+    right: 16px;
+  }
+}
+
+/* ≤ 1024: bỏ padding ngoài để không còn khoảng trắng hai bên */
 @media (max-width: 1024px) {
+  .topMenu {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .menuRow {
+    padding-left: 16px;   /* lề trong cho item */
+    padding-right: 0;
+  }
+
+  .ctaButton {
+    right: 16px;
+  }
+
+  .topSubmenu {
+    left: 0;                 /* bám đúng theo menu cha */
+    right: auto;
+    max-width: calc(100vw - 80px);  /* vẫn tránh tràn màn hình */
+    width: max-content;
+  }
+
+  .topSubmenuColumns {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(160px, 1fr));
+  }
+}
+
+/* ===== 991px–1199px: ICON + CHỮ, CO PADDING ===== */
+@media (max-width: 1199px) and (min-width: 991px) {
+  .topMenuLink {
+    padding: 0 10px;
+  }
+
+  .topMenuText {
+    display: inline;
+  }
+}
+
+/* ===== Desktop ≥ 991px: CTA ABSOLUTE ===== */
+@media (min-width: 991px) {
+  .ctaButton {
+    display: inline-flex;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .topMenuText {
+    display: inline;
+  }
+}
+
+/* ===== TABLET 769–990px: CHỈ ICON + CTA FLEX ITEM ===== */
+@media (max-width: 990px) and (min-width: 769px) {
+  .topMenu {
+    padding-left: 0;          /* không khoảng trắng ngoài */
+    padding-right: 0;
+    justify-content: flex-start;
+  }
+
+  .menuRow {
+    padding-left: 12px;       /* lề trong cho icon */
+    padding-right: 0;
+  }
+
+  .topMenuText {
+    display: none;            /* chỉ icon */
+  }
+
+  .topMenuLink {
+    padding: 0 18px;
+  }
+
+  .topMenuItem {
+    margin: 0 16px;
+  }
+
+  .ctaButton {
+    display: inline-flex;
+    position: static;
+    transform: none;
+    margin-left: 8px;
+    margin-right:8px;
+    display: inline-flex;
+  }
+
+  .ctaButton:hover {
+    transform: none;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.18);
+  }
+
+  .ctaButton:active {
+    transform: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  }
+}
+
+/* MOBILE / PHABLET: 481–768px */
+/* 480–768px: menu ngang, icon-only */
+@media (max-width: 768px) and (min-width: 480px) {
+  .topMenu {
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+    padding-left: 0;
+    padding-right: 0;
+    background: #0d7bff;
+    justify-content: flex-start;
+  }
+
+  .menuRow {
+    flex: 1;
+    padding-left: 12px;
+    padding-right: 0;
+  }
+
+  .mobileMenuToggle {
+    display: none;            /* không hiện hamburger */
+  }
+
+  .topMenuList {
+    display: flex;            /* giữ menu ngang */
+    position: static;
+    height: 56px;
+  }
+
+  /* Tab chỉ icon */
   .topMenuText {
     display: none;
   }
 
   .topMenuLink {
-    padding: 0 12px;
-    gap: 4px;
+    padding: 0 14px;
+    height: 40px;
+    margin-top: 8px;
+    margin-bottom: 8px;
   }
 
-  .topMenuIcon {
-    font-size: 14px;
+  .topMenuItem {
+    margin: 0 8px;
+  }
+
+  /* CTA chỉ icon */
+  .ctaButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 32px;
+    padding: 0 10px;
+  }
+
+  .ctaButton > span:last-child {
+    display: none;            /* ẩn chữ "Bán hàng" */
   }
 }
 
-/* ===== MOBILE: Hamburger menu (< 768px) ===== */
-@media (max-width: 768px) {
+/* MOBILE NHỎ: Hamburger menu (< 480px) */
+@media (max-width: 480px) {
   .topMenu {
     position: sticky;
     top: 0;
-    z-index: 1001;  /* ← Cao hơn menu list */
-    padding: 0 12px;
+    z-index: 1001;
+    padding-left: 0;          /* full-bleed */
+    padding-right: 0;
     gap: 12px;
+    background: #0d7bff;
+    justify-content: flex-start;
+  }
+
+  .menuRow {
+    flex: 1;
+    padding-left: 12px;
+    padding-right: 0;
   }
 
   .mobileMenuToggle {
     display: flex;
-    margin-right: auto;
+    margin-right: 8px;
     margin-left: 0;
     order: -1;
   }
 
-  /* ===== MENU KHỐI - Full screen ===== */
+  /* MENU KHỐI - full screen */
   .topMenuList {
     display: none;
     position: fixed;
-    top: 56px;        /* ← Dưới header */
+    top: 56px;
     left: 0;
     right: 0;
     bottom: 0;
     flex-direction: column;
-    background: #fafafa;
+    background: #ffffff;
     width: 100%;
-    height: auto;
-    max-height: calc(100vh - 56px);
     overflow-y: auto;
     margin: 0;
-    padding: 12px;
+    padding: 12px 16px 16px;
     gap: 8px;
-    z-index: 1000;    /* ← Cao hơn overlay */
+    z-index: 1000;
   }
 
   .topMenuList.mobileOpen {
     display: flex;
   }
 
-  /* ===== MENU ITEM ===== */
+  /* ITEM MENU CHÍNH */
   .topMenuItem {
     width: 100%;
     height: auto;
-    background: white;
-    border-radius: 8px;
-    border: 1px solid #f0f0f0;
+    background: transparent;
+    border-radius: 0;
+    border: none;
     padding: 0;
     margin: 0;
   }
@@ -364,17 +550,18 @@
   .topMenuLink {
     width: 100%;
     padding: 12px 16px;
-    border-bottom: none;
-    border-left: none;
-    background: none;
-    color: #595959;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #262626;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    text-align: left;
   }
 
   .topMenuLink:hover {
     background: #f6f8fc;
+    color: #1890ff;
   }
 
   .topMenuLink.active {
@@ -388,7 +575,6 @@
   }
 
   .topMenuText {
-    display: inline;
     font-weight: 500;
     flex: 1;
   }
@@ -398,7 +584,7 @@
     font-size: 12px;
   }
 
-  /* ===== SUBMENU ===== */
+  /* SUBMENU WRAPPER */
   .topMenuDropdown {
     width: 100%;
     flex-direction: column;
@@ -410,17 +596,30 @@
     position: static;
     display: none;
     flex-direction: column;
-    background: white;
-    border-radius: 0 0 8px 8px;
-    border-top: 1px solid #f0f0f0;
+    background: transparent;        /* để item con tự phủ full width */
+    border-radius: 0;
+    border-top: none;
     margin: 0;
     padding: 0;
     box-shadow: none;
     min-width: unset;
+    width: 100%;
   }
 
   .topSubmenu.visible {
     display: flex;
+  }
+
+  .topSubmenuColumns {
+    display: block;
+  }
+
+  .topSubmenuSection {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8c8c8c;
+    padding: 10px 16px 4px;
+    text-transform: uppercase;
   }
 
   .topSubmenuItem {
@@ -428,17 +627,19 @@
   }
 
   .topSubmenuLink {
-    padding: 12px 16px 12px 48px;
-    font-size: 14px;
+    display: block;
     width: 100%;
-    background: white;
+    padding: 10px 16px 10px 48px;   /* 16px biên + 32px thụt cho submenu */
+    font-size: 14px;
+    background: #ffffff;            /* nền full width */
     color: #595959;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #f2f2f2;
+    text-align: left;
+    box-sizing: border-box;
   }
 
   .topSubmenuLink:last-child {
     border-bottom: none;
-    border-radius: 0 0 8px 8px;
   }
 
   .topSubmenuLink:hover {
@@ -455,18 +656,38 @@
     padding-left: 45px;
   }
 
-  .ctaButton {
-    display: none;
-  }
-
   .topSubmenuLinkDisabled {
-    padding: 12px 16px 12px 48px;
+    width: 100%;
+    padding: 10px 16px 10px 48px;
+    background: #ffffff;
     color: #bfbfbf;
+    box-sizing: border-box;
   }
 
-  /* ===== OVERLAY ===== */
   .mobileMenuOverlay {
     display: block;
-    z-index: 999;    /* ← Thấp hơn menu */
+    z-index: 999;
   }
+}
+
+/* CTA MOBILE ITEM (dùng nếu đã render trong JSX) */
+.topMenuItemMobileCta {
+  display: none;
+}
+
+.mobileCtaButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px 16px;
+  height: 44px;
+  background: #ffffff;
+  color: #0d7bff;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }

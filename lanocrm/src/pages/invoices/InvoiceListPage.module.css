@@ -17,7 +17,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: clamp(240px, 24vw, 320px) minmax(0, 1fr);
   gap: 12px;
   align-items: flex-start;
 }
@@ -27,6 +27,7 @@
   padding: 12px;
   border: 1px solid #f0f0f0;
   border-radius: 8px;
+  min-width: 0;
 }
 
 .pageTotals {
@@ -41,6 +42,22 @@
 
 @media (max-width: 1200px) {
   .layout {
+    grid-template-columns: clamp(220px, 28vw, 300px) minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 991px) {
+  .layout {
     grid-template-columns: 1fr;
+  }
+
+  .headerRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .search {
+    flex: 1 1 240px;
+    max-width: 100%;
   }
 }

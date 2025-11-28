@@ -27,19 +27,18 @@
 }
 
 .header-bottom {
-  height: 56px;               /* Fixed height */
+  height: 56px;
   display: flex;
-  align-items: center;        /* Center nav vertically */
-  padding: 0 24px;
-  background: white;
+  align-items: center;
+  padding: 0;
+  background: transparent;       /* trước là white */
   position: sticky;
   top: 64px;
   z-index: 99;
-  border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
-  gap: 12px;
+  border-bottom: none;           /* bỏ border, đã có trong .topMenu nếu muốn */
+  box-shadow: none;              /* bỏ shadow để giống ảnh */
+  gap: 0;                        /* không cần gap */
 }
-
 
 /* ===== LOGO SECTION ===== */
 .logo-section {
@@ -281,10 +280,6 @@
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .header-top {
-    padding: 0 16px;
-  }
-
-  .header-bottom {
     padding: 0 16px;
   }
 

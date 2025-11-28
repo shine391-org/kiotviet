@@ -2,7 +2,16 @@ import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { DownOutlined, MenuOutlined, CloseOutlined } from '@ant-design/icons';
-import { ShoppingCartOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  ShoppingOutlined,
+  FileTextOutlined,
+  TeamOutlined,
+  WalletOutlined,
+  BarChartOutlined,
+  ShopOutlined,
+  ShoppingCartOutlined,
+} from '@ant-design/icons';
 import styles from './TopMenu.module.css';
 
 const MENU_CONFIG = [
@@ -83,15 +92,25 @@ const MENU_CONFIG = [
   },
 ];
 
+const MENU_ICONS = {
+  overview: AppstoreOutlined,
+  products: ShoppingOutlined,
+  orders: FileTextOutlined,
+  customers: TeamOutlined,
+  cashbook: WalletOutlined,
+  reports: BarChartOutlined,
+  online: ShopOutlined,
+};
+
 const TopMenu = () => {
   const location = useLocation();
   const user = useSelector((state) => state.auth?.user);
   const [dynamicMenu, setDynamicMenu] = useState([]);
   const [openSubmenu, setOpenSubmenu] = useState(null);
-  const menuRef = useRef(null); // ← ADD THIS
+  const menuRef = useRef(null);
   const isInitialMount = useRef(true);
   const isUserClick = useRef(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);  // ← Add
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const hasModules = user?.modules && Array.isArray(user.modules) && user.modules.length > 0;
@@ -101,12 +120,10 @@ const TopMenu = () => {
       ? MENU_CONFIG.filter((item) => userModuleKeys.includes(item.key))
       : MENU_CONFIG;
 
-    // Fallback: nếu lọc theo modules không còn mục nào, hiển thị full menu để tránh trống
     if (!menuItems || menuItems.length === 0) {
       menuItems = MENU_CONFIG;
     }
 
-    // Đảm bảo các mục bắt buộc luôn hiện (dù user.modules thiếu), ví dụ Sổ quỹ
     const requiredKeys = ['overview', 'cashbook'];
     requiredKeys.forEach((req) => {
       if (!menuItems.some((m) => m.key === req)) {
@@ -155,30 +172,33 @@ const TopMenu = () => {
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setOpenSubmenu(null); // ← Close dropdown khi click outside
+        setOpenSubmenu(null);
       }
     };
-  
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const toggleSubmenu = (key) => {
-    setOpenSubmenu(openSubmenu === key ? null : key);
-  };
+    // bấm lại đúng menu đang mở thì đóng
+    if (openSubmenu === key) {
+      setOpenSubmenu(null);
+      return;
+    }
+    // mở menu mới, tự đóng mọi menu khác
+    setOpenSubmenu(key);
+};
 
-  const isSubmenuOpen = (menuItem) => {
-    return openSubmenu === menuItem.key;
-  };
+  const isSubmenuOpen = (menuItem) => openSubmenu === menuItem.key;
 
-  const isSubmenuActive = (menuItem) => {
-    return menuItem.subItems?.some((sub) => location.pathname === sub.path);
-  };
+  const isSubmenuActive = (menuItem) =>
+    menuItem.subItems?.some((sub) => location.pathname === sub.path);
 
   const handleSubmenuClick = () => {
     isUserClick.current = true;
     setOpenSubmenu(null);
-    setMobileMenuOpen(false);  // ← Close mobile menu on submenu click
+    setMobileMenuOpen(false);
   };
 
   const renderGroupedSubmenu = (menuItem) => {
@@ -198,7 +218,9 @@ const TopMenu = () => {
         <div className={styles.topSubmenuColumns}>
           {columns.map(([section, items]) => (
             <div key={section} className={styles.topSubmenuColumn}>
-              {section !== 'Khác' && <div className={styles.topSubmenuSection}>{section}</div>}
+              {section !== 'Khác' && (
+                <div className={styles.topSubmenuSection}>{section}</div>
+              )}
               <div
                 className={`${styles.topSubmenuItems} ${
                   section === 'Khác' ? styles.topSubmenuItemsWithDivider : ''
@@ -219,7 +241,9 @@ const TopMenu = () => {
                         {subItem.label}
                       </NavLink>
                     ) : (
-                      <span className={styles.topSubmenuLinkDisabled}>{subItem.label}</span>
+                      <span className={styles.topSubmenuLinkDisabled}>
+                        {subItem.label}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -233,78 +257,103 @@ const TopMenu = () => {
 
   return (
     <nav className={styles.topMenu} ref={menuRef}>
-      <ul className={`${styles.topMenuList} ${mobileMenuOpen ? styles.mobileOpen : ''}`}>
-        {dynamicMenu.map((menuItem) => (
-          <li key={menuItem.key} className={styles.topMenuItem}>
-            {menuItem.subItems && menuItem.subItems.length > 0 ? (
-              <div className={styles.topMenuDropdown}>
-                <button
-                  className={`${styles.topMenuLink} ${
-                    isSubmenuOpen(menuItem) ? styles.active : ''
-                  } ${isSubmenuActive(menuItem) ? styles.hasActiveChild : ''}`}
-                  onClick={() => toggleSubmenu(menuItem.key)}
-                  type="button"
-                  title={menuItem.label}
-                >
-                  <span className={styles.topMenuText}>{menuItem.label}</span>
-                  <span
-                    className={`${styles.topMenuArrow} ${
-                      isSubmenuOpen(menuItem) ? styles.open : ''
-                    }`}
-                  >
-                    <DownOutlined />
-                  </span>
-                </button>
+      <div className={styles.menuRow}>
+        <ul className={`${styles.topMenuList} ${mobileMenuOpen ? styles.mobileOpen : ''}`}>
+          {dynamicMenu.map((menuItem) => {
+            const Icon = MENU_ICONS[menuItem.key];
+            return (
+              <li key={menuItem.key} className={styles.topMenuItem}>
+                {menuItem.subItems && menuItem.subItems.length > 0 ? (
+                  <div className={styles.topMenuDropdown}>
+                    <button
+                      className={`${styles.topMenuLink} ${
+                        isSubmenuOpen(menuItem) ? styles.active : ''
+                      } ${isSubmenuActive(menuItem) ? styles.hasActiveChild : ''}`}
+                      onClick={() => toggleSubmenu(menuItem.key)}
+                      type="button"
+                      title={menuItem.label}
+                    >
+                      {Icon && (
+                        <span className={styles.topMenuIcon}>
+                          <Icon />
+                        </span>
+                      )}
+                      <span className={styles.topMenuText}>{menuItem.label}</span>
+                    </button>
 
-              {renderGroupedSubmenu(menuItem)}
-              </div>
-            ) : (
-              <>
-                {menuItem.path ? (
-                  <NavLink
-                    to={menuItem.path}
-                    className={({ isActive }) =>
-                      `${styles.topMenuLink} ${isActive ? styles.active : ''}`
-                    }
-                    title={menuItem.label}
-                    end
-                  >
-                    <span className={styles.topMenuText}>{menuItem.label}</span>
-                  </NavLink>
+                    {renderGroupedSubmenu(menuItem)}
+                  </div>
                 ) : (
-                  <button className={`${styles.topMenuLink} ${styles.topMenuLinkDisabled}`} type="button">
-                    <span className={styles.topMenuText}>{menuItem.label}</span>
-                  </button>
+                  <>
+                    {menuItem.path ? (
+                      <NavLink
+                        to={menuItem.path}
+                        className={({ isActive }) =>
+                          `${styles.topMenuLink} ${isActive ? styles.active : ''}`
+                        }
+                        title={menuItem.label}
+                        end
+                        onClick={() => {
+                          setOpenSubmenu(null);       // đóng mọi submenu đang mở
+                          setMobileMenuOpen(false);   // nếu đang ở hamburger thì đóng luôn menu
+                        }}
+                      >
+                        {Icon && (
+                          <span className={styles.topMenuIcon}>
+                            <Icon />
+                          </span>
+                        )}
+                        <span className={styles.topMenuText}>{menuItem.label}</span>
+                      </NavLink>
+                    ) : (
+                      <button
+                        className={`${styles.topMenuLink} ${styles.topMenuLinkDisabled}`}
+                        type="button"
+                        onClick={() => {
+                          setOpenSubmenu(null);
+                          setMobileMenuOpen(false);
+                        }}
+                      >
+                        {Icon && (
+                          <span className={styles.topMenuIcon}>
+                            <Icon />
+                          </span>
+                        )}
+                        <span className={styles.topMenuText}>{menuItem.label}</span>
+                      </button>
+                    )}
+
+                  </>
                 )}
-              </>
-            )}
-          </li>
-        ))}
-      </ul>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
       <NavLink to="/sales" className={styles.ctaButton}>
         <ShoppingCartOutlined />
         <span>Bán hàng</span>
       </NavLink>
 
-    {/* ===== MOBILE HAMBURGER BUTTON ===== */}
-    <button
-      className={styles.mobileMenuToggle}
-      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-      type="button"
-      aria-label="Toggle menu"
-    >
-      {mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
-    </button>
+      {/* MOBILE HAMBURGER BUTTON */}
+      <button
+        className={styles.mobileMenuToggle}
+        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        type="button"
+        aria-label="Toggle menu"
+      >
+        {mobileMenuOpen ? <CloseOutlined /> : <MenuOutlined />}
+      </button>
 
-    {/* ===== MOBILE OVERLAY ===== */}
-    {mobileMenuOpen && (
-      <div
-        className={styles.mobileMenuOverlay}
-        onClick={() => setMobileMenuOpen(false)}
-      />
-    )}
-  </nav>
+      {/* MOBILE OVERLAY */}
+      {mobileMenuOpen && (
+        <div
+          className={styles.mobileMenuOverlay}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+    </nav>
   );
 };
 

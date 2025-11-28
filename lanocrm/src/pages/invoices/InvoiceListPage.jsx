@@ -9,6 +9,8 @@ import {
   Dropdown,
   Spin,
   Checkbox,
+  Drawer,
+  Grid,
 } from 'antd';
 import {
   SearchOutlined,
@@ -18,6 +20,7 @@ import {
   QuestionCircleOutlined,
   ColumnHeightOutlined,
   ReloadOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import InvoiceFilters from '../../components/invoices/InvoiceFilters';
 import InvoiceTable from '../../components/invoices/InvoiceTable';
@@ -36,6 +39,7 @@ import styles from './InvoiceListPage.module.css';
 const InvoiceListPage = () => {
   const dispatch = useDispatch();
   const { message } = App.useApp();
+  const screens = Grid.useBreakpoint();
   const { items, pagination, filters, loading, pageTotals, current, detailLoading } =
     useSelector((s) => s.invoices);
   const { branches } = useSelector((s) => s.branch);
@@ -43,6 +47,14 @@ const InvoiceListPage = () => {
   const [searchText, setSearchText] = useState(filters.search || '');
   const [visibleColumns, setVisibleColumns] = useState(DEFAULT_INVOICE_COLUMNS);
   const [selectedId, setSelectedId] = useState(null);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+  // Treat screens narrower than ~lg (992px) as "mobile" for layout purposes
+  const isMobile = !screens.lg;
+
+  useEffect(() => {
+    setIsFilterOpen(!isMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     dispatch(fetchBranches());
@@ -129,6 +141,11 @@ const InvoiceListPage = () => {
           className={styles.search}
         />
         <Space>
+          {isMobile && (
+            <Button icon={<FilterOutlined />} onClick={() => setIsFilterOpen(true)}>
+              Bộ lọc
+            </Button>
+          )}
           <Tooltip title="Tạo mới">
             <Button type="primary" icon={<PlusOutlined />}>Tạo mới</Button>
           </Tooltip>
@@ -149,11 +166,30 @@ const InvoiceListPage = () => {
       </div>
 
       <div className={styles.layout}>
-        <InvoiceFilters
-          filters={filters}
-          onChange={(payload) => dispatch(setInvoiceFilters(payload))}
-          branches={branches}
-        />
+        {!isMobile && (
+          <InvoiceFilters
+            filters={filters}
+            onChange={(payload) => dispatch(setInvoiceFilters(payload))}
+            branches={branches}
+          />
+        )}
+
+        {isMobile && (
+          <Drawer
+            title="Bộ lọc"
+            placement="left"
+            open={isFilterOpen}
+            onClose={() => setIsFilterOpen(false)}
+            width="100%"
+            bodyStyle={{ padding: 12 }}
+          >
+            <InvoiceFilters
+              filters={filters}
+              onChange={(payload) => dispatch(setInvoiceFilters(payload))}
+              branches={branches}
+            />
+          </Drawer>
+        )}
 
         <div className={styles.tableArea}>
           <InvoiceTable
