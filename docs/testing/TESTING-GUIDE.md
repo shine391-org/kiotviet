@@ -1,7 +1,7 @@
 ---
 title: "Testing Guide - LANO CRM Backend"
 id: "TESTING-GUIDE-01"
-version: "2.0"
+version: "2.1"
 status: "Active"
 module: "Testing"
 type: "Guideline"
@@ -14,14 +14,14 @@ related_to:
   - id: "TEST-CHECKLIST-01"
     description: "Refer to this for mandatory testing checklist."
 updated: "2025-11-25"
-changes: "Migrated from SQLite to MySQL-only testing. All tests now use real MySQL database."
+changes: "MySQL-only with golden schema (2025-11-27), truncate-only schema traits, DevDatabaseTrait auto-migration."
 ---
 
 # Testing Guide
 
-## 🚨 BREAKING CHANGE: MySQL-Only Testing
+## 🚨 BREAKING CHANGE: MySQL-Only + Golden Schema
 
-> **Note (2025-11-25):** Nội dung từ `TESTING-MAIN-DB-GUIDE.md` đã được gộp vào tài liệu này để tránh trùng lặp. Tham chiếu cũ `TESTING-MAIN-DB-01` nay trỏ về đây.
+> **Note (2025-11-28):** Golden migration `app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php` là **single source of truth** cho test schema. DevDatabaseTrait tự chạy migration này và chỉ **truncate** dữ liệu (không drop bảng).
 
 **As of 2025-11-25, all tests use MySQL-only architecture. SQLite in-memory testing has been removed.**
 
@@ -69,11 +69,11 @@ We follow the standard Test Pyramid with **MySQL-only** approach:
 ## Section 3: Test Environment Setup
 
 ### Prerequisites
-**CRITICAL**: MySQL test database must be running before any tests:
+**CRITICAL**: MySQL container (`db`) must be running before any tests:
 
 ```bash
-# Start MySQL test container
-docker-compose up -d db-test
+# Start database + API
+docker-compose up -d db api
 
 # Verify connection
 docker exec meomeo2-api-1 php spark db:info tests
@@ -83,7 +83,7 @@ docker exec meomeo2-api-1 php spark db:info tests
 - **Database**: MySQL 8.4 (`lanocrm_shop`) – dùng **main database** cho test, rollback bảo vệ dữ liệu
 - **Connection**: `backend-ci/app/Config/Database.php` group `tests` trỏ về main DB, `DBPrefix` rỗng
 - **Test Config**: `phpunit.xml.dist` (group `tests`)
-- **Auto-migration**: DevDatabaseTrait + các *SchemaTrait* tự tạo schema trong transaction
+- **Auto-migration**: `DevDatabaseTrait` chạy **golden migration** `2025-11-27-000999_TestSchemaSetup.php`, sau đó truncate-only (không drop bảng) qua schema traits.
 
 ### Running Tests
 
@@ -140,7 +140,7 @@ class YourServiceTest extends CIUnitTestCase
 ### Key Benefits:
 - ✅ Automatic MySQL connection management
 - ✅ Transaction-based isolation (fast cleanup)
-- ✅ Schema auto-migration from traits
+- ✅ Schema auto-migration from golden migration + schema traits (truncate-only)
 - ✅ No SQLite fallback complexity
 - ✅ Consistent with production environment
 
@@ -155,7 +155,8 @@ class YourServiceTest extends CIUnitTestCase
   - `app/Config/Database.php` group `tests`: hostname `db`, database `lanocrm_shop`, `DBPrefix` rỗng.
   - `phpunit.xml.dist`: env `database.tests.*` khớp với config trên.
 - Quy trình: `setUpDatabase()` mở kết nối + `transBegin()`, `tearDownDatabase()` rollback. Luôn gọi cả hai.
-- Không dùng database/schema phụ; mọi *SchemaTrait* tạo bảng ngay trên main DB trong transaction.
+- Không dùng database/schema phụ; mọi *SchemaTrait* **chỉ truncate** bảng đã tạo bởi golden migration.
+- Nếu cần refresh schema thủ công: `docker exec meomeo2-api-1 php -r "require 'app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php'; (new \\App\\Database\\Migrations\\TestSchemaSetup())->up();"` hoặc `php run_test_schema.php` (đã kèm bootstrap).
 
 ## Section 6: Common Issues & Solutions
 
@@ -195,8 +196,12 @@ protected function tearDown(): void {
 **Cause**: Schema recreation or no transaction usage.
 **Solution**: 
 - Use DevDatabaseTrait (transactions are automatic)
-- Schema is cached per test class
-- Only data changes are rolled back (fast)
+- Golden migration chạy một lần khi cần; schema traits chỉ truncate dữ liệu
+- Chỉ data được rollback (nhanh)
+
+### ISSUE 5: Webhook tests
+**Cause**: Transaction isolation / prefix mismatch.  
+**Solution**: Webhook tests dùng fakes in-memory (`tests/_support/Fakes/FakeWebhookSubscriptionRepository.php`, `FakeWebhookEventRepository.php`) – không cần DB.
 
 ## Section 7: Migration from SQLite (For Reference)
 
