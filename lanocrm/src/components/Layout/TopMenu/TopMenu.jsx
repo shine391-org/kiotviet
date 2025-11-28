@@ -188,7 +188,7 @@ const TopMenu = () => {
     }
     // mở menu mới, tự đóng mọi menu khác
     setOpenSubmenu(key);
-};
+  };
 
   const isSubmenuOpen = (menuItem) => openSubmenu === menuItem.key;
 
