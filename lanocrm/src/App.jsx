@@ -18,6 +18,11 @@ import BranchPage from './pages/BranchPage';
 import RolePermissionsPage from './pages/RolePermissionsPage';
 import PlaceholderPage from './pages/PlaceholderPage';
 import CashBookPage from './pages/cash/CashBookPage';
+import TransferListPage from './pages/inventory/TransferListPage';
+import TransferCreatePage from './pages/inventory/TransferCreatePage';
+import StockAuditListPage from './pages/inventory/StockAuditListPage';
+import StockAuditCreatePage from './pages/inventory/StockAuditCreatePage';
+import DisposalListPage from './pages/inventory/DisposalListPage';
 
 // 🆕 PRODUCT PAGES
 import ProductListPage from './pages/products/ProductListPage';
@@ -39,6 +44,7 @@ import InvoiceListPage from './pages/invoices/InvoiceListPage';
 import ReturnListPage from './pages/returns/ReturnListPage';
 import DeliveryPartnerPage from './pages/orders/DeliveryPartnerPage';
 import ShipmentListPage from './pages/orders/ShipmentListPage';
+import SupplierListPage from './pages/suppliers/SupplierListPage';
 
 // Layout
 import MainLayout from './components/Layout/MainLayout';
@@ -88,6 +94,11 @@ function App() {
                     <Route path="/orders/invoices" element={<InvoiceListPage />} />
                     <Route path="/orders/returns" element={<ReturnListPage />} />
                     <Route path="/returns" element={<ReturnListPage />} />
+                    <Route path="/inventory/transfer" element={<TransferListPage />} />
+                    <Route path="/inventory/transfer/create" element={<TransferCreatePage />} />
+                    <Route path="/inventory/audit" element={<StockAuditListPage />} />
+                    <Route path="/inventory/audit/create" element={<StockAuditCreatePage />} />
+                    <Route path="/inventory/dispose" element={<DisposalListPage />} />
                     <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
                     <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />
                     <Route path="/online" element={<PlaceholderPage title="Bán online" />} />
@@ -272,6 +283,12 @@ function App() {
                     <Route
                       path="/customers"
                       element={<CustomerListPage />}
+                    />
+
+                    {/* 🆕 Suppliers (Nhập hàng) */}
+                    <Route
+                      path="/partners/suppliers"
+                      element={<SupplierListPage />}
                     />
 
                     {/* ========== 404 PAGE ========== */}

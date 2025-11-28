@@ -1,0 +1,20 @@
+.wrapper {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.emptyDesc {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}

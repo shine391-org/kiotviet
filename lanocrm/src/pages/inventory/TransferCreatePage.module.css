@@ -1,0 +1,106 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 12px 24px;
+  width: 100%;
+}
+
+.topBar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.title {
+  margin: 0;
+}
+
+.search {
+  max-width: 520px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 12px;
+  align-items: start;
+}
+
+.tableCard {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHeader {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tableEmptyInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.uploadBtn {
+  margin-top: 6px;
+}
+
+.sidebar {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  min-height: 600px;
+}
+
+.sideSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sideRow {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.actionRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.draftBtn {
+  background: #f2f4f7;
+}
+
+.submitBtn {
+  background: #22c55e;
+  border-color: #22c55e;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+}
