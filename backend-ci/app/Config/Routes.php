@@ -239,6 +239,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('campaigns/(:num)/members', 'Api\\CampaignsController::addMember/$1');
     $routes->post('email-campaigns', 'Api\\EmailCampaignsController::create');
     $routes->post('email-campaigns/(:num)/status', 'Api\\EmailCampaignsController::updateStatus/$1');
+    $routes->post('support-tickets', 'Api\\SupportTicketsController::create');
+    $routes->put('support-tickets/(:num)', 'Api\\SupportTicketsController::update/$1');
+    $routes->get('support-tickets/(:num)', 'Api\\SupportTicketsController::show/$1');
+    $routes->post('support-tickets/(:num)/status', 'Api\\SupportTicketsController::updateStatus/$1');
+    $routes->post('support-tickets/(:num)/assign', 'Api\\SupportTicketsController::assign/$1');
+    $routes->post('support-tickets/(:num)/communications', 'Api\\TicketCommunicationsController::create/$1');
     $routes->post('contract-templates', 'Api\\ContractTemplatesController::create');
     $routes->get('contract-templates/(:num)', 'Api\\ContractTemplatesController::show/$1');
     $routes->post('contracts', 'Api\\ContractsController::create');

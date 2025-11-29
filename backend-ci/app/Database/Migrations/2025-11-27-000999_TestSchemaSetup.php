@@ -48,6 +48,7 @@ class TestSchemaSetup extends Migration
         $this->createOpportunityTables();
         $this->createQuotationTables();
         $this->createCampaignTables();
+        $this->createSupportTables();
         $this->createContractTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
@@ -101,6 +102,7 @@ class TestSchemaSetup extends Migration
             'tax_templates','tax_charges','payment_entries',
             'leads','opportunities','opportunity_items','quotations','quotation_items',
             'campaigns','campaign_members','email_campaigns','email_campaign_logs',
+            'ticket_events','ticket_communications','support_tickets',
             'contract_templates','contracts','contract_terms','appointments'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
@@ -1040,6 +1042,48 @@ class TestSchemaSetup extends Migration
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             KEY idx_email_campaign_log (email_campaign_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createSupportTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS support_tickets (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            subject VARCHAR(255) NOT NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            lead_id BIGINT UNSIGNED NULL,
+            priority VARCHAR(20) DEFAULT 'medium',
+            status VARCHAR(30) DEFAULT 'open',
+            assigned_to BIGINT UNSIGNED NULL,
+            description TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_support_ticket_status (status),
+            KEY idx_support_ticket_customer (customer_id),
+            KEY idx_support_ticket_lead (lead_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS ticket_communications (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            ticket_id BIGINT UNSIGNED NOT NULL,
+            type VARCHAR(30) DEFAULT 'note',
+            content TEXT NULL,
+            attachments TEXT NULL,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_ticket_comm_ticket (ticket_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS ticket_events (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            ticket_id BIGINT UNSIGNED NOT NULL,
+            event_type VARCHAR(30) NOT NULL,
+            from_status VARCHAR(30) NULL,
+            to_status VARCHAR(30) NULL,
+            description TEXT NULL,
+            created_at DATETIME NULL,
+            KEY idx_ticket_event_ticket (ticket_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

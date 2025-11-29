@@ -28,6 +28,9 @@ use App\Repositories\CRM\QuotationRepository;
 use App\Repositories\Contracts\ContractRepository;
 use App\Repositories\Contracts\ContractTemplateRepository;
 use App\Repositories\Appointments\AppointmentRepository;
+use App\Repositories\Support\SupportTicketRepository;
+use App\Repositories\Support\CommunicationRepository;
+use App\Repositories\Support\TicketEventRepository;
 use App\Repositories\Campaigns\CampaignRepository;
 use App\Repositories\Campaigns\EmailCampaignRepository;
 use App\Repositories\Invoices\InvoiceRepository;
@@ -82,6 +85,8 @@ use App\Services\CRM\QuotationService;
 use App\Services\CRM\QuotationNumberGenerator;
 use App\Services\Contracts\ContractService;
 use App\Services\Appointments\AppointmentService;
+use App\Services\Support\SupportTicketService;
+use App\Services\Support\CommunicationService;
 use App\Services\Campaigns\CampaignService;
 use App\Services\Campaigns\EmailCampaignService;
 use App\Services\Coupons\CouponService;
@@ -139,6 +144,8 @@ use App\Validators\OpportunityValidator;
 use App\Validators\QuotationValidator;
 use App\Validators\ContractValidator;
 use App\Validators\AppointmentValidator;
+use App\Validators\SupportTicketValidator;
+use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
 use App\Validators\EmailCampaignValidator;
 use App\Validators\WebhookPayloadValidator;
@@ -1265,6 +1272,58 @@ class Services extends BaseService
         return new AppointmentService(
             static::appointmentRepository(false),
             static::appointmentValidator(false)
+        );
+    }
+
+    public static function supportTicketRepository(bool $getShared = true): SupportTicketRepository
+    {
+        if ($getShared) { return static::getSharedInstance('supportTicketRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new SupportTicketRepository(null, $db);
+    }
+
+    public static function ticketEventRepository(bool $getShared = true): TicketEventRepository
+    {
+        if ($getShared) { return static::getSharedInstance('ticketEventRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TicketEventRepository(null, $db);
+    }
+
+    public static function communicationRepository(bool $getShared = true): CommunicationRepository
+    {
+        if ($getShared) { return static::getSharedInstance('communicationRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CommunicationRepository(null, $db);
+    }
+
+    public static function supportTicketValidator(bool $getShared = true): SupportTicketValidator
+    {
+        return $getShared ? static::getSharedInstance('supportTicketValidator') : new SupportTicketValidator();
+    }
+
+    public static function communicationValidator(bool $getShared = true): CommunicationValidator
+    {
+        return $getShared ? static::getSharedInstance('communicationValidator') : new CommunicationValidator();
+    }
+
+    public static function supportTicketService(bool $getShared = true): SupportTicketService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('supportTicketService'); }
+        return new SupportTicketService(
+            static::supportTicketRepository(false),
+            static::ticketEventRepository(false),
+            static::supportTicketValidator(false)
+        );
+    }
+
+    public static function communicationService(bool $getShared = true): CommunicationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('communicationService'); }
+        return new CommunicationService(
+            static::communicationRepository(false),
+            static::supportTicketRepository(false),
+            static::ticketEventRepository(false),
+            static::communicationValidator(false)
         );
     }
 
