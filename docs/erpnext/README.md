@@ -79,11 +79,21 @@ Trung tâm tập hợp tài liệu ERPNext để dễ tra cứu khi triển khai
 - [ERP-035 - Báo cáo Tài chính & Tồn kho chuẩn](../tasks/ERPNext/ERP-035-REPORTS-FINANCE-STOCK.md)
 - [ERP-036 - Tuân thủ thuế địa phương (GST/VAT/Withholding nâng cao)](../tasks/ERPNext/ERP-036-TAX-LOCAL-COMPLIANCE.md)
 
-## Quyết định đang chờ
-- Chốt ưu tiên Phase 1 (Inventory/Fulfillment) hay CRM trước.
-- Bẻ nhỏ Phase 1 thành tasks cụ thể (migration + repo/service/controller + tests) và ghi vào `docs/tasks` theo checklist AGENT.
-- Quyết định dựng workflow/approval service dùng chung trước hay sau order/delivery để tránh rework.
+## Thứ tự ưu tiên (phụ thuộc)
+1) Nền tảng: ERP-003 (Approval) → ERP-001 (Batch/Serial) → ERP-004 (Ledger/Reconciliation) → ERP-002 (Delivery Note).
+2) Giá/Hoạch định: ERP-005, ERP-006 (Pricing, Reorder) + ERP-007, ERP-008 nếu cần song song.
+3) POS: ERP-012 → ERP-015 (profile/shift, offline, loyalty/coupon, payment/tax).
+4) CRM: ERP-016 → ERP-019 (lead/opportunity/quotation, campaign, contract, ticket).
+5) Accounting: ERP-021 → ERP-026 (COA/GL, sales/purchase invoice, payment/bank, tax/credit, đa tiền tệ/aging).
+6) Buying/Warehouse nâng cao: ERP-027 → ERP-028 (PO/GRN/LCV/subcon, stock entry nâng cao).
+7) Manufacturing/E-com/Subscription: ERP-009 → ERP-011.
+8) Project/Asset/HR: ERP-029 → ERP-031.
+9) Portal/Quyền/Nền tảng: ERP-032 → ERP-036 (portal/notify, multi-company/ACL, scheduler, báo cáo, thuế địa phương).
+
+## Quyết định đã chốt
+- Ưu tiên Phase 1 (Inventory/Fulfillment) trước CRM; dựng nền tảng trước khi làm module phụ thuộc.
+- Workflow/Approval service (ERP-003) làm trước order/delivery; các task Phase 1 đã tách sẵn (ERP-001..004).
 
 ## Gợi ý tiếp theo
-- Sau khi chốt 3 quyết định trên, tạo từng task file dưới `docs/tasks` cho mỗi module (batch/serial, delivery note, stock ledger/reconciliation, approval engine).
-- Cập nhật mục liên quan trong `docs/DOCUMENTATION_INDEX.md` nếu thêm tài liệu mới.
+- Gán owner và kick-off theo thứ tự ưu tiên ở trên; bắt đầu từ ERP-003 → ERP-001 → ERP-004 → ERP-002.
+- Với mỗi task: tuân AGENTS.md, viết unit + integration tests (DevDatabaseTrait), cập nhật session log/tài liệu liên quan nếu phát sinh.
