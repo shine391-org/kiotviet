@@ -78,6 +78,7 @@ trait DevDatabaseTrait
             'cash_transactions','payment_methods','purchase_orders',
             'gl_entries','chart_of_accounts',
             'payment_schedules','sales_invoice_taxes','sales_invoice_items','sales_invoices',
+            'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
             'tax_charges','tax_templates',
             'payment_entries',
             'coupons','coupon_usages',

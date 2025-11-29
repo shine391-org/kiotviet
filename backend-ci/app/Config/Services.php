@@ -30,6 +30,7 @@ use App\Repositories\Contracts\ContractTemplateRepository;
 use App\Repositories\Appointments\AppointmentRepository;
 use App\Repositories\Accounting\COARepository;
 use App\Repositories\Accounting\GLEntryRepository;
+use App\Repositories\Accounting\PurchaseInvoiceRepository;
 use App\Repositories\Accounting\SalesInvoiceRepository;
 use App\Repositories\Support\SupportTicketRepository;
 use App\Repositories\Support\CommunicationRepository;
@@ -90,6 +91,7 @@ use App\Services\Contracts\ContractService;
 use App\Services\Appointments\AppointmentService;
 use App\Services\Accounting\COAService;
 use App\Services\Accounting\AccountingService;
+use App\Services\Accounting\PurchaseInvoiceService;
 use App\Services\Accounting\SalesInvoiceService;
 use App\Services\Support\SupportTicketService;
 use App\Services\Support\CommunicationService;
@@ -152,6 +154,7 @@ use App\Validators\ContractValidator;
 use App\Validators\AppointmentValidator;
 use App\Validators\COAValidator;
 use App\Validators\GLEntryValidator;
+use App\Validators\PurchaseInvoiceValidator;
 use App\Validators\SalesInvoiceValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
@@ -1342,6 +1345,29 @@ class Services extends BaseService
         return new SalesInvoiceService(
             static::salesInvoiceRepository(false),
             static::salesInvoiceValidator(false),
+            static::taxTemplateRepository(false),
+            static::accountingService(false)
+        );
+    }
+
+    public static function purchaseInvoiceRepository(bool $getShared = true): PurchaseInvoiceRepository
+    {
+        if ($getShared) { return static::getSharedInstance('purchaseInvoiceRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PurchaseInvoiceRepository(null, null, null, $db);
+    }
+
+    public static function purchaseInvoiceValidator(bool $getShared = true): PurchaseInvoiceValidator
+    {
+        return $getShared ? static::getSharedInstance('purchaseInvoiceValidator') : new PurchaseInvoiceValidator();
+    }
+
+    public static function purchaseInvoiceService(bool $getShared = true): PurchaseInvoiceService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('purchaseInvoiceService'); }
+        return new PurchaseInvoiceService(
+            static::purchaseInvoiceRepository(false),
+            static::purchaseInvoiceValidator(false),
             static::taxTemplateRepository(false),
             static::accountingService(false)
         );
