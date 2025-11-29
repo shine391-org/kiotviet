@@ -75,7 +75,13 @@ trait DevDatabaseTrait
             'subscription_cycles','subscriptions',
             'bom_items','bill_of_materials','work_orders',
             'quality_inspection_items','quality_inspections','quality_parameters',
-            'cash_transactions','payment_methods','purchase_orders'
+            'cash_transactions','payment_methods','purchase_orders',
+            'tax_charges','tax_templates',
+            'payment_entries',
+            'coupons','coupon_usages',
+            'loyalty_transactions','loyalty_wallets','loyalty_programs',
+            'pos_offline_queue',
+            'pos_shift_logs','pos_shift_payments','pos_shifts','pos_payment_methods','pos_profiles'
         ];
         $existing = array_flip($this->db->listTables());
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');

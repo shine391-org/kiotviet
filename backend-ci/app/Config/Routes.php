@@ -213,6 +213,22 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->patch('orders/(:num)/status', 'Api\\OrderStatusController::update/$1');
     $routes->post('orders/(:num)/cancel', 'Api\\OrderCancellationController::cancel/$1');
 
+    // POS
+    $routes->post('pos/profiles', 'Api\\POSProfilesController::create');
+    $routes->put('pos/profiles/(:num)', 'Api\\POSProfilesController::update/$1');
+    $routes->get('pos/profiles/(:num)', 'Api\\POSProfilesController::show/$1');
+    $routes->get('pos/profiles/resolve', 'Api\\POSProfilesController::resolve');
+    $routes->post('pos/shifts/open', 'Api\\POSShiftsController::open');
+    $routes->post('pos/shifts/close', 'Api\\POSShiftsController::close');
+    $routes->get('pos/shifts/current', 'Api\\POSShiftsController::current');
+    $routes->post('pos/offline/queue', 'Api\\POSOfflineController::queue');
+    $routes->post('pos/offline/sync', 'Api\\POSOfflineController::sync');
+    $routes->post('pos/coupons/apply', 'Api\\POSLoyaltyController::applyCoupon');
+    $routes->post('pos/loyalty/redeem-preview', 'Api\\POSLoyaltyController::redeemPreview');
+    $routes->get('tax-templates', 'Api\\TaxTemplatesController::index');
+    $routes->post('tax-templates', 'Api\\TaxTemplatesController::create');
+    $routes->post('payment-entries', 'Api\\PaymentEntriesController::create');
+
     // Payment methods
     $routes->get('payment-methods', 'Api\\PaymentMethodsController::index');
     $routes->get('payment-methods/(:num)', 'Api\\PaymentMethodsController::show/$1');

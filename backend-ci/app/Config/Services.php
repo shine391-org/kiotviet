@@ -15,6 +15,13 @@ use App\Repositories\PriceLists\ProjectPriceListRepository;
 use App\Repositories\Pricing\PricingRuleRepository;
 use App\Repositories\Pricing\PriceHistoryRepository;
 use App\Repositories\PaymentMethods\PaymentMethodRepository;
+use App\Repositories\POS\POSProfileRepository;
+use App\Repositories\POS\POSShiftPaymentRepository;
+use App\Repositories\POS\POSShiftRepository;
+use App\Repositories\POS\POSOfflineQueueRepository;
+use App\Repositories\Payments\PaymentEntryRepository;
+use App\Repositories\Taxes\TaxTemplateRepository;
+use App\Repositories\Taxes\TaxChargeRepository;
 use App\Repositories\Invoices\InvoiceRepository;
 use App\Repositories\Returns\ReturnRepository;
 use App\Repositories\DeliveryNotes\DeliveryNoteRepository;
@@ -54,6 +61,15 @@ use App\Services\PriceLists\PriceListService;
 use App\Services\Pricing\PricingRuleService;
 use App\Services\Pricing\PricingService;
 use App\Services\PaymentMethods\PaymentMethodService;
+use App\Services\POS\POSPaymentSplitService;
+use App\Services\POS\POSProfileService;
+use App\Services\POS\POSShiftService;
+use App\Services\POS\POSOfflineService;
+use App\Services\POS\POSIdempotencyService;
+use App\Services\POS\POSTaxService;
+use App\Services\Payments\PaymentEntryService;
+use App\Services\Coupons\CouponService;
+use App\Services\Loyalty\LoyaltyService;
 use App\Services\Invoices\InvoiceService;
 use App\Services\Invoices\VATCalculator;
 use App\Services\Invoices\InvoicePDFGenerator;
@@ -97,6 +113,11 @@ use App\Validators\OrderTemplateValidator;
 use App\Validators\OrderSubscriptionValidator;
 use App\Validators\BOMValidator;
 use App\Validators\WorkOrderValidator;
+use App\Validators\POSProfileValidator;
+use App\Validators\POSShiftValidator;
+use App\Validators\POSOfflineValidator;
+use App\Validators\CouponValidator;
+use App\Validators\LoyaltyProgramValidator;
 use App\Validators\WebhookPayloadValidator;
 use App\Validators\SubscriptionValidator;
 use App\Validators\QualityInspectionValidator;
@@ -789,7 +810,14 @@ class Services extends BaseService
             static::inventoryMovementLogger(false),
             static::inventoryRepository(false),
             static::productBatchService(false),
-            static::productSerialNumberService(false)
+            static::productSerialNumberService(false),
+            static::posProfileService(false),
+            static::posPaymentSplitService(false),
+            static::posShiftService(false),
+            static::couponService(false),
+            static::loyaltyService(false),
+            static::paymentEntryService(false),
+            static::posTaxService(false)
         );
     }
 
@@ -965,6 +993,176 @@ class Services extends BaseService
             static::paymentMethodRepository(false),
             static::paymentMethodValidator(false)
         );
+    }
+
+    public static function posProfileRepository(bool $getShared = true): POSProfileRepository
+    {
+        if ($getShared) { return static::getSharedInstance('posProfileRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new POSProfileRepository(null, null, $db);
+    }
+
+    public static function posShiftPaymentRepository(bool $getShared = true): POSShiftPaymentRepository
+    {
+        if ($getShared) { return static::getSharedInstance('posShiftPaymentRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new POSShiftPaymentRepository(null, $db);
+    }
+
+    public static function posShiftRepository(bool $getShared = true): POSShiftRepository
+    {
+        if ($getShared) { return static::getSharedInstance('posShiftRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new POSShiftRepository(null, null, static::posShiftPaymentRepository(false), $db);
+    }
+
+    public static function posProfileValidator(bool $getShared = true): POSProfileValidator
+    {
+        return $getShared ? static::getSharedInstance('posProfileValidator') : new POSProfileValidator();
+    }
+
+    public static function posShiftValidator(bool $getShared = true): POSShiftValidator
+    {
+        return $getShared ? static::getSharedInstance('posShiftValidator') : new POSShiftValidator();
+    }
+
+    public static function posProfileService(bool $getShared = true): POSProfileService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('posProfileService'); }
+
+        return new POSProfileService(
+            static::posProfileRepository(false),
+            static::posProfileValidator(false),
+            static::paymentMethodRepository(false)
+        );
+    }
+
+    public static function posShiftService(bool $getShared = true): POSShiftService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('posShiftService'); }
+        return new POSShiftService(
+            static::posShiftRepository(false),
+            static::posShiftValidator(false)
+        );
+    }
+
+    public static function posPaymentSplitService(bool $getShared = true): POSPaymentSplitService
+    {
+        return $getShared ? static::getSharedInstance('posPaymentSplitService') : new POSPaymentSplitService();
+    }
+
+    public static function posOfflineQueueRepository(bool $getShared = true): POSOfflineQueueRepository
+    {
+        if ($getShared) { return static::getSharedInstance('posOfflineQueueRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new POSOfflineQueueRepository(null, static::posIdempotencyService(false), $db);
+    }
+
+    public static function posIdempotencyService(bool $getShared = true): POSIdempotencyService
+    {
+        return $getShared ? static::getSharedInstance('posIdempotencyService') : new POSIdempotencyService();
+    }
+
+    public static function posOfflineValidator(bool $getShared = true): POSOfflineValidator
+    {
+        return $getShared ? static::getSharedInstance('posOfflineValidator') : new POSOfflineValidator();
+    }
+
+    public static function posOfflineService(bool $getShared = true): POSOfflineService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('posOfflineService'); }
+        return new POSOfflineService(
+            static::posOfflineQueueRepository(false),
+            static::posOfflineValidator(false),
+            static::orderService(false)
+        );
+    }
+
+    public static function paymentEntryRepository(bool $getShared = true): PaymentEntryRepository
+    {
+        if ($getShared) { return static::getSharedInstance('paymentEntryRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PaymentEntryRepository(null, $db);
+    }
+
+    public static function paymentEntryValidator(bool $getShared = true): \App\Validators\PaymentEntryValidator
+    {
+        return $getShared ? static::getSharedInstance('paymentEntryValidator') : new \App\Validators\PaymentEntryValidator();
+    }
+
+    public static function paymentEntryService(bool $getShared = true): PaymentEntryService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('paymentEntryService'); }
+        return new PaymentEntryService(
+            static::paymentEntryRepository(false),
+            static::paymentEntryValidator(false)
+        );
+    }
+
+    public static function taxTemplateRepository(bool $getShared = true): TaxTemplateRepository
+    {
+        if ($getShared) { return static::getSharedInstance('taxTemplateRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TaxTemplateRepository(null, $db);
+    }
+
+    public static function taxChargeRepository(bool $getShared = true): TaxChargeRepository
+    {
+        if ($getShared) { return static::getSharedInstance('taxChargeRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TaxChargeRepository(null, $db);
+    }
+
+    public static function taxTemplateValidator(bool $getShared = true): TaxTemplateValidator
+    {
+        return $getShared ? static::getSharedInstance('taxTemplateValidator') : new TaxTemplateValidator();
+    }
+
+    public static function posTaxService(bool $getShared = true): POSTaxService
+    {
+        return $getShared ? static::getSharedInstance('posTaxService') : new POSTaxService(
+            static::taxTemplateRepository(false),
+            static::taxChargeRepository(false)
+        );
+    }
+
+    public static function couponRepository(bool $getShared = true): \App\Repositories\Coupons\CouponRepository
+    {
+        if ($getShared) { return static::getSharedInstance('couponRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Repositories\Coupons\CouponRepository(null, null, $db);
+    }
+
+    public static function couponValidator(bool $getShared = true): CouponValidator
+    {
+        return $getShared ? static::getSharedInstance('couponValidator') : new CouponValidator();
+    }
+
+    public static function couponService(bool $getShared = true): CouponService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('couponService'); }
+        return new CouponService(
+            static::couponRepository(false),
+            static::couponValidator(false)
+        );
+    }
+
+    public static function loyaltyRepository(bool $getShared = true): \App\Repositories\Loyalty\LoyaltyRepository
+    {
+        if ($getShared) { return static::getSharedInstance('loyaltyRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Repositories\Loyalty\LoyaltyRepository(null, null, null, $db);
+    }
+
+    public static function loyaltyProgramValidator(bool $getShared = true): LoyaltyProgramValidator
+    {
+        return $getShared ? static::getSharedInstance('loyaltyProgramValidator') : new LoyaltyProgramValidator();
+    }
+
+    public static function loyaltyService(bool $getShared = true): \App\Services\Loyalty\LoyaltyService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('loyaltyService'); }
+        return new \App\Services\Loyalty\LoyaltyService(static::loyaltyRepository(false));
     }
 
     public static function invoiceRepository(bool $getShared = true): InvoiceRepository

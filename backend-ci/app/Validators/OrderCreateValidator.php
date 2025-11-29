@@ -24,12 +24,6 @@ class OrderCreateValidator
             throw new InvalidArgumentException('order_type must be pos or shipping');
         }
 
-        $payments = $input['payments'] ?? null;
-        $paymentMethod = $input['payment_method'] ?? null;
-        if (! $paymentMethod && empty($payments)) {
-            throw new InvalidArgumentException('payment_method is required when payments not provided');
-        }
-
         $branchId = isset($input['branch_id']) ? (int) $input['branch_id'] : 0;
         if ($branchId <= 0) {
             throw new InvalidArgumentException('branch_id is required');
@@ -49,10 +43,33 @@ class OrderCreateValidator
         if ($paidAmount < 0) {
             throw new InvalidArgumentException('paid_amount must be >= 0');
         }
+
+        $priceListId = isset($input['price_list_id']) ? (int) $input['price_list_id'] : null;
+        if ($priceListId !== null && $priceListId <= 0) {
+            throw new InvalidArgumentException('price_list_id must be positive');
+        }
+        $posProfileId = isset($input['pos_profile_id']) ? (int) $input['pos_profile_id'] : null;
+        if ($posProfileId !== null && $posProfileId <= 0) {
+            throw new InvalidArgumentException('pos_profile_id must be positive');
+        }
+        $redeemPoints = isset($input['redeem_points']) ? (int) $input['redeem_points'] : 0;
+        if ($redeemPoints < 0) {
+            throw new InvalidArgumentException('redeem_points must be >= 0');
+        }
+        $couponCode = isset($input['coupon_code']) ? trim((string) $input['coupon_code']) : null;
+        if ($couponCode !== null && $couponCode === '') {
+            $couponCode = null;
+        }
+        if ($redeemPoints > 0 && ($customerId === null || $customerId <= 0)) {
+            throw new InvalidArgumentException('customer_id is required to redeem points');
+        }
+
+        $payments = $input['payments'] ?? null;
+        $paymentMethod = $input['payment_method'] ?? null;
         $paymentsArr = [];
         if ($payments && is_array($payments)) {
             foreach ($payments as $p) {
-                $pm = $p['payment_method'] ?? null;
+                $pm = isset($p['payment_method']) ? strtoupper(trim((string) $p['payment_method'])) : null;
                 $amt = isset($p['amount']) ? (float) $p['amount'] : 0;
                 if (! $pm) {
                     throw new InvalidArgumentException('payment_method in payments is required');
@@ -66,6 +83,31 @@ class OrderCreateValidator
                 ];
             }
             $paidAmount = array_sum(array_column($paymentsArr, 'amount'));
+        }
+        $paymentMethod = $paymentMethod ? strtoupper(trim((string) $paymentMethod)) : null;
+        if (! $paymentMethod && empty($paymentsArr)) {
+            throw new InvalidArgumentException('payment_method is required when payments not provided');
+        }
+
+        $createdBy = isset($input['created_by']) ? (int) $input['created_by'] : null;
+        if (! $createdBy && isset($input['user_id'])) {
+            $createdBy = (int) $input['user_id'];
+        }
+        if ($createdBy !== null && $createdBy <= 0) {
+            throw new InvalidArgumentException('created_by must be positive');
+        }
+
+        if ($orderType === 'pos' && empty($paymentsArr) && $paymentMethod) {
+            if ($paidAmount <= 0) {
+                throw new InvalidArgumentException('paid_amount must be > 0 for POS payments');
+            }
+            $paymentsArr[] = [
+                'payment_method' => $paymentMethod,
+                'amount' => $paidAmount,
+            ];
+        }
+        if ($orderType === 'pos' && empty($paymentsArr)) {
+            throw new InvalidArgumentException('payments are required for POS orders');
         }
 
         $orderItems = [];
@@ -98,9 +140,15 @@ class OrderCreateValidator
             'payment_method' => trim((string) $paymentMethod),
             'order_date' => $input['order_date'] ?? date('Y-m-d'),
             'branch_id' => $branchId,
+            'price_list_id' => $priceListId,
+            'pos_profile_id' => $posProfileId,
+            'user_id' => $createdBy,
+            'created_by' => $createdBy,
             'shipping_fee' => $shippingFee,
             'paid_amount' => $paidAmount,
             'payments' => $paymentsArr ?: null,
+            'redeem_points' => $redeemPoints,
+            'coupon_code' => $couponCode ? strtoupper($couponCode) : null,
             'notes' => isset($input['notes']) ? trim((string) $input['notes']) : null,
             'shipping' => [
                 'name' => $input['shipping_name'] ?? ($input['shipping']['name'] ?? null),

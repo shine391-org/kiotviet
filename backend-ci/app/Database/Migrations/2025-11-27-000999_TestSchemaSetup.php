@@ -33,11 +33,17 @@ class TestSchemaSetup extends Migration
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
+        $this->createTaxTemplateTables();
+        $this->createLoyaltyTables();
+        $this->createCouponTables();
         $this->createPurchaseOrderTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
         $this->createOrderPaymentTables();
+        $this->createPaymentEntryTables();
         $this->createOrderSequenceTables();
+        $this->createPOSTables();
+        $this->createPOSOfflineTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
         $this->createInvoiceTables();
@@ -84,7 +90,10 @@ class TestSchemaSetup extends Migration
             'ecommerce_webhook_logs',
             'subscription_cycles','subscriptions',
             'bom_items','bill_of_materials','work_orders',
-            'cash_transactions'
+            'cash_transactions',
+            'pos_profiles','pos_payment_methods','pos_shifts','pos_shift_payments','pos_shift_logs','pos_offline_queue',
+            'loyalty_programs','loyalty_wallets','loyalty_transactions','coupons','coupon_usages',
+            'tax_templates','tax_charges','payment_entries'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
@@ -623,7 +632,56 @@ class TestSchemaSetup extends Migration
 
     private function createOrderTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS orders (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) NULL, order_number VARCHAR(50) NULL, customer_id INT NULL, customer_group_id INT NULL, branch_id INT NULL, order_date DATE NULL, order_type VARCHAR(50) DEFAULT 'online', payment_method VARCHAR(50) NULL, status VARCHAR(50) DEFAULT 'draft', subtotal DECIMAL(14,2) DEFAULT 0, discount_total DECIMAL(14,2) DEFAULT 0, shipping_fee DECIMAL(14,2) DEFAULT 0, total DECIMAL(14,2) DEFAULT 0, paid_amount DECIMAL(14,2) DEFAULT 0, debt_amount DECIMAL(14,2) DEFAULT 0, payment_status VARCHAR(20) NULL, is_paid TINYINT(1) DEFAULT 0, applied_price_list_id INT NULL, shipping_name VARCHAR(255) NULL, shipping_phone VARCHAR(50) NULL, shipping_address TEXT NULL, shipping_ward VARCHAR(100) NULL, shipping_district VARCHAR(100) NULL, shipping_city VARCHAR(100) NULL, notes TEXT NULL, confirmed_at DATETIME NULL, processing_at DATETIME NULL, shipping_at DATETIME NULL, delivered_at DATETIME NULL, completed_at DATETIME NULL, cancelled_at DATETIME NULL, cancellation_reason TEXT NULL, cod_collected TINYINT(1) DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NULL,
+            order_number VARCHAR(50) NULL,
+            customer_id INT NULL,
+            customer_group_id INT NULL,
+            branch_id INT NULL,
+            warehouse_id INT NULL,
+            order_date DATE NULL,
+            order_type VARCHAR(50) DEFAULT 'online',
+            pos_profile_id BIGINT UNSIGNED NULL,
+            pos_shift_id BIGINT UNSIGNED NULL,
+            tax_template_id INT NULL,
+            tax_total DECIMAL(14,2) DEFAULT 0,
+            rounding_adjustment DECIMAL(14,2) DEFAULT 0,
+            payment_method VARCHAR(50) NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            coupon_code VARCHAR(120) NULL,
+            coupon_discount DECIMAL(14,2) DEFAULT 0,
+            loyalty_points_redeemed INT DEFAULT 0,
+            loyalty_discount DECIMAL(14,2) DEFAULT 0,
+            loyalty_points_earned INT DEFAULT 0,
+            subtotal DECIMAL(14,2) DEFAULT 0,
+            discount_total DECIMAL(14,2) DEFAULT 0,
+            shipping_fee DECIMAL(14,2) DEFAULT 0,
+            total DECIMAL(14,2) DEFAULT 0,
+            paid_amount DECIMAL(14,2) DEFAULT 0,
+            debt_amount DECIMAL(14,2) DEFAULT 0,
+            payment_status VARCHAR(20) NULL,
+            is_paid TINYINT(1) DEFAULT 0,
+            applied_price_list_id INT NULL,
+            shipping_name VARCHAR(255) NULL,
+            shipping_phone VARCHAR(50) NULL,
+            shipping_address TEXT NULL,
+            shipping_ward VARCHAR(100) NULL,
+            shipping_district VARCHAR(100) NULL,
+            shipping_city VARCHAR(100) NULL,
+            notes TEXT NULL,
+            confirmed_at DATETIME NULL,
+            processing_at DATETIME NULL,
+            shipping_at DATETIME NULL,
+            delivered_at DATETIME NULL,
+            completed_at DATETIME NULL,
+            cancelled_at DATETIME NULL,
+            cancellation_reason TEXT NULL,
+            cod_collected TINYINT(1) DEFAULT 0,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createOrderItemTables(): void
@@ -710,6 +768,215 @@ class TestSchemaSetup extends Migration
     private function createOrderStatusLogTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS order_status_logs (id INT AUTO_INCREMENT PRIMARY KEY, order_id INT NOT NULL, from_status VARCHAR(50) NULL, to_status VARCHAR(50) NOT NULL, changed_by INT NULL, notes TEXT NULL, changed_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createPOSTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_profiles (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            user_id BIGINT UNSIGNED NULL,
+            role_id BIGINT UNSIGNED NULL,
+            price_list_id INT NULL,
+            tax_template_id INT NULL,
+            warehouse_id INT NULL,
+            branch_id INT NULL,
+            company VARCHAR(150) NULL,
+            allow_offline TINYINT(1) DEFAULT 0,
+            require_shift TINYINT(1) DEFAULT 1,
+            credit_limit DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pos_profile_user_branch (user_id, branch_id),
+            KEY idx_pos_profile_role (role_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_payment_methods (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            profile_id BIGINT UNSIGNED NOT NULL,
+            payment_method VARCHAR(50) NOT NULL,
+            is_allowed TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_profile_method (profile_id, payment_method),
+            KEY idx_pos_payment_profile (profile_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_shifts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            user_id BIGINT UNSIGNED NOT NULL,
+            profile_id BIGINT UNSIGNED NULL,
+            branch_id INT NULL,
+            opening_balance DECIMAL(14,2) DEFAULT 0,
+            expected_total DECIMAL(14,2) DEFAULT 0,
+            expected_cash DECIMAL(14,2) DEFAULT 0,
+            expected_card DECIMAL(14,2) DEFAULT 0,
+            actual_total DECIMAL(14,2) DEFAULT 0,
+            actual_cash DECIMAL(14,2) DEFAULT 0,
+            actual_card DECIMAL(14,2) DEFAULT 0,
+            discrepancy DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'open',
+            opened_at DATETIME NULL,
+            closed_at DATETIME NULL,
+            closing_note TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pos_shift_user_status (user_id, status),
+            KEY idx_pos_shift_profile (profile_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_shift_payments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            shift_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NOT NULL,
+            amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+            reference_type VARCHAR(50) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pos_shift_payment (shift_id),
+            KEY idx_pos_shift_payment_method (shift_id, payment_method)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_shift_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            shift_id BIGINT UNSIGNED NOT NULL,
+            action VARCHAR(50) NOT NULL,
+            message TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pos_shift_log (shift_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createPOSOfflineTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS pos_offline_queue (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            temp_id VARCHAR(120) NOT NULL,
+            device_id VARCHAR(120) NOT NULL,
+            idempotency_key VARCHAR(200) NOT NULL,
+            user_id BIGINT UNSIGNED NULL,
+            branch_id INT NULL,
+            payload JSON NULL,
+            status VARCHAR(20) DEFAULT 'pending',
+            order_id BIGINT UNSIGNED NULL,
+            error_message TEXT NULL,
+            created_at DATETIME NULL,
+            synced_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_pos_offline_key (device_id, temp_id),
+            KEY idx_pos_offline_status (status),
+            KEY idx_pos_offline_idem (idempotency_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createTaxTemplateTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS tax_templates (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            rate_percent DECIMAL(8,3) DEFAULT 0,
+            is_inclusive TINYINT(1) DEFAULT 0,
+            rounding_rule VARCHAR(20) DEFAULT 'nearest',
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS tax_charges (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            template_id BIGINT UNSIGNED NOT NULL,
+            name VARCHAR(150) NOT NULL,
+            rate_percent DECIMAL(8,3) DEFAULT 0,
+            charge_type VARCHAR(20) DEFAULT 'on_net_total',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_tax_charges_template (template_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createPaymentEntryTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS payment_entries (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_id BIGINT UNSIGNED NOT NULL,
+            payment_method VARCHAR(50) NOT NULL,
+            amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+            reference VARCHAR(120) NULL,
+            status VARCHAR(20) DEFAULT 'posted',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_payment_entry (order_id, payment_method, reference)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createLoyaltyTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS loyalty_programs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            customer_group_id INT NULL,
+            earn_rate DECIMAL(12,4) DEFAULT 0,
+            redeem_rate DECIMAL(12,4) DEFAULT 0,
+            expiry_days INT DEFAULT 365,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS loyalty_wallets (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            points_balance DECIMAL(14,2) DEFAULT 0,
+            last_earned_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_loyalty_wallet_customer (customer_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS loyalty_transactions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            wallet_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            points_delta DECIMAL(14,2) NOT NULL,
+            reason VARCHAR(120) NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_loyalty_tx_wallet (wallet_id),
+            KEY idx_loyalty_tx_order (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createCouponTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS coupons (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(100) NOT NULL UNIQUE,
+            discount_type VARCHAR(20) DEFAULT 'percent',
+            discount_value DECIMAL(14,2) NOT NULL DEFAULT 0,
+            min_amount DECIMAL(14,2) DEFAULT 0,
+            expiry_date DATE NULL,
+            usage_limit INT DEFAULT 0,
+            used_count INT DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS coupon_usages (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            coupon_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            used_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_coupon_usage_coupon (coupon_id),
+            KEY idx_coupon_usage_order (order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createWebhookTables(): void
