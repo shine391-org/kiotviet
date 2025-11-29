@@ -245,6 +245,11 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('chart-of-accounts', 'Api\\ChartOfAccountsController::create');
     $routes->post('gl/journal', 'Api\\GLEntriesController::postJournal');
     $routes->get('gl', 'Api\\GLEntriesController::index');
+    $routes->post('sales-invoices/preview', 'Api\\SalesInvoicesController::preview');
+    $routes->post('sales-invoices', 'Api\\SalesInvoicesController::create');
+    $routes->get('sales-invoices/(:num)', 'Api\\SalesInvoicesController::show/$1');
+    $routes->post('sales-invoices/(:num)/submit', 'Api\\SalesInvoicesController::submit/$1');
+    $routes->post('sales-invoices/(:num)/cancel', 'Api\\SalesInvoicesController::cancel/$1');
     $routes->post('support-tickets', 'Api\\SupportTicketsController::create');
     $routes->put('support-tickets/(:num)', 'Api\\SupportTicketsController::update/$1');
     $routes->get('support-tickets/(:num)', 'Api\\SupportTicketsController::show/$1');

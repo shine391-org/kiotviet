@@ -51,6 +51,7 @@ class TestSchemaSetup extends Migration
         $this->createCampaignTables();
         $this->createSupportTables();
         $this->createContractTables();
+        $this->createSalesInvoiceTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
         $this->createInvoiceTables();
@@ -88,6 +89,7 @@ class TestSchemaSetup extends Migration
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'chart_of_accounts','gl_entries',
+            'sales_invoice_taxes','sales_invoice_items','sales_invoices','payment_schedules',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
             'returns','return_items',
             'invoices','invoice_orders',
@@ -1121,6 +1123,66 @@ class TestSchemaSetup extends Migration
             description TEXT NULL,
             created_at DATETIME NULL,
             KEY idx_ticket_event_ticket (ticket_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createSalesInvoiceTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS sales_invoices (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_number VARCHAR(50) NOT NULL,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            posting_date DATE NOT NULL,
+            due_date DATE NULL,
+            status VARCHAR(20) DEFAULT 'draft',
+            currency VARCHAR(10) DEFAULT 'VND',
+            exchange_rate DECIMAL(12,4) DEFAULT 1,
+            total DECIMAL(14,2) DEFAULT 0,
+            taxes_total DECIMAL(14,2) DEFAULT 0,
+            grand_total DECIMAL(14,2) DEFAULT 0,
+            rounding_adjustment DECIMAL(12,2) DEFAULT 0,
+            debit_account_id BIGINT UNSIGNED NULL,
+            credit_account_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_sales_invoice_number (invoice_number),
+            KEY idx_sales_invoice_customer (customer_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS sales_invoice_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NULL,
+            description VARCHAR(255) NULL,
+            quantity DECIMAL(12,2) DEFAULT 0,
+            rate DECIMAL(14,2) DEFAULT 0,
+            amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_sales_invoice_item_invoice (invoice_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS sales_invoice_taxes (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_id BIGINT UNSIGNED NOT NULL,
+            tax_name VARCHAR(150) NOT NULL,
+            rate_percent DECIMAL(8,3) DEFAULT 0,
+            amount DECIMAL(14,2) DEFAULT 0,
+            template_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_sales_invoice_tax_invoice (invoice_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS payment_schedules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_id BIGINT UNSIGNED NOT NULL,
+            due_date DATE NOT NULL,
+            amount DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'pending',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_payment_schedule_invoice (invoice_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
