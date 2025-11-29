@@ -23,6 +23,8 @@ class TestSchemaSetup extends Migration
         $this->createProductAttributeTables();
         $this->createProductAttributeOptionTables();
         $this->createProductAttributeValueTables();
+        $this->createProductBatchTables();
+        $this->createProductSerialNumberTables();
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
@@ -56,6 +58,7 @@ class TestSchemaSetup extends Migration
             'attributes','attribute_options',
             'products','product_categories','product_category_links','product_variants_v2',
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
+            'product_batches','product_serial_numbers',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -116,6 +119,54 @@ class TestSchemaSetup extends Migration
         $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, variant_id INT NULL, attribute_id INT, option_id INT, value_text TEXT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
+    private function createProductBatchTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_batches (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            warehouse_id BIGINT UNSIGNED NULL,
+            batch_number VARCHAR(120) NOT NULL,
+            manufacture_date DATE NULL,
+            expiry_date DATE NULL,
+            initial_quantity DECIMAL(12,3) DEFAULT 0,
+            current_quantity DECIMAL(12,3) DEFAULT 0,
+            cost_per_unit DECIMAL(14,4) DEFAULT 0,
+            supplier_name VARCHAR(255) NULL,
+            reference_document VARCHAR(160) NULL,
+            status VARCHAR(30) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_product_batch_number (product_id, batch_number),
+            KEY idx_product_batch_expiry (expiry_date),
+            KEY idx_product_batch_product (product_id, variant_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createProductSerialNumberTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_serial_numbers (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NOT NULL,
+            status VARCHAR(30) DEFAULT 'available',
+            warranty_expiry_date DATE NULL,
+            reserved_for_order_id BIGINT UNSIGNED NULL,
+            reserved_at DATETIME NULL,
+            sold_to_order_id BIGINT UNSIGNED NULL,
+            sold_date DATETIME NULL,
+            returned_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_serial_number (serial_number),
+            KEY idx_serial_status_product (status, product_id),
+            KEY idx_serial_reserved (reserved_for_order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
     private function createPriceListTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'custom', description TEXT NULL, apply_to_groups JSON NULL, start_date DATE NULL, end_date DATE NULL, priority INT DEFAULT 0, is_active TINYINT(1) DEFAULT 1, formula TEXT NULL, base_price_list_id INT NULL, auto_update TINYINT(1) DEFAULT 0, rounding_rule VARCHAR(50) DEFAULT 'none', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -148,7 +199,22 @@ class TestSchemaSetup extends Migration
 
     private function createOrderItemTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS order_items (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, order_id BIGINT UNSIGNED NOT NULL, product_id INT NULL, variant_id INT NULL, quantity DECIMAL(14,3) DEFAULT 0, base_price DECIMAL(14,2) DEFAULT 0, final_price DECIMAL(14,2) DEFAULT 0, price_list_id INT NULL, price_list_name VARCHAR(255) NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_id BIGINT UNSIGNED NOT NULL,
+            product_id INT NULL,
+            variant_id INT NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_numbers TEXT NULL,
+            quantity DECIMAL(14,3) DEFAULT 0,
+            base_price DECIMAL(14,2) DEFAULT 0,
+            final_price DECIMAL(14,2) DEFAULT 0,
+            price_list_id INT NULL,
+            price_list_name VARCHAR(255) NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL,
+            deleted_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createOrderPaymentTables(): void
@@ -189,7 +255,22 @@ class TestSchemaSetup extends Migration
 
     private function createInventoryMovementTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_movements (id INT AUTO_INCREMENT PRIMARY KEY, branch_id INT, product_id INT, variant_id INT NULL, type VARCHAR(50), quantity DECIMAL(10,2), reference_type VARCHAR(50) NULL, reference_id INT NULL, notes TEXT NULL, created_by INT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_movements (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            branch_id INT,
+            product_id INT,
+            variant_id INT NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            type VARCHAR(50),
+            quantity DECIMAL(10,2),
+            reference_type VARCHAR(50) NULL,
+            reference_id INT NULL,
+            notes TEXT NULL,
+            created_by INT NULL,
+            created_at TIMESTAMP NULL,
+            updated_at TIMESTAMP NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInventoryAlertTables(): void

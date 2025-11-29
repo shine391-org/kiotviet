@@ -38,7 +38,7 @@ class OrderStatusServiceTest extends CIUnitTestCase
         $movementRepo = new InventoryMovementRepository(null, $this->db);
         $logger = new InventoryMovementLogger($movementRepo);
 
-        $this->service = new OrderStatusService($orders, $transition, $logs, $paymentRepo, $inventoryRepo, $logger);
+        $this->service = new OrderStatusService($orders, $transition, $logs, $paymentRepo, $inventoryRepo, $logger, null, null, null);
     }
 
     /** @test */

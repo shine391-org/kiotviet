@@ -24,6 +24,8 @@ class InventoryMovementRepository
             'branch_id' => $data['branch_id'],
             'product_id' => $data['product_id'],
             'variant_id' => $data['variant_id'] ?? null,
+            'batch_id' => $data['batch_id'] ?? null,
+            'serial_number' => $data['serial_number'] ?? null,
             'type' => $data['type'],
             'quantity' => $data['quantity'],
             'reference_type' => $data['reference_type'] ?? null,

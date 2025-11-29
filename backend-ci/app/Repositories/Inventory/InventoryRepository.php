@@ -60,7 +60,7 @@ class InventoryRepository
     }
 
     /** Upsert stock quantities. Positive delta increases on-hand. */
-    public function adjustStock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty): array
+    public function adjustStock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty, ?int $branchId = null): array
     {
         $now = date('Y-m-d H:i:s');
         $this->db->transStart();
@@ -68,10 +68,14 @@ class InventoryRepository
         $row = $this->stockRow($productId, $variantId, $warehouseId);
         if ($row) {
             // Use atomic SQL expression to avoid race condition
-            $this->db->table('inventory_stock')->where('id', $row['id'])->set('quantity_on_hand', 'quantity_on_hand + ' . $this->db->escape($deltaQty), false)->set([
+            $set = [
                 'last_movement_at' => $now,
                 'updated_at' => $now,
-            ])->update();
+            ];
+            if ($branchId !== null) {
+                $set['branch_id'] = $branchId;
+            }
+            $this->db->table('inventory_stock')->where('id', $row['id'])->set('quantity_on_hand', 'quantity_on_hand + ' . $this->db->escape($deltaQty), false)->set($set)->update();
             // Re-fetch to get the updated value
             $row = $this->db->table('inventory_stock')->where('id', $row['id'])->get()->getRowArray();
 
@@ -79,6 +83,7 @@ class InventoryRepository
             return $row;
         }
         $payload = [
+            'branch_id' => $branchId,
             'product_id' => $productId,
             'variant_id' => $variantId,
             'warehouse_id' => $warehouseId,
@@ -98,7 +103,7 @@ class InventoryRepository
      * Adjust stock with pessimistic lock.
      * @throws \RuntimeException
      */
-    public function adjustStockWithLock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty): array
+    public function adjustStockWithLock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty, ?int $branchId = null): array
     {
         $this->db->transStart();
 
@@ -125,6 +130,7 @@ class InventoryRepository
         if (!$row) {
              // If row doesn't exist, create it
             $payload = [
+                'branch_id' => $branchId,
                 'product_id' => $productId,
                 'variant_id' => $variantId,
                 'warehouse_id' => $warehouseId,
@@ -146,10 +152,14 @@ class InventoryRepository
             throw new \RuntimeException('Insufficient stock for adjustment');
         }
 
-        $this->db->table('inventory_stock')->where('id', $row['id'])->update([
+        $update = [
             'quantity_on_hand' => $newQty,
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($branchId !== null && empty($row['branch_id'])) {
+            $update['branch_id'] = $branchId;
+        }
+        $this->db->table('inventory_stock')->where('id', $row['id'])->update($update);
         
         $row['quantity_on_hand'] = $newQty;
         $this->db->transComplete();

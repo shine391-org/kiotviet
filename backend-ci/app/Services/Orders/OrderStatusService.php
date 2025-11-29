@@ -9,6 +9,8 @@ use App\Models\CashTransactionModel;
 use App\Services\CashTransactions\CashTransactionService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Inventory\InventoryService;
+use App\Services\Products\ProductBatchService;
+use App\Services\Products\ProductSerialNumberService;
 use App\Services\Webhooks\WebhookDispatcher;
 use App\Validators\CashTransactionReferenceValidator;
 use InvalidArgumentException;
@@ -29,6 +31,8 @@ class OrderStatusService
     protected OrderPaymentRepository $orderPayments;
     protected \App\Repositories\Inventory\InventoryRepository $inventoryRepo;
     protected InventoryMovementLogger $movementLogger;
+    protected ProductBatchService $batchService;
+    protected ProductSerialNumberService $serialService;
     protected ?WebhookDispatcher $webhooks;
 
     public function __construct(
@@ -38,6 +42,8 @@ class OrderStatusService
         ?OrderPaymentRepository $orderPayments = null,
         ?\App\Repositories\Inventory\InventoryRepository $inventoryRepo = null,
         ?InventoryMovementLogger $movementLogger = null,
+        ?ProductBatchService $batchService = null,
+        ?ProductSerialNumberService $serialService = null,
         ?WebhookDispatcher $webhooks = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
@@ -46,6 +52,8 @@ class OrderStatusService
         $this->orderPayments = $orderPayments ?? new OrderPaymentRepository();
         $this->inventoryRepo = $inventoryRepo ?? new \App\Repositories\Inventory\InventoryRepository();
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
+        $this->batchService = $batchService ?? new ProductBatchService();
+        $this->serialService = $serialService ?? new ProductSerialNumberService();
         $this->webhooks = $webhooks;
     }
 
@@ -128,6 +136,7 @@ class OrderStatusService
      */
     protected function handleCompletedStatus(array $order, ?int $userId): void
     {
+        $this->markSerialsSold($order);
         $db = \Config\Database::connect();
         $cashService = new CashTransactionService(null, null, new CashTransactionReferenceValidator($db));
         $creatorId = $userId ?? ($order['created_by'] ?? 1);
@@ -194,29 +203,54 @@ class OrderStatusService
         $branchId = $order['branch_id'] ?? null;
         $productId = $item['product_id'] ?? null;
         $variantId = $item['variant_id'] ?? null;
+        $batchId = isset($item['batch_id']) ? (int) $item['batch_id'] : null;
+        $serials = $this->serialsFromItem($item);
+        $serialString = $serials ? implode(',', $serials) : null;
         if (! $branchId || ! $productId) {
             return;
         }
 
         try {
-            $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta);
+            if ($batchId) {
+                $this->batchService->adjustQuantity($batchId, [
+                    'quantity_delta' => $delta,
+                    'reference_type' => 'order',
+                    'reference_id' => (int) $order['id'],
+                    'reason' => $notes,
+                    'branch_id' => (int) $branchId,
+                    'warehouse_id' => (int) $branchId,
+                    'serial_number' => $serialString,
+                    'movement_type' => $type,
+                ]);
+            } else {
+                $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta, (int) $branchId);
+                $this->movementLogger->log(
+                    branchId: (int) $branchId,
+                    productId: (int) $productId,
+                    variantId: $variantId ? (int) $variantId : null,
+                    batchId: null,
+                    serialNumber: $serialString,
+                    type: $type,
+                    quantity: $delta,
+                    referenceType: 'order',
+                    referenceId: (int) $order['id'],
+                    notes: $notes,
+                    createdBy: $userId
+                );
+            }
         } catch (\Throwable $e) {
             // If locking fails or stock is insufficient, rethrow.
             throw new RuntimeException('Failed to adjust inventory: ' . $e->getMessage(), 0, $e);
         }
-        
-        // Log movement
-        $this->movementLogger->log(
-            branchId: (int) $branchId,
-            productId: (int) $productId,
-            variantId: $variantId ? (int) $variantId : null,
-            type: $type,
-            quantity: $delta,
-            referenceType: 'order',
-            referenceId: (int) $order['id'],
-            notes: $notes,
-            createdBy: $userId
-        );
+
+        if ($delta < 0 && $serials) {
+            $this->serialService->reserve([
+                'serial_numbers' => $serials,
+                'order_id' => (int) $order['id'],
+            ]);
+        } elseif ($delta > 0 && $serials) {
+            $this->serialService->release($serials);
+        }
 
         $this->emitInventoryIfNeeded((int) $branchId, (int) $productId, $variantId ? (int) $variantId : null);
     }
@@ -287,6 +321,43 @@ class OrderStatusService
             $this->webhooks->dispatch($eventName, $order);
         } catch (\Throwable $e) {
             log_message('error', 'Webhook dispatch failed: ' . $e->getMessage());
+        }
+    }
+
+    private function serialsFromItem(array $item): array
+    {
+        $serials = $item['serial_numbers'] ?? [];
+        if (is_string($serials)) {
+            $decoded = json_decode($serials, true);
+            if (is_array($decoded)) {
+                $serials = $decoded;
+            } else {
+                $serials = array_filter(array_map('trim', explode(',', $serials)));
+            }
+        }
+        if (! is_array($serials)) {
+            return [];
+        }
+        $serials = array_map(static fn ($s) => is_numeric($s) ? (string) $s : (is_string($s) ? trim($s) : ''), $serials);
+        $serials = array_filter($serials, static fn ($s) => $s !== '');
+        return array_values(array_unique($serials));
+    }
+
+    private function markSerialsSold(array $order): void
+    {
+        $items = $order['items'] ?? [];
+        if (empty($items)) {
+            return;
+        }
+        foreach ($items as $item) {
+            $serials = $this->serialsFromItem($item);
+            if (empty($serials)) {
+                continue;
+            }
+            $this->serialService->sell([
+                'serial_numbers' => $serials,
+                'order_id' => (int) ($order['id'] ?? 0),
+            ]);
         }
     }
 }

@@ -50,6 +50,17 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('products/media/library', 'Api\\ProductMediaController::library');
     $routes->get('products/media/by-date', 'Api\\ProductMediaController::byDate');
     $routes->get('products/media/search-sku', 'Api\\ProductMediaController::searchSku');
+    $routes->get('product-batches', 'Api\\ProductBatchesController::index');
+    $routes->get('product-batches/expiring', 'Api\\ProductBatchesController::expiring');
+    $routes->get('product-batches/(:num)', 'Api\\ProductBatchesController::show/$1');
+    $routes->post('product-batches', 'Api\\ProductBatchesController::create');
+    $routes->put('product-batches/(:num)', 'Api\\ProductBatchesController::update/$1');
+    $routes->post('product-batches/(:num)/adjust-quantity', 'Api\\ProductBatchesController::adjust/$1');
+    $routes->get('product-serials', 'Api\\ProductSerialsController::index');
+    $routes->post('product-serials', 'Api\\ProductSerialsController::create');
+    $routes->post('product-serials/reserve', 'Api\\ProductSerialsController::reserve');
+    $routes->post('product-serials/sell', 'Api\\ProductSerialsController::sell');
+    $routes->post('product-serials/return', 'Api\\ProductSerialsController::markReturned');
 
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('product-categories/(:num)', 'Api\\ProductCategoriesController::show/$1');

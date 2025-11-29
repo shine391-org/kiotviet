@@ -63,7 +63,7 @@ trait DevDatabaseTrait
             'price_list_items','price_lists',
             'product_attribute_values','product_attribute_options','product_attributes',
             'product_images','product_category_links','product_categories',
-            'product_variants_v2','products',
+            'product_variants_v2','product_batches','product_serial_numbers','products',
             'customers','branches','warehouses','users','factories',
             'inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
             'webhook_events','webhook_subscriptions',

@@ -11,7 +11,7 @@ class OrderItemModel extends Model
     protected $primaryKey = 'id';
     protected $returnType = 'array';
     protected $allowedFields = [
-        'order_id','product_id','variant_id','quantity',
+        'order_id','product_id','variant_id','batch_id','serial_numbers','quantity',
         'base_price','final_price','price_list_id','price_list_name',
         'created_at','updated_at',
     ];

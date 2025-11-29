@@ -6,6 +6,8 @@ use App\Repositories\Attributes\AttributeRepository;
 use App\Repositories\Branches\BranchRepository;
 use App\Repositories\ProductMedia\ProductMediaRepository;
 use App\Repositories\Products\ProductRepository;
+use App\Repositories\Products\ProductBatchRepository;
+use App\Repositories\Products\ProductSerialNumberRepository;
 use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
 use App\Repositories\PaymentMethods\PaymentMethodRepository;
@@ -22,6 +24,8 @@ use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
 use App\Services\Products\ProductExportService;
+use App\Services\Products\ProductBatchService;
+use App\Services\Products\ProductSerialNumberService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
 use App\Services\PriceLists\PriceCalculatorService;
@@ -44,6 +48,8 @@ use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
+use App\Validators\ProductBatchValidator;
+use App\Validators\ProductSerialValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
@@ -101,6 +107,65 @@ class Services extends BaseService
             static::productRepository(false),
             static::productValidator(false),
             static::priceCalculatorService(false)
+        );
+    }
+
+    public static function productBatchRepository(bool $getShared = true): ProductBatchRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productBatchRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ProductBatchRepository(null, $db);
+    }
+
+    public static function productBatchValidator(bool $getShared = true): ProductBatchValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productBatchValidator');
+        }
+        return new ProductBatchValidator();
+    }
+
+    public static function productBatchService(bool $getShared = true): ProductBatchService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productBatchService');
+        }
+        return new ProductBatchService(
+            static::productBatchRepository(false),
+            static::productBatchValidator(false),
+            static::inventoryRepository(false),
+            static::inventoryMovementLogger(false)
+        );
+    }
+
+    public static function productSerialNumberRepository(bool $getShared = true): ProductSerialNumberRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productSerialNumberRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ProductSerialNumberRepository(null, $db);
+    }
+
+    public static function productSerialValidator(bool $getShared = true): ProductSerialValidator
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productSerialValidator');
+        }
+        return new ProductSerialValidator();
+    }
+
+    public static function productSerialNumberService(bool $getShared = true): ProductSerialNumberService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('productSerialNumberService');
+        }
+        return new ProductSerialNumberService(
+            static::productSerialNumberRepository(false),
+            static::productSerialValidator(false),
+            static::productBatchRepository(false)
         );
     }
 
@@ -368,7 +433,12 @@ class Services extends BaseService
             static::priceCalculatorService(false),
             null,
             null,
-            static::webhookDispatcher(false)
+            static::webhookDispatcher(false),
+            null,
+            static::inventoryMovementLogger(false),
+            static::inventoryRepository(false),
+            static::productBatchService(false),
+            static::productSerialNumberService(false)
         );
     }
 
@@ -483,6 +553,8 @@ class Services extends BaseService
             static::orderPaymentRepository(false),
             static::inventoryRepository(false),
             static::inventoryMovementLogger(false),
+            static::productBatchService(false),
+            static::productSerialNumberService(false),
             static::webhookDispatcher(false)
         );
     }

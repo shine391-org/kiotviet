@@ -5,6 +5,10 @@ namespace App\Services\Orders;
 use App\Repositories\Orders\OrderRepository;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Services\Orders\OrderPaymentService;
+use App\Services\Inventory\InventoryMovementLogger;
+use App\Repositories\Inventory\InventoryRepository;
+use App\Services\Products\ProductBatchService;
+use App\Services\Products\ProductSerialNumberService;
 use App\Validators\OrderValidator;
 use App\Validators\OrderCreateValidator;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -21,6 +25,10 @@ class OrderService
     protected OrderNumberGenerator $numberGen;
     protected ?WebhookDispatcher $webhooks;
     protected OrderPaymentService $paymentService;
+    protected InventoryMovementLogger $movementLogger;
+    protected InventoryRepository $inventoryRepo;
+    protected ProductBatchService $batchService;
+    protected ProductSerialNumberService $serialService;
 
     public function __construct(
         ?OrderRepository $orders = null,
@@ -29,7 +37,11 @@ class OrderService
         ?OrderCreateValidator $createValidator = null,
         ?OrderNumberGenerator $numberGen = null,
         ?WebhookDispatcher $webhooks = null,
-        ?OrderPaymentService $paymentService = null
+        ?OrderPaymentService $paymentService = null,
+        ?InventoryMovementLogger $movementLogger = null,
+        ?InventoryRepository $inventoryRepo = null,
+        ?ProductBatchService $batchService = null,
+        ?ProductSerialNumberService $serialService = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
         $this->validator = $validator ?? new OrderValidator();
@@ -38,6 +50,10 @@ class OrderService
         $this->numberGen = $numberGen ?? new OrderNumberGenerator();
         $this->webhooks = $webhooks;
         $this->paymentService = $paymentService ?? new OrderPaymentService();
+        $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
+        $this->inventoryRepo = $inventoryRepo ?? new InventoryRepository();
+        $this->batchService = $batchService ?? new ProductBatchService();
+        $this->serialService = $serialService ?? new ProductSerialNumberService();
     }
 
     /** Preview order totals with price lists applied. @agent-use: POST /api/orders/calculate-preview */
@@ -49,12 +65,14 @@ class OrderService
         $items = [];
         $subtotal = 0; $total = 0; $firstPriceListId = null; $firstPriceListName = null;
         foreach ($validated['items'] as $item) {
-            $this->assertStockAvailable($item['product_id'], $item['variant_id'], $item['quantity']);
+            $this->assertStockAvailable($item);
             $calc = $this->pricing->getProductPrice($item['product_id'], $item['variant_id'], $groupId, $item['quantity'], $validated['order_date']);
             $items[] = [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],
                 'quantity' => $item['quantity'],
+                'batch_id' => $item['batch_id'] ?? null,
+                'serial_numbers' => $item['serial_numbers'] ?? [],
                 'base_price' => $calc['base_price'],
                 'final_price' => $calc['final_price'],
                 'line_total' => $calc['line_total'],
@@ -131,6 +149,8 @@ class OrderService
             $itemRows[] = [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],
+                'batch_id' => $item['batch_id'] ?? null,
+                'serial_numbers' => ! empty($item['serial_numbers']) ? json_encode($item['serial_numbers']) : null,
                 'quantity' => $item['quantity'],
                 'base_price' => $item['base_price'],
                 'final_price' => $item['final_price'],
@@ -177,8 +197,6 @@ class OrderService
         if ($branchId <= 0 || empty($order['items'])) {
             return;
         }
-        $db = Database::connect();
-        $now = date('Y-m-d H:i:s');
         foreach ($order['items'] as $item) {
             $productId = (int) ($item['product_id'] ?? 0);
             $variantId = $item['variant_id'] ?? null;
@@ -186,41 +204,43 @@ class OrderService
             if ($productId <= 0 || $qty <= 0) {
                 continue;
             }
+            $serials = $this->serialsFromItem($item);
+            $batchId = isset($item['batch_id']) ? (int) $item['batch_id'] : null;
 
-            // Update stock using null-safe comparison to handle NULL variant_id
-            $updated = $db->query(
-                "UPDATE inventory_stock 
-                 SET quantity_on_hand = quantity_on_hand - ?
-                 WHERE branch_id = ? AND product_id = ? AND (variant_id <=> ?)
-                 LIMIT 1",
-                [$qty, $branchId, $productId, $variantId]
-            );
-
-            // Fallback: try null variant when variant-specific row not found
-            if ($db->affectedRows() === 0 && $variantId !== null) {
-                $db->query(
-                    "UPDATE inventory_stock 
-                     SET quantity_on_hand = quantity_on_hand - ?
-                     WHERE branch_id = ? AND product_id = ? AND variant_id IS NULL
-                     LIMIT 1",
-                    [$qty, $branchId, $productId]
+            if ($batchId) {
+                $this->batchService->adjustQuantity($batchId, [
+                    'quantity_delta' => -$qty,
+                    'reference_type' => 'order',
+                    'reference_id' => $order['id'] ?? null,
+                    'reason' => 'POS auto-complete deduction',
+                    'branch_id' => $branchId,
+                    'warehouse_id' => $branchId,
+                    'serial_number' => $serials ? implode(',', $serials) : null,
+                    'movement_type' => 'sale',
+                ]);
+            } else {
+                $this->inventoryRepo->adjustStockWithLock($productId, $variantId ? (int) $variantId : null, $branchId, -$qty, $branchId);
+                $this->movementLogger->log(
+                    branchId: $branchId,
+                    productId: $productId,
+                    variantId: $variantId ? (int) $variantId : null,
+                    batchId: null,
+                    serialNumber: $serials ? implode(',', $serials) : null,
+                    type: 'sale',
+                    quantity: -$qty,
+                    referenceType: 'order',
+                    referenceId: $order['id'] ?? null,
+                    notes: 'POS auto-complete deduction',
+                    createdBy: $order['created_by'] ?? null
                 );
             }
 
-            // Log movement
-            $db->table('inventory_movements')->insert([
-                'branch_id' => $branchId,
-                'product_id' => $productId,
-                'variant_id' => $variantId,
-                'type' => 'sale',
-                'quantity' => -$qty,
-                'reference_type' => 'order',
-                'reference_id' => $order['id'] ?? null,
-                'notes' => 'POS auto-complete deduction',
-                'created_by' => $order['created_by'] ?? null,
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            if (! empty($serials)) {
+                $this->serialService->sell([
+                    'serial_numbers' => $serials,
+                    'order_id' => (int) ($order['id'] ?? 0),
+                ]);
+            }
         }
     }
 
@@ -238,8 +258,38 @@ class OrderService
         return $row['customer_group_id'] ?? null;
     }
 
-    private function assertStockAvailable(int $productId, ?int $variantId, float $qty): void
+    private function assertStockAvailable(array $item): void
     {
+        $productId = (int) ($item['product_id'] ?? 0);
+        $variantId = $item['variant_id'] ?? null;
+        $qty = (float) ($item['quantity'] ?? 0);
+        $serials = $this->serialsFromItem($item);
+        $batchId = isset($item['batch_id']) ? (int) $item['batch_id'] : null;
+
+        if ($batchId) {
+            $batch = $this->batchService->show($batchId)['data'] ?? null;
+            if (! $batch) {
+                throw new RuntimeException('Batch not found');
+            }
+            if ((int) $batch['product_id'] !== $productId) {
+                throw new RuntimeException('Batch does not belong to product');
+            }
+            if ($variantId && isset($batch['variant_id']) && (int) $batch['variant_id'] !== (int) $variantId) {
+                throw new RuntimeException('Batch does not belong to variant');
+            }
+            if ((float) ($batch['current_quantity'] ?? 0) < $qty) {
+                throw new RuntimeException('Insufficient batch quantity');
+            }
+        }
+
+        foreach ($serials as $serial) {
+            $this->serialService->ensureAvailableForOrder($serial, $item['order_id'] ?? null);
+        }
+
+        if ($productId <= 0 || $qty <= 0) {
+            return;
+        }
+
         $db = Database::connect();
         if (! $db->tableExists('inventory_stock')) { return; }
         $row = $db->table('inventory_stock')
@@ -252,6 +302,25 @@ class OrderService
         if ($available < $qty) {
             throw new \RuntimeException('Insufficient stock for product');
         }
+    }
+
+    private function serialsFromItem(array $item): array
+    {
+        $serials = $item['serial_numbers'] ?? [];
+        if (is_string($serials)) {
+            $decoded = json_decode($serials, true);
+            if (is_array($decoded)) {
+                $serials = $decoded;
+            } else {
+                $serials = array_filter(array_map('trim', explode(',', $serials)));
+            }
+        }
+        if (! is_array($serials)) {
+            return [];
+        }
+        $serials = array_map(static fn ($s) => is_numeric($s) ? (string) $s : (is_string($s) ? trim($s) : ''), $serials);
+        $serials = array_filter($serials, static fn ($s) => $s !== '');
+        return array_values(array_unique($serials));
     }
 
     private function emit(string $event, array $payload): void

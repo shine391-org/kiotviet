@@ -29,3 +29,8 @@ Bạn là AI backend engineer phụ trách đưa batch/serial/expiry vào LanoCR
 - Migrations + repo/service/controller hoàn chỉnh, tuân thủ clean architecture.
 - Batch/serial gắn được vào order/delivery line; inventory movements ghi batch/serial.
 - Unit + integration tests pass; cập nhật docs/erpnext/README.md nếu cần.
+
+## Status
+- [x] Migrations + services + controllers
+- [x] Unit tests
+- [x] Integration tests

@@ -39,6 +39,8 @@ class InventoryMovementLoggerTest extends CIUnitTestCase
             branchId: 1,
             productId: 10,
             variantId: null,
+            batchId: null,
+            serialNumber: 'SER-1',
             type: 'sale',
             quantity: -2,
             referenceType: 'order',
@@ -51,5 +53,6 @@ class InventoryMovementLoggerTest extends CIUnitTestCase
         $stored = $this->db->table('inventory_movements')->where('id', $row['id'])->get()->getRowArray();
         $this->assertEquals(-2, (float) $stored['quantity']);
         $this->assertEquals('order', $stored['reference_type']);
+        $this->assertEquals('SER-1', $stored['serial_number']);
     }
 }

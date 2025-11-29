@@ -58,6 +58,8 @@ class InventoryValidator
             'reference_code'=> 'permit_empty|string|max_length[50]',
             'created_by'    => 'permit_empty|integer',
             'valuation_method' => 'permit_empty|in_list[FIFO,LIFO,AVERAGE]',
+            'batch_id'      => 'permit_empty|integer|greater_than_equal_to[0]',
+            'serial_number' => 'permit_empty|string|max_length[160]',
         ];
         $data = $this->run($input, $rules);
 
