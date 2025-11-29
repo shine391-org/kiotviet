@@ -21,3 +21,8 @@ Bạn là AI backend engineer phụ trách thêm quality inspection tương tự
 - Inspection flow chạy được, đánh giá tham số pass/fail, log trạng thái.
 - Có thể gắn inspection vào inbound/outbound nếu module yêu cầu.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + validators/repositories/services/controllers
+- [x] Unit tests (QualityInspectionServiceTest, QualityParameterRepositoryTest)
+- [x] Integration tests (QualityInspectionsApiTest)

@@ -70,6 +70,7 @@ trait DevDatabaseTrait
             'approval_actions','approvals','order_approval_rules',
             'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers','reorder_levels','purchase_suggestions',
             'pricing_rules','customer_price_lists','project_price_lists','price_history',
+            'quality_inspection_items','quality_inspections','quality_parameters',
             'cash_transactions','payment_methods','purchase_orders'
         ];
         $existing = array_flip($this->db->listTables());

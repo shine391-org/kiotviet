@@ -47,6 +47,7 @@ class TestSchemaSetup extends Migration
         $this->createInventoryAlertTables();
         $this->createOrderStatusLogTables();
         $this->createWebhookTables();
+        $this->createQualityTables();
         $this->createCashTransactionTables();
     }
 
@@ -74,6 +75,7 @@ class TestSchemaSetup extends Migration
             'invoices','invoice_orders',
             'inventory_stock','inventory_movements','inventory_alerts',
             'webhook_subscriptions','webhook_events',
+            'quality_inspection_items','quality_inspections','quality_parameters',
             'cash_transactions'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
@@ -85,7 +87,29 @@ class TestSchemaSetup extends Migration
 
     private function createBaseTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) NULL, email VARCHAR(100) NULL, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS users (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            username VARCHAR(100) NULL UNIQUE,
+            email VARCHAR(255) NULL UNIQUE,
+            password VARCHAR(255) NULL,
+            full_name VARCHAR(255) NULL,
+            phone VARCHAR(20) NULL,
+            avatar VARCHAR(255) NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            status ENUM('active','inactive','suspended') DEFAULT 'active',
+            last_login_at DATETIME NULL,
+            last_login_ip VARCHAR(45) NULL,
+            remember_token VARCHAR(100) NULL,
+            two_factor_secret VARCHAR(255) NULL,
+            two_factor_enabled TINYINT(1) DEFAULT 0,
+            password_changed_at DATETIME NULL,
+            failed_login_attempts INT DEFAULT 0,
+            account_locked_until DATETIME NULL,
+            timezone VARCHAR(50) DEFAULT 'Asia/Ho_Chi_Minh',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS branches (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(20) NULL, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS warehouses (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(50) NULL, branch_id INT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS customers (id INT AUTO_INCREMENT PRIMARY KEY, organization_id INT UNSIGNED NOT NULL DEFAULT 1, customer_group_id INT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, phone VARCHAR(50) NULL, phone2 VARCHAR(50) NULL, gender ENUM('MALE','FEMALE','OTHER') NULL, facebook VARCHAR(255) NULL, customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL', company_name VARCHAR(255) NULL, tax_code VARCHAR(20) NULL, buyer_name VARCHAR(255) NULL, invoice_company_name VARCHAR(255) NULL, invoice_address VARCHAR(500) NULL, invoice_province VARCHAR(120) NULL, invoice_district VARCHAR(120) NULL, invoice_ward VARCHAR(120) NULL, invoice_email VARCHAR(255) NULL, invoice_phone VARCHAR(50) NULL, cccd_cmnd VARCHAR(50) NULL, id_number VARCHAR(50) NULL, bank_account VARCHAR(50) NULL, bank_name VARCHAR(255) NULL, notes TEXT NULL, code VARCHAR(50) NULL, address VARCHAR(500) NULL, province VARCHAR(120) NULL, district VARCHAR(120) NULL, ward VARCHAR(120) NULL, birthday DATE NULL, created_by INT NULL, status VARCHAR(20) DEFAULT 'active', last_transaction_at DATETIME NULL, current_debt DECIMAL(15,2) DEFAULT 0, total_sales DECIMAL(15,2) DEFAULT 0, total_sales_net DECIMAL(15,2) DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL, UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code), KEY idx_customers_tax_code (tax_code)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -371,6 +395,59 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             UNIQUE KEY uq_purchase_suggestion_day (product_id, variant_id, branch_id, generated_for_date),
             KEY idx_purchase_suggestion_status (branch_id, status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    private function createQualityTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS quality_parameters (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            uom VARCHAR(50) NULL,
+            min_value DECIMAL(14,4) NULL,
+            max_value DECIMAL(14,4) NULL,
+            specification VARCHAR(255) NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_quality_parameter_name (name),
+            KEY idx_quality_parameter_active (is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS quality_inspections (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            reference_type VARCHAR(80) NOT NULL,
+            reference_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(20) DEFAULT 'draft',
+            result VARCHAR(20) DEFAULT 'pending',
+            inspected_by BIGINT UNSIGNED NULL,
+            inspected_at DATETIME NULL,
+            submitted_at DATETIME NULL,
+            approved_by BIGINT UNSIGNED NULL,
+            approved_at DATETIME NULL,
+            rejected_by BIGINT UNSIGNED NULL,
+            rejected_at DATETIME NULL,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_quality_reference (reference_type, reference_id),
+            KEY idx_quality_status (status),
+            KEY idx_quality_result (result)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS quality_inspection_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            inspection_id BIGINT UNSIGNED NOT NULL,
+            parameter_id BIGINT UNSIGNED NOT NULL,
+            parameter_name VARCHAR(150) NOT NULL,
+            uom VARCHAR(50) NULL,
+            value_numeric DECIMAL(14,4) NULL,
+            value_text VARCHAR(255) NULL,
+            pass_flag TINYINT(1) NULL,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_quality_item_inspection (inspection_id),
+            KEY idx_quality_item_parameter (parameter_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createPriceListTables(): void

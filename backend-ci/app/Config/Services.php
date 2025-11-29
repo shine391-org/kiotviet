@@ -34,6 +34,8 @@ use App\Repositories\Inventory\StockBinRepository;
 use App\Repositories\Inventory\StockReconciliationRepository;
 use App\Repositories\Inventory\ReorderLevelRepository;
 use App\Repositories\Inventory\PurchaseSuggestionRepository;
+use App\Repositories\Quality\QualityInspectionRepository;
+use App\Repositories\Quality\QualityParameterRepository;
 use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
@@ -80,6 +82,8 @@ use App\Validators\StockLedgerValidator;
 use App\Validators\StockReconciliationValidator;
 use App\Validators\ReorderLevelValidator;
 use App\Validators\PurchaseSuggestionValidator;
+use App\Validators\QualityInspectionValidator;
+use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
@@ -94,6 +98,7 @@ use App\Validators\InventoryValidator;
 use App\Services\Approvals\ApprovalRuleService;
 use App\Services\Approvals\ApprovalService;
 use App\Services\Approvals\ApprovalHook;
+use App\Services\Quality\QualityInspectionService;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -937,6 +942,43 @@ class Services extends BaseService
     {
         if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('inventoryMovementLogger'); }
         return new InventoryMovementLogger(static::inventoryMovementRepository(false));
+    }
+
+    public static function qualityParameterValidator(bool $getShared = true): QualityParameterValidator
+    {
+        return $getShared ? static::getSharedInstance('qualityParameterValidator') : new QualityParameterValidator();
+    }
+
+    public static function qualityInspectionValidator(bool $getShared = true): QualityInspectionValidator
+    {
+        return $getShared ? static::getSharedInstance('qualityInspectionValidator') : new QualityInspectionValidator();
+    }
+
+    public static function qualityParameterRepository(bool $getShared = true): QualityParameterRepository
+    {
+        if ($getShared) { return static::getSharedInstance('qualityParameterRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new QualityParameterRepository(null, $db);
+    }
+
+    public static function qualityInspectionRepository(bool $getShared = true): QualityInspectionRepository
+    {
+        if ($getShared) { return static::getSharedInstance('qualityInspectionRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new QualityInspectionRepository(null, null, $db);
+    }
+
+    public static function qualityInspectionService(bool $getShared = true): QualityInspectionService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('qualityInspectionService'); }
+        $inspectionRepo = static::qualityInspectionRepository(false);
+        $parameterRepo = new QualityParameterRepository(null, $inspectionRepo->db());
+        return new QualityInspectionService(
+            $inspectionRepo,
+            $parameterRepo,
+            static::qualityInspectionValidator(false),
+            static::qualityParameterValidator(false)
+        );
     }
 
     public static function webhookSubscriptionRepository(bool $getShared = true): WebhookSubscriptionRepository

@@ -93,6 +93,16 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-suggestions', 'Api\\ReorderPlanningController::listSuggestions');
     $routes->post('purchase-suggestions/(:num)/ack', 'Api\\ReorderPlanningController::acknowledge/$1');
     $routes->post('purchase-suggestions/(:num)/convert', 'Api\\ReorderPlanningController::convert/$1');
+    $routes->get('quality-parameters', 'Api\\QualityInspectionsController::parameters');
+    $routes->post('quality-parameters', 'Api\\QualityInspectionsController::createParameter');
+    $routes->put('quality-parameters/(:num)', 'Api\\QualityInspectionsController::updateParameter/$1');
+    $routes->delete('quality-parameters/(:num)', 'Api\\QualityInspectionsController::deleteParameter/$1');
+    $routes->get('quality-inspections', 'Api\\QualityInspectionsController::index');
+    $routes->get('quality-inspections/(:num)', 'Api\\QualityInspectionsController::show/$1');
+    $routes->post('quality-inspections', 'Api\\QualityInspectionsController::create');
+    $routes->post('quality-inspections/(:num)/submit', 'Api\\QualityInspectionsController::submit/$1');
+    $routes->post('quality-inspections/(:num)/approve', 'Api\\QualityInspectionsController::approve/$1');
+    $routes->post('quality-inspections/(:num)/reject', 'Api\\QualityInspectionsController::reject/$1');
 
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('product-categories/(:num)', 'Api\\ProductCategoriesController::show/$1');
