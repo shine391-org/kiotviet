@@ -243,6 +243,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('chart-of-accounts/(:num)', 'Api\\ChartOfAccountsController::show/$1');
     $routes->get('chart-of-accounts/(:num)/children', 'Api\\ChartOfAccountsController::children/$1');
     $routes->post('chart-of-accounts', 'Api\\ChartOfAccountsController::create');
+    $routes->get('tax-templates/(:num)', 'Api\\TaxTemplatesController::show/$1');
     $routes->post('gl/journal', 'Api\\GLEntriesController::postJournal');
     $routes->get('gl', 'Api\\GLEntriesController::index');
     $routes->post('sales-invoices/preview', 'Api\\SalesInvoicesController::preview');
@@ -261,6 +262,10 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('payment-entries/(:num)/cancel', 'Api\\PaymentEntriesController::cancel/$1');
     $routes->post('bank-statements/import', 'Api\\BankReconciliationsController::import');
     $routes->post('bank-reconciliations/(:num)/match', 'Api\\BankReconciliationsController::match/$1');
+    $routes->post('withholding-rules', 'Api\\WithholdingRulesController::create');
+    $routes->get('withholding-rules/(:num)/apply', 'Api\\WithholdingRulesController::apply/$1');
+    $routes->post('credit-limits', 'Api\\CreditLimitsController::upsert');
+    $routes->post('credit-check', 'Api\\CreditLimitsController::check');
     $routes->post('support-tickets', 'Api\\SupportTicketsController::create');
     $routes->put('support-tickets/(:num)', 'Api\\SupportTicketsController::update/$1');
     $routes->get('support-tickets/(:num)', 'Api\\SupportTicketsController::show/$1');

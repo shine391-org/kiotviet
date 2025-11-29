@@ -94,6 +94,7 @@ class TestSchemaSetup extends Migration
             'bank_reconciliation_logs','bank_reconciliations','bank_statements','payment_entry_allocations',
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
             'sales_invoice_taxes','sales_invoice_items','sales_invoices','payment_schedules',
+            'withholding_rules','credit_limits','tax_template_items',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
             'returns','return_items',
             'invoices','invoice_orders',
@@ -989,6 +990,37 @@ class TestSchemaSetup extends Migration
             message TEXT NULL,
             created_at DATETIME NULL,
             KEY idx_bank_reco_log (bank_reconciliation_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS tax_template_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            template_id BIGINT UNSIGNED NOT NULL,
+            tax_name VARCHAR(150) NOT NULL,
+            rate_percent DECIMAL(8,3) DEFAULT 0,
+            charge_type VARCHAR(30) DEFAULT 'on_net_total',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_tax_template_items (template_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS withholding_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            rate_percent DECIMAL(8,3) DEFAULT 0,
+            apply_threshold DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS credit_limits (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            limit_amount DECIMAL(14,2) DEFAULT 0,
+            on_hold TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_credit_limit_customer (customer_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

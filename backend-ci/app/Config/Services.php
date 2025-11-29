@@ -35,6 +35,9 @@ use App\Repositories\Accounting\SalesInvoiceRepository;
 use App\Repositories\Accounting\PaymentEntryRepository as AccountingPaymentEntryRepository;
 use App\Repositories\Accounting\BankStatementRepository;
 use App\Repositories\Accounting\BankReconciliationRepository;
+use App\Repositories\Accounting\WithholdingRuleRepository;
+use App\Repositories\Accounting\CreditLimitRepository;
+use App\Repositories\Taxes\TaxTemplateItemRepository;
 use App\Repositories\Support\SupportTicketRepository;
 use App\Repositories\Support\CommunicationRepository;
 use App\Repositories\Support\TicketEventRepository;
@@ -98,6 +101,9 @@ use App\Services\Accounting\PurchaseInvoiceService;
 use App\Services\Accounting\SalesInvoiceService;
 use App\Services\Accounting\PaymentEntryService as AccountingPaymentEntryService;
 use App\Services\Accounting\BankReconciliationService;
+use App\Services\Accounting\WithholdingService;
+use App\Services\Accounting\CreditControlService;
+use App\Services\Taxes\TaxTemplateService;
 use App\Services\Support\SupportTicketService;
 use App\Services\Support\CommunicationService;
 use App\Services\Campaigns\CampaignService;
@@ -162,6 +168,8 @@ use App\Validators\GLEntryValidator;
 use App\Validators\PurchaseInvoiceValidator;
 use App\Validators\SalesInvoiceValidator;
 use App\Validators\BankReconciliationValidator;
+use App\Validators\WithholdingValidator;
+use App\Validators\CreditControlValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
@@ -1400,9 +1408,40 @@ class Services extends BaseService
         return new BankReconciliationRepository(null, null, $db);
     }
 
+    public static function withholdingRuleRepository(bool $getShared = true): WithholdingRuleRepository
+    {
+        if ($getShared) { return static::getSharedInstance('withholdingRuleRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new WithholdingRuleRepository(null, $db);
+    }
+
+    public static function creditLimitRepository(bool $getShared = true): CreditLimitRepository
+    {
+        if ($getShared) { return static::getSharedInstance('creditLimitRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CreditLimitRepository(null, $db);
+    }
+
+    public static function taxTemplateItemRepository(bool $getShared = true): TaxTemplateItemRepository
+    {
+        if ($getShared) { return static::getSharedInstance('taxTemplateItemRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TaxTemplateItemRepository(null, $db);
+    }
+
     public static function bankReconciliationValidator(bool $getShared = true): BankReconciliationValidator
     {
         return $getShared ? static::getSharedInstance('bankReconciliationValidator') : new BankReconciliationValidator();
+    }
+
+    public static function withholdingValidator(bool $getShared = true): WithholdingValidator
+    {
+        return $getShared ? static::getSharedInstance('withholdingValidator') : new WithholdingValidator();
+    }
+
+    public static function creditControlValidator(bool $getShared = true): CreditControlValidator
+    {
+        return $getShared ? static::getSharedInstance('creditControlValidator') : new CreditControlValidator();
     }
 
     public static function accountingPaymentEntryService(bool $getShared = true): AccountingPaymentEntryService
@@ -1423,6 +1462,34 @@ class Services extends BaseService
             static::bankReconciliationRepository(false),
             static::accountingPaymentEntryRepository(false),
             static::bankReconciliationValidator(false)
+        );
+    }
+
+    public static function withholdingService(bool $getShared = true): WithholdingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('withholdingService'); }
+        return new WithholdingService(
+            static::withholdingRuleRepository(false),
+            static::withholdingValidator(false)
+        );
+    }
+
+    public static function creditControlService(bool $getShared = true): CreditControlService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('creditControlService'); }
+        return new CreditControlService(
+            static::creditLimitRepository(false),
+            static::creditControlValidator(false)
+        );
+    }
+
+    public static function taxTemplateService(bool $getShared = true): TaxTemplateService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('taxTemplateService'); }
+        return new TaxTemplateService(
+            static::taxTemplateRepository(false),
+            static::taxTemplateItemRepository(false),
+            static::taxTemplateValidator(false)
         );
     }
 

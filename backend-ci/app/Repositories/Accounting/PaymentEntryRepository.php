@@ -52,11 +52,13 @@ class PaymentEntryRepository
 
     public function findById(int $id): ?array
     {
-        $entry = $this->entries->find($id);
-        if (! $entry) {
-            return null;
-        }
-        $allocs = $this->allocations->where('payment_entry_id', $id)->findAll();
+        $row = $this->entries->find($id);
+        return $row ? $this->findByIdWithAllocations($row) : null;
+    }
+
+    private function findByIdWithAllocations(array $entry): array
+    {
+        $allocs = $this->allocations->where('payment_entry_id', (int) $entry['id'])->findAll();
         $entry = $this->hydrate($entry);
         $entry['allocations'] = array_map(fn ($a) => $this->hydrateAlloc($a), $allocs);
         return $entry;

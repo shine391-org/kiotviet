@@ -44,6 +44,7 @@ class OrderService
     protected LoyaltyService $loyaltyService;
     protected \App\Services\Payments\PaymentEntryService $paymentEntries;
     protected \App\Services\POS\POSTaxService $taxService;
+    protected \App\Services\Accounting\CreditControlService $creditControl;
     protected BaseConnection $db;
 
     public function __construct(
@@ -66,6 +67,7 @@ class OrderService
         ?LoyaltyService $loyaltyService = null,
         ?\App\Services\Payments\PaymentEntryService $paymentEntries = null,
         ?\App\Services\POS\POSTaxService $taxService = null,
+        ?\App\Services\Accounting\CreditControlService $creditControl = null,
         ?BaseConnection $db = null
     ) {
         $this->db = $db ?? Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
@@ -92,6 +94,10 @@ class OrderService
         $this->taxService = $taxService ?? new \App\Services\POS\POSTaxService(
             new \App\Repositories\Taxes\TaxTemplateRepository(null, $this->db),
             new \App\Repositories\Taxes\TaxChargeRepository(null, $this->db)
+        );
+        $this->creditControl = $creditControl ?? new \App\Services\Accounting\CreditControlService(
+            new \App\Repositories\Accounting\CreditLimitRepository(null, $this->db),
+            new \App\Validators\CreditControlValidator()
         );
         if ($shiftService) {
             $this->shiftService = $shiftService;
@@ -232,6 +238,15 @@ class OrderService
         $totalWithShipping = max(0, $totalWithShipping - $couponDiscount - $loyaltyDiscount);
         $taxResult = $this->taxService->apply($profile['tax_template_id'] ?? ($validated['tax_template_id'] ?? null), $totalWithShipping);
         $totalWithShipping = $taxResult['grand_total'];
+
+        if (! empty($validated['customer_id'])) {
+            $this->creditControl->assertWithinLimit(
+                (int) $validated['customer_id'],
+                $totalWithShipping,
+                ! empty($validated['allow_credit_override'])
+            );
+        }
+
         $payments = $validated['payments'] ?? [];
         if ($validated['order_type'] === 'pos' && $profile) {
             $payments = $this->paymentSplit->validate($payments, $profile['payment_methods'] ?? [], $totalWithShipping);

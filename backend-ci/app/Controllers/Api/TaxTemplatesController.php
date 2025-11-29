@@ -4,8 +4,7 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Services\POS\POSTaxService;
-use App\Repositories\Taxes\TaxTemplateRepository;
-use App\Validators\TaxTemplateValidator;
+use App\Services\Taxes\TaxTemplateService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
@@ -16,14 +15,12 @@ class TaxTemplatesController extends BaseController
 {
     use ResponseTrait;
 
-    protected TaxTemplateRepository $repo;
-    protected TaxTemplateValidator $validator;
+    protected TaxTemplateService $service;
     protected POSTaxService $taxService;
 
     public function __construct()
     {
-        $this->repo = service('taxTemplateRepository');
-        $this->validator = service('taxTemplateValidator');
+        $this->service = service('taxTemplateService');
         $this->taxService = service('posTaxService');
     }
 
@@ -38,10 +35,15 @@ class TaxTemplatesController extends BaseController
     {
         $payload = $this->request->getJSON(true) ?? [];
         return $this->wrap(function () use ($payload) {
-            $data = $this->validator->validateCreate($payload);
-            $created = $this->repo->create($data);
-            return $this->respondCreated(['success' => true, 'data' => $created]);
+            $created = $this->service->create($payload);
+            return $this->respondCreated($created);
         });
+    }
+
+    /** @agent-use: GET /api/tax-templates/{id} */
+    public function show($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->get((int) $id)));
     }
 
     private function wrap(callable $action)
