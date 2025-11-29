@@ -80,7 +80,7 @@ trait DevDatabaseTrait
             'payment_schedules','sales_invoice_taxes','sales_invoice_items','sales_invoices',
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
             'bank_reconciliation_logs','bank_reconciliations','bank_statements','payment_entry_allocations',
-            'withholding_rules','credit_limits','tax_template_items',
+            'withholding_rules','credit_limits','tax_template_items','exchange_rates',
             'tax_charges','tax_templates',
             'payment_entries',
             'coupons','coupon_usages',

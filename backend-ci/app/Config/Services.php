@@ -37,6 +37,7 @@ use App\Repositories\Accounting\BankStatementRepository;
 use App\Repositories\Accounting\BankReconciliationRepository;
 use App\Repositories\Accounting\WithholdingRuleRepository;
 use App\Repositories\Accounting\CreditLimitRepository;
+use App\Repositories\Accounting\ExchangeRateRepository;
 use App\Repositories\Taxes\TaxTemplateItemRepository;
 use App\Repositories\Support\SupportTicketRepository;
 use App\Repositories\Support\CommunicationRepository;
@@ -103,6 +104,8 @@ use App\Services\Accounting\PaymentEntryService as AccountingPaymentEntryService
 use App\Services\Accounting\BankReconciliationService;
 use App\Services\Accounting\WithholdingService;
 use App\Services\Accounting\CreditControlService;
+use App\Services\Accounting\CurrencyService;
+use App\Services\Accounting\AgingService;
 use App\Services\Taxes\TaxTemplateService;
 use App\Services\Support\SupportTicketService;
 use App\Services\Support\CommunicationService;
@@ -170,6 +173,7 @@ use App\Validators\SalesInvoiceValidator;
 use App\Validators\BankReconciliationValidator;
 use App\Validators\WithholdingValidator;
 use App\Validators\CreditControlValidator;
+use App\Validators\ExchangeRateValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
@@ -1491,6 +1495,33 @@ class Services extends BaseService
             static::taxTemplateItemRepository(false),
             static::taxTemplateValidator(false)
         );
+    }
+
+    public static function currencyService(bool $getShared = true): CurrencyService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('currencyService'); }
+        return new CurrencyService(
+            static::exchangeRateRepository(false),
+            static::exchangeRateValidator(false)
+        );
+    }
+
+    public static function exchangeRateRepository(bool $getShared = true): ExchangeRateRepository
+    {
+        if ($getShared) { return static::getSharedInstance('exchangeRateRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ExchangeRateRepository(null, $db);
+    }
+
+    public static function exchangeRateValidator(bool $getShared = true): ExchangeRateValidator
+    {
+        return $getShared ? static::getSharedInstance('exchangeRateValidator') : new ExchangeRateValidator();
+    }
+
+    public static function agingService(bool $getShared = true): AgingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('agingService'); }
+        return new AgingService(static::glEntryRepository(false), static::currencyService(false));
     }
 
     public static function supportTicketRepository(bool $getShared = true): SupportTicketRepository

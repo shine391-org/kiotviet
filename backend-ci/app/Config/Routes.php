@@ -239,6 +239,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('campaigns/(:num)/members', 'Api\\CampaignsController::addMember/$1');
     $routes->post('email-campaigns', 'Api\\EmailCampaignsController::create');
     $routes->post('email-campaigns/(:num)/status', 'Api\\EmailCampaignsController::updateStatus/$1');
+    $routes->post('exchange-rates', 'Api\\ExchangeRatesController::create');
     $routes->get('chart-of-accounts', 'Api\\ChartOfAccountsController::index');
     $routes->get('chart-of-accounts/(:num)', 'Api\\ChartOfAccountsController::show/$1');
     $routes->get('chart-of-accounts/(:num)/children', 'Api\\ChartOfAccountsController::children/$1');
@@ -246,6 +247,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('tax-templates/(:num)', 'Api\\TaxTemplatesController::show/$1');
     $routes->post('gl/journal', 'Api\\GLEntriesController::postJournal');
     $routes->get('gl', 'Api\\GLEntriesController::index');
+    $routes->get('aging', 'Api\\AgingReportsController::index');
     $routes->post('sales-invoices/preview', 'Api\\SalesInvoicesController::preview');
     $routes->post('sales-invoices', 'Api\\SalesInvoicesController::create');
     $routes->get('sales-invoices/(:num)', 'Api\\SalesInvoicesController::show/$1');

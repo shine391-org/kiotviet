@@ -20,6 +20,7 @@ class GLEntryModel extends Model
         'reference_type',
         'reference_id',
         'remarks',
+        'currency',
         'created_at',
         'updated_at',
     ];

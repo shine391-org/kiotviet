@@ -95,6 +95,7 @@ class TestSchemaSetup extends Migration
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
             'sales_invoice_taxes','sales_invoice_items','sales_invoices','payment_schedules',
             'withholding_rules','credit_limits','tax_template_items',
+            'exchange_rates',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
             'returns','return_items',
             'invoices','invoice_orders',
@@ -1022,6 +1023,16 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             UNIQUE KEY uq_credit_limit_customer (customer_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS exchange_rates (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            currency VARCHAR(10) NOT NULL,
+            rate DECIMAL(16,6) NOT NULL,
+            valid_from DATE NOT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_exchange_rate_curr_date (currency, valid_from)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createAccountingTables(): void
@@ -1051,6 +1062,7 @@ class TestSchemaSetup extends Migration
             reference_type VARCHAR(100) NULL,
             reference_id BIGINT UNSIGNED NULL,
             remarks TEXT NULL,
+            currency VARCHAR(10) DEFAULT 'VND',
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             KEY idx_gl_account (account_id),
