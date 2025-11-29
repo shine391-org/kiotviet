@@ -72,6 +72,7 @@ trait DevDatabaseTrait
             'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'order_template_items','order_templates','order_subscriptions',
             'ecommerce_webhook_logs',
+            'subscription_cycles','subscriptions',
             'bom_items','bill_of_materials','work_orders',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'cash_transactions','payment_methods','purchase_orders'

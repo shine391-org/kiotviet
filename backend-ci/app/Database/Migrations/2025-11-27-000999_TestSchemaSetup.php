@@ -51,6 +51,7 @@ class TestSchemaSetup extends Migration
         $this->createOrderTemplateTables();
         $this->createEcommerceTables();
         $this->createManufacturingTables();
+        $this->createSubscriptionTables();
         $this->createCashTransactionTables();
     }
 
@@ -81,6 +82,7 @@ class TestSchemaSetup extends Migration
             'quality_inspection_items','quality_inspections','quality_parameters',
             'order_template_items','order_templates','order_subscriptions',
             'ecommerce_webhook_logs',
+            'subscription_cycles','subscriptions',
             'bom_items','bill_of_materials','work_orders',
             'cash_transactions'
         ];
@@ -564,6 +566,34 @@ class TestSchemaSetup extends Migration
             KEY idx_work_order_product (product_id),
             KEY idx_work_order_bom (bom_id),
             KEY idx_work_order_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    private function createSubscriptionTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS subscriptions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NULL,
+            template_id BIGINT UNSIGNED NULL,
+            plan_name VARCHAR(150) NOT NULL,
+            interval_days INT DEFAULT 30,
+            next_run_at DATETIME NULL,
+            status VARCHAR(30) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_subscription_status (status),
+            KEY idx_subscription_next (next_run_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS subscription_cycles (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            subscription_id BIGINT UNSIGNED NOT NULL,
+            run_date DATE NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'processed',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_subscription_cycle (subscription_id, run_date),
+            KEY idx_cycle_status (status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createPriceListTables(): void

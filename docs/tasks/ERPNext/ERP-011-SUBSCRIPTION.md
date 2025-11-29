@@ -20,3 +20,8 @@ Bạn là AI backend engineer phụ trách subscription/recurring orders.
 4. Definition of Done
 - Subscriptions tạo đơn định kỳ đúng lịch, không trùng lặp, hỗ trợ pause/resume/cancel.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + validators/repositories/services/controllers
+- [x] Unit tests (SubscriptionServiceTest)
+- [x] Integration tests (SubscriptionsApiTest)

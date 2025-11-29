@@ -115,6 +115,14 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('work-orders/(:num)/start', 'Api\\WorkOrdersController::start/$1');
     $routes->post('work-orders/(:num)/complete', 'Api\\WorkOrdersController::complete/$1');
     $routes->post('work-orders/(:num)/cancel', 'Api\\WorkOrdersController::cancel/$1');
+    $routes->get('subscriptions', 'Api\\SubscriptionsController::index');
+    $routes->get('subscriptions/(:num)', 'Api\\SubscriptionsController::show/$1');
+    $routes->post('subscriptions', 'Api\\SubscriptionsController::create');
+    $routes->put('subscriptions/(:num)', 'Api\\SubscriptionsController::update/$1');
+    $routes->post('subscriptions/(:num)/pause', 'Api\\SubscriptionsController::pause/$1');
+    $routes->post('subscriptions/(:num)/resume', 'Api\\SubscriptionsController::resume/$1');
+    $routes->post('subscriptions/(:num)/cancel', 'Api\\SubscriptionsController::cancel/$1');
+    $routes->post('subscriptions/run', 'Api\\SubscriptionsController::run');
     $routes->group('webhooks/ecommerce', ['filter' => 'webhookauth'], static function ($routes) {
         $routes->post('product', 'Api\\EcommerceWebhooksController::product');
         $routes->post('order', 'Api\\EcommerceWebhooksController::order');

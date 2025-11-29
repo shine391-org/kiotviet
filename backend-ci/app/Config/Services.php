@@ -71,6 +71,7 @@ use App\Services\Orders\OrderSubscriptionService;
 use App\Services\Manufacturing\BOMService;
 use App\Services\Manufacturing\WorkOrderService;
 use App\Services\Ecommerce\EcommerceIntegrationService;
+use App\Services\Subscriptions\SubscriptionService;
 use App\Services\PurchaseOrders\PurchaseOrderStatusService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
@@ -97,6 +98,7 @@ use App\Validators\OrderSubscriptionValidator;
 use App\Validators\BOMValidator;
 use App\Validators\WorkOrderValidator;
 use App\Validators\WebhookPayloadValidator;
+use App\Validators\SubscriptionValidator;
 use App\Validators\QualityInspectionValidator;
 use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
@@ -876,6 +878,36 @@ class Services extends BaseService
             static::bomRepository(false),
             static::stockLedgerService(false),
             static::workOrderValidator(false)
+        );
+    }
+
+    public static function subscriptionValidator(bool $getShared = true): SubscriptionValidator
+    {
+        return $getShared ? static::getSharedInstance('subscriptionValidator') : new SubscriptionValidator();
+    }
+
+    public static function subscriptionRepository(bool $getShared = true): \App\Repositories\Subscriptions\SubscriptionRepository
+    {
+        if ($getShared) { return static::getSharedInstance('subscriptionRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Repositories\Subscriptions\SubscriptionRepository(null, $db);
+    }
+
+    public static function subscriptionCycleRepository(bool $getShared = true): \App\Repositories\Subscriptions\SubscriptionCycleRepository
+    {
+        if ($getShared) { return static::getSharedInstance('subscriptionCycleRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new \App\Repositories\Subscriptions\SubscriptionCycleRepository(null, $db);
+    }
+
+    public static function subscriptionService(bool $getShared = true): SubscriptionService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('subscriptionService'); }
+        return new SubscriptionService(
+            static::subscriptionRepository(false),
+            static::subscriptionCycleRepository(false),
+            static::orderService(false),
+            static::subscriptionValidator(false)
         );
     }
 
