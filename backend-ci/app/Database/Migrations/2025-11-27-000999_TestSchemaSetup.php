@@ -27,6 +27,7 @@ class TestSchemaSetup extends Migration
         $this->createProductSerialNumberTables();
         $this->createDeliveryNoteTables();
         $this->createApprovalTables();
+        $this->createStockLedgerTables();
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
@@ -62,6 +63,7 @@ class TestSchemaSetup extends Migration
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
             'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
             'approval_actions','approvals','order_approval_rules',
+            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -255,6 +257,72 @@ class TestSchemaSetup extends Migration
             notes TEXT NULL,
             created_at DATETIME NULL,
             KEY idx_actions_approval (approval_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createStockLedgerTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_ledgers (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            warehouse_id BIGINT UNSIGNED NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            movement_date DATETIME NOT NULL,
+            reference_type VARCHAR(80) NOT NULL,
+            reference_id BIGINT UNSIGNED NOT NULL,
+            reference_seq INT UNSIGNED DEFAULT 1,
+            qty_delta DECIMAL(12,3) DEFAULT 0,
+            unit_cost DECIMAL(14,4) DEFAULT 0,
+            total_cost DECIMAL(14,4) DEFAULT 0,
+            created_at DATETIME NULL,
+            UNIQUE KEY uq_ledger_ref_seq (reference_type, reference_id, reference_seq),
+            KEY idx_ledger_product (product_id, branch_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_bins (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            on_hand_qty DECIMAL(12,3) DEFAULT 0,
+            reserved_qty DECIMAL(12,3) DEFAULT 0,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_stock_bin (product_id, variant_id, branch_id, batch_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_reconciliations (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            recon_number VARCHAR(60) NOT NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(20) DEFAULT 'draft',
+            notes TEXT NULL,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            approved_by BIGINT UNSIGNED NULL,
+            approved_at DATETIME NULL,
+            UNIQUE KEY uq_recon_number (recon_number)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_reconciliation_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            reconciliation_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            counted_qty DECIMAL(12,3) DEFAULT 0,
+            current_qty DECIMAL(12,3) DEFAULT 0,
+            variance_qty DECIMAL(12,3) DEFAULT 0,
+            unit_cost DECIMAL(14,4) DEFAULT 0,
+            remarks TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_recon_item (reconciliation_id),
+            KEY idx_recon_product (product_id, batch_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createPriceListTables(): void

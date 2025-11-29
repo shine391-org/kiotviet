@@ -75,6 +75,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('approvals/submit', 'Api\\ApprovalsController::submit');
     $routes->post('approvals/(:num)/approve', 'Api\\ApprovalsController::approve/$1');
     $routes->post('approvals/(:num)/reject', 'Api\\ApprovalsController::reject/$1');
+    $routes->get('stock-reconciliations', 'Api\\StockReconciliationsController::index');
+    $routes->get('stock-reconciliations/(:num)', 'Api\\StockReconciliationsController::show/$1');
+    $routes->post('stock-reconciliations', 'Api\\StockReconciliationsController::create');
+    $routes->post('stock-reconciliations/(:num)/submit', 'Api\\StockReconciliationsController::submit/$1');
+    $routes->post('stock-reconciliations/(:num)/approve', 'Api\\StockReconciliationsController::approve/$1');
+    $routes->post('stock-reconciliations/(:num)/reject', 'Api\\StockReconciliationsController::reject/$1');
 
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('product-categories/(:num)', 'Api\\ProductCategoriesController::show/$1');

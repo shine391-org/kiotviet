@@ -25,6 +25,9 @@ use App\Repositories\Webhooks\WebhookSubscriptionRepository;
 use App\Repositories\Approvals\ApprovalRuleRepository;
 use App\Repositories\Approvals\ApprovalRepository;
 use App\Repositories\Approvals\ApprovalActionRepository;
+use App\Repositories\Inventory\StockLedgerRepository;
+use App\Repositories\Inventory\StockBinRepository;
+use App\Repositories\Inventory\StockReconciliationRepository;
 use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
@@ -41,6 +44,8 @@ use App\Services\Invoices\VATCalculator;
 use App\Services\Invoices\InvoicePDFGenerator;
 use App\Services\Returns\ReturnService;
 use App\Services\DeliveryNotes\DeliveryNoteService;
+use App\Services\Inventory\StockLedgerService;
+use App\Services\Inventory\StockReconciliationService;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
@@ -59,6 +64,8 @@ use App\Validators\ProductSerialValidator;
 use App\Validators\ApprovalRuleValidator;
 use App\Validators\ApprovalRequestValidator;
 use App\Validators\DeliveryNoteValidator;
+use App\Validators\StockLedgerValidator;
+use App\Validators\StockReconciliationValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
@@ -250,6 +257,68 @@ class Services extends BaseService
             return static::getSharedInstance('approvalHook');
         }
         return new ApprovalHook(static::approvalService(false));
+    }
+
+    public static function stockLedgerValidator(bool $getShared = true): StockLedgerValidator
+    {
+        return $getShared ? static::getSharedInstance('stockLedgerValidator') : new StockLedgerValidator();
+    }
+
+    public static function stockReconciliationValidator(bool $getShared = true): StockReconciliationValidator
+    {
+        return $getShared ? static::getSharedInstance('stockReconciliationValidator') : new StockReconciliationValidator();
+    }
+
+    public static function stockLedgerRepository(bool $getShared = true): StockLedgerRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockLedgerRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new StockLedgerRepository(null, $db);
+    }
+
+    public static function stockBinRepository(bool $getShared = true): StockBinRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockBinRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new StockBinRepository(null, $db);
+    }
+
+    public static function stockReconciliationRepository(bool $getShared = true): StockReconciliationRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockReconciliationRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new StockReconciliationRepository(null, null, $db);
+    }
+
+    public static function stockLedgerService(bool $getShared = true): StockLedgerService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockLedgerService');
+        }
+        return new StockLedgerService(
+            static::stockLedgerRepository(false),
+            static::stockBinRepository(false),
+            static::stockLedgerValidator(false)
+        );
+    }
+
+    public static function stockReconciliationService(bool $getShared = true): StockReconciliationService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockReconciliationService');
+        }
+        return new StockReconciliationService(
+            static::stockReconciliationRepository(false),
+            static::stockReconciliationValidator(false),
+            static::stockLedgerService(false),
+            static::stockBinRepository(false)
+        );
     }
 
     public static function deliveryNoteValidator(bool $getShared = true): DeliveryNoteValidator

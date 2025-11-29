@@ -28,3 +28,8 @@ Bạn là AI backend engineer phụ trách sổ kho và kiểm kê theo chuẩn 
 - Ledger + bin hoạt động, không oversell, hỗ trợ batch/serial hooks.
 - Reconciliation flow từ draft→approved ghi đúng variance vào ledger/bin.
 - Unit + integration tests pass; cập nhật docs/erpnext/README.md nếu thêm tài liệu.
+
+## Status
+- [x] Migrations + services/controllers
+- [x] Unit tests
+- [x] Integration tests

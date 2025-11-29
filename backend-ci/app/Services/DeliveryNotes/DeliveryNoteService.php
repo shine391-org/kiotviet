@@ -7,6 +7,7 @@ use App\Repositories\DeliveryNotes\DeliveryNoteRepository;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Repositories\Orders\OrderRepository;
 use App\Services\Inventory\InventoryMovementLogger;
+use App\Services\Inventory\StockLedgerService;
 use App\Services\Products\ProductBatchService;
 use App\Services\Products\ProductSerialNumberService;
 use App\Validators\DeliveryNoteValidator;
@@ -30,6 +31,7 @@ class DeliveryNoteService
     private InventoryMovementLogger $movementLogger;
     private ProductBatchService $batchService;
     private ProductSerialNumberService $serialService;
+    private StockLedgerService $ledger;
 
     public function __construct(
         ?DeliveryNoteRepository $notes = null,
@@ -39,7 +41,8 @@ class DeliveryNoteService
         ?InventoryRepository $inventory = null,
         ?InventoryMovementLogger $movementLogger = null,
         ?ProductBatchService $batchService = null,
-        ?ProductSerialNumberService $serialService = null
+        ?ProductSerialNumberService $serialService = null,
+        ?StockLedgerService $ledger = null
     ) {
         $this->notes = $notes ?? new DeliveryNoteRepository();
         $this->items = $items ?? new DeliveryNoteItemRepository();
@@ -49,6 +52,7 @@ class DeliveryNoteService
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
         $this->batchService = $batchService ?? new ProductBatchService();
         $this->serialService = $serialService ?? new ProductSerialNumberService();
+        $this->ledger = $ledger ?? new StockLedgerService();
     }
 
     /** List delivery notes. @agent-use: GET /api/delivery-notes */
@@ -268,6 +272,19 @@ class DeliveryNoteService
                 createdBy: $userId
             );
         }
+
+        $this->ledger->record([
+            'product_id' => $productId,
+            'variant_id' => $variantId,
+            'branch_id' => $branchId,
+            'batch_id' => $batchId,
+            'movement_date' => date('Y-m-d H:i:s'),
+            'reference_type' => 'delivery_note',
+            'reference_id' => (int) ($item['delivery_note_id'] ?? $orderId ?? 0),
+            'reference_seq' => (int) ($item['id'] ?? 1),
+            'qty_delta' => -$delta,
+            'serial_number' => $serials ? implode(',', $serials) : null,
+        ]);
 
         foreach ($serials as $serial) {
             $this->serialService->ensureAvailableForOrder($serial, $orderId);

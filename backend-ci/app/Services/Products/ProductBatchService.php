@@ -5,6 +5,7 @@ namespace App\Services\Products;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Repositories\Products\ProductBatchRepository;
 use App\Services\Inventory\InventoryMovementLogger;
+use App\Services\Inventory\StockLedgerService;
 use App\Validators\ProductBatchValidator;
 use InvalidArgumentException;
 use RuntimeException;
@@ -22,17 +23,20 @@ class ProductBatchService
     protected ProductBatchValidator $validator;
     protected InventoryRepository $inventoryRepo;
     protected InventoryMovementLogger $movementLogger;
+    protected StockLedgerService $ledger;
 
     public function __construct(
         ?ProductBatchRepository $repo = null,
         ?ProductBatchValidator $validator = null,
         ?InventoryRepository $inventoryRepo = null,
-        ?InventoryMovementLogger $movementLogger = null
+        ?InventoryMovementLogger $movementLogger = null,
+        ?StockLedgerService $ledger = null
     ) {
         $this->repo = $repo ?? new ProductBatchRepository();
         $this->validator = $validator ?? new ProductBatchValidator();
         $this->inventoryRepo = $inventoryRepo ?? new InventoryRepository();
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
+        $this->ledger = $ledger ?? new StockLedgerService();
     }
 
     /** List batches. @agent-use: GET /api/product-batches */
@@ -76,6 +80,17 @@ class ProductBatchService
                 'reference_id' => $batch['id'],
                 'notes' => 'Initial quantity',
             ]);
+            $this->ledger->record([
+                'product_id' => (int) $batch['product_id'],
+                'variant_id' => $batch['variant_id'] ? (int) $batch['variant_id'] : null,
+                'branch_id' => (int) ($batch['branch_id'] ?? 0),
+                'batch_id' => (int) $batch['id'],
+                'movement_date' => date('Y-m-d H:i:s'),
+                'reference_type' => 'batch_init',
+                'reference_id' => $batch['id'],
+                'reference_seq' => 1,
+                'qty_delta' => (float) $batch['current_quantity'],
+            ]);
         }
 
         return ['success' => true, 'data' => $batch];
@@ -110,6 +125,18 @@ class ProductBatchService
             'reference_type' => $payload['reference_type'] ?? 'batch_adjust',
             'reference_id' => $payload['reference_id'] ?? $batch['id'],
             'notes' => $payload['reason'] ?? null,
+            'serial_number' => $serialNumber,
+        ]);
+        $this->ledger->record([
+            'product_id' => (int) $batch['product_id'],
+            'variant_id' => $batch['variant_id'] ? (int) $batch['variant_id'] : null,
+            'branch_id' => (int) ($batch['branch_id'] ?? ($payload['branch_id'] ?? 0)),
+            'batch_id' => (int) $batch['id'],
+            'movement_date' => date('Y-m-d H:i:s'),
+            'reference_type' => $payload['reference_type'] ?? 'batch_adjust',
+            'reference_id' => $batch['id'],
+            'reference_seq' => 1,
+            'qty_delta' => $delta,
             'serial_number' => $serialNumber,
         ]);
 
