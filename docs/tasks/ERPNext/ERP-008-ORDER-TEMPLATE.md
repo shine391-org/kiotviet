@@ -22,3 +22,8 @@ Bạn là AI backend engineer phụ trách order template giống ERPNext.
 - Template có thể lưu và áp dụng tạo order draft chuẩn, không phá workflow hiện tại.
 - Nếu triển khai subscription: tạo đơn định kỳ đúng lịch, tránh trùng lặp.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + validators/repositories/services/controllers
+- [x] Unit tests (OrderTemplateServiceTest covering subscriptions)
+- [x] Integration tests (OrderTemplatesApiTest)

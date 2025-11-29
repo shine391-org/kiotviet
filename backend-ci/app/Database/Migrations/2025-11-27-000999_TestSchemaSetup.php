@@ -48,6 +48,7 @@ class TestSchemaSetup extends Migration
         $this->createOrderStatusLogTables();
         $this->createWebhookTables();
         $this->createQualityTables();
+        $this->createOrderTemplateTables();
         $this->createCashTransactionTables();
     }
 
@@ -76,6 +77,7 @@ class TestSchemaSetup extends Migration
             'inventory_stock','inventory_movements','inventory_alerts',
             'webhook_subscriptions','webhook_events',
             'quality_inspection_items','quality_inspections','quality_parameters',
+            'order_template_items','order_templates','order_subscriptions',
             'cash_transactions'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
@@ -448,6 +450,53 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             KEY idx_quality_item_inspection (inspection_id),
             KEY idx_quality_item_parameter (parameter_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    private function createOrderTemplateTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_templates (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            frequency VARCHAR(50) NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_order_template_name (name),
+            KEY idx_order_template_customer (customer_id),
+            KEY idx_order_template_active (is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_template_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            template_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            quantity DECIMAL(12,3) DEFAULT 0,
+            price DECIMAL(14,2) NULL,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_template_item_template (template_id),
+            KEY idx_template_item_product (product_id, variant_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_subscriptions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            template_id BIGINT UNSIGNED NOT NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            payment_method VARCHAR(50) NOT NULL,
+            order_type VARCHAR(20) DEFAULT 'shipping',
+            next_run_at DATETIME NULL,
+            last_run_at DATETIME NULL,
+            frequency_interval INT DEFAULT 7,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_order_subscription_template (template_id),
+            KEY idx_order_subscription_next (next_run_at),
+            KEY idx_order_subscription_status (status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createPriceListTables(): void

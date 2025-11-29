@@ -34,6 +34,8 @@ use App\Repositories\Inventory\StockBinRepository;
 use App\Repositories\Inventory\StockReconciliationRepository;
 use App\Repositories\Inventory\ReorderLevelRepository;
 use App\Repositories\Inventory\PurchaseSuggestionRepository;
+use App\Repositories\Orders\OrderTemplateRepository;
+use App\Repositories\Orders\OrderSubscriptionRepository;
 use App\Repositories\Quality\QualityInspectionRepository;
 use App\Repositories\Quality\QualityParameterRepository;
 use App\Services\Customers\CustomerService;
@@ -61,6 +63,8 @@ use App\Services\Inventory\PurchaseSuggestionService;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
+use App\Services\Orders\OrderTemplateService;
+use App\Services\Orders\OrderSubscriptionService;
 use App\Services\PurchaseOrders\PurchaseOrderStatusService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
@@ -82,6 +86,8 @@ use App\Validators\StockLedgerValidator;
 use App\Validators\StockReconciliationValidator;
 use App\Validators\ReorderLevelValidator;
 use App\Validators\PurchaseSuggestionValidator;
+use App\Validators\OrderTemplateValidator;
+use App\Validators\OrderSubscriptionValidator;
 use App\Validators\QualityInspectionValidator;
 use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
@@ -773,6 +779,50 @@ class Services extends BaseService
             static::inventoryRepository(false),
             static::productBatchService(false),
             static::productSerialNumberService(false)
+        );
+    }
+
+    public static function orderTemplateValidator(bool $getShared = true): OrderTemplateValidator
+    {
+        return $getShared ? static::getSharedInstance('orderTemplateValidator') : new OrderTemplateValidator();
+    }
+
+    public static function orderSubscriptionValidator(bool $getShared = true): OrderSubscriptionValidator
+    {
+        return $getShared ? static::getSharedInstance('orderSubscriptionValidator') : new OrderSubscriptionValidator();
+    }
+
+    public static function orderTemplateRepository(bool $getShared = true): OrderTemplateRepository
+    {
+        if ($getShared) { return static::getSharedInstance('orderTemplateRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderTemplateRepository(null, null, $db);
+    }
+
+    public static function orderSubscriptionRepository(bool $getShared = true): OrderSubscriptionRepository
+    {
+        if ($getShared) { return static::getSharedInstance('orderSubscriptionRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OrderSubscriptionRepository(null, $db);
+    }
+
+    public static function orderTemplateService(bool $getShared = true): OrderTemplateService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderTemplateService'); }
+        return new OrderTemplateService(
+            static::orderTemplateRepository(false),
+            static::orderTemplateValidator(false),
+            static::orderService(false)
+        );
+    }
+
+    public static function orderSubscriptionService(bool $getShared = true): OrderSubscriptionService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('orderSubscriptionService'); }
+        return new OrderSubscriptionService(
+            static::orderSubscriptionRepository(false),
+            static::orderSubscriptionValidator(false),
+            static::orderTemplateService(false)
         );
     }
 

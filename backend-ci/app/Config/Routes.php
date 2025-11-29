@@ -93,6 +93,16 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-suggestions', 'Api\\ReorderPlanningController::listSuggestions');
     $routes->post('purchase-suggestions/(:num)/ack', 'Api\\ReorderPlanningController::acknowledge/$1');
     $routes->post('purchase-suggestions/(:num)/convert', 'Api\\ReorderPlanningController::convert/$1');
+    $routes->get('order-templates', 'Api\\OrderTemplatesController::index');
+    $routes->get('order-templates/(:num)', 'Api\\OrderTemplatesController::show/$1');
+    $routes->post('order-templates', 'Api\\OrderTemplatesController::create');
+    $routes->put('order-templates/(:num)', 'Api\\OrderTemplatesController::update/$1');
+    $routes->delete('order-templates/(:num)', 'Api\\OrderTemplatesController::delete/$1');
+    $routes->post('order-templates/(:num)/apply', 'Api\\OrderTemplatesController::apply/$1');
+    $routes->get('order-subscriptions', 'Api\\OrderSubscriptionsController::index');
+    $routes->post('order-subscriptions', 'Api\\OrderSubscriptionsController::create');
+    $routes->put('order-subscriptions/(:num)', 'Api\\OrderSubscriptionsController::update/$1');
+    $routes->post('order-subscriptions/run', 'Api\\OrderSubscriptionsController::run');
     $routes->get('quality-parameters', 'Api\\QualityInspectionsController::parameters');
     $routes->post('quality-parameters', 'Api\\QualityInspectionsController::createParameter');
     $routes->put('quality-parameters/(:num)', 'Api\\QualityInspectionsController::updateParameter/$1');
