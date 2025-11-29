@@ -22,6 +22,11 @@ use App\Repositories\POS\POSOfflineQueueRepository;
 use App\Repositories\Payments\PaymentEntryRepository;
 use App\Repositories\Taxes\TaxTemplateRepository;
 use App\Repositories\Taxes\TaxChargeRepository;
+use App\Repositories\CRM\LeadRepository;
+use App\Repositories\CRM\OpportunityRepository;
+use App\Repositories\CRM\QuotationRepository;
+use App\Repositories\Campaigns\CampaignRepository;
+use App\Repositories\Campaigns\EmailCampaignRepository;
 use App\Repositories\Invoices\InvoiceRepository;
 use App\Repositories\Returns\ReturnRepository;
 use App\Repositories\DeliveryNotes\DeliveryNoteRepository;
@@ -68,6 +73,12 @@ use App\Services\POS\POSOfflineService;
 use App\Services\POS\POSIdempotencyService;
 use App\Services\POS\POSTaxService;
 use App\Services\Payments\PaymentEntryService;
+use App\Services\CRM\LeadService;
+use App\Services\CRM\OpportunityService;
+use App\Services\CRM\QuotationService;
+use App\Services\CRM\QuotationNumberGenerator;
+use App\Services\Campaigns\CampaignService;
+use App\Services\Campaigns\EmailCampaignService;
 use App\Services\Coupons\CouponService;
 use App\Services\Loyalty\LoyaltyService;
 use App\Services\Invoices\InvoiceService;
@@ -118,6 +129,11 @@ use App\Validators\POSShiftValidator;
 use App\Validators\POSOfflineValidator;
 use App\Validators\CouponValidator;
 use App\Validators\LoyaltyProgramValidator;
+use App\Validators\LeadValidator;
+use App\Validators\OpportunityValidator;
+use App\Validators\QuotationValidator;
+use App\Validators\CampaignValidator;
+use App\Validators\EmailCampaignValidator;
 use App\Validators\WebhookPayloadValidator;
 use App\Validators\SubscriptionValidator;
 use App\Validators\QualityInspectionValidator;
@@ -1123,6 +1139,115 @@ class Services extends BaseService
         return $getShared ? static::getSharedInstance('posTaxService') : new POSTaxService(
             static::taxTemplateRepository(false),
             static::taxChargeRepository(false)
+        );
+    }
+
+    public static function leadRepository(bool $getShared = true): LeadRepository
+    {
+        if ($getShared) { return static::getSharedInstance('leadRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new LeadRepository(null, $db);
+    }
+
+    public static function leadValidator(bool $getShared = true): LeadValidator
+    {
+        return $getShared ? static::getSharedInstance('leadValidator') : new LeadValidator();
+    }
+
+    public static function leadService(bool $getShared = true): LeadService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('leadService'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new LeadService(static::leadRepository(false), static::leadValidator(false), $db);
+    }
+
+    public static function opportunityRepository(bool $getShared = true): OpportunityRepository
+    {
+        if ($getShared) { return static::getSharedInstance('opportunityRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new OpportunityRepository(null, null, $db);
+    }
+
+    public static function opportunityValidator(bool $getShared = true): OpportunityValidator
+    {
+        return $getShared ? static::getSharedInstance('opportunityValidator') : new OpportunityValidator();
+    }
+
+    public static function opportunityService(bool $getShared = true): OpportunityService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('opportunityService'); }
+        return new OpportunityService(
+            static::opportunityRepository(false),
+            static::opportunityValidator(false),
+            static::pricingService(false)
+        );
+    }
+
+    public static function quotationRepository(bool $getShared = true): QuotationRepository
+    {
+        if ($getShared) { return static::getSharedInstance('quotationRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new QuotationRepository(null, null, $db);
+    }
+
+    public static function quotationValidator(bool $getShared = true): QuotationValidator
+    {
+        return $getShared ? static::getSharedInstance('quotationValidator') : new QuotationValidator();
+    }
+
+    public static function quotationNumberGenerator(bool $getShared = true): QuotationNumberGenerator
+    {
+        return $getShared ? static::getSharedInstance('quotationNumberGenerator') : new QuotationNumberGenerator();
+    }
+
+    public static function quotationService(bool $getShared = true): QuotationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('quotationService'); }
+        return new QuotationService(
+            static::quotationRepository(false),
+            static::quotationValidator(false),
+            static::pricingService(false),
+            static::quotationNumberGenerator(false)
+        );
+    }
+
+    public static function campaignRepository(bool $getShared = true): CampaignRepository
+    {
+        if ($getShared) { return static::getSharedInstance('campaignRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CampaignRepository(null, null, $db);
+    }
+
+    public static function campaignValidator(bool $getShared = true): CampaignValidator
+    {
+        return $getShared ? static::getSharedInstance('campaignValidator') : new CampaignValidator();
+    }
+
+    public static function campaignService(bool $getShared = true): CampaignService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('campaignService'); }
+        return new CampaignService(static::campaignRepository(false), static::campaignValidator(false));
+    }
+
+    public static function emailCampaignRepository(bool $getShared = true): EmailCampaignRepository
+    {
+        if ($getShared) { return static::getSharedInstance('emailCampaignRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new EmailCampaignRepository(null, null, $db);
+    }
+
+    public static function emailCampaignValidator(bool $getShared = true): EmailCampaignValidator
+    {
+        return $getShared ? static::getSharedInstance('emailCampaignValidator') : new EmailCampaignValidator();
+    }
+
+    public static function emailCampaignService(bool $getShared = true): EmailCampaignService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('emailCampaignService'); }
+        return new EmailCampaignService(
+            static::emailCampaignRepository(false),
+            static::campaignRepository(false),
+            static::emailCampaignValidator(false)
         );
     }
 

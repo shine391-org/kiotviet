@@ -44,6 +44,10 @@ class TestSchemaSetup extends Migration
         $this->createOrderSequenceTables();
         $this->createPOSTables();
         $this->createPOSOfflineTables();
+        $this->createLeadTables();
+        $this->createOpportunityTables();
+        $this->createQuotationTables();
+        $this->createCampaignTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
         $this->createInvoiceTables();
@@ -93,7 +97,9 @@ class TestSchemaSetup extends Migration
             'cash_transactions',
             'pos_profiles','pos_payment_methods','pos_shifts','pos_shift_payments','pos_shift_logs','pos_offline_queue',
             'loyalty_programs','loyalty_wallets','loyalty_transactions','coupons','coupon_usages',
-            'tax_templates','tax_charges','payment_entries'
+            'tax_templates','tax_charges','payment_entries',
+            'leads','opportunities','opportunity_items','quotations','quotation_items',
+            'campaigns','campaign_members','email_campaigns','email_campaign_logs'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
@@ -910,6 +916,128 @@ class TestSchemaSetup extends Migration
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             UNIQUE KEY uq_payment_entry (order_id, payment_method, reference)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createLeadTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS leads (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            lead_number VARCHAR(50) NULL,
+            name VARCHAR(255) NOT NULL,
+            email VARCHAR(255) NULL,
+            phone VARCHAR(50) NULL,
+            source VARCHAR(100) NULL,
+            status VARCHAR(50) DEFAULT 'new',
+            company VARCHAR(255) NULL,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createOpportunityTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS opportunities (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            lead_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            title VARCHAR(255) NOT NULL,
+            stage VARCHAR(50) DEFAULT 'qualification',
+            probability INT DEFAULT 10,
+            expected_value DECIMAL(14,2) DEFAULT 0,
+            closing_date DATE NULL,
+            status VARCHAR(30) DEFAULT 'open',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS opportunity_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            opportunity_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            quantity DECIMAL(14,2) DEFAULT 1,
+            price DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_opp_items_opp (opportunity_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createQuotationTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS quotations (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            quote_number VARCHAR(50) NULL,
+            opportunity_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            lead_id BIGINT UNSIGNED NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            validity_date DATE NULL,
+            subtotal DECIMAL(14,2) DEFAULT 0,
+            discount_total DECIMAL(14,2) DEFAULT 0,
+            tax_total DECIMAL(14,2) DEFAULT 0,
+            total DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS quotation_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            quotation_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            quantity DECIMAL(14,2) DEFAULT 1,
+            price DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_quote_items_quote (quotation_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createCampaignTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS campaigns (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            source VARCHAR(100) NULL,
+            budget DECIMAL(14,2) DEFAULT 0,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS campaign_members (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            campaign_id BIGINT UNSIGNED NOT NULL,
+            lead_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_campaign_member_campaign (campaign_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS email_campaigns (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            campaign_id BIGINT UNSIGNED NULL,
+            subject VARCHAR(255) NOT NULL,
+            template TEXT NULL,
+            schedule_at DATETIME NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS email_campaign_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            email_campaign_id BIGINT UNSIGNED NOT NULL,
+            member_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'queued',
+            message TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_email_campaign_log (email_campaign_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

@@ -80,6 +80,10 @@ trait DevDatabaseTrait
             'payment_entries',
             'coupons','coupon_usages',
             'loyalty_transactions','loyalty_wallets','loyalty_programs',
+            'quotation_items','quotations',
+            'opportunity_items','opportunities',
+            'leads',
+            'campaign_members','campaigns','email_campaign_logs','email_campaigns',
             'pos_offline_queue',
             'pos_shift_logs','pos_shift_payments','pos_shifts','pos_payment_methods','pos_profiles'
         ];

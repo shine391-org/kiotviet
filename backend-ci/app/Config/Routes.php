@@ -228,6 +228,17 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('tax-templates', 'Api\\TaxTemplatesController::index');
     $routes->post('tax-templates', 'Api\\TaxTemplatesController::create');
     $routes->post('payment-entries', 'Api\\PaymentEntriesController::create');
+    // CRM lead -> opportunity -> quotation
+    $routes->post('leads', 'Api\\LeadsController::create');
+    $routes->post('leads/(:num)/convert', 'Api\\LeadsController::convert/$1');
+    $routes->post('opportunities', 'Api\\OpportunitiesController::create');
+    $routes->post('opportunities/(:num)/stage', 'Api\\OpportunitiesController::updateStage/$1');
+    $routes->post('quotations', 'Api\\QuotationsController::create');
+    $routes->post('opportunities/(:num)/quote', 'Api\\QuotationsController::createFromOpportunity/$1');
+    $routes->post('campaigns', 'Api\\CampaignsController::create');
+    $routes->post('campaigns/(:num)/members', 'Api\\CampaignsController::addMember/$1');
+    $routes->post('email-campaigns', 'Api\\EmailCampaignsController::create');
+    $routes->post('email-campaigns/(:num)/status', 'Api\\EmailCampaignsController::updateStatus/$1');
 
     // Payment methods
     $routes->get('payment-methods', 'Api\\PaymentMethodsController::index');
