@@ -57,6 +57,9 @@ linked_from: []
 - **[Test Checklist](./testing/TEST-CHECKLIST.md)** - Mandatory testing checklist
 - **[Frontend Testing](./testing/FE-TESTING-GUIDE.md)** - Frontend testing strategy
 
+### 🔗 ERPNext Integration
+- **[ERPNext Integration Hub](./erpnext/README.md)** - Liên kết phân tích và kế hoạch ERPNext
+
 ---
 
 ## 📊 DOCUMENTATION CATEGORIES
