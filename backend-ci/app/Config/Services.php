@@ -13,6 +13,8 @@ use App\Repositories\PriceLists\PriceListRepository;
 use App\Repositories\PaymentMethods\PaymentMethodRepository;
 use App\Repositories\Invoices\InvoiceRepository;
 use App\Repositories\Returns\ReturnRepository;
+use App\Repositories\DeliveryNotes\DeliveryNoteRepository;
+use App\Repositories\DeliveryNotes\DeliveryNoteItemRepository;
 use App\Repositories\Inventory\InventoryMovementRepository;
 use App\Repositories\Customers\CustomerRepository;
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
@@ -35,6 +37,7 @@ use App\Services\Invoices\InvoiceService;
 use App\Services\Invoices\VATCalculator;
 use App\Services\Invoices\InvoicePDFGenerator;
 use App\Services\Returns\ReturnService;
+use App\Services\DeliveryNotes\DeliveryNoteService;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
@@ -50,6 +53,7 @@ use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\ProductBatchValidator;
 use App\Validators\ProductSerialValidator;
+use App\Validators\DeliveryNoteValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
@@ -166,6 +170,46 @@ class Services extends BaseService
             static::productSerialNumberRepository(false),
             static::productSerialValidator(false),
             static::productBatchRepository(false)
+        );
+    }
+
+    public static function deliveryNoteValidator(bool $getShared = true): DeliveryNoteValidator
+    {
+        return $getShared ? static::getSharedInstance('deliveryNoteValidator') : new DeliveryNoteValidator();
+    }
+
+    public static function deliveryNoteRepository(bool $getShared = true): DeliveryNoteRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('deliveryNoteRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new DeliveryNoteRepository(null, null, $db);
+    }
+
+    public static function deliveryNoteItemRepository(bool $getShared = true): DeliveryNoteItemRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('deliveryNoteItemRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new DeliveryNoteItemRepository(null, $db);
+    }
+
+    public static function deliveryNoteService(bool $getShared = true): DeliveryNoteService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('deliveryNoteService');
+        }
+        return new DeliveryNoteService(
+            static::deliveryNoteRepository(false),
+            static::deliveryNoteItemRepository(false),
+            static::deliveryNoteValidator(false),
+            static::orderRepository(false),
+            static::inventoryRepository(false),
+            static::inventoryMovementLogger(false),
+            static::productBatchService(false),
+            static::productSerialNumberService(false)
         );
     }
 

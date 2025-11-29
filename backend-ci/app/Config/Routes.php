@@ -50,6 +50,14 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('products/media/library', 'Api\\ProductMediaController::library');
     $routes->get('products/media/by-date', 'Api\\ProductMediaController::byDate');
     $routes->get('products/media/search-sku', 'Api\\ProductMediaController::searchSku');
+    $routes->get('delivery-notes', 'Api\\DeliveryNotesController::index');
+    $routes->get('delivery-notes/(:num)', 'Api\\DeliveryNotesController::show/$1');
+    $routes->post('delivery-notes', 'Api\\DeliveryNotesController::create');
+    $routes->post('delivery-notes/from-order', 'Api\\DeliveryNotesController::createFromOrder');
+    $routes->post('delivery-notes/(:num)/confirm', 'Api\\DeliveryNotesController::confirm/$1');
+    $routes->post('delivery-notes/(:num)/ship', 'Api\\DeliveryNotesController::ship/$1');
+    $routes->post('delivery-notes/(:num)/deliver', 'Api\\DeliveryNotesController::deliver/$1');
+    $routes->post('delivery-notes/(:num)/cancel', 'Api\\DeliveryNotesController::cancel/$1');
     $routes->get('product-batches', 'Api\\ProductBatchesController::index');
     $routes->get('product-batches/expiring', 'Api\\ProductBatchesController::expiring');
     $routes->get('product-batches/(:num)', 'Api\\ProductBatchesController::show/$1');

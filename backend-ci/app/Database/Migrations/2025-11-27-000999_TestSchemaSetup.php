@@ -25,6 +25,7 @@ class TestSchemaSetup extends Migration
         $this->createProductAttributeValueTables();
         $this->createProductBatchTables();
         $this->createProductSerialNumberTables();
+        $this->createDeliveryNoteTables();
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
@@ -58,7 +59,7 @@ class TestSchemaSetup extends Migration
             'attributes','attribute_options',
             'products','product_categories','product_category_links','product_variants_v2',
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
-            'product_batches','product_serial_numbers',
+            'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -164,6 +165,49 @@ class TestSchemaSetup extends Migration
             UNIQUE KEY uq_serial_number (serial_number),
             KEY idx_serial_status_product (status, product_id),
             KEY idx_serial_reserved (reserved_for_order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createDeliveryNoteTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS delivery_notes (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            delivery_number VARCHAR(50) NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            delivery_date DATE NULL,
+            expected_delivery_date DATE NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            shipping_address TEXT NULL,
+            tracking_number VARCHAR(120) NULL,
+            carrier VARCHAR(120) NULL,
+            notes TEXT NULL,
+            confirmed_by BIGINT UNSIGNED NULL,
+            confirmed_at DATETIME NULL,
+            delivered_by BIGINT UNSIGNED NULL,
+            delivered_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_delivery_number (delivery_number),
+            KEY idx_delivery_order_branch (order_id, branch_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS delivery_note_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            delivery_note_id BIGINT UNSIGNED NOT NULL,
+            order_item_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            quantity DECIMAL(12,3) DEFAULT 0,
+            delivered_quantity DECIMAL(12,3) DEFAULT 0,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_dn_items_note (delivery_note_id),
+            KEY idx_dn_items_product (product_id, variant_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

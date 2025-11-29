@@ -222,21 +222,21 @@ class OrderStatusService
                     'serial_number' => $serialString,
                     'movement_type' => $type,
                 ]);
-            } else {
-                $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta, (int) $branchId);
-                $this->movementLogger->log(
-                    branchId: (int) $branchId,
-                    productId: (int) $productId,
-                    variantId: $variantId ? (int) $variantId : null,
-                    batchId: null,
-                    serialNumber: $serialString,
-                    type: $type,
-                    quantity: $delta,
-                    referenceType: 'order',
-                    referenceId: (int) $order['id'],
-                    notes: $notes,
-                    createdBy: $userId
-                );
+        } else {
+            $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta, (int) $branchId);
+            $this->movementLogger->log(
+                branchId: (int) $branchId,
+                productId: (int) $productId,
+                variantId: $variantId ? (int) $variantId : null,
+                type: $type,
+                quantity: $delta,
+                batchId: null,
+                serialNumber: $serialString,
+                referenceType: 'order',
+                referenceId: (int) $order['id'],
+                notes: $notes,
+                createdBy: $userId
+            );
             }
         } catch (\Throwable $e) {
             // If locking fails or stock is insufficient, rethrow.

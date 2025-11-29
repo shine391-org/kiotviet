@@ -29,3 +29,8 @@ Bạn là AI backend engineer phụ trách xây Delivery Note chuẩn ERPNext ch
 - Delivery note flow hoạt động từ order → delivery → movement/ledger.
 - Batch/serial áp dụng khi product yêu cầu; không over-delivery.
 - Unit + integration tests pass; docs/erpnext/README.md cập nhật nếu phát sinh tài liệu mới.
+
+## Status
+- [x] Migration + repos + service + controller
+- [x] Unit tests
+- [x] Integration tests
