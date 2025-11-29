@@ -37,6 +37,10 @@ class TestSchemaSetup extends Migration
         $this->createLoyaltyTables();
         $this->createCouponTables();
         $this->createPurchaseOrderTables();
+        $this->createPurchaseOrderItemTables();
+        $this->createGoodsReceiptTables();
+        $this->createLandedCostTables();
+        $this->createSubcontractingTables();
         $this->createOrderTables();
         $this->createOrderItemTables();
         $this->createOrderPaymentTables();
@@ -90,6 +94,7 @@ class TestSchemaSetup extends Migration
             'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
+            'purchase_order_items','goods_receipts','goods_receipt_items','landed_cost_vouchers','landed_cost_items','subcontracting_orders','subcontracting_materials',
             'chart_of_accounts','gl_entries',
             'bank_reconciliation_logs','bank_reconciliations','bank_statements','payment_entry_allocations',
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
@@ -648,6 +653,99 @@ class TestSchemaSetup extends Migration
     private function createPurchaseOrderTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS purchase_orders (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, po_number VARCHAR(50) NULL, code VARCHAR(50) NULL, branch_id BIGINT UNSIGNED NULL, payment_method VARCHAR(50) NULL, total DECIMAL(12,2) NOT NULL DEFAULT 0.00, status VARCHAR(50) DEFAULT 'draft', received_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createPurchaseOrderItemTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS purchase_order_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            purchase_order_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NULL,
+            quantity DECIMAL(14,3) DEFAULT 0,
+            received_quantity DECIMAL(14,3) DEFAULT 0,
+            rate DECIMAL(14,2) DEFAULT 0,
+            amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_po_item_po (purchase_order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createGoodsReceiptTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS goods_receipts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            receipt_number VARCHAR(50) NOT NULL,
+            purchase_order_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_grn_number (receipt_number)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS goods_receipt_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            goods_receipt_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NULL,
+            quantity DECIMAL(14,3) DEFAULT 0,
+            rate DECIMAL(14,2) DEFAULT 0,
+            amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_grn_item_grn (goods_receipt_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createLandedCostTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS landed_cost_vouchers (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            voucher_number VARCHAR(50) NOT NULL,
+            goods_receipt_id BIGINT UNSIGNED NULL,
+            total_cost DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_lcv_number (voucher_number)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS landed_cost_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            landed_cost_voucher_id BIGINT UNSIGNED NOT NULL,
+            goods_receipt_item_id BIGINT UNSIGNED NULL,
+            cost_component VARCHAR(150) NOT NULL,
+            amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_lcv_item (landed_cost_voucher_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createSubcontractingTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS subcontracting_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_number VARCHAR(50) NOT NULL,
+            supplier_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NULL,
+            quantity DECIMAL(14,3) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_subcon_order (order_number)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS subcontracting_materials (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            subcontracting_order_id BIGINT UNSIGNED NOT NULL,
+            material_product_id BIGINT UNSIGNED NULL,
+            quantity DECIMAL(14,3) DEFAULT 0,
+            issued_quantity DECIMAL(14,3) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_subcon_material (subcontracting_order_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createOrderTables(): void

@@ -258,6 +258,17 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-invoices/(:num)', 'Api\\PurchaseInvoicesController::show/$1');
     $routes->post('purchase-invoices/(:num)/submit', 'Api\\PurchaseInvoicesController::submit/$1');
     $routes->post('purchase-invoices/(:num)/cancel', 'Api\\PurchaseInvoicesController::cancel/$1');
+    $routes->post('purchase-orders', 'Api\\PurchaseOrdersController::create');
+    $routes->get('purchase-orders/(:num)', 'Api\\PurchaseOrdersController::show/$1');
+    $routes->post('purchase-orders/(:num)/submit', 'Api\\PurchaseOrdersController::submit/$1');
+    $routes->post('purchase-orders/(:num)/cancel', 'Api\\PurchaseOrdersController::cancel/$1');
+    $routes->post('goods-receipts', 'Api\\GoodsReceiptsController::create');
+    $routes->get('goods-receipts/(:num)', 'Api\\GoodsReceiptsController::show/$1');
+    $routes->post('landed-costs', 'Api\\LandedCostsController::create');
+    $routes->get('landed-costs/(:num)', 'Api\\LandedCostsController::show/$1');
+    $routes->post('subcontracting', 'Api\\SubcontractingController::create');
+    $routes->post('subcontracting/(:num)/issue', 'Api\\SubcontractingController::issue/$1');
+    $routes->post('subcontracting/(:num)/receive', 'Api\\SubcontractingController::receive/$1');
     $routes->post('payment-entries', 'Api\\PaymentEntriesController::create');
     $routes->get('payment-entries/(:num)', 'Api\\PaymentEntriesController::show/$1');
     $routes->post('payment-entries/(:num)/submit', 'Api\\PaymentEntriesController::submit/$1');

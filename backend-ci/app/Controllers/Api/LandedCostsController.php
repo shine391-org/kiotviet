@@ -3,40 +3,30 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\Accounting\LandedCostService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
- * Purchase orders API.
+ * Landed cost API.
  *
- * @agent-controller: PurchaseOrders
+ * @agent-controller: LandedCosts
  * @agent-pattern: Thin controller - routing only
  */
-class PurchaseOrdersController extends BaseController
+class LandedCostsController extends BaseController
 {
     use ResponseTrait;
 
-    protected PurchaseOrderService $service;
+    protected LandedCostService $service;
 
     public function __construct()
     {
-        $this->service = service('purchaseOrderService');
+        $this->service = service('landedCostService');
     }
 
     public function create()
     {
         $payload = $this->request->getJSON(true) ?? [];
         return $this->wrap(fn () => $this->respondCreated($this->service->create($payload)));
-    }
-
-    public function submit($id)
-    {
-        return $this->wrap(fn () => $this->respond($this->service->submit((int) $id)));
-    }
-
-    public function cancel($id)
-    {
-        return $this->wrap(fn () => $this->respond($this->service->cancel((int) $id)));
     }
 
     public function show($id)

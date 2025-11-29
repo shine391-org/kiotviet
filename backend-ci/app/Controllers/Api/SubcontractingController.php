@@ -3,24 +3,24 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\Manufacturing\SubcontractingService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
- * Purchase orders API.
+ * Subcontracting API.
  *
- * @agent-controller: PurchaseOrders
+ * @agent-controller: Subcontracting
  * @agent-pattern: Thin controller - routing only
  */
-class PurchaseOrdersController extends BaseController
+class SubcontractingController extends BaseController
 {
     use ResponseTrait;
 
-    protected PurchaseOrderService $service;
+    protected SubcontractingService $service;
 
     public function __construct()
     {
-        $this->service = service('purchaseOrderService');
+        $this->service = service('subcontractingService');
     }
 
     public function create()
@@ -29,19 +29,14 @@ class PurchaseOrdersController extends BaseController
         return $this->wrap(fn () => $this->respondCreated($this->service->create($payload)));
     }
 
-    public function submit($id)
+    public function issue($id)
     {
-        return $this->wrap(fn () => $this->respond($this->service->submit((int) $id)));
+        return $this->wrap(fn () => $this->respond($this->service->issueMaterials((int) $id)));
     }
 
-    public function cancel($id)
+    public function receive($id)
     {
-        return $this->wrap(fn () => $this->respond($this->service->cancel((int) $id)));
-    }
-
-    public function show($id)
-    {
-        return $this->wrap(fn () => $this->respond($this->service->get((int) $id)));
+        return $this->wrap(fn () => $this->respond($this->service->receiveProduct((int) $id)));
     }
 
     private function wrap(callable $action)

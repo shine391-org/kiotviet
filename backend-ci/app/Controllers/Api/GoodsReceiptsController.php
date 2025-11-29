@@ -3,40 +3,30 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\Inventory\GoodsReceiptService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
- * Purchase orders API.
+ * Goods receipts API.
  *
- * @agent-controller: PurchaseOrders
+ * @agent-controller: GoodsReceipts
  * @agent-pattern: Thin controller - routing only
  */
-class PurchaseOrdersController extends BaseController
+class GoodsReceiptsController extends BaseController
 {
     use ResponseTrait;
 
-    protected PurchaseOrderService $service;
+    protected GoodsReceiptService $service;
 
     public function __construct()
     {
-        $this->service = service('purchaseOrderService');
+        $this->service = service('goodsReceiptService');
     }
 
     public function create()
     {
         $payload = $this->request->getJSON(true) ?? [];
         return $this->wrap(fn () => $this->respondCreated($this->service->create($payload)));
-    }
-
-    public function submit($id)
-    {
-        return $this->wrap(fn () => $this->respond($this->service->submit((int) $id)));
-    }
-
-    public function cancel($id)
-    {
-        return $this->wrap(fn () => $this->respond($this->service->cancel((int) $id)));
     }
 
     public function show($id)

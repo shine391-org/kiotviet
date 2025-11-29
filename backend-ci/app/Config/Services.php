@@ -28,6 +28,10 @@ use App\Repositories\CRM\QuotationRepository;
 use App\Repositories\Contracts\ContractRepository;
 use App\Repositories\Contracts\ContractTemplateRepository;
 use App\Repositories\Appointments\AppointmentRepository;
+use App\Repositories\PurchaseOrders\PurchaseOrderRepository;
+use App\Repositories\Inventory\GoodsReceiptRepository;
+use App\Repositories\Accounting\LandedCostRepository;
+use App\Repositories\Manufacturing\SubcontractingRepository;
 use App\Repositories\Accounting\COARepository;
 use App\Repositories\Accounting\GLEntryRepository;
 use App\Repositories\Accounting\PurchaseInvoiceRepository;
@@ -96,6 +100,10 @@ use App\Services\CRM\QuotationService;
 use App\Services\CRM\QuotationNumberGenerator;
 use App\Services\Contracts\ContractService;
 use App\Services\Appointments\AppointmentService;
+use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\Inventory\GoodsReceiptService;
+use App\Services\Accounting\LandedCostService;
+use App\Services\Manufacturing\SubcontractingService;
 use App\Services\Accounting\COAService;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\PurchaseInvoiceService;
@@ -174,6 +182,10 @@ use App\Validators\BankReconciliationValidator;
 use App\Validators\WithholdingValidator;
 use App\Validators\CreditControlValidator;
 use App\Validators\ExchangeRateValidator;
+use App\Validators\PurchaseOrderValidator;
+use App\Validators\GoodsReceiptValidator;
+use App\Validators\LandedCostValidator;
+use App\Validators\SubcontractingValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
@@ -1494,6 +1506,94 @@ class Services extends BaseService
             static::taxTemplateRepository(false),
             static::taxTemplateItemRepository(false),
             static::taxTemplateValidator(false)
+        );
+    }
+
+    public static function purchaseOrderRepository(bool $getShared = true): PurchaseOrderRepository
+    {
+        if ($getShared) { return static::getSharedInstance('purchaseOrderRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PurchaseOrderRepository(null, null, $db);
+    }
+
+    public static function goodsReceiptRepository(bool $getShared = true): GoodsReceiptRepository
+    {
+        if ($getShared) { return static::getSharedInstance('goodsReceiptRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new GoodsReceiptRepository(null, null, $db);
+    }
+
+    public static function landedCostRepository(bool $getShared = true): LandedCostRepository
+    {
+        if ($getShared) { return static::getSharedInstance('landedCostRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new LandedCostRepository(null, null, $db);
+    }
+
+    public static function subcontractingRepository(bool $getShared = true): SubcontractingRepository
+    {
+        if ($getShared) { return static::getSharedInstance('subcontractingRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new SubcontractingRepository(null, null, $db);
+    }
+
+    public static function purchaseOrderValidator(bool $getShared = true): PurchaseOrderValidator
+    {
+        return $getShared ? static::getSharedInstance('purchaseOrderValidator') : new PurchaseOrderValidator();
+    }
+
+    public static function goodsReceiptValidator(bool $getShared = true): GoodsReceiptValidator
+    {
+        return $getShared ? static::getSharedInstance('goodsReceiptValidator') : new GoodsReceiptValidator();
+    }
+
+    public static function landedCostValidator(bool $getShared = true): LandedCostValidator
+    {
+        return $getShared ? static::getSharedInstance('landedCostValidator') : new LandedCostValidator();
+    }
+
+    public static function subcontractingValidator(bool $getShared = true): SubcontractingValidator
+    {
+        return $getShared ? static::getSharedInstance('subcontractingValidator') : new SubcontractingValidator();
+    }
+
+    public static function purchaseOrderService(bool $getShared = true): PurchaseOrderService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('purchaseOrderService'); }
+        return new PurchaseOrderService(
+            static::purchaseOrderRepository(false),
+            static::purchaseOrderValidator(false)
+        );
+    }
+
+    public static function goodsReceiptService(bool $getShared = true): GoodsReceiptService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('goodsReceiptService'); }
+        return new GoodsReceiptService(
+            static::goodsReceiptRepository(false),
+            static::purchaseOrderRepository(false),
+            static::goodsReceiptValidator(false),
+            static::stockLedgerService(false)
+        );
+    }
+
+    public static function landedCostService(bool $getShared = true): LandedCostService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('landedCostService'); }
+        return new LandedCostService(
+            static::landedCostRepository(false),
+            static::landedCostValidator(false),
+            static::goodsReceiptRepository(false)
+        );
+    }
+
+    public static function subcontractingService(bool $getShared = true): SubcontractingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('subcontractingService'); }
+        return new SubcontractingService(
+            static::subcontractingRepository(false),
+            static::subcontractingValidator(false),
+            static::stockLedgerService(false)
         );
     }
 

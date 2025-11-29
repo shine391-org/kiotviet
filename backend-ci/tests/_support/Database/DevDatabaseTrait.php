@@ -76,6 +76,7 @@ trait DevDatabaseTrait
             'bom_items','bill_of_materials','work_orders',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'cash_transactions','payment_methods','purchase_orders',
+            'purchase_order_items','goods_receipt_items','goods_receipts','landed_cost_items','landed_cost_vouchers','subcontracting_materials','subcontracting_orders',
             'gl_entries','chart_of_accounts',
             'payment_schedules','sales_invoice_taxes','sales_invoice_items','sales_invoices',
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
