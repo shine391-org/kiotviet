@@ -74,17 +74,25 @@ class PricingService
             $finalPrice = $fallback;
         }
 
-        $customerList = $customerId ? $this->customerPriceLists->activeForCustomer($customerId, $date) : null;
-        if ($customerList) {
-            $pl = $this->baseCalculator->getProductPriceByListId((int) $customerList['price_list_id'], $productId, $variantId, $qty);
+        $profileListId = isset($input['price_list_id']) ? (int) $input['price_list_id'] : null;
+        if ($profileListId) {
+            $pl = $this->baseCalculator->getProductPriceByListId($profileListId, $productId, $variantId, $qty);
             $basePrice = (float) $pl['base_price'];
             $finalPrice = (float) $pl['final_price'];
-            $reason = ['source' => 'customer_price_list', 'price_list_id' => (int) $customerList['price_list_id']];
-        } elseif ($projectId && ($projectList = $this->projectPriceLists->activeForProject($projectId, $date))) {
-            $pl = $this->baseCalculator->getProductPriceByListId((int) $projectList['price_list_id'], $productId, $variantId, $qty);
-            $basePrice = (float) $pl['base_price'];
-            $finalPrice = (float) $pl['final_price'];
-            $reason = ['source' => 'project_price_list', 'price_list_id' => (int) $projectList['price_list_id']];
+            $reason = ['source' => 'profile_price_list', 'price_list_id' => $profileListId];
+        } else {
+            $customerList = $customerId ? $this->customerPriceLists->activeForCustomer($customerId, $date) : null;
+            if ($customerList) {
+                $pl = $this->baseCalculator->getProductPriceByListId((int) $customerList['price_list_id'], $productId, $variantId, $qty);
+                $basePrice = (float) $pl['base_price'];
+                $finalPrice = (float) $pl['final_price'];
+                $reason = ['source' => 'customer_price_list', 'price_list_id' => (int) $customerList['price_list_id']];
+            } elseif ($projectId && ($projectList = $this->projectPriceLists->activeForProject($projectId, $date))) {
+                $pl = $this->baseCalculator->getProductPriceByListId((int) $projectList['price_list_id'], $productId, $variantId, $qty);
+                $basePrice = (float) $pl['base_price'];
+                $finalPrice = (float) $pl['final_price'];
+                $reason = ['source' => 'project_price_list', 'price_list_id' => (int) $projectList['price_list_id']];
+            }
         }
 
         $rule = $this->rules->findApplicableRule([

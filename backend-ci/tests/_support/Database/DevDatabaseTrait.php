@@ -84,6 +84,7 @@ trait DevDatabaseTrait
             'opportunity_items','opportunities',
             'leads',
             'campaign_members','campaigns','email_campaign_logs','email_campaigns',
+            'contract_terms','contracts','contract_templates','appointments',
             'pos_offline_queue',
             'pos_shift_logs','pos_shift_payments','pos_shifts','pos_payment_methods','pos_profiles'
         ];

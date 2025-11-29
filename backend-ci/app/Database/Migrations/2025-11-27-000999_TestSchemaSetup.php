@@ -48,6 +48,7 @@ class TestSchemaSetup extends Migration
         $this->createOpportunityTables();
         $this->createQuotationTables();
         $this->createCampaignTables();
+        $this->createContractTables();
         $this->createReturnTables();
         $this->createReturnItemTables();
         $this->createInvoiceTables();
@@ -99,7 +100,8 @@ class TestSchemaSetup extends Migration
             'loyalty_programs','loyalty_wallets','loyalty_transactions','coupons','coupon_usages',
             'tax_templates','tax_charges','payment_entries',
             'leads','opportunities','opportunity_items','quotations','quotation_items',
-            'campaigns','campaign_members','email_campaigns','email_campaign_logs'
+            'campaigns','campaign_members','email_campaigns','email_campaign_logs',
+            'contract_templates','contracts','contract_terms','appointments'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
@@ -1038,6 +1040,55 @@ class TestSchemaSetup extends Migration
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             KEY idx_email_campaign_log (email_campaign_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createContractTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS contract_templates (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            terms TEXT NULL,
+            status VARCHAR(30) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS contract_terms (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            contract_id BIGINT UNSIGNED NOT NULL,
+            description TEXT NULL,
+            is_completed TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_contract_terms (contract_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS contracts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NULL,
+            template_id BIGINT UNSIGNED NULL,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            value DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'draft',
+            auto_renew TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS appointments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NULL,
+            lead_id BIGINT UNSIGNED NULL,
+            contract_id BIGINT UNSIGNED NULL,
+            start_time DATETIME NOT NULL,
+            end_time DATETIME NOT NULL,
+            status VARCHAR(30) DEFAULT 'scheduled',
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_appointment_time (start_time, end_time)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

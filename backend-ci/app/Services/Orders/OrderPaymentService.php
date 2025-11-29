@@ -57,6 +57,7 @@ class OrderPaymentService
             'paid_amount' => $newPaid,
             'debt_amount' => max(0, (float) ($order['total'] ?? 0) - $newPaid),
             'payment_status' => $this->paymentStatus((float) ($order['total'] ?? 0), $newPaid),
+            'is_paid' => $this->isPaid((float) ($order['total'] ?? 0), $newPaid),
         ]);
 
         if ($validated['payment_method'] === 'CASH') {
@@ -82,5 +83,10 @@ class OrderPaymentService
         if ($paid <= 0) return 'unpaid';
         if ($paid + 0.0001 >= $total) return 'paid';
         return 'partial';
+    }
+
+    private function isPaid(float $total, float $paid): int
+    {
+        return ($paid + 0.0001 >= $total) ? 1 : 0;
     }
 }

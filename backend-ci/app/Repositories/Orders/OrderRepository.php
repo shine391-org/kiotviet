@@ -21,12 +21,14 @@ class OrderRepository
     }
 
     /** Create order with items. */
-    public function create(array $order, array $items): array
+    public function create(array $order, array $items, bool $useTransaction = true): array
     {
         $now = date('Y-m-d H:i:s');
         $payload = $order + ['created_at' => $now, 'updated_at' => $now];
 
-        $this->db->transStart();
+        if ($useTransaction) {
+            $this->db->transStart();
+        }
         $this->db->table('orders')->insert($payload);
         $orderId = (int) $this->db->insertID();
 
@@ -45,11 +47,13 @@ class OrderRepository
                 throw new \RuntimeException('Order items insert failed: ' . json_encode($err));
             }
         }
-        $this->db->transComplete();
-        if ($this->db->transStatus() === false && ENVIRONMENT !== 'testing') {
-            $err = $this->db->error();
-            $message = $err['message'] ?? 'unknown DB error';
-            throw new \RuntimeException('Order create failed: ' . $message . ' code:' . ($err['code'] ?? ''));
+        if ($useTransaction) {
+            $this->db->transComplete();
+            if ($this->db->transStatus() === false && ENVIRONMENT !== 'testing') {
+                $err = $this->db->error();
+                $message = $err['message'] ?? 'unknown DB error';
+                throw new \RuntimeException('Order create failed: ' . $message . ' code:' . ($err['code'] ?? ''));
+            }
         }
 
         return $payload + ['id' => $orderId];

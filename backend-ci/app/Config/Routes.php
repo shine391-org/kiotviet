@@ -239,6 +239,17 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('campaigns/(:num)/members', 'Api\\CampaignsController::addMember/$1');
     $routes->post('email-campaigns', 'Api\\EmailCampaignsController::create');
     $routes->post('email-campaigns/(:num)/status', 'Api\\EmailCampaignsController::updateStatus/$1');
+    $routes->post('contract-templates', 'Api\\ContractTemplatesController::create');
+    $routes->get('contract-templates/(:num)', 'Api\\ContractTemplatesController::show/$1');
+    $routes->post('contracts', 'Api\\ContractsController::create');
+    $routes->get('contracts/(:num)', 'Api\\ContractsController::show/$1');
+    $routes->post('contracts/(:num)/activate', 'Api\\ContractsController::activate/$1');
+    $routes->post('contracts/(:num)/close', 'Api\\ContractsController::close/$1');
+    $routes->post('contracts/(:num)/renew', 'Api\\ContractsController::renew/$1');
+    $routes->post('appointments', 'Api\\AppointmentsController::schedule');
+    $routes->get('appointments/(:num)', 'Api\\AppointmentsController::show/$1');
+    $routes->post('appointments/(:num)/reschedule', 'Api\\AppointmentsController::reschedule/$1');
+    $routes->post('appointments/(:num)/cancel', 'Api\\AppointmentsController::cancel/$1');
 
     // Payment methods
     $routes->get('payment-methods', 'Api\\PaymentMethodsController::index');

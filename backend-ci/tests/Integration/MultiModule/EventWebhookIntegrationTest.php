@@ -161,6 +161,9 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             'branch_id' => 1,
             'order_type' => 'pos',
             'payment_method' => 'CASH',
+            'payments' => [
+                ['payment_method' => 'CASH', 'amount' => 100000],
+            ],
             'items' => [
                 ['product_id' => $this->productId, 'quantity' => 1],
             ],

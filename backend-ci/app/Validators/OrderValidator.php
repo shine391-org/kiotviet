@@ -39,10 +39,16 @@ class OrderValidator
             ];
         }
 
+        $priceListId = isset($input['price_list_id']) ? (int) $input['price_list_id'] : null;
+        if ($priceListId !== null && $priceListId <= 0) {
+            throw new InvalidArgumentException('price_list_id must be positive');
+        }
+
         return [
             'customer_id' => isset($input['customer_id']) ? (int) $input['customer_id'] : null,
             'customer_group_id' => isset($input['customer_group_id']) ? (int) $input['customer_group_id'] : null,
             'order_date' => $orderDate,
+            'price_list_id' => $priceListId,
             'items' => $mapped,
         ];
     }

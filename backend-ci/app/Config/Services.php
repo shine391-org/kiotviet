@@ -25,6 +25,9 @@ use App\Repositories\Taxes\TaxChargeRepository;
 use App\Repositories\CRM\LeadRepository;
 use App\Repositories\CRM\OpportunityRepository;
 use App\Repositories\CRM\QuotationRepository;
+use App\Repositories\Contracts\ContractRepository;
+use App\Repositories\Contracts\ContractTemplateRepository;
+use App\Repositories\Appointments\AppointmentRepository;
 use App\Repositories\Campaigns\CampaignRepository;
 use App\Repositories\Campaigns\EmailCampaignRepository;
 use App\Repositories\Invoices\InvoiceRepository;
@@ -77,6 +80,8 @@ use App\Services\CRM\LeadService;
 use App\Services\CRM\OpportunityService;
 use App\Services\CRM\QuotationService;
 use App\Services\CRM\QuotationNumberGenerator;
+use App\Services\Contracts\ContractService;
+use App\Services\Appointments\AppointmentService;
 use App\Services\Campaigns\CampaignService;
 use App\Services\Campaigns\EmailCampaignService;
 use App\Services\Coupons\CouponService;
@@ -132,6 +137,8 @@ use App\Validators\LoyaltyProgramValidator;
 use App\Validators\LeadValidator;
 use App\Validators\OpportunityValidator;
 use App\Validators\QuotationValidator;
+use App\Validators\ContractValidator;
+use App\Validators\AppointmentValidator;
 use App\Validators\CampaignValidator;
 use App\Validators\EmailCampaignValidator;
 use App\Validators\WebhookPayloadValidator;
@@ -1208,6 +1215,56 @@ class Services extends BaseService
             static::quotationValidator(false),
             static::pricingService(false),
             static::quotationNumberGenerator(false)
+        );
+    }
+
+    public static function contractRepository(bool $getShared = true): ContractRepository
+    {
+        if ($getShared) { return static::getSharedInstance('contractRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ContractRepository(null, null, $db);
+    }
+
+    public static function contractTemplateRepository(bool $getShared = true): ContractTemplateRepository
+    {
+        if ($getShared) { return static::getSharedInstance('contractTemplateRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ContractTemplateRepository(null, $db);
+    }
+
+    public static function contractValidator(bool $getShared = true): ContractValidator
+    {
+        return $getShared ? static::getSharedInstance('contractValidator') : new ContractValidator();
+    }
+
+    public static function contractService(bool $getShared = true): ContractService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('contractService'); }
+        return new ContractService(
+            static::contractRepository(false),
+            static::contractTemplateRepository(false),
+            static::contractValidator(false)
+        );
+    }
+
+    public static function appointmentRepository(bool $getShared = true): AppointmentRepository
+    {
+        if ($getShared) { return static::getSharedInstance('appointmentRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AppointmentRepository(null, $db);
+    }
+
+    public static function appointmentValidator(bool $getShared = true): AppointmentValidator
+    {
+        return $getShared ? static::getSharedInstance('appointmentValidator') : new AppointmentValidator();
+    }
+
+    public static function appointmentService(bool $getShared = true): AppointmentService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('appointmentService'); }
+        return new AppointmentService(
+            static::appointmentRepository(false),
+            static::appointmentValidator(false)
         );
     }
 

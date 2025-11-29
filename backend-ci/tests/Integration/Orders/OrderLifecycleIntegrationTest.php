@@ -119,6 +119,9 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
             'branch_id' => 1,
             'order_type' => 'pos',
             'payment_method' => 'CASH',
+            'payments' => [
+                ['payment_method' => 'CASH', 'amount' => 500000],
+            ],
             'items' => [
                 ['product_id' => $productId, 'quantity' => 5],
             ],
