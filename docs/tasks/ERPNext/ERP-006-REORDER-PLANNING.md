@@ -22,3 +22,8 @@ Bạn là AI backend engineer phụ trách gợi ý mua hàng dựa trên tồn 
 - Reorder suggestions tạo đúng theo tồn khả dụng và ngưỡng; không trùng lặp khi chạy lại cùng ngày.
 - CRUD reorder level hoạt động; integration với bin/ledger.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + services/controllers
+- [x] Unit tests (ReorderLevelRepositoryTest, ReorderPlanningServiceTest)
+- [x] Integration tests (ReorderPlanningApiTest)

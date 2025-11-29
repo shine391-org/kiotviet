@@ -28,6 +28,8 @@ class TestSchemaSetup extends Migration
         $this->createDeliveryNoteTables();
         $this->createApprovalTables();
         $this->createStockLedgerTables();
+        $this->createReorderPlanningTables();
+        $this->createAdvancedPricingTables();
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
@@ -63,7 +65,8 @@ class TestSchemaSetup extends Migration
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
             'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
             'approval_actions','approvals','order_approval_rules',
-            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers',
+            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers','reorder_levels','purchase_suggestions',
+            'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -325,6 +328,51 @@ class TestSchemaSetup extends Migration
             KEY idx_recon_product (product_id, batch_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
+
+    private function createReorderPlanningTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS reorder_levels (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            min_level DECIMAL(12,3) DEFAULT 0,
+            max_level DECIMAL(12,3) DEFAULT 0,
+            safety_stock DECIMAL(12,3) DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            UNIQUE KEY uq_reorder_level (product_id, variant_id, branch_id),
+            KEY idx_reorder_branch (branch_id, product_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS purchase_suggestions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            reorder_level_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            generated_for_date DATE NOT NULL,
+            suggested_qty DECIMAL(12,3) DEFAULT 0,
+            on_hand_qty DECIMAL(12,3) DEFAULT 0,
+            reserved_qty DECIMAL(12,3) DEFAULT 0,
+            available_qty DECIMAL(12,3) DEFAULT 0,
+            min_level DECIMAL(12,3) DEFAULT 0,
+            max_level DECIMAL(12,3) DEFAULT 0,
+            safety_stock DECIMAL(12,3) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'pending',
+            reason VARCHAR(255) NULL,
+            purchase_order_id BIGINT UNSIGNED NULL,
+            acknowledged_by BIGINT UNSIGNED NULL,
+            acknowledged_at DATETIME NULL,
+            converted_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_purchase_suggestion_day (product_id, variant_id, branch_id, generated_for_date),
+            KEY idx_purchase_suggestion_status (branch_id, status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
     private function createPriceListTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'custom', description TEXT NULL, apply_to_groups JSON NULL, start_date DATE NULL, end_date DATE NULL, priority INT DEFAULT 0, is_active TINYINT(1) DEFAULT 1, formula TEXT NULL, base_price_list_id INT NULL, auto_update TINYINT(1) DEFAULT 0, rounding_rule VARCHAR(50) DEFAULT 'none', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -445,5 +493,66 @@ class TestSchemaSetup extends Migration
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS webhook_subscriptions (id INT AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), target_url VARCHAR(500), secret VARCHAR(255) NULL, is_active TINYINT(1) DEFAULT 1, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS webhook_events (id INT AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), payload JSON, status VARCHAR(50), attempts INT DEFAULT 0, last_error TEXT NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createAdvancedPricingTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS customer_price_lists (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NOT NULL,
+            price_list_id BIGINT UNSIGNED NOT NULL,
+            valid_from DATE NULL,
+            valid_to DATE NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_cpl_customer (customer_id, price_list_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS project_price_lists (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            project_id BIGINT UNSIGNED NOT NULL,
+            price_list_id BIGINT UNSIGNED NOT NULL,
+            valid_from DATE NULL,
+            valid_to DATE NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_ppl_project (project_id, price_list_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pricing_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            condition_type VARCHAR(50) DEFAULT 'amount',
+            customer_id BIGINT UNSIGNED NULL,
+            project_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            min_qty DECIMAL(12,3) DEFAULT 0,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            price DECIMAL(14,4) DEFAULT 0,
+            discount_percent DECIMAL(6,3) DEFAULT 0,
+            priority INT DEFAULT 100,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pricing_rule (condition_type, customer_id, project_id),
+            KEY idx_pricing_priority (priority)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS price_history (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            source_type VARCHAR(50) NOT NULL,
+            source_id BIGINT UNSIGNED NULL,
+            old_price DECIMAL(14,4) DEFAULT 0,
+            new_price DECIMAL(14,4) DEFAULT 0,
+            changed_by BIGINT UNSIGNED NULL,
+            changed_at DATETIME NULL,
+            KEY idx_price_history (product_id, variant_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

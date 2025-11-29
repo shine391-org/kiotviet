@@ -23,3 +23,8 @@ Bạn là AI backend engineer phụ trách mở rộng hệ thống giá theo ch
 - Pricing engine áp dụng được customer/project/date rules, fallback price list.
 - Order/Quote tích hợp PricingService; history lưu lại.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + services/controllers
+- [x] Unit tests (PricingRuleServiceTest, PricingServiceTest)
+- [x] Integration tests (PricingApiTest, order preview)

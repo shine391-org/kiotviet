@@ -5,6 +5,7 @@ namespace App\Services\Orders;
 use App\Repositories\Orders\OrderRepository;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Services\Orders\OrderPaymentService;
+use App\Services\Pricing\PricingService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Products\ProductBatchService;
@@ -22,6 +23,7 @@ class OrderService
     protected OrderValidator $validator;
     protected OrderCreateValidator $createValidator;
     protected PriceCalculatorService $pricing;
+    protected PricingService $advancedPricing;
     protected OrderNumberGenerator $numberGen;
     protected ?WebhookDispatcher $webhooks;
     protected OrderPaymentService $paymentService;
@@ -34,6 +36,7 @@ class OrderService
         ?OrderRepository $orders = null,
         ?OrderValidator $validator = null,
         ?PriceCalculatorService $pricing = null,
+        ?PricingService $advancedPricing = null,
         ?OrderCreateValidator $createValidator = null,
         ?OrderNumberGenerator $numberGen = null,
         ?WebhookDispatcher $webhooks = null,
@@ -47,6 +50,7 @@ class OrderService
         $this->validator = $validator ?? new OrderValidator();
         $this->createValidator = $createValidator ?? new OrderCreateValidator();
         $this->pricing = $pricing ?? new PriceCalculatorService();
+        $this->advancedPricing = $advancedPricing ?? new PricingService();
         $this->numberGen = $numberGen ?? new OrderNumberGenerator();
         $this->webhooks = $webhooks;
         $this->paymentService = $paymentService ?? new OrderPaymentService();
@@ -66,7 +70,14 @@ class OrderService
         $subtotal = 0; $total = 0; $firstPriceListId = null; $firstPriceListName = null;
         foreach ($validated['items'] as $item) {
             $this->assertStockAvailable($item);
-            $calc = $this->pricing->getProductPrice($item['product_id'], $item['variant_id'], $groupId, $item['quantity'], $validated['order_date']);
+            $calc = $this->advancedPricing->getPrice([
+                'product_id' => $item['product_id'],
+                'variant_id' => $item['variant_id'],
+                'customer_id' => $validated['customer_id'],
+                'project_id' => null,
+                'quantity' => $item['quantity'],
+                'order_date' => $validated['order_date'],
+            ]);
             $items[] = [
                 'product_id' => $item['product_id'],
                 'variant_id' => $item['variant_id'],
@@ -78,6 +89,7 @@ class OrderService
                 'line_total' => $calc['line_total'],
                 'applied_price_list_id' => $calc['applied_price_list_id'],
                 'applied_price_list_name' => $calc['applied_price_list_name'],
+                'pricing_reason' => $calc['reason'] ?? null,
             ];
             $subtotal += $calc['base_price'] * $item['quantity'];
             $total += $calc['final_price'] * $item['quantity'];

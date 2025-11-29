@@ -10,6 +10,10 @@ use App\Repositories\Products\ProductBatchRepository;
 use App\Repositories\Products\ProductSerialNumberRepository;
 use App\Repositories\PriceLists\PriceListItemRepository;
 use App\Repositories\PriceLists\PriceListRepository;
+use App\Repositories\PriceLists\CustomerPriceListRepository;
+use App\Repositories\PriceLists\ProjectPriceListRepository;
+use App\Repositories\Pricing\PricingRuleRepository;
+use App\Repositories\Pricing\PriceHistoryRepository;
 use App\Repositories\PaymentMethods\PaymentMethodRepository;
 use App\Repositories\Invoices\InvoiceRepository;
 use App\Repositories\Returns\ReturnRepository;
@@ -28,6 +32,8 @@ use App\Repositories\Approvals\ApprovalActionRepository;
 use App\Repositories\Inventory\StockLedgerRepository;
 use App\Repositories\Inventory\StockBinRepository;
 use App\Repositories\Inventory\StockReconciliationRepository;
+use App\Repositories\Inventory\ReorderLevelRepository;
+use App\Repositories\Inventory\PurchaseSuggestionRepository;
 use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
@@ -38,6 +44,8 @@ use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Services\PriceLists\PriceListService;
+use App\Services\Pricing\PricingRuleService;
+use App\Services\Pricing\PricingService;
 use App\Services\PaymentMethods\PaymentMethodService;
 use App\Services\Invoices\InvoiceService;
 use App\Services\Invoices\VATCalculator;
@@ -46,6 +54,8 @@ use App\Services\Returns\ReturnService;
 use App\Services\DeliveryNotes\DeliveryNoteService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Inventory\StockReconciliationService;
+use App\Services\Inventory\ReorderPlanningService;
+use App\Services\Inventory\PurchaseSuggestionService;
 use App\Services\Orders\OrderStatusService;
 use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
@@ -61,11 +71,15 @@ use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\ProductBatchValidator;
 use App\Validators\ProductSerialValidator;
+use App\Validators\PricingRuleValidator;
+use App\Validators\CustomerPriceListValidator;
 use App\Validators\ApprovalRuleValidator;
 use App\Validators\ApprovalRequestValidator;
 use App\Validators\DeliveryNoteValidator;
 use App\Validators\StockLedgerValidator;
 use App\Validators\StockReconciliationValidator;
+use App\Validators\ReorderLevelValidator;
+use App\Validators\PurchaseSuggestionValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
@@ -126,6 +140,73 @@ class Services extends BaseService
             static::productRepository(false),
             static::productValidator(false),
             static::priceCalculatorService(false)
+        );
+    }
+
+    public static function pricingRuleValidator(bool $getShared = true): PricingRuleValidator
+    {
+        return $getShared ? static::getSharedInstance('pricingRuleValidator') : new PricingRuleValidator();
+    }
+
+    public static function customerPriceListValidator(bool $getShared = true): CustomerPriceListValidator
+    {
+        return $getShared ? static::getSharedInstance('customerPriceListValidator') : new CustomerPriceListValidator();
+    }
+
+    public static function pricingRuleRepository(bool $getShared = true): PricingRuleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pricingRuleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PricingRuleRepository(null, $db);
+    }
+
+    public static function priceHistoryRepository(bool $getShared = true): PriceHistoryRepository
+    {
+        return $getShared ? static::getSharedInstance('priceHistoryRepository') : new PriceHistoryRepository();
+    }
+
+    public static function customerPriceListRepository(bool $getShared = true): CustomerPriceListRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('customerPriceListRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CustomerPriceListRepository(null, $db);
+    }
+
+    public static function projectPriceListRepository(bool $getShared = true): ProjectPriceListRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('projectPriceListRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ProjectPriceListRepository(null, $db);
+    }
+
+    public static function pricingRuleService(bool $getShared = true): PricingRuleService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pricingRuleService');
+        }
+        return new PricingRuleService(
+            static::pricingRuleRepository(false),
+            static::pricingRuleValidator(false)
+        );
+    }
+
+    public static function pricingService(bool $getShared = true): PricingService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pricingService');
+        }
+        return new PricingService(
+            static::priceCalculatorService(false),
+            static::pricingRuleService(false),
+            static::customerPriceListRepository(false),
+            static::projectPriceListRepository(false),
+            static::priceHistoryRepository(false)
         );
     }
 
@@ -526,6 +607,61 @@ class Services extends BaseService
         );
     }
 
+    public static function reorderLevelValidator(bool $getShared = true): ReorderLevelValidator
+    {
+        return $getShared ? static::getSharedInstance('reorderLevelValidator') : new ReorderLevelValidator();
+    }
+
+    public static function purchaseSuggestionValidator(bool $getShared = true): PurchaseSuggestionValidator
+    {
+        return $getShared ? static::getSharedInstance('purchaseSuggestionValidator') : new PurchaseSuggestionValidator();
+    }
+
+    public static function reorderLevelRepository(bool $getShared = true): ReorderLevelRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('reorderLevelRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ReorderLevelRepository(null, $db);
+    }
+
+    public static function purchaseSuggestionRepository(bool $getShared = true): PurchaseSuggestionRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('purchaseSuggestionRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PurchaseSuggestionRepository(null, $db);
+    }
+
+    public static function reorderPlanningService(bool $getShared = true): ReorderPlanningService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('reorderPlanningService');
+        }
+
+        return new ReorderPlanningService(
+            static::reorderLevelRepository(false),
+            static::purchaseSuggestionRepository(false),
+            static::stockBinRepository(false),
+            static::reorderLevelValidator(false),
+            static::purchaseSuggestionValidator(false)
+        );
+    }
+
+    public static function purchaseSuggestionService(bool $getShared = true): PurchaseSuggestionService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('purchaseSuggestionService');
+        }
+
+        return new PurchaseSuggestionService(
+            static::purchaseSuggestionRepository(false),
+            static::purchaseSuggestionValidator(false)
+        );
+    }
+
     public static function customerRepository(bool $getShared = true): CustomerRepository
     {
         if ($getShared) {
@@ -623,6 +759,7 @@ class Services extends BaseService
             static::orderRepository(false),
             static::orderValidator(false),
             static::priceCalculatorService(false),
+            static::pricingService(false),
             null,
             null,
             static::webhookDispatcher(false),

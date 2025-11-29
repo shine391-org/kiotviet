@@ -14,10 +14,10 @@ class ProductRepository
 
     public function __construct(?ProductModel $products = null, ?ProductCategoryLinkModel $links = null, ?ProductVariantV2Model $variants = null, ?BaseConnection $db = null)
     {
-        $this->products = $products ?? new ProductModel();
-        $this->links = $links ?? new ProductCategoryLinkModel();
-        $this->variants = $variants ?? new ProductVariantV2Model();
-        $this->db = $db ?? \Config\Database::connect();
+        $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->products = $products ?? new ProductModel($this->db);
+        $this->links = $links ?? new ProductCategoryLinkModel($this->db);
+        $this->variants = $variants ?? new ProductVariantV2Model($this->db);
     }
 
     /** List products with filters + pagination. @agent-use: Product listing @agent-pattern: Standard query pattern */

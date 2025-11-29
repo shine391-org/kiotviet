@@ -75,12 +75,24 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('approvals/submit', 'Api\\ApprovalsController::submit');
     $routes->post('approvals/(:num)/approve', 'Api\\ApprovalsController::approve/$1');
     $routes->post('approvals/(:num)/reject', 'Api\\ApprovalsController::reject/$1');
+    $routes->get('pricing-rules', 'Api\\PricingRulesController::index');
+    $routes->post('pricing-rules', 'Api\\PricingRulesController::create');
+    $routes->put('pricing-rules/(:num)', 'Api\\PricingRulesController::update/$1');
+    $routes->post('pricing/preview', 'Api\\PricingController::preview');
     $routes->get('stock-reconciliations', 'Api\\StockReconciliationsController::index');
     $routes->get('stock-reconciliations/(:num)', 'Api\\StockReconciliationsController::show/$1');
     $routes->post('stock-reconciliations', 'Api\\StockReconciliationsController::create');
     $routes->post('stock-reconciliations/(:num)/submit', 'Api\\StockReconciliationsController::submit/$1');
     $routes->post('stock-reconciliations/(:num)/approve', 'Api\\StockReconciliationsController::approve/$1');
     $routes->post('stock-reconciliations/(:num)/reject', 'Api\\StockReconciliationsController::reject/$1');
+    $routes->get('reorder-levels', 'Api\\ReorderPlanningController::reorderLevels');
+    $routes->post('reorder-levels', 'Api\\ReorderPlanningController::createLevel');
+    $routes->put('reorder-levels/(:num)', 'Api\\ReorderPlanningController::updateLevel/$1');
+    $routes->delete('reorder-levels/(:num)', 'Api\\ReorderPlanningController::deleteLevel/$1');
+    $routes->post('purchase-suggestions/generate', 'Api\\ReorderPlanningController::generateSuggestions');
+    $routes->get('purchase-suggestions', 'Api\\ReorderPlanningController::listSuggestions');
+    $routes->post('purchase-suggestions/(:num)/ack', 'Api\\ReorderPlanningController::acknowledge/$1');
+    $routes->post('purchase-suggestions/(:num)/convert', 'Api\\ReorderPlanningController::convert/$1');
 
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('product-categories/(:num)', 'Api\\ProductCategoriesController::show/$1');

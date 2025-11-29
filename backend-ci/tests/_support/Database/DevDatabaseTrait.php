@@ -68,7 +68,8 @@ trait DevDatabaseTrait
             'inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
             'webhook_events','webhook_subscriptions',
             'approval_actions','approvals','order_approval_rules',
-            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers',
+            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers','reorder_levels','purchase_suggestions',
+            'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'cash_transactions','payment_methods','purchase_orders'
         ];
         $existing = array_flip($this->db->listTables());
