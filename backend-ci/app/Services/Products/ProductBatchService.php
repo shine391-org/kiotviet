@@ -82,7 +82,7 @@ class ProductBatchService
             ]);
             $this->ledger->record([
                 'product_id' => (int) $batch['product_id'],
-                'variant_id' => $batch['variant_id'] ? (int) $batch['variant_id'] : null,
+                'variant_id' => isset($batch['variant_id']) && $batch['variant_id'] ? (int) $batch['variant_id'] : null,
                 'branch_id' => (int) ($batch['branch_id'] ?? 0),
                 'batch_id' => (int) $batch['id'],
                 'movement_date' => date('Y-m-d H:i:s'),

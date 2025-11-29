@@ -24,25 +24,8 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();          // Connect to MySQL + start transaction
         
-        // Skip transaction for table creation - create directly in main database
-        $this->db->transComplete(); // End transaction
-        
-        // Create cash transaction schema (now includes supporting tables)
-        $this->resetCashTransactionSchema();     // Creates all tables in MySQL
-        
-        // Debug: Check if tables exist using raw SQL
-        $branchesCheck = $this->db->query("SHOW TABLES LIKE 'branches'")->getResultArray();
-        $usersCheck = $this->db->query("SHOW TABLES LIKE 'users'")->getResultArray();
-        
-        if (count($branchesCheck) === 0) {
-            throw new \Exception("Branches table does not exist");
-        }
-        if (count($usersCheck) === 0) {
-            throw new \Exception("Users table does not exist");
-        }
-        
-        // Skip transaction for now - work directly with main database
-        // $this->db->transStart();
+        // Truncate tables to ensure clean state
+        $this->resetCashTransactionSchema();
         
         $this->validator = new CashTransactionValidator(null, $this->db);
         $this->referenceValidator = new CashTransactionReferenceValidator($this->db);
@@ -50,18 +33,7 @@ class CashTransactionValidatorTest extends CIUnitTestCase
 
     protected function tearDown(): void
     {
-        // Clean up test data manually since we're not using transactions
-        try {
-            $this->db->query("DELETE FROM cash_transactions");
-            $this->db->query("DELETE FROM purchase_orders");
-            $this->db->query("DELETE FROM orders");
-            $this->db->query("DELETE FROM users");
-            $this->db->query("DELETE FROM branches");
-        } catch (\Exception $e) {
-            // Ignore cleanup errors
-        }
-        
-        // $this->tearDownDatabase();      // Skip rollback since we're not using transactions
+        $this->tearDownDatabase();      // Rollback transaction
         parent::tearDown();
     }
 
@@ -414,28 +386,8 @@ class CashTransactionValidatorTest extends CIUnitTestCase
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
 
-        // Debug: Check if table exists using raw SQL
-        $branchesCheck = $this->db->query("SHOW TABLES LIKE 'branches'")->getResultArray();
-        if (count($branchesCheck) === 0) {
-            throw new \Exception('Branches table does not exist');
-        }
-
-        // Debug: Try raw SQL insert instead of query builder
-        $sql = "INSERT INTO branches (name, code, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?)";
-        $this->db->query($sql, [
-            $payload['name'],
-            $payload['code'],
-            $payload['status'],
-            $payload['created_at'],
-            $payload['updated_at']
-        ]);
-        $insertId = $this->db->insertID();
-        
-        if ($insertId === 0) {
-            throw new \Exception('Insert failed: ' . json_encode($payload));
-        }
-        
-        return (int) $insertId;
+        $this->db->table('branches')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function seedOrder(array $data): int
@@ -455,28 +407,23 @@ class CashTransactionValidatorTest extends CIUnitTestCase
 
     private function seedUser(array $data): int
     {
+        // Always generate unique username/email to avoid UNIQUE constraint violations
+        $uniqueId = random_int(100000, 999999);
         $payload = array_merge([
-            'username' => 'user' . random_int(1000, 9999),
-            'email' => 'user' . random_int(1000, 9999) . '@test.com',
+            'username' => 'user' . $uniqueId,
+            'email' => 'user' . $uniqueId . '@test.com',
             'status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ], $data);
-
-        // Debug: Check if table exists using raw SQL
-        $usersCheck = $this->db->query("SHOW TABLES LIKE 'users'")->getResultArray();
-        if (count($usersCheck) === 0) {
-            throw new \Exception('Users table does not exist');
+        
+        // Override username if provided to make it unique
+        if (isset($data['username'])) {
+            $payload['username'] = $data['username'] . '_' . $uniqueId;
         }
 
-        $result = $this->db->table('users')->insert($payload);
-        $insertId = $this->db->insertID();
-        
-        if ($insertId === 0) {
-            throw new \Exception('User insert failed: ' . json_encode($payload));
-        }
-        
-        return (int) $insertId;
+        $this->db->table('users')->insert($payload);
+        return (int) $this->db->insertID();
     }
 
     private function seedPurchaseOrder(array $data): int

@@ -4,22 +4,29 @@ namespace Tests\Services;
 
 use App\Services\Attributes\AttributeService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use InvalidArgumentException;
 use RuntimeException;
 
 class AttributeServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+
     private AttributeService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
         $repo = new \App\Repositories\Attributes\AttributeRepository(null, 'tests'); // Pass 'tests' group
         $this->service = new AttributeService($repo); // Pass the configured repository
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_list_filters_by_type_and_status(): void
@@ -157,52 +164,13 @@ class AttributeServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS product_attribute_values');
-        $this->db->query('DROP TABLE IF EXISTS product_attribute_options');
-        $this->db->query('DROP TABLE IF EXISTS product_attributes');
-
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (
-            id INTEGER PRIMARY KEY {$auto},
-            name TEXT,
-            slug TEXT,
-            attribute_key TEXT,
-            type TEXT,
-            is_required INTEGER,
-            is_filterable INTEGER,
-            is_visible INTEGER,
-            sort_order INTEGER,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (
-            id INTEGER PRIMARY KEY {$auto},
-            attribute_id INTEGER,
-            option_name TEXT,
-            option_value TEXT,
-            color_code TEXT,
-            image_url TEXT,
-            sort_order INTEGER,
-            status TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_id INTEGER,
-            attribute_id INTEGER,
-            option_id INTEGER,
-            value_text TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
+        // Tables are created by golden migration, just truncate data
+        $tables = ['product_attribute_values', 'product_attribute_options', 'product_attributes'];
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($tables as $table) {
+            $this->db->table($table)->truncate();
+        }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function seedAttribute(array $data): int

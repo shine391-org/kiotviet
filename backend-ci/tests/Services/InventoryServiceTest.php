@@ -6,7 +6,7 @@ use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Common\NotificationService;
 use App\Services\Inventory\InventoryService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use RuntimeException;
 
 class TestInventoryRepository extends InventoryRepository
@@ -50,16 +50,23 @@ class TestInventoryRepository extends InventoryRepository
 
 class InventoryServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+
     private InventoryService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetSchema();
         $repo = new TestInventoryRepository($this->db);
         $this->service = new InventoryService($repo, null, new NotificationService());
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
     public function test_in_movement_increases_stock(): void
@@ -201,82 +208,13 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS inventory_alerts');
-        $this->db->query('DROP TABLE IF EXISTS inventory_valuation');
-        $this->db->query('DROP TABLE IF EXISTS inventory_movements');
-        $this->db->query('DROP TABLE IF EXISTS inventory_stock');
-        $this->db->query('DROP TABLE IF EXISTS warehouses');
-
-        $this->db->query("CREATE TABLE warehouses (
-            id INTEGER PRIMARY KEY {$auto},
-            code TEXT,
-            name TEXT,
-            address TEXT,
-            phone TEXT,
-            manager_id INTEGER,
-            status TEXT,
-            is_default INTEGER,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE inventory_stock (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_id INTEGER,
-            warehouse_id INTEGER,
-            quantity_on_hand REAL,
-            quantity_reserved REAL,
-            minimum_stock REAL DEFAULT 0,
-            last_movement_at TEXT,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE inventory_movements (
-            id INTEGER PRIMARY KEY {$auto},
-            reference_code TEXT,
-            movement_type TEXT,
-            product_id INTEGER,
-            variant_id INTEGER,
-            from_warehouse_id INTEGER,
-            to_warehouse_id INTEGER,
-            quantity REAL,
-            unit_cost REAL,
-            reason TEXT,
-            created_by INTEGER,
-            created_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE inventory_alerts (
-            id INTEGER PRIMARY KEY {$auto},
-            alert_type TEXT,
-            product_id INTEGER,
-            variant_id INTEGER,
-            warehouse_id INTEGER,
-            current_quantity REAL,
-            threshold_quantity REAL,
-            status TEXT,
-            resolved_by INTEGER,
-            resolved_at TEXT,
-            created_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE inventory_valuation (
-            id INTEGER PRIMARY KEY {$auto},
-            warehouse_id INTEGER,
-            product_id INTEGER,
-            variant_id INTEGER,
-            valuation_method TEXT,
-            quantity REAL,
-            unit_cost REAL,
-            total_value REAL,
-            movement_id INTEGER,
-            created_at TEXT
-        )");
+        // Tables are created by golden migration, just truncate data
+        $tables = ['inventory_alerts', 'inventory_valuation', 'inventory_movements', 'inventory_stock', 'warehouses'];
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($tables as $table) {
+            $this->db->table($table)->truncate();
+        }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function seedWarehouse(string $code): int

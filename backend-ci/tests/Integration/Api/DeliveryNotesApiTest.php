@@ -63,8 +63,8 @@ class DeliveryNotesApiTest extends CIUnitTestCase
         $this->assertTrue($deliverBody['success'] ?? false, json_encode($deliverBody));
         $this->assertEquals('delivered', $deliverBody['data']['status']);
 
-        $stock = $this->db->table('inventory_stock')->where('product_id', 1)->get()->getRowArray();
-        $this->assertEquals(3.0, (float) $stock['quantity_on_hand']);
+        $stock = $this->db->table('stock_bins')->where('product_id', 1)->where('branch_id', 1)->get()->getRowArray();
+        $this->assertEquals(3.0, (float) $stock['on_hand_qty']);
     }
 
     /** @test */
@@ -134,14 +134,13 @@ class DeliveryNotesApiTest extends CIUnitTestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
-        $this->db->table('inventory_stock')->insert([
-            'branch_id' => 1,
-            'warehouse_id' => 1,
+        $this->db->table('stock_bins')->insert([
             'product_id' => 1,
             'variant_id' => null,
-            'quantity_on_hand' => 5,
-            'quantity_reserved' => 0,
-            'created_at' => $now,
+            'branch_id' => 1,
+            'batch_id' => null,
+            'on_hand_qty' => 5,
+            'reserved_qty' => 0,
             'updated_at' => $now,
         ]);
     }
