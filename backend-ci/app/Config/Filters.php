@@ -32,6 +32,7 @@ class Filters extends BaseFilters
         'secureheaders' => SecureHeaders::class,
         'cors'          => \App\Filters\CorsFilter::class,
         'jwt'           => \App\Filters\JwtAuthFilter::class,
+        'webhookauth'   => \App\Filters\WebhookAuthFilter::class,
         'forcehttps'    => ForceHTTPS::class,
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
@@ -109,6 +110,9 @@ class Filters extends BaseFilters
             'before' => [
                 'api',
                 'api/*',
+            ],
+            'except' => [
+                'api/webhooks/ecommerce/*',
             ],
         ],
     ];

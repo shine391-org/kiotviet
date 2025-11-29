@@ -22,6 +22,8 @@ class JwtAuthFilter implements FilterInterface
         'api/auth/login',
         'api/users/login',
         'api/health',
+        'api/webhooks',
+        'api/webhooks/ecommerce',
     ];
 
     public function before(RequestInterface $request, $arguments = null)

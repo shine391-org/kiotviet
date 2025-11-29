@@ -115,6 +115,10 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('work-orders/(:num)/start', 'Api\\WorkOrdersController::start/$1');
     $routes->post('work-orders/(:num)/complete', 'Api\\WorkOrdersController::complete/$1');
     $routes->post('work-orders/(:num)/cancel', 'Api\\WorkOrdersController::cancel/$1');
+    $routes->group('webhooks/ecommerce', ['filter' => 'webhookauth'], static function ($routes) {
+        $routes->post('product', 'Api\\EcommerceWebhooksController::product');
+        $routes->post('order', 'Api\\EcommerceWebhooksController::order');
+    });
     $routes->get('quality-parameters', 'Api\\QualityInspectionsController::parameters');
     $routes->post('quality-parameters', 'Api\\QualityInspectionsController::createParameter');
     $routes->put('quality-parameters/(:num)', 'Api\\QualityInspectionsController::updateParameter/$1');

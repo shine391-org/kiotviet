@@ -49,6 +49,7 @@ class TestSchemaSetup extends Migration
         $this->createWebhookTables();
         $this->createQualityTables();
         $this->createOrderTemplateTables();
+        $this->createEcommerceTables();
         $this->createManufacturingTables();
         $this->createCashTransactionTables();
     }
@@ -79,6 +80,7 @@ class TestSchemaSetup extends Migration
             'webhook_subscriptions','webhook_events',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'order_template_items','order_templates','order_subscriptions',
+            'ecommerce_webhook_logs',
             'bom_items','bill_of_materials','work_orders',
             'cash_transactions'
         ];
@@ -452,6 +454,22 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             KEY idx_quality_item_inspection (inspection_id),
             KEY idx_quality_item_parameter (parameter_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    private function createEcommerceTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS ecommerce_webhook_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            source VARCHAR(50) NULL,
+            event_type VARCHAR(100) NOT NULL,
+            idempotency_key VARCHAR(150) NOT NULL,
+            status VARCHAR(30) DEFAULT 'processed',
+            payload_hash VARCHAR(64) NULL,
+            processed_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_ecommerce_idempotency (idempotency_key),
+            KEY idx_ecommerce_event_status (event_type, status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createOrderTemplateTables(): void

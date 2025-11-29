@@ -19,3 +19,8 @@ Bạn là AI backend engineer phụ trách tích hợp e-commerce cơ bản.
 4. Definition of Done
 - Webhook flow nhận và đồng bộ product/order tối thiểu; chống duplicate qua idempotency.
 - Unit + integration tests pass.
+
+## Status
+- [x] Service + middleware + controller/routes
+- [x] Unit tests (EcommerceIntegrationServiceTest, WebhookAuthFilterTest)
+- [x] Integration tests (EcommerceWebhooksApiTest)

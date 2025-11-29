@@ -38,6 +38,7 @@ use App\Repositories\Orders\OrderTemplateRepository;
 use App\Repositories\Orders\OrderSubscriptionRepository;
 use App\Repositories\Manufacturing\BOMRepository;
 use App\Repositories\Manufacturing\WorkOrderRepository;
+use App\Repositories\Ecommerce\EcommerceWebhookLogRepository;
 use App\Repositories\Quality\QualityInspectionRepository;
 use App\Repositories\Quality\QualityParameterRepository;
 use App\Services\Customers\CustomerService;
@@ -69,6 +70,7 @@ use App\Services\Orders\OrderTemplateService;
 use App\Services\Orders\OrderSubscriptionService;
 use App\Services\Manufacturing\BOMService;
 use App\Services\Manufacturing\WorkOrderService;
+use App\Services\Ecommerce\EcommerceIntegrationService;
 use App\Services\PurchaseOrders\PurchaseOrderStatusService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
@@ -94,6 +96,7 @@ use App\Validators\OrderTemplateValidator;
 use App\Validators\OrderSubscriptionValidator;
 use App\Validators\BOMValidator;
 use App\Validators\WorkOrderValidator;
+use App\Validators\WebhookPayloadValidator;
 use App\Validators\QualityInspectionValidator;
 use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
@@ -873,6 +876,29 @@ class Services extends BaseService
             static::bomRepository(false),
             static::stockLedgerService(false),
             static::workOrderValidator(false)
+        );
+    }
+
+    public static function webhookPayloadValidator(bool $getShared = true): WebhookPayloadValidator
+    {
+        return $getShared ? static::getSharedInstance('webhookPayloadValidator') : new WebhookPayloadValidator();
+    }
+
+    public static function ecommerceWebhookLogRepository(bool $getShared = true): EcommerceWebhookLogRepository
+    {
+        if ($getShared) { return static::getSharedInstance('ecommerceWebhookLogRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new EcommerceWebhookLogRepository(null, $db);
+    }
+
+    public static function ecommerceIntegrationService(bool $getShared = true): EcommerceIntegrationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('ecommerceIntegrationService'); }
+        return new EcommerceIntegrationService(
+            static::productRepository(false),
+            static::orderService(false),
+            static::ecommerceWebhookLogRepository(false),
+            static::webhookPayloadValidator(false)
         );
     }
 
