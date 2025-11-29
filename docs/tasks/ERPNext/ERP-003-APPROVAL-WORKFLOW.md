@@ -31,3 +31,8 @@ Bạn là AI backend engineer phụ trách dựng engine phê duyệt dùng chun
 - Hook mẫu cho Order: confirm đơn > ngưỡng phải tạo approval instance và chặn tiến trình nếu pending.
 - Unit + integration tests pass (phpunit + phpunit.integration.xml nếu cần HTTP).
 - Tài liệu cập nhật liên kết vào docs/erpnext/README.md nếu thêm file mới.
+
+## Status
+- [x] Migrations + services/controllers
+- [x] Unit tests
+- [x] Integration tests

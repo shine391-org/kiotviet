@@ -26,6 +26,7 @@ class TestSchemaSetup extends Migration
         $this->createProductBatchTables();
         $this->createProductSerialNumberTables();
         $this->createDeliveryNoteTables();
+        $this->createApprovalTables();
         $this->createPriceListTables();
         $this->createPriceListItemTables();
         $this->createPaymentMethodTables();
@@ -60,6 +61,7 @@ class TestSchemaSetup extends Migration
             'products','product_categories','product_category_links','product_variants_v2',
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
             'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
+            'approval_actions','approvals','order_approval_rules',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -211,6 +213,50 @@ class TestSchemaSetup extends Migration
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
+    private function createApprovalTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_approval_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            condition_type VARCHAR(50) DEFAULT 'amount',
+            threshold_amount DECIMAL(14,2) DEFAULT 0,
+            customer_id BIGINT UNSIGNED NULL,
+            custom_condition TEXT NULL,
+            approver_ids TEXT NOT NULL,
+            priority INT DEFAULT 100,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_rule_condition (condition_type, customer_id),
+            KEY idx_rule_priority (priority)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS approvals (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            entity_type VARCHAR(50) DEFAULT 'order',
+            entity_id BIGINT UNSIGNED NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            status VARCHAR(20) DEFAULT 'pending',
+            approver_queue TEXT NOT NULL,
+            current_index INT DEFAULT 0,
+            current_approver_id BIGINT UNSIGNED NULL,
+            requested_by BIGINT UNSIGNED NULL,
+            requested_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_approval_entity (entity_type, entity_id),
+            KEY idx_approval_order (order_id, status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS approval_actions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            approval_id BIGINT UNSIGNED NOT NULL,
+            action VARCHAR(20) NOT NULL,
+            actor_id BIGINT UNSIGNED NULL,
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            KEY idx_actions_approval (approval_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
     private function createPriceListTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'custom', description TEXT NULL, apply_to_groups JSON NULL, start_date DATE NULL, end_date DATE NULL, priority INT DEFAULT 0, is_active TINYINT(1) DEFAULT 1, formula TEXT NULL, base_price_list_id INT NULL, auto_update TINYINT(1) DEFAULT 0, rounding_rule VARCHAR(50) DEFAULT 'none', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");

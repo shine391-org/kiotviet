@@ -22,6 +22,9 @@ use App\Repositories\Orders\OrderRepository;
 use App\Repositories\Orders\OrderPaymentRepository;
 use App\Repositories\Webhooks\WebhookEventRepository;
 use App\Repositories\Webhooks\WebhookSubscriptionRepository;
+use App\Repositories\Approvals\ApprovalRuleRepository;
+use App\Repositories\Approvals\ApprovalRepository;
+use App\Repositories\Approvals\ApprovalActionRepository;
 use App\Services\Customers\CustomerService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
@@ -53,6 +56,8 @@ use App\Validators\ProductMediaValidator;
 use App\Validators\ProductValidator;
 use App\Validators\ProductBatchValidator;
 use App\Validators\ProductSerialValidator;
+use App\Validators\ApprovalRuleValidator;
+use App\Validators\ApprovalRequestValidator;
 use App\Validators\DeliveryNoteValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
@@ -65,6 +70,9 @@ use App\Validators\CustomerValidator;
 use App\Repositories\Inventory\InventoryRepository;
 use App\Services\Inventory\InventoryService;
 use App\Validators\InventoryValidator;
+use App\Services\Approvals\ApprovalRuleService;
+use App\Services\Approvals\ApprovalService;
+use App\Services\Approvals\ApprovalHook;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -171,6 +179,77 @@ class Services extends BaseService
             static::productSerialValidator(false),
             static::productBatchRepository(false)
         );
+    }
+
+    public static function approvalRuleValidator(bool $getShared = true): ApprovalRuleValidator
+    {
+        return $getShared ? static::getSharedInstance('approvalRuleValidator') : new ApprovalRuleValidator();
+    }
+
+    public static function approvalRequestValidator(bool $getShared = true): ApprovalRequestValidator
+    {
+        return $getShared ? static::getSharedInstance('approvalRequestValidator') : new ApprovalRequestValidator();
+    }
+
+    public static function approvalRuleRepository(bool $getShared = true): ApprovalRuleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalRuleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ApprovalRuleRepository(null, $db);
+    }
+
+    public static function approvalRepository(bool $getShared = true): ApprovalRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $repo = new ApprovalRepository(null, $db);
+        $repo->db = $db;
+        return $repo;
+    }
+
+    public static function approvalActionRepository(bool $getShared = true): ApprovalActionRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalActionRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ApprovalActionRepository(null, $db);
+    }
+
+    public static function approvalRuleService(bool $getShared = true): ApprovalRuleService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalRuleService');
+        }
+        return new ApprovalRuleService(
+            static::approvalRuleRepository(false),
+            static::approvalRuleValidator(false)
+        );
+    }
+
+    public static function approvalService(bool $getShared = true): ApprovalService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalService');
+        }
+        return new ApprovalService(
+            static::approvalRepository(false),
+            static::approvalActionRepository(false),
+            static::approvalRuleService(false),
+            static::approvalRequestValidator(false)
+        );
+    }
+
+    public static function approvalHook(bool $getShared = true): ApprovalHook
+    {
+        if ($getShared) {
+            return static::getSharedInstance('approvalHook');
+        }
+        return new ApprovalHook(static::approvalService(false));
     }
 
     public static function deliveryNoteValidator(bool $getShared = true): DeliveryNoteValidator
@@ -599,6 +678,7 @@ class Services extends BaseService
             static::inventoryMovementLogger(false),
             static::productBatchService(false),
             static::productSerialNumberService(false),
+            static::approvalHook(false),
             static::webhookDispatcher(false)
         );
     }

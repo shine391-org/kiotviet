@@ -67,6 +67,7 @@ trait DevDatabaseTrait
             'customers','branches','warehouses','users','factories',
             'inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
             'webhook_events','webhook_subscriptions',
+            'approval_actions','approvals','order_approval_rules',
             'cash_transactions','payment_methods','purchase_orders'
         ];
         $existing = array_flip($this->db->listTables());

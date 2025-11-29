@@ -69,6 +69,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('product-serials/reserve', 'Api\\ProductSerialsController::reserve');
     $routes->post('product-serials/sell', 'Api\\ProductSerialsController::sell');
     $routes->post('product-serials/return', 'Api\\ProductSerialsController::markReturned');
+    $routes->get('approval-rules', 'Api\\ApprovalRulesController::index');
+    $routes->post('approval-rules', 'Api\\ApprovalRulesController::create');
+    $routes->put('approval-rules/(:num)', 'Api\\ApprovalRulesController::update/$1');
+    $routes->post('approvals/submit', 'Api\\ApprovalsController::submit');
+    $routes->post('approvals/(:num)/approve', 'Api\\ApprovalsController::approve/$1');
+    $routes->post('approvals/(:num)/reject', 'Api\\ApprovalsController::reject/$1');
 
     $routes->get('product-categories', 'Api\\ProductCategoriesController::index');
     $routes->get('product-categories/(:num)', 'Api\\ProductCategoriesController::show/$1');

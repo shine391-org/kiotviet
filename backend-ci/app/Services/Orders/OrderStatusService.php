@@ -9,6 +9,7 @@ use App\Models\CashTransactionModel;
 use App\Services\CashTransactions\CashTransactionService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Inventory\InventoryService;
+use App\Services\Approvals\ApprovalHook;
 use App\Services\Products\ProductBatchService;
 use App\Services\Products\ProductSerialNumberService;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -34,6 +35,7 @@ class OrderStatusService
     protected ProductBatchService $batchService;
     protected ProductSerialNumberService $serialService;
     protected ?WebhookDispatcher $webhooks;
+    protected ?ApprovalHook $approvalHook;
 
     public function __construct(
         ?OrderRepository $orders = null,
@@ -44,6 +46,7 @@ class OrderStatusService
         ?InventoryMovementLogger $movementLogger = null,
         ?ProductBatchService $batchService = null,
         ?ProductSerialNumberService $serialService = null,
+        ?ApprovalHook $approvalHook = null,
         ?WebhookDispatcher $webhooks = null
     ) {
         $this->orders = $orders ?? new OrderRepository();
@@ -54,6 +57,7 @@ class OrderStatusService
         $this->movementLogger = $movementLogger ?? new InventoryMovementLogger();
         $this->batchService = $batchService ?? new ProductBatchService();
         $this->serialService = $serialService ?? new ProductSerialNumberService();
+        $this->approvalHook = $approvalHook;
         $this->webhooks = $webhooks;
     }
 
@@ -68,6 +72,10 @@ class OrderStatusService
         $fromStatus = $order['status'] ?? 'draft';
         if (! $this->transition->isValid($fromStatus, $toStatus)) {
             throw new InvalidArgumentException("Cannot transition from {$fromStatus} to {$toStatus}");
+        }
+
+        if ($toStatus === 'confirmed' && $fromStatus === 'draft' && $this->approvalHook) {
+            $this->approvalHook->requireOrderApproval($order, $userId);
         }
 
         // side effects before status change
