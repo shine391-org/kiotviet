@@ -49,6 +49,7 @@ class TestSchemaSetup extends Migration
         $this->createWebhookTables();
         $this->createQualityTables();
         $this->createOrderTemplateTables();
+        $this->createManufacturingTables();
         $this->createCashTransactionTables();
     }
 
@@ -78,6 +79,7 @@ class TestSchemaSetup extends Migration
             'webhook_subscriptions','webhook_events',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'order_template_items','order_templates','order_subscriptions',
+            'bom_items','bill_of_materials','work_orders',
             'cash_transactions'
         ];
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
@@ -497,6 +499,53 @@ class TestSchemaSetup extends Migration
             KEY idx_order_subscription_template (template_id),
             KEY idx_order_subscription_next (next_run_at),
             KEY idx_order_subscription_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+    private function createManufacturingTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS bill_of_materials (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            version VARCHAR(50) NULL,
+            quantity DECIMAL(12,3) DEFAULT 1,
+            uom VARCHAR(50) NULL,
+            cost DECIMAL(14,4) DEFAULT 0,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_bom_product (product_id),
+            KEY idx_bom_active (is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS bom_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            bom_id BIGINT UNSIGNED NOT NULL,
+            component_product_id BIGINT UNSIGNED NOT NULL,
+            quantity DECIMAL(12,3) DEFAULT 0,
+            uom VARCHAR(50) NULL,
+            scrap_percent DECIMAL(6,3) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_bom_item_bom (bom_id),
+            KEY idx_bom_item_component (component_product_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS work_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            product_id BIGINT UNSIGNED NOT NULL,
+            bom_id BIGINT UNSIGNED NOT NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            quantity DECIMAL(12,3) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'draft',
+            planned_start DATETIME NULL,
+            planned_end DATETIME NULL,
+            actual_start DATETIME NULL,
+            actual_end DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_work_order_product (product_id),
+            KEY idx_work_order_bom (bom_id),
+            KEY idx_work_order_status (status)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
     private function createPriceListTables(): void

@@ -21,3 +21,8 @@ Bạn là AI backend engineer phụ trách tích hợp sản xuất cơ bản th
 - BOM và Work Order vận hành cơ bản, ghi movement tiêu hao NVL và nhập thành phẩm.
 - Không oversell linh kiện; trạng thái work order chính xác.
 - Unit + integration tests pass.
+
+## Status
+- [x] Migrations + validators/repositories/services/controllers
+- [x] Unit tests (BOMServiceTest, WorkOrderServiceTest)
+- [x] Integration tests (WorkOrdersApiTest)

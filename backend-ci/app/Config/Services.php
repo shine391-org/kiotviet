@@ -36,6 +36,8 @@ use App\Repositories\Inventory\ReorderLevelRepository;
 use App\Repositories\Inventory\PurchaseSuggestionRepository;
 use App\Repositories\Orders\OrderTemplateRepository;
 use App\Repositories\Orders\OrderSubscriptionRepository;
+use App\Repositories\Manufacturing\BOMRepository;
+use App\Repositories\Manufacturing\WorkOrderRepository;
 use App\Repositories\Quality\QualityInspectionRepository;
 use App\Repositories\Quality\QualityParameterRepository;
 use App\Services\Customers\CustomerService;
@@ -65,6 +67,8 @@ use App\Services\Orders\OrderStatusTransition;
 use App\Services\Orders\OrderCancellationService;
 use App\Services\Orders\OrderTemplateService;
 use App\Services\Orders\OrderSubscriptionService;
+use App\Services\Manufacturing\BOMService;
+use App\Services\Manufacturing\WorkOrderService;
 use App\Services\PurchaseOrders\PurchaseOrderStatusService;
 use App\Services\Inventory\InventoryMovementLogger;
 use App\Services\Orders\OrderService;
@@ -88,6 +92,8 @@ use App\Validators\ReorderLevelValidator;
 use App\Validators\PurchaseSuggestionValidator;
 use App\Validators\OrderTemplateValidator;
 use App\Validators\OrderSubscriptionValidator;
+use App\Validators\BOMValidator;
+use App\Validators\WorkOrderValidator;
 use App\Validators\QualityInspectionValidator;
 use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
@@ -823,6 +829,50 @@ class Services extends BaseService
             static::orderSubscriptionRepository(false),
             static::orderSubscriptionValidator(false),
             static::orderTemplateService(false)
+        );
+    }
+
+    public static function bomValidator(bool $getShared = true): BOMValidator
+    {
+        return $getShared ? static::getSharedInstance('bomValidator') : new BOMValidator();
+    }
+
+    public static function workOrderValidator(bool $getShared = true): WorkOrderValidator
+    {
+        return $getShared ? static::getSharedInstance('workOrderValidator') : new WorkOrderValidator();
+    }
+
+    public static function bomRepository(bool $getShared = true): BOMRepository
+    {
+        if ($getShared) { return static::getSharedInstance('bomRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new BOMRepository(null, null, $db);
+    }
+
+    public static function workOrderRepository(bool $getShared = true): WorkOrderRepository
+    {
+        if ($getShared) { return static::getSharedInstance('workOrderRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new WorkOrderRepository(null, null, $db);
+    }
+
+    public static function bomService(bool $getShared = true): BOMService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('bomService'); }
+        return new BOMService(
+            static::bomRepository(false),
+            static::bomValidator(false)
+        );
+    }
+
+    public static function workOrderService(bool $getShared = true): WorkOrderService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('workOrderService'); }
+        return new WorkOrderService(
+            static::workOrderRepository(false),
+            static::bomRepository(false),
+            static::stockLedgerService(false),
+            static::workOrderValidator(false)
         );
     }
 

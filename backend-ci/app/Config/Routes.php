@@ -103,6 +103,18 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('order-subscriptions', 'Api\\OrderSubscriptionsController::create');
     $routes->put('order-subscriptions/(:num)', 'Api\\OrderSubscriptionsController::update/$1');
     $routes->post('order-subscriptions/run', 'Api\\OrderSubscriptionsController::run');
+    $routes->get('boms', 'Api\\BOMsController::index');
+    $routes->get('boms/(:num)', 'Api\\BOMsController::show/$1');
+    $routes->post('boms', 'Api\\BOMsController::create');
+    $routes->put('boms/(:num)', 'Api\\BOMsController::update/$1');
+    $routes->delete('boms/(:num)', 'Api\\BOMsController::delete/$1');
+    $routes->get('work-orders', 'Api\\WorkOrdersController::index');
+    $routes->get('work-orders/(:num)', 'Api\\WorkOrdersController::show/$1');
+    $routes->post('work-orders', 'Api\\WorkOrdersController::create');
+    $routes->post('work-orders/(:num)/release', 'Api\\WorkOrdersController::release/$1');
+    $routes->post('work-orders/(:num)/start', 'Api\\WorkOrdersController::start/$1');
+    $routes->post('work-orders/(:num)/complete', 'Api\\WorkOrdersController::complete/$1');
+    $routes->post('work-orders/(:num)/cancel', 'Api\\WorkOrdersController::cancel/$1');
     $routes->get('quality-parameters', 'Api\\QualityInspectionsController::parameters');
     $routes->post('quality-parameters', 'Api\\QualityInspectionsController::createParameter');
     $routes->put('quality-parameters/(:num)', 'Api\\QualityInspectionsController::updateParameter/$1');
