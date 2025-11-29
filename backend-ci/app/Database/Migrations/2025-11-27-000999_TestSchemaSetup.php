@@ -41,6 +41,7 @@ class TestSchemaSetup extends Migration
         $this->createOrderItemTables();
         $this->createOrderPaymentTables();
         $this->createPaymentEntryTables();
+        $this->createBankReconciliationTables();
         $this->createAccountingTables();
         $this->createOrderSequenceTables();
         $this->createPOSTables();
@@ -90,6 +91,7 @@ class TestSchemaSetup extends Migration
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
             'chart_of_accounts','gl_entries',
+            'bank_reconciliation_logs','bank_reconciliations','bank_statements','payment_entry_allocations',
             'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
             'sales_invoice_taxes','sales_invoice_items','sales_invoices','payment_schedules',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
@@ -918,14 +920,75 @@ class TestSchemaSetup extends Migration
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS payment_entries (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            order_id BIGINT UNSIGNED NOT NULL,
-            payment_method VARCHAR(50) NOT NULL,
+            order_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NULL,
+            mode_of_payment VARCHAR(50) NULL,
+            party_type VARCHAR(50) NULL,
+            party_id BIGINT UNSIGNED NULL,
+            reference_type VARCHAR(120) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            debit_account_id BIGINT UNSIGNED NULL,
+            credit_account_id BIGINT UNSIGNED NULL,
             amount DECIMAL(14,2) NOT NULL DEFAULT 0,
+            currency VARCHAR(10) DEFAULT 'VND',
+            exchange_rate DECIMAL(12,4) DEFAULT 1,
             reference VARCHAR(120) NULL,
+            reference_no VARCHAR(120) NULL,
+            reference_date DATE NULL,
             status VARCHAR(20) DEFAULT 'posted',
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
-            UNIQUE KEY uq_payment_entry (order_id, payment_method, reference)
+            UNIQUE KEY uq_payment_entry_order (order_id, payment_method, reference),
+            KEY idx_payment_party (party_type, party_id),
+            KEY idx_payment_ref (reference_type, reference_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createBankReconciliationTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS payment_entry_allocations (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            payment_entry_id BIGINT UNSIGNED NOT NULL,
+            reference_type VARCHAR(120) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            allocated_amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_payment_alloc_entry (payment_entry_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS bank_statements (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            account_number VARCHAR(50) NOT NULL,
+            amount DECIMAL(14,2) NOT NULL,
+            currency VARCHAR(10) DEFAULT 'VND',
+            reference_no VARCHAR(120) NULL,
+            reference_date DATE NULL,
+            description VARCHAR(255) NULL,
+            status VARCHAR(20) DEFAULT 'imported',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_bank_statement_ref (reference_no, reference_date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS bank_reconciliations (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            bank_statement_id BIGINT UNSIGNED NOT NULL,
+            payment_entry_id BIGINT UNSIGNED NULL,
+            status VARCHAR(20) DEFAULT 'pending',
+            matched_amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_bank_reco_statement (bank_statement_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS bank_reconciliation_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            bank_reconciliation_id BIGINT UNSIGNED NOT NULL,
+            action VARCHAR(50) NOT NULL,
+            message TEXT NULL,
+            created_at DATETIME NULL,
+            KEY idx_bank_reco_log (bank_reconciliation_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

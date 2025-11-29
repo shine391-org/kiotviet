@@ -3,11 +3,13 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
-use App\Services\Payments\PaymentEntryService;
+use App\Services\Accounting\PaymentEntryService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
- * @agent-controller: Payment entries
+ * Payment entries API (accounting).
+ *
+ * @agent-controller: PaymentEntries
  * @agent-pattern: Thin controller - routing only
  */
 class PaymentEntriesController extends BaseController
@@ -18,14 +20,32 @@ class PaymentEntriesController extends BaseController
 
     public function __construct()
     {
-        $this->service = service('paymentEntryService');
+        $this->service = service('accountingPaymentEntryService');
     }
 
-    /** Create payment entry. @agent-use: POST /api/payment-entries */
+    /** @agent-use: POST /api/payment-entries */
     public function create()
     {
         $payload = $this->request->getJSON(true) ?? [];
         return $this->wrap(fn () => $this->respondCreated($this->service->create($payload)));
+    }
+
+    /** @agent-use: POST /api/payment-entries/{id}/submit */
+    public function submit($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->submit((int) $id)));
+    }
+
+    /** @agent-use: POST /api/payment-entries/{id}/cancel */
+    public function cancel($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->cancel((int) $id)));
+    }
+
+    /** @agent-use: GET /api/payment-entries/{id} */
+    public function show($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->get((int) $id)));
     }
 
     private function wrap(callable $action)

@@ -32,6 +32,9 @@ use App\Repositories\Accounting\COARepository;
 use App\Repositories\Accounting\GLEntryRepository;
 use App\Repositories\Accounting\PurchaseInvoiceRepository;
 use App\Repositories\Accounting\SalesInvoiceRepository;
+use App\Repositories\Accounting\PaymentEntryRepository as AccountingPaymentEntryRepository;
+use App\Repositories\Accounting\BankStatementRepository;
+use App\Repositories\Accounting\BankReconciliationRepository;
 use App\Repositories\Support\SupportTicketRepository;
 use App\Repositories\Support\CommunicationRepository;
 use App\Repositories\Support\TicketEventRepository;
@@ -93,6 +96,8 @@ use App\Services\Accounting\COAService;
 use App\Services\Accounting\AccountingService;
 use App\Services\Accounting\PurchaseInvoiceService;
 use App\Services\Accounting\SalesInvoiceService;
+use App\Services\Accounting\PaymentEntryService as AccountingPaymentEntryService;
+use App\Services\Accounting\BankReconciliationService;
 use App\Services\Support\SupportTicketService;
 use App\Services\Support\CommunicationService;
 use App\Services\Campaigns\CampaignService;
@@ -156,6 +161,7 @@ use App\Validators\COAValidator;
 use App\Validators\GLEntryValidator;
 use App\Validators\PurchaseInvoiceValidator;
 use App\Validators\SalesInvoiceValidator;
+use App\Validators\BankReconciliationValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
@@ -1370,6 +1376,53 @@ class Services extends BaseService
             static::purchaseInvoiceValidator(false),
             static::taxTemplateRepository(false),
             static::accountingService(false)
+        );
+    }
+
+    public static function accountingPaymentEntryRepository(bool $getShared = true): AccountingPaymentEntryRepository
+    {
+        if ($getShared) { return static::getSharedInstance('accountingPaymentEntryRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AccountingPaymentEntryRepository(null, null, $db);
+    }
+
+    public static function bankStatementRepository(bool $getShared = true): BankStatementRepository
+    {
+        if ($getShared) { return static::getSharedInstance('bankStatementRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new BankStatementRepository(null, $db);
+    }
+
+    public static function bankReconciliationRepository(bool $getShared = true): BankReconciliationRepository
+    {
+        if ($getShared) { return static::getSharedInstance('bankReconciliationRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new BankReconciliationRepository(null, null, $db);
+    }
+
+    public static function bankReconciliationValidator(bool $getShared = true): BankReconciliationValidator
+    {
+        return $getShared ? static::getSharedInstance('bankReconciliationValidator') : new BankReconciliationValidator();
+    }
+
+    public static function accountingPaymentEntryService(bool $getShared = true): AccountingPaymentEntryService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('accountingPaymentEntryService'); }
+        return new AccountingPaymentEntryService(
+            static::accountingPaymentEntryRepository(false),
+            static::paymentEntryValidator(false),
+            static::accountingService(false)
+        );
+    }
+
+    public static function bankReconciliationService(bool $getShared = true): BankReconciliationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('bankReconciliationService'); }
+        return new BankReconciliationService(
+            static::bankStatementRepository(false),
+            static::bankReconciliationRepository(false),
+            static::accountingPaymentEntryRepository(false),
+            static::bankReconciliationValidator(false)
         );
     }
 

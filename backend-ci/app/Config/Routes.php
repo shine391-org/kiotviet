@@ -255,6 +255,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-invoices/(:num)', 'Api\\PurchaseInvoicesController::show/$1');
     $routes->post('purchase-invoices/(:num)/submit', 'Api\\PurchaseInvoicesController::submit/$1');
     $routes->post('purchase-invoices/(:num)/cancel', 'Api\\PurchaseInvoicesController::cancel/$1');
+    $routes->post('payment-entries', 'Api\\PaymentEntriesController::create');
+    $routes->get('payment-entries/(:num)', 'Api\\PaymentEntriesController::show/$1');
+    $routes->post('payment-entries/(:num)/submit', 'Api\\PaymentEntriesController::submit/$1');
+    $routes->post('payment-entries/(:num)/cancel', 'Api\\PaymentEntriesController::cancel/$1');
+    $routes->post('bank-statements/import', 'Api\\BankReconciliationsController::import');
+    $routes->post('bank-reconciliations/(:num)/match', 'Api\\BankReconciliationsController::match/$1');
     $routes->post('support-tickets', 'Api\\SupportTicketsController::create');
     $routes->put('support-tickets/(:num)', 'Api\\SupportTicketsController::update/$1');
     $routes->get('support-tickets/(:num)', 'Api\\SupportTicketsController::show/$1');
