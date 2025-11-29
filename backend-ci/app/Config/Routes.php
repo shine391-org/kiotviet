@@ -239,6 +239,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('campaigns/(:num)/members', 'Api\\CampaignsController::addMember/$1');
     $routes->post('email-campaigns', 'Api\\EmailCampaignsController::create');
     $routes->post('email-campaigns/(:num)/status', 'Api\\EmailCampaignsController::updateStatus/$1');
+    $routes->get('chart-of-accounts', 'Api\\ChartOfAccountsController::index');
+    $routes->get('chart-of-accounts/(:num)', 'Api\\ChartOfAccountsController::show/$1');
+    $routes->get('chart-of-accounts/(:num)/children', 'Api\\ChartOfAccountsController::children/$1');
+    $routes->post('chart-of-accounts', 'Api\\ChartOfAccountsController::create');
+    $routes->post('gl/journal', 'Api\\GLEntriesController::postJournal');
+    $routes->get('gl', 'Api\\GLEntriesController::index');
     $routes->post('support-tickets', 'Api\\SupportTicketsController::create');
     $routes->put('support-tickets/(:num)', 'Api\\SupportTicketsController::update/$1');
     $routes->get('support-tickets/(:num)', 'Api\\SupportTicketsController::show/$1');

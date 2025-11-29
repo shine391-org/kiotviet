@@ -28,6 +28,8 @@ use App\Repositories\CRM\QuotationRepository;
 use App\Repositories\Contracts\ContractRepository;
 use App\Repositories\Contracts\ContractTemplateRepository;
 use App\Repositories\Appointments\AppointmentRepository;
+use App\Repositories\Accounting\COARepository;
+use App\Repositories\Accounting\GLEntryRepository;
 use App\Repositories\Support\SupportTicketRepository;
 use App\Repositories\Support\CommunicationRepository;
 use App\Repositories\Support\TicketEventRepository;
@@ -85,6 +87,8 @@ use App\Services\CRM\QuotationService;
 use App\Services\CRM\QuotationNumberGenerator;
 use App\Services\Contracts\ContractService;
 use App\Services\Appointments\AppointmentService;
+use App\Services\Accounting\COAService;
+use App\Services\Accounting\AccountingService;
 use App\Services\Support\SupportTicketService;
 use App\Services\Support\CommunicationService;
 use App\Services\Campaigns\CampaignService;
@@ -144,6 +148,8 @@ use App\Validators\OpportunityValidator;
 use App\Validators\QuotationValidator;
 use App\Validators\ContractValidator;
 use App\Validators\AppointmentValidator;
+use App\Validators\COAValidator;
+use App\Validators\GLEntryValidator;
 use App\Validators\SupportTicketValidator;
 use App\Validators\CommunicationValidator;
 use App\Validators\CampaignValidator;
@@ -1272,6 +1278,46 @@ class Services extends BaseService
         return new AppointmentService(
             static::appointmentRepository(false),
             static::appointmentValidator(false)
+        );
+    }
+
+    public static function coaRepository(bool $getShared = true): COARepository
+    {
+        if ($getShared) { return static::getSharedInstance('coaRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new COARepository(null, $db);
+    }
+
+    public static function glEntryRepository(bool $getShared = true): GLEntryRepository
+    {
+        if ($getShared) { return static::getSharedInstance('glEntryRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new GLEntryRepository(null, $db);
+    }
+
+    public static function coaValidator(bool $getShared = true): COAValidator
+    {
+        return $getShared ? static::getSharedInstance('coaValidator') : new COAValidator();
+    }
+
+    public static function glEntryValidator(bool $getShared = true): GLEntryValidator
+    {
+        return $getShared ? static::getSharedInstance('glEntryValidator') : new GLEntryValidator();
+    }
+
+    public static function coaService(bool $getShared = true): COAService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('coaService'); }
+        return new COAService(static::coaRepository(false), static::coaValidator(false));
+    }
+
+    public static function accountingService(bool $getShared = true): AccountingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('accountingService'); }
+        return new AccountingService(
+            static::coaRepository(false),
+            static::glEntryRepository(false),
+            static::glEntryValidator(false)
         );
     }
 

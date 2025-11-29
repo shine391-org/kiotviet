@@ -76,6 +76,7 @@ trait DevDatabaseTrait
             'bom_items','bill_of_materials','work_orders',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'cash_transactions','payment_methods','purchase_orders',
+            'gl_entries','chart_of_accounts',
             'tax_charges','tax_templates',
             'payment_entries',
             'coupons','coupon_usages',

@@ -41,6 +41,7 @@ class TestSchemaSetup extends Migration
         $this->createOrderItemTables();
         $this->createOrderPaymentTables();
         $this->createPaymentEntryTables();
+        $this->createAccountingTables();
         $this->createOrderSequenceTables();
         $this->createPOSTables();
         $this->createPOSOfflineTables();
@@ -86,6 +87,7 @@ class TestSchemaSetup extends Migration
             'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'price_lists','price_list_items',
             'payment_methods','purchase_orders',
+            'chart_of_accounts','gl_entries',
             'orders','order_items','order_sequences','order_payments','order_status_logs',
             'returns','return_items',
             'invoices','invoice_orders',
@@ -920,6 +922,41 @@ class TestSchemaSetup extends Migration
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
             UNIQUE KEY uq_payment_entry (order_id, payment_method, reference)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createAccountingTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS chart_of_accounts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            account_type VARCHAR(50) NOT NULL,
+            currency VARCHAR(10) NULL,
+            parent_id BIGINT UNSIGNED NULL,
+            is_group TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_coa_code (code),
+            KEY idx_coa_parent (parent_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS gl_entries (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            posting_date DATE NOT NULL,
+            account_id BIGINT UNSIGNED NOT NULL,
+            debit DECIMAL(14,2) DEFAULT 0,
+            credit DECIMAL(14,2) DEFAULT 0,
+            party_type VARCHAR(60) NULL,
+            party_id BIGINT UNSIGNED NULL,
+            reference_type VARCHAR(100) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            remarks TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_gl_account (account_id),
+            KEY idx_gl_posting_date (posting_date),
+            KEY idx_gl_party (party_type, party_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
