@@ -197,14 +197,72 @@ use App\Validators\QualityParameterValidator;
 use App\Validators\PriceListValidator;
 use App\Validators\PaymentMethodValidator;
 use App\Validators\InvoiceValidator;
+use App\Validators\AssetValidator;
+use App\Validators\DepreciationValidator;
+use App\Validators\MaintenanceValidator;
+use App\Validators\EmployeeValidator;
+use App\Validators\LeaveValidator;
+use App\Validators\PayrollValidator;
+use App\Validators\ProjectValidator;
+use App\Validators\TaskValidator;
+use App\Validators\TimesheetValidator;
+use App\Validators\StockEntryValidator;
+use App\Validators\PickListValidator;
+use App\Validators\PackingSlipValidator;
 use App\Validators\ReturnValidator;
 use App\Validators\OrderValidator;
 use App\Validators\WebhookSubscriptionValidator;
 use App\Validators\AttributeValidator;
 use App\Validators\CustomerValidator;
 use App\Repositories\Inventory\InventoryRepository;
+use App\Repositories\Assets\AssetRepository;
+use App\Repositories\Assets\DepreciationScheduleRepository;
+use App\Repositories\Assets\MaintenanceRepository;
+use App\Repositories\Jobs\JobRepository;
+use App\Repositories\Jobs\SchedulerRuleRepository;
+use App\Repositories\Portal\PortalUserRepository;
+use App\Repositories\Portal\KnowledgeBaseRepository;
+use App\Repositories\Notifications\NotificationRuleRepository;
+use App\Repositories\Assignments\AssignmentRepository;
+use App\Repositories\HR\EmployeeRepository;
+use App\Repositories\HR\LeaveRepository;
+use App\Repositories\HR\AttendanceRepository;
+use App\Repositories\HR\PayrollRepository;
+use App\Repositories\HR\SalarySlipRepository;
+use App\Repositories\Projects\ProjectRepository;
+use App\Repositories\Projects\TaskRepository;
+use App\Repositories\Projects\TimesheetRepository;
+use App\Repositories\Projects\ActivityTypeRepository;
+use App\Repositories\Inventory\StockEntryRepository;
+use App\Repositories\Inventory\PickListRepository;
+use App\Repositories\Inventory\PackingSlipRepository;
 use App\Services\Inventory\InventoryService;
+use App\Services\Assets\AssetService;
+use App\Services\Assets\DepreciationService;
+use App\Services\Assets\MaintenanceService;
+use App\Services\Jobs\SchedulerService;
+use App\Services\Jobs\JobRunnerService;
+use App\Services\Portal\PortalService;
+use App\Services\Portal\KnowledgeBaseService;
+use App\Services\Notifications\NotificationService;
+use App\Services\Assignments\AssignmentService;
+use App\Services\HR\EmployeeService;
+use App\Services\HR\LeaveService;
+use App\Services\HR\AttendanceService;
+use App\Services\HR\PayrollService;
+use App\Services\Projects\ProjectService;
+use App\Services\Projects\TaskService;
+use App\Services\Projects\TimesheetService;
+use App\Services\Projects\ActivityCostService;
+use App\Services\Inventory\StockEntryService;
+use App\Services\Inventory\PickPackService;
+use App\Services\Inventory\StockEntryReturnService;
 use App\Validators\InventoryValidator;
+use App\Validators\SchedulerValidator;
+use App\Validators\JobValidator;
+use App\Validators\PortalValidator;
+use App\Validators\NotificationValidator;
+use App\Validators\AssignmentValidator;
 use App\Services\Approvals\ApprovalRuleService;
 use App\Services\Approvals\ApprovalService;
 use App\Services\Approvals\ApprovalHook;
@@ -517,6 +575,83 @@ class Services extends BaseService
         );
     }
 
+    public static function stockEntryValidator(bool $getShared = true): StockEntryValidator
+    {
+        return $getShared ? static::getSharedInstance('stockEntryValidator') : new StockEntryValidator();
+    }
+
+    public static function pickListValidator(bool $getShared = true): PickListValidator
+    {
+        return $getShared ? static::getSharedInstance('pickListValidator') : new PickListValidator();
+    }
+
+    public static function packingSlipValidator(bool $getShared = true): PackingSlipValidator
+    {
+        return $getShared ? static::getSharedInstance('packingSlipValidator') : new PackingSlipValidator();
+    }
+
+    public static function stockEntryRepository(bool $getShared = true): StockEntryRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockEntryRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new StockEntryRepository(null, null, $db);
+    }
+
+    public static function pickListRepository(bool $getShared = true): PickListRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('pickListRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PickListRepository(null, null, $db);
+    }
+
+    public static function packingSlipRepository(bool $getShared = true): PackingSlipRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('packingSlipRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PackingSlipRepository(null, null, $db);
+    }
+
+    public static function stockEntryService(bool $getShared = true): StockEntryService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('stockEntryService');
+        }
+        return new StockEntryService(
+            static::stockEntryRepository(false),
+            static::stockEntryValidator(false),
+            static::stockLedgerService(false),
+            static::inventoryRepository(false)
+        );
+    }
+
+    public static function pickPackService(bool $getShared = true): PickPackService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('pickPackService');
+        }
+        return new PickPackService(
+            static::pickListRepository(false),
+            static::packingSlipRepository(false),
+            static::stockEntryRepository(false),
+            static::pickListValidator(false),
+            static::packingSlipValidator(false)
+        );
+    }
+
+    public static function stockEntryReturnService(bool $getShared = true): StockEntryReturnService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('stockEntryReturnService');
+        }
+        return new StockEntryReturnService(static::stockEntryService(false));
+    }
+
     public static function deliveryNoteValidator(bool $getShared = true): DeliveryNoteValidator
     {
         return $getShared ? static::getSharedInstance('deliveryNoteValidator') : new DeliveryNoteValidator();
@@ -710,6 +845,76 @@ class Services extends BaseService
         return new InventoryValidator();
     }
 
+    public static function assetValidator(bool $getShared = true): AssetValidator
+    {
+        return $getShared ? static::getSharedInstance('assetValidator') : new AssetValidator();
+    }
+
+    public static function depreciationValidator(bool $getShared = true): DepreciationValidator
+    {
+        return $getShared ? static::getSharedInstance('depreciationValidator') : new DepreciationValidator();
+    }
+
+    public static function maintenanceValidator(bool $getShared = true): MaintenanceValidator
+    {
+        return $getShared ? static::getSharedInstance('maintenanceValidator') : new MaintenanceValidator();
+    }
+
+    public static function schedulerValidator(bool $getShared = true): SchedulerValidator
+    {
+        return $getShared ? static::getSharedInstance('schedulerValidator') : new SchedulerValidator();
+    }
+
+    public static function jobValidator(bool $getShared = true): JobValidator
+    {
+        return $getShared ? static::getSharedInstance('jobValidator') : new JobValidator();
+    }
+
+    public static function portalValidator(bool $getShared = true): PortalValidator
+    {
+        return $getShared ? static::getSharedInstance('portalValidator') : new PortalValidator();
+    }
+
+    public static function notificationValidator(bool $getShared = true): NotificationValidator
+    {
+        return $getShared ? static::getSharedInstance('notificationValidator') : new NotificationValidator();
+    }
+
+    public static function assignmentValidator(bool $getShared = true): AssignmentValidator
+    {
+        return $getShared ? static::getSharedInstance('assignmentValidator') : new AssignmentValidator();
+    }
+
+    public static function employeeValidator(bool $getShared = true): EmployeeValidator
+    {
+        return $getShared ? static::getSharedInstance('employeeValidator') : new EmployeeValidator();
+    }
+
+    public static function leaveValidator(bool $getShared = true): LeaveValidator
+    {
+        return $getShared ? static::getSharedInstance('leaveValidator') : new LeaveValidator();
+    }
+
+    public static function payrollValidator(bool $getShared = true): PayrollValidator
+    {
+        return $getShared ? static::getSharedInstance('payrollValidator') : new PayrollValidator();
+    }
+
+    public static function projectValidator(bool $getShared = true): ProjectValidator
+    {
+        return $getShared ? static::getSharedInstance('projectValidator') : new ProjectValidator();
+    }
+
+    public static function taskValidator(bool $getShared = true): TaskValidator
+    {
+        return $getShared ? static::getSharedInstance('taskValidator') : new TaskValidator();
+    }
+
+    public static function timesheetValidator(bool $getShared = true): TimesheetValidator
+    {
+        return $getShared ? static::getSharedInstance('timesheetValidator') : new TimesheetValidator();
+    }
+
     public static function inventoryService(bool $getShared = true): InventoryService
     {
         if ($getShared) {
@@ -720,6 +925,168 @@ class Services extends BaseService
             static::inventoryRepository(false),
             static::inventoryValidator(false)
         );
+    }
+
+    public static function assetRepository(bool $getShared = true): AssetRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('assetRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AssetRepository(null, $db);
+    }
+
+    public static function depreciationScheduleRepository(bool $getShared = true): DepreciationScheduleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('depreciationScheduleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new DepreciationScheduleRepository(null, null, $db);
+    }
+
+    public static function maintenanceRepository(bool $getShared = true): MaintenanceRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('maintenanceRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new MaintenanceRepository(null, null, $db);
+    }
+
+    public static function jobRepository(bool $getShared = true): JobRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('jobRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new JobRepository(null, null, $db);
+    }
+
+    public static function schedulerRuleRepository(bool $getShared = true): SchedulerRuleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('schedulerRuleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new SchedulerRuleRepository(null, $db);
+    }
+
+    public static function portalUserRepository(bool $getShared = true): PortalUserRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('portalUserRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PortalUserRepository(null, null, $db);
+    }
+
+    public static function knowledgeBaseRepository(bool $getShared = true): KnowledgeBaseRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('knowledgeBaseRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new KnowledgeBaseRepository(null, null, $db);
+    }
+
+    public static function notificationRuleRepository(bool $getShared = true): NotificationRuleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('notificationRuleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new NotificationRuleRepository(null, null, $db);
+    }
+
+    public static function assignmentRepository(bool $getShared = true): AssignmentRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('assignmentRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AssignmentRepository(null, null, $db);
+    }
+
+    public static function employeeRepository(bool $getShared = true): EmployeeRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('employeeRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new EmployeeRepository(null, $db);
+    }
+
+    public static function leaveRepository(bool $getShared = true): LeaveRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('leaveRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new LeaveRepository(null, null, $db);
+    }
+
+    public static function attendanceRepository(bool $getShared = true): AttendanceRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('attendanceRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AttendanceRepository(null, $db);
+    }
+
+    public static function payrollRepository(bool $getShared = true): PayrollRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('payrollRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new PayrollRepository(null, $db);
+    }
+
+    public static function salarySlipRepository(bool $getShared = true): SalarySlipRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('salarySlipRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new SalarySlipRepository(null, null, $db);
+    }
+
+    public static function projectRepository(bool $getShared = true): ProjectRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('projectRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ProjectRepository(null, $db);
+    }
+
+    public static function taskRepository(bool $getShared = true): TaskRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('taskRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TaskRepository(null, $db);
+    }
+
+    public static function timesheetRepository(bool $getShared = true): TimesheetRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('timesheetRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TimesheetRepository(null, null, $db);
+    }
+
+    public static function activityTypeRepository(bool $getShared = true): ActivityTypeRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('activityTypeRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ActivityTypeRepository(null, $db);
     }
 
     public static function reorderLevelValidator(bool $getShared = true): ReorderLevelValidator
@@ -739,6 +1106,198 @@ class Services extends BaseService
         }
         $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
         return new ReorderLevelRepository(null, $db);
+    }
+
+    public static function assetService(bool $getShared = true): AssetService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('assetService');
+        }
+        return new AssetService(
+            static::assetRepository(false),
+            static::assetValidator(false)
+        );
+    }
+
+    public static function depreciationService(bool $getShared = true): DepreciationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('depreciationService');
+        }
+        return new DepreciationService(
+            static::depreciationScheduleRepository(false),
+            static::assetRepository(false),
+            static::glEntryRepository(false),
+            static::depreciationValidator(false)
+        );
+    }
+
+    public static function maintenanceService(bool $getShared = true): MaintenanceService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('maintenanceService');
+        }
+        return new MaintenanceService(
+            static::maintenanceRepository(false),
+            static::assetRepository(false),
+            static::maintenanceValidator(false),
+            static::stockEntryService(false)
+        );
+    }
+
+    public static function employeeService(bool $getShared = true): EmployeeService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('employeeService');
+        }
+        return new EmployeeService(
+            static::employeeRepository(false),
+            static::employeeValidator(false)
+        );
+    }
+
+    public static function leaveService(bool $getShared = true): LeaveService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('leaveService');
+        }
+        return new LeaveService(
+            static::leaveRepository(false),
+            static::employeeRepository(false),
+            static::leaveValidator(false)
+        );
+    }
+
+    public static function attendanceService(bool $getShared = true): AttendanceService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('attendanceService');
+        }
+        return new AttendanceService(
+            static::attendanceRepository(false),
+            static::employeeRepository(false)
+        );
+    }
+
+    public static function payrollService(bool $getShared = true): PayrollService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('payrollService');
+        }
+        return new PayrollService(
+            static::payrollRepository(false),
+            static::salarySlipRepository(false),
+            static::employeeRepository(false),
+            static::glEntryRepository(false),
+            static::payrollValidator(false)
+        );
+    }
+
+    public static function schedulerService(bool $getShared = true): SchedulerService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('schedulerService');
+        }
+        return new SchedulerService(
+            static::schedulerRuleRepository(false),
+            static::jobRepository(false),
+            static::schedulerValidator(false),
+            static::jobValidator(false)
+        );
+    }
+
+    public static function jobRunnerService(bool $getShared = true): JobRunnerService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('jobRunnerService');
+        }
+        return new JobRunnerService(static::jobRepository(false));
+    }
+
+    public static function portalService(bool $getShared = true): PortalService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('portalService');
+        }
+        return new PortalService(
+            static::portalUserRepository(false),
+            static::portalValidator(false)
+        );
+    }
+
+    public static function knowledgeBaseService(bool $getShared = true): KnowledgeBaseService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('knowledgeBaseService');
+        }
+        return new KnowledgeBaseService(static::knowledgeBaseRepository(false));
+    }
+
+    public static function notificationService(bool $getShared = true): NotificationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('notificationService');
+        }
+        return new NotificationService(
+            static::notificationRuleRepository(false),
+            static::notificationValidator(false)
+        );
+    }
+
+    public static function assignmentService(bool $getShared = true): AssignmentService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('assignmentService');
+        }
+        return new AssignmentService(
+            static::assignmentRepository(false),
+            static::assignmentValidator(false)
+        );
+    }
+
+    public static function projectService(bool $getShared = true): ProjectService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('projectService');
+        }
+        return new ProjectService(
+            static::projectRepository(false),
+            static::taskRepository(false),
+            static::projectValidator(false)
+        );
+    }
+
+    public static function taskService(bool $getShared = true): TaskService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('taskService');
+        }
+        return new TaskService(
+            static::taskRepository(false),
+            static::taskValidator(false),
+            static::projectService(false)
+        );
+    }
+
+    public static function timesheetService(bool $getShared = true): TimesheetService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('timesheetService');
+        }
+        return new TimesheetService(
+            static::timesheetRepository(false),
+            static::activityTypeRepository(false),
+            static::taskRepository(false),
+            static::timesheetValidator(false)
+        );
+    }
+
+    public static function activityCostService(bool $getShared = true): ActivityCostService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('activityCostService');
+        }
+        return new ActivityCostService(static::activityTypeRepository(false));
     }
 
     public static function purchaseSuggestionRepository(bool $getShared = true): PurchaseSuggestionRepository

@@ -28,6 +28,7 @@ class TestSchemaSetup extends Migration
         $this->createDeliveryNoteTables();
         $this->createApprovalTables();
         $this->createStockLedgerTables();
+        $this->createStockEntryTables();
         $this->createReorderPlanningTables();
         $this->createAdvancedPricingTables();
         $this->createPriceListTables();
@@ -73,6 +74,11 @@ class TestSchemaSetup extends Migration
         $this->createManufacturingTables();
         $this->createSubscriptionTables();
         $this->createCashTransactionTables();
+        $this->createAssetTables();
+        $this->createPortalNotificationTables();
+        $this->createHRPayrollTables();
+        $this->createSchedulerTables();
+        $this->createProjectTables();
     }
 
     public function down()
@@ -90,6 +96,7 @@ class TestSchemaSetup extends Migration
             'product_images','product_attributes','product_attribute_options','product_attribute_values',
             'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
             'approval_actions','approvals','order_approval_rules',
+            'stock_entry_items','stock_entries','pick_list_items','pick_lists','packing_slip_items','packing_slips',
             'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers','reorder_levels','purchase_suggestions',
             'pricing_rules','customer_price_lists','project_price_lists','price_history',
             'price_lists','price_list_items',
@@ -105,6 +112,11 @@ class TestSchemaSetup extends Migration
             'returns','return_items',
             'invoices','invoice_orders',
             'inventory_stock','inventory_movements','inventory_alerts',
+            'maintenance_work_orders','maintenance_schedules','depreciation_schedule_lines','depreciation_schedules','assets',
+            'job_logs','job_queue','scheduler_rules',
+            'assignment_logs','assignment_rules','notifications','notification_rules','knowledge_base_articles','knowledge_base_categories','portal_access_tokens','portal_users',
+            'salary_components','salary_slips','payroll_entries','attendances','leave_applications','leave_types','employees',
+            'projects','tasks','timesheets','timesheet_details','activity_types',
             'webhook_subscriptions','webhook_events',
             'quality_inspection_items','quality_inspections','quality_parameters',
             'order_template_items','order_templates','order_subscriptions',
@@ -392,6 +404,107 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             KEY idx_recon_item (reconciliation_id),
             KEY idx_recon_product (product_id, batch_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createStockEntryTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_entries (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            entry_number VARCHAR(60) NOT NULL,
+            type VARCHAR(20) NOT NULL,
+            status VARCHAR(20) DEFAULT 'draft',
+            branch_id BIGINT UNSIGNED NULL,
+            source_warehouse_id BIGINT UNSIGNED NULL,
+            target_warehouse_id BIGINT UNSIGNED NULL,
+            reference_type VARCHAR(80) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            return_reason VARCHAR(255) NULL,
+            created_by BIGINT UNSIGNED NULL,
+            submitted_by BIGINT UNSIGNED NULL,
+            cancelled_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            submitted_at DATETIME NULL,
+            cancelled_at DATETIME NULL,
+            UNIQUE KEY uq_stock_entry_number (entry_number),
+            KEY idx_stock_entry_type_status (type, status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS stock_entry_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            stock_entry_id BIGINT UNSIGNED NOT NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            variant_id BIGINT UNSIGNED NULL,
+            qty DECIMAL(12,3) DEFAULT 0,
+            uom VARCHAR(50) NULL,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            source_warehouse_id BIGINT UNSIGNED NULL,
+            target_warehouse_id BIGINT UNSIGNED NULL,
+            source_branch_id BIGINT UNSIGNED NULL,
+            target_branch_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_stock_entry_item_entry (stock_entry_id),
+            KEY idx_stock_entry_item_product (product_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pick_lists (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            pick_list_number VARCHAR(60) NOT NULL,
+            stock_entry_id BIGINT UNSIGNED NULL,
+            source_warehouse_id BIGINT UNSIGNED NULL,
+            status VARCHAR(20) DEFAULT 'open',
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_pick_list_number (pick_list_number),
+            KEY idx_pick_list_entry (stock_entry_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS pick_list_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            pick_list_id BIGINT UNSIGNED NOT NULL,
+            stock_entry_item_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            qty DECIMAL(12,3) DEFAULT 0,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            source_warehouse_id BIGINT UNSIGNED NULL,
+            target_warehouse_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_pick_list_item_list (pick_list_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS packing_slips (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            packing_slip_number VARCHAR(60) NOT NULL,
+            pick_list_id BIGINT UNSIGNED NULL,
+            stock_entry_id BIGINT UNSIGNED NULL,
+            status VARCHAR(20) DEFAULT 'packed',
+            source_warehouse_id BIGINT UNSIGNED NULL,
+            target_warehouse_id BIGINT UNSIGNED NULL,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_packing_slip_number (packing_slip_number),
+            KEY idx_packing_slip_pick (pick_list_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS packing_slip_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            packing_slip_id BIGINT UNSIGNED NOT NULL,
+            pick_list_item_id BIGINT UNSIGNED NULL,
+            stock_entry_item_id BIGINT UNSIGNED NULL,
+            product_id BIGINT UNSIGNED NOT NULL,
+            qty DECIMAL(12,3) DEFAULT 0,
+            batch_id BIGINT UNSIGNED NULL,
+            serial_number VARCHAR(160) NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_packing_slip_item (packing_slip_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
@@ -1621,6 +1734,395 @@ class TestSchemaSetup extends Migration
             changed_by BIGINT UNSIGNED NULL,
             changed_at DATETIME NULL,
             KEY idx_price_history (product_id, variant_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createAssetTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS assets (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            asset_number VARCHAR(60) NOT NULL,
+            asset_name VARCHAR(255) NOT NULL,
+            category VARCHAR(120) NULL,
+            purchase_date DATE NULL,
+            cost DECIMAL(14,2) DEFAULT 0,
+            location VARCHAR(255) NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            salvage_value DECIMAL(14,2) DEFAULT 0,
+            useful_life_months INT DEFAULT 0,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_asset_number (asset_number),
+            KEY idx_asset_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS depreciation_schedules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            asset_id BIGINT UNSIGNED NOT NULL,
+            method VARCHAR(50) DEFAULT 'straight_line',
+            rate DECIMAL(6,3) DEFAULT 0,
+            start_date DATE NULL,
+            total_periods INT DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_dep_asset (asset_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS depreciation_schedule_lines (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            schedule_id BIGINT UNSIGNED NOT NULL,
+            period_no INT NOT NULL,
+            posting_date DATE NOT NULL,
+            amount DECIMAL(14,2) DEFAULT 0,
+            posted_gl_entry_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_dep_line (schedule_id, period_no),
+            KEY idx_dep_line_schedule (schedule_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS maintenance_schedules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            asset_id BIGINT UNSIGNED NOT NULL,
+            schedule_name VARCHAR(150) NOT NULL,
+            frequency VARCHAR(50) DEFAULT 'monthly',
+            next_due_date DATE NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_maint_asset (asset_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS maintenance_work_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            work_order_number VARCHAR(60) NOT NULL,
+            asset_id BIGINT UNSIGNED NOT NULL,
+            schedule_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'open',
+            description TEXT NULL,
+            planned_date DATE NULL,
+            completed_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_maint_wo_number (work_order_number),
+            KEY idx_maint_wo_asset (asset_id),
+            KEY idx_maint_wo_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createPortalNotificationTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS portal_users (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NULL,
+            email VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            status VARCHAR(30) DEFAULT 'active',
+            last_login_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_portal_email (email)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS portal_access_tokens (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            portal_user_id BIGINT UNSIGNED NOT NULL,
+            token VARCHAR(120) NOT NULL,
+            expires_at DATETIME NULL,
+            created_at DATETIME NULL,
+            UNIQUE KEY uq_portal_token (token),
+            KEY idx_portal_token_user (portal_user_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS knowledge_base_categories (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            description TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_kb_category (name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS knowledge_base_articles (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            category_id BIGINT UNSIGNED NULL,
+            title VARCHAR(255) NOT NULL,
+            content TEXT NULL,
+            is_published TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_kb_article_category (category_id),
+            KEY idx_kb_article_published (is_published)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS notification_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            event_type VARCHAR(80) NOT NULL,
+            channel VARCHAR(50) DEFAULT 'email',
+            template TEXT NOT NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_notification_rule_event (event_type, is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS notifications (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            rule_id BIGINT UNSIGNED NULL,
+            event_type VARCHAR(80) NOT NULL,
+            entity_type VARCHAR(80) NULL,
+            entity_id BIGINT UNSIGNED NULL,
+            payload JSON NULL,
+            status VARCHAR(30) DEFAULT 'queued',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_notification_rule (rule_id),
+            KEY idx_notification_event (event_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS assignment_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            entity_type VARCHAR(80) NOT NULL,
+            strategy VARCHAR(50) DEFAULT 'round_robin',
+            team_members JSON NOT NULL,
+            last_assigned_id BIGINT UNSIGNED NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_assignment_entity (entity_type, is_active)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS assignment_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            assignment_rule_id BIGINT UNSIGNED NOT NULL,
+            entity_type VARCHAR(80) NOT NULL,
+            entity_id BIGINT UNSIGNED NOT NULL,
+            assignee_id BIGINT UNSIGNED NOT NULL,
+            created_at DATETIME NULL,
+            KEY idx_assignment_log_rule (assignment_rule_id),
+            KEY idx_assignment_log_entity (entity_type, entity_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createSchedulerTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS scheduler_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            cron_expression VARCHAR(60) NOT NULL,
+            handler VARCHAR(120) NOT NULL,
+            is_active TINYINT(1) DEFAULT 1,
+            last_run_at DATETIME NULL,
+            next_run_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_scheduler_name (name),
+            KEY idx_scheduler_active (is_active, next_run_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS job_queue (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(150) NOT NULL,
+            payload JSON NULL,
+            status VARCHAR(30) DEFAULT 'queued',
+            attempts INT DEFAULT 0,
+            max_attempts INT DEFAULT 3,
+            next_run_at DATETIME NULL,
+            last_error TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_job_status (status, next_run_at),
+            KEY idx_job_name (name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS job_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            job_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(30) NOT NULL,
+            message TEXT NULL,
+            created_at DATETIME NULL,
+            KEY idx_job_log_job (job_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createHRPayrollTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS employees (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            employee_code VARCHAR(60) NOT NULL,
+            full_name VARCHAR(255) NOT NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'active',
+            join_date DATE NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_employee_code (employee_code),
+            KEY idx_employee_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS leave_types (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            leave_name VARCHAR(150) NOT NULL,
+            default_allocation DECIMAL(10,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_leave_name (leave_name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS leave_applications (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            employee_id BIGINT UNSIGNED NOT NULL,
+            leave_type_id BIGINT UNSIGNED NOT NULL,
+            from_date DATE NOT NULL,
+            to_date DATE NOT NULL,
+            total_days DECIMAL(10,2) DEFAULT 0,
+            status VARCHAR(30) DEFAULT 'pending',
+            reason TEXT NULL,
+            approved_by BIGINT UNSIGNED NULL,
+            approved_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_leave_employee (employee_id),
+            KEY idx_leave_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS attendances (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            employee_id BIGINT UNSIGNED NOT NULL,
+            attendance_date DATE NOT NULL,
+            status VARCHAR(20) DEFAULT 'present',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_attendance_day (employee_id, attendance_date)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS payroll_entries (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            payroll_number VARCHAR(60) NOT NULL,
+            period_start DATE NOT NULL,
+            period_end DATE NOT NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_payroll_number (payroll_number),
+            KEY idx_payroll_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS salary_slips (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            payroll_entry_id BIGINT UNSIGNED NOT NULL,
+            employee_id BIGINT UNSIGNED NOT NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            period_start DATE NULL,
+            period_end DATE NULL,
+            total_earnings DECIMAL(14,2) DEFAULT 0,
+            total_deductions DECIMAL(14,2) DEFAULT 0,
+            net_pay DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_salary_slip (payroll_entry_id, employee_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS salary_components (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            salary_slip_id BIGINT UNSIGNED NOT NULL,
+            component_name VARCHAR(150) NOT NULL,
+            component_type VARCHAR(20) DEFAULT 'earning',
+            amount DECIMAL(14,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_salary_component_slip (salary_slip_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createProjectTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS projects (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            project_name VARCHAR(255) NOT NULL,
+            project_code VARCHAR(80) NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'open',
+            progress DECIMAL(5,2) DEFAULT 0,
+            start_date DATE NULL,
+            end_date DATE NULL,
+            description TEXT NULL,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_project_code (project_code),
+            KEY idx_project_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS tasks (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            project_id BIGINT UNSIGNED NULL,
+            parent_id BIGINT UNSIGNED NULL,
+            task_name VARCHAR(255) NOT NULL,
+            status VARCHAR(30) DEFAULT 'open',
+            progress DECIMAL(5,2) DEFAULT 0,
+            estimated_hours DECIMAL(10,2) DEFAULT 0,
+            actual_hours DECIMAL(10,2) DEFAULT 0,
+            start_date DATE NULL,
+            due_date DATE NULL,
+            assigned_to BIGINT UNSIGNED NULL,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_task_project (project_id),
+            KEY idx_task_parent (parent_id),
+            KEY idx_task_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS activity_types (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            activity_name VARCHAR(150) NOT NULL,
+            billing_rate DECIMAL(12,2) DEFAULT 0,
+            cost_rate DECIMAL(12,2) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_activity_name (activity_name)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS timesheets (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            timesheet_number VARCHAR(60) NOT NULL,
+            project_id BIGINT UNSIGNED NULL,
+            employee_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'draft',
+            total_hours DECIMAL(12,2) DEFAULT 0,
+            total_billable DECIMAL(14,2) DEFAULT 0,
+            total_cost DECIMAL(14,2) DEFAULT 0,
+            notes TEXT NULL,
+            created_by BIGINT UNSIGNED NULL,
+            submitted_by BIGINT UNSIGNED NULL,
+            submitted_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_timesheet_number (timesheet_number),
+            KEY idx_timesheet_project (project_id),
+            KEY idx_timesheet_status (status)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS timesheet_details (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            timesheet_id BIGINT UNSIGNED NOT NULL,
+            project_id BIGINT UNSIGNED NULL,
+            task_id BIGINT UNSIGNED NULL,
+            activity_type_id BIGINT UNSIGNED NULL,
+            work_date DATE NULL,
+            hours DECIMAL(10,2) DEFAULT 0,
+            billing_rate DECIMAL(12,2) DEFAULT 0,
+            cost_rate DECIMAL(12,2) DEFAULT 0,
+            billable_amount DECIMAL(14,2) DEFAULT 0,
+            cost_amount DECIMAL(14,2) DEFAULT 0,
+            description TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_timesheet_detail_header (timesheet_id),
+            KEY idx_timesheet_detail_task (task_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }
