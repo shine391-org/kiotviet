@@ -77,6 +77,7 @@ class TestSchemaSetup extends Migration
         $this->createAssetTables();
         $this->createPortalNotificationTables();
         $this->createHRPayrollTables();
+        $this->createRegionalTaxTables();
         $this->createSchedulerTables();
         $this->createProjectTables();
     }
@@ -114,6 +115,7 @@ class TestSchemaSetup extends Migration
             'inventory_stock','inventory_movements','inventory_alerts',
             'maintenance_work_orders','maintenance_schedules','depreciation_schedule_lines','depreciation_schedules','assets',
             'job_logs','job_queue','scheduler_rules',
+            'tax_certificate_records','e_invoice_logs','regional_tax_rules',
             'assignment_logs','assignment_rules','notifications','notification_rules','knowledge_base_articles','knowledge_base_categories','portal_access_tokens','portal_users',
             'salary_components','salary_slips','payroll_entries','attendances','leave_applications','leave_types','employees',
             'projects','tasks','timesheets','timesheet_details','activity_types',
@@ -1944,6 +1946,42 @@ class TestSchemaSetup extends Migration
             message TEXT NULL,
             created_at DATETIME NULL,
             KEY idx_job_log_job (job_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    }
+
+    private function createRegionalTaxTables(): void
+    {
+        $this->db->query("CREATE TABLE IF NOT EXISTS regional_tax_rules (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            country VARCHAR(5) NOT NULL,
+            rule_json JSON NOT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_region_country (country)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS e_invoice_logs (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_id BIGINT UNSIGNED NULL,
+            status VARCHAR(30) DEFAULT 'queued',
+            payload JSON NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_einvoice_invoice (invoice_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+        $this->db->query("CREATE TABLE IF NOT EXISTS tax_certificate_records (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            certificate_number VARCHAR(80) NOT NULL,
+            country VARCHAR(5) NOT NULL,
+            party_type VARCHAR(60) NULL,
+            party_id BIGINT UNSIGNED NULL,
+            base_amount DECIMAL(14,2) DEFAULT 0,
+            withheld_amount DECIMAL(14,2) DEFAULT 0,
+            issue_date DATE NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_tax_certificate (certificate_number)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

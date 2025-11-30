@@ -233,6 +233,9 @@ use App\Repositories\Projects\ProjectRepository;
 use App\Repositories\Projects\TaskRepository;
 use App\Repositories\Projects\TimesheetRepository;
 use App\Repositories\Projects\ActivityTypeRepository;
+use App\Repositories\Taxes\RegionalTaxRuleRepository;
+use App\Repositories\Taxes\EInvoiceLogRepository;
+use App\Repositories\Taxes\TaxCertificateRepository;
 use App\Repositories\Inventory\StockEntryRepository;
 use App\Repositories\Inventory\PickListRepository;
 use App\Repositories\Inventory\PackingSlipRepository;
@@ -255,6 +258,8 @@ use App\Services\Projects\TaskService;
 use App\Services\Projects\TimesheetService;
 use App\Services\Projects\ActivityCostService;
 use App\Services\Reports\ReportService;
+use App\Services\Taxes\RegionalTaxService;
+use App\Services\Taxes\WithholdingAdvancedService;
 use App\Services\Inventory\StockEntryService;
 use App\Services\Inventory\PickPackService;
 use App\Services\Inventory\StockEntryReturnService;
@@ -265,6 +270,7 @@ use App\Validators\PortalValidator;
 use App\Validators\NotificationValidator;
 use App\Validators\AssignmentValidator;
 use App\Validators\ReportValidator;
+use App\Validators\RegionalTaxValidator;
 use App\Services\Approvals\ApprovalRuleService;
 use App\Services\Approvals\ApprovalService;
 use App\Services\Approvals\ApprovalHook;
@@ -892,6 +898,11 @@ class Services extends BaseService
         return $getShared ? static::getSharedInstance('reportValidator') : new ReportValidator();
     }
 
+    public static function regionalTaxValidator(bool $getShared = true): RegionalTaxValidator
+    {
+        return $getShared ? static::getSharedInstance('regionalTaxValidator') : new RegionalTaxValidator();
+    }
+
     public static function employeeValidator(bool $getShared = true): EmployeeValidator
     {
         return $getShared ? static::getSharedInstance('employeeValidator') : new EmployeeValidator();
@@ -1058,6 +1069,33 @@ class Services extends BaseService
         }
         $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
         return new SalarySlipRepository(null, null, $db);
+    }
+
+    public static function regionalTaxRuleRepository(bool $getShared = true): RegionalTaxRuleRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('regionalTaxRuleRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new RegionalTaxRuleRepository(null, $db);
+    }
+
+    public static function eInvoiceLogRepository(bool $getShared = true): EInvoiceLogRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('eInvoiceLogRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new EInvoiceLogRepository(null, $db);
+    }
+
+    public static function taxCertificateRepository(bool $getShared = true): TaxCertificateRepository
+    {
+        if ($getShared) {
+            return static::getSharedInstance('taxCertificateRepository');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new TaxCertificateRepository(null, $db);
     }
 
     public static function projectRepository(bool $getShared = true): ProjectRepository
@@ -1269,6 +1307,29 @@ class Services extends BaseService
         }
         $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
         return new ReportService($db, static::reportValidator(false));
+    }
+
+    public static function regionalTaxService(bool $getShared = true): RegionalTaxService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('regionalTaxService');
+        }
+        return new RegionalTaxService(
+            static::regionalTaxRuleRepository(false),
+            static::eInvoiceLogRepository(false),
+            static::regionalTaxValidator(false)
+        );
+    }
+
+    public static function withholdingAdvancedService(bool $getShared = true): WithholdingAdvancedService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('withholdingAdvancedService');
+        }
+        return new WithholdingAdvancedService(
+            static::taxCertificateRepository(false),
+            static::regionalTaxValidator(false)
+        );
     }
 
     public static function projectService(bool $getShared = true): ProjectService

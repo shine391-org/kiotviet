@@ -68,6 +68,7 @@ trait DevDatabaseTrait
             'inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
             'webhook_events','webhook_subscriptions',
             'approval_actions','approvals','order_approval_rules',
+            'tax_certificate_records','e_invoice_logs','regional_tax_rules',
             'job_logs','job_queue','scheduler_rules',
             'maintenance_work_orders','maintenance_schedules','depreciation_schedule_lines','depreciation_schedules','assets',
             'salary_components','salary_slips','payroll_entries','attendances','leave_applications','leave_types','employees',

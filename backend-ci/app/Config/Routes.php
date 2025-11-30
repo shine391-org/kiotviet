@@ -115,6 +115,10 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('reports/balance-sheet', 'Api\\ReportsController::balanceSheet');
     $routes->get('reports/aging', 'Api\\ReportsController::aging');
     $routes->get('reports/stock-balance', 'Api\\ReportsController::stockBalance');
+    $routes->post('taxes/regional/rules', 'Api\\RegionalTaxesController::setRule');
+    $routes->post('taxes/regional/preview', 'Api\\RegionalTaxesController::preview');
+    $routes->post('taxes/regional/e-invoice', 'Api\\RegionalTaxesController::einvoice');
+    $routes->post('taxes/withholding-certificates', 'Api\\WithholdingCertificatesController::create');
     $routes->get('employees', 'Api\\EmployeesController::index');
     $routes->get('employees/(:num)', 'Api\\EmployeesController::show/$1');
     $routes->post('employees', 'Api\\EmployeesController::create');
