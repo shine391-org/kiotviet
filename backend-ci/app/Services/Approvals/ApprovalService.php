@@ -5,6 +5,7 @@ namespace App\Services\Approvals;
 use App\Repositories\Approvals\ApprovalActionRepository;
 use App\Repositories\Approvals\ApprovalRepository;
 use App\Services\Approvals\ApprovalRuleService;
+use App\Repositories\Orders\OrderRepository;
 use App\Validators\ApprovalRequestValidator;
 use InvalidArgumentException;
 use RuntimeException;
@@ -22,17 +23,35 @@ class ApprovalService
     protected ApprovalActionRepository $actions;
     protected ApprovalRuleService $rules;
     protected ApprovalRequestValidator $validator;
+    protected OrderRepository $orders;
 
     public function __construct(
         ?ApprovalRepository $approvals = null,
         ?ApprovalActionRepository $actions = null,
         ?ApprovalRuleService $rules = null,
-        ?ApprovalRequestValidator $validator = null
+        ?ApprovalRequestValidator $validator = null,
+        ?OrderRepository $orders = null
     ) {
         $this->approvals = $approvals ?? new ApprovalRepository();
         $this->actions = $actions ?? new ApprovalActionRepository();
         $this->rules = $rules ?? new ApprovalRuleService();
         $this->validator = $validator ?? new ApprovalRequestValidator();
+        $this->orders = $orders ?? new OrderRepository();
+    }
+
+    /**
+     * Load order with items for approval context.
+     *
+     * @agent-use: Controller submits approval request
+     * @agent-pattern: Delegate data access to repository
+     */
+    public function loadOrderWithItems(int $orderId): array
+    {
+        if ($orderId <= 0) {
+            return [];
+        }
+
+        return $this->orders->findById($orderId) ?? [];
     }
 
     /** Submit approval for order. @agent-use: POST /api/approvals/submit */

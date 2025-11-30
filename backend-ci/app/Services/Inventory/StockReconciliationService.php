@@ -81,7 +81,7 @@ class StockReconciliationService
         }
         $this->validator->validateApprove($input);
         $branchId = (int) $recon['branch_id'];
-        $db = $this->repo->db ?? \Config\Database::connect();
+        $db = $this->repo->db();
         $db->transBegin();
         try {
             foreach ($recon['items'] as $item) {
@@ -124,7 +124,12 @@ class StockReconciliationService
         if ($recon['status'] === 'approved') {
             throw new RuntimeException('Cannot reject approved reconciliation');
         }
-        $this->repo->updateStatus($id, 'rejected', ['notes' => $recon['notes'] ?? null]);
+        $notes = $input['notes'] ?? ($recon['notes'] ?? null);
+        $rejectedBy = $input['rejected_by'] ?? null;
+        $this->repo->updateStatus($id, 'rejected', [
+            'notes' => $notes,
+            'rejected_by' => $rejectedBy,
+        ]);
         return ['success' => true, 'data' => $this->require($id)];
     }
 

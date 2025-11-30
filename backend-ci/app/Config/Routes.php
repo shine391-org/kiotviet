@@ -105,6 +105,17 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('assignment-rules', 'Api\\AssignmentsController::createRule');
     $routes->get('assignment-rules', 'Api\\AssignmentsController::listRules');
     $routes->post('assignment-rules/assign', 'Api\\AssignmentsController::assign');
+    $routes->get('companies', 'Api\\CompaniesController::index');
+    $routes->post('companies', 'Api\\CompaniesController::create');
+    $routes->put('companies/(:num)', 'Api\\CompaniesController::update/$1');
+    $routes->post('companies/(:num)/permissions', 'Api\\CompaniesController::assignPermission/$1');
+    $routes->get('companies/(:num)/permissions', 'Api\\CompaniesController::permissions/$1');
+    $routes->get('shares', 'Api\\SharesController::index');
+    $routes->post('shares', 'Api\\SharesController::create');
+    $routes->delete('shares/(:num)', 'Api\\SharesController::delete/$1');
+    $routes->get('documents/(:num)/(:segment)/(:num)', 'Api\\CompanyDocumentsController::show/$1/$2/$3');
+    $routes->put('documents/(:num)/(:segment)/(:num)', 'Api\\CompanyDocumentsController::update/$1/$2/$3');
+    $routes->get('audit-logs', 'Api\\AuditLogsController::index');
     $routes->post('scheduler-rules', 'Api\\SchedulerController::createRule');
     $routes->get('scheduler-rules', 'Api\\SchedulerController::listRules');
     $routes->post('scheduler/tick', 'Api\\SchedulerController::tick');

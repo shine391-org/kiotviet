@@ -4,6 +4,7 @@ namespace Config;
 
 use App\Repositories\Attributes\AttributeRepository;
 use App\Repositories\Branches\BranchRepository;
+use App\Repositories\Companies\CompanyRepository;
 use App\Repositories\ProductMedia\ProductMediaRepository;
 use App\Repositories\Products\ProductRepository;
 use App\Repositories\Products\ProductBatchRepository;
@@ -59,6 +60,8 @@ use App\Repositories\Orders\OrderRepository;
 use App\Repositories\Orders\OrderPaymentRepository;
 use App\Repositories\Webhooks\WebhookEventRepository;
 use App\Repositories\Webhooks\WebhookSubscriptionRepository;
+use App\Repositories\Permissions\ShareRepository;
+use App\Repositories\Audits\AuditLogRepository;
 use App\Repositories\Approvals\ApprovalRuleRepository;
 use App\Repositories\Approvals\ApprovalRepository;
 use App\Repositories\Approvals\ApprovalActionRepository;
@@ -82,6 +85,11 @@ use App\Services\Products\ProductBatchService;
 use App\Services\Products\ProductSerialNumberService;
 use App\Services\ProductMedia\ProductMediaService;
 use App\Services\Attributes\AttributeService;
+use App\Services\Audits\AuditService;
+use App\Services\Companies\CompanyService;
+use App\Services\Permissions\DocumentAccessService;
+use App\Services\Permissions\PermissionService;
+use App\Services\Permissions\SharingService;
 use App\Services\PriceLists\PriceCalculatorService;
 use App\Services\PriceLists\PriceListService;
 use App\Services\Pricing\PricingRuleService;
@@ -148,6 +156,9 @@ use App\Transformers\CustomerTransformer;
 use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
+use App\Validators\CompanyValidator;
+use App\Validators\PermissionValidator;
+use App\Validators\ShareValidator;
 use App\Validators\ProductValidator;
 use App\Validators\ProductBatchValidator;
 use App\Validators\ProductSerialValidator;
@@ -475,9 +486,7 @@ class Services extends BaseService
             return static::getSharedInstance('approvalRepository');
         }
         $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
-        $repo = new ApprovalRepository(null, $db);
-        $repo->db = $db;
-        return $repo;
+        return new ApprovalRepository(null, $db);
     }
 
     public static function approvalActionRepository(bool $getShared = true): ApprovalActionRepository
@@ -509,7 +518,8 @@ class Services extends BaseService
             static::approvalRepository(false),
             static::approvalActionRepository(false),
             static::approvalRuleService(false),
-            static::approvalRequestValidator(false)
+            static::approvalRequestValidator(false),
+            static::orderRepository(false)
         );
     }
 
@@ -2597,6 +2607,92 @@ class Services extends BaseService
         return new WebhookDispatcher(
             static::webhookSubscriptionRepository(false),
             static::webhookEventRepository(false)
+        );
+    }
+
+    public static function companyRepository(bool $getShared = true): CompanyRepository
+    {
+        if ($getShared) { return static::getSharedInstance('companyRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new CompanyRepository(null, null, $db);
+    }
+
+    public static function shareRepository(bool $getShared = true): ShareRepository
+    {
+        if ($getShared) { return static::getSharedInstance('shareRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ShareRepository(null, $db);
+    }
+
+    public static function auditLogRepository(bool $getShared = true): AuditLogRepository
+    {
+        if ($getShared) { return static::getSharedInstance('auditLogRepository'); }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new AuditLogRepository(null, $db);
+    }
+
+    public static function permissionValidator(bool $getShared = true): PermissionValidator
+    {
+        return $getShared ? static::getSharedInstance('permissionValidator') : new PermissionValidator();
+    }
+
+    public static function companyValidator(bool $getShared = true): CompanyValidator
+    {
+        return $getShared ? static::getSharedInstance('companyValidator') : new CompanyValidator(static::permissionValidator(false));
+    }
+
+    public static function shareValidator(bool $getShared = true): ShareValidator
+    {
+        return $getShared ? static::getSharedInstance('shareValidator') : new ShareValidator(static::permissionValidator(false));
+    }
+
+    public static function permissionService(bool $getShared = true): PermissionService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('permissionService'); }
+        return new PermissionService(
+            static::companyRepository(false),
+            static::shareRepository(false),
+            static::permissionValidator(false)
+        );
+    }
+
+    public static function auditService(bool $getShared = true): AuditService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('auditService'); }
+        return new AuditService(
+            static::auditLogRepository(false),
+            static::permissionService(false)
+        );
+    }
+
+    public static function sharingService(bool $getShared = true): SharingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('sharingService'); }
+        return new SharingService(
+            static::shareRepository(false),
+            static::shareValidator(false),
+            static::permissionService(false),
+            static::auditService(false)
+        );
+    }
+
+    public static function companyService(bool $getShared = true): CompanyService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('companyService'); }
+        return new CompanyService(
+            static::companyRepository(false),
+            static::companyValidator(false),
+            static::permissionValidator(false),
+            static::permissionService(false)
+        );
+    }
+
+    public static function documentAccessService(bool $getShared = true): DocumentAccessService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('documentAccessService'); }
+        return new DocumentAccessService(
+            static::permissionService(false),
+            static::auditService(false)
         );
     }
 }

@@ -6,28 +6,26 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\AuthTestTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\ManufacturingSchemaTrait;
 
 /**
  * @agent-test: Work orders API
- * @agent-pattern: Integration test with DevDatabaseTrait + FeatureTestTrait
+ * @agent-pattern: FeatureTestTrait + DevDatabaseTrait
  */
 class WorkOrdersApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
-    use AuthTestTrait;
     use DevDatabaseTrait;
-    use ManufacturingSchemaTrait;
+    use AuthTestTrait;
+
+    private int $fgProductId;
+    private int $componentProductId;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->resetManufacturingSchema();
-        $this->seedBranch();
-        $this->seedProducts();
-        $this->seedStock();
         $this->setUpAuthToken();
+        $this->seedProducts();
     }
 
     protected function tearDown(): void
@@ -37,81 +35,99 @@ class WorkOrdersApiTest extends CIUnitTestCase
     }
 
     /** @test */
-    public function it_creates_and_completes_work_order_via_api(): void
+    public function it_runs_bom_and_work_order_flow()
     {
-        $headers = $this->authHeaders(['Content-Type' => 'application/json']);
+        $bomResponse = $this->withHeaders($this->jsonHeaders())
+            ->withBody(json_encode([
+                'product_id' => $this->fgProductId,
+                'version' => 'v1',
+                'quantity' => 1,
+                'items' => [
+                    ['component_product_id' => $this->componentProductId, 'quantity' => 2],
+                ],
+            ]))
+            ->post('/api/boms');
+        $bomResponse->assertStatus(201);
+        $bom = $this->decode($bomResponse)['data'];
 
-        $bomResp = $this->withHeaders($headers)->withBody(json_encode([
-            'product_id' => 100,
-            'version' => 'v1',
-            'items' => [
-                ['component_product_id' => 1, 'quantity' => 2],
-                ['component_product_id' => 2, 'quantity' => 1],
-            ],
-        ]))->post('/api/boms');
-        $bomBody = $this->decode($bomResp);
-        $this->assertTrue($bomBody['success'] ?? false, json_encode($bomBody));
-        $bomId = $bomBody['data']['id'];
+        $woResponse = $this->withHeaders($this->jsonHeaders())
+            ->withBody(json_encode([
+                'product_id' => $this->fgProductId,
+                'bom_id' => $bom['id'],
+                'branch_id' => 1,
+                'quantity' => 3,
+            ]))
+            ->post('/api/work-orders');
+        $woResponse->assertStatus(201);
+        $wo = $this->decode($woResponse)['data'];
 
-        $createWo = $this->withHeaders($headers)->withBody(json_encode([
-            'product_id' => 100,
-            'bom_id' => $bomId,
-            'quantity' => 1,
-            'branch_id' => 1,
-        ]))->post('/api/work-orders');
-        $woBody = $this->decode($createWo);
-        $this->assertTrue($woBody['success'] ?? false, json_encode($woBody));
-        $woId = $woBody['data']['id'];
+        $this->withHeaders($this->jsonHeaders())->post("/api/work-orders/{$wo['id']}/release")->assertStatus(200);
+        $this->withHeaders($this->jsonHeaders())->post("/api/work-orders/{$wo['id']}/start")->assertStatus(200);
+        $completed = $this->withHeaders($this->jsonHeaders())->post("/api/work-orders/{$wo['id']}/complete");
+        $completed->assertStatus(200);
+        $payload = $this->decode($completed);
+        $this->assertEquals('completed', $payload['data']['status']);
 
-        $startResp = $this->withHeaders($headers)->post('/api/work-orders/' . $woId . '/start');
-        $startBody = $this->decode($startResp);
-        $this->assertTrue($startBody['success'] ?? false, json_encode($startBody));
+        $componentBin = $this->db->table('stock_bins')
+            ->where('product_id', $this->componentProductId)
+            ->where('branch_id', 1)
+            ->get()->getRowArray();
+        $this->assertEquals(4.0, (float) $componentBin['on_hand_qty']);
 
-        $completeResp = $this->withHeaders($headers)->post('/api/work-orders/' . $woId . '/complete');
-        $completeBody = $this->decode($completeResp);
-        $this->assertSame('completed', $completeBody['data']['status'] ?? null);
-
-        $binFG = $this->db->table('stock_bins')->where(['product_id' => 100, 'branch_id' => 1])->get()->getRowArray();
-        $this->assertEquals(1.0, (float) $binFG['on_hand_qty']);
+        $fgBin = $this->db->table('stock_bins')
+            ->where('product_id', $this->fgProductId)
+            ->where('branch_id', 1)
+            ->get()->getRowArray();
+        $this->assertEquals(3.0, (float) $fgBin['on_hand_qty']);
     }
 
     private function seedProducts(): void
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->table('products')->insertBatch([
-            ['id' => 100, 'code' => 'FG', 'name' => 'Finished', 'selling_price' => 0, 'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 1, 'code' => 'C1', 'name' => 'Comp1', 'selling_price' => 0, 'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
-            ['id' => 2, 'code' => 'C2', 'name' => 'Comp2', 'selling_price' => 0, 'status' => 'active', 'created_at' => $now, 'updated_at' => $now],
-        ]);
-    }
-
-    private function seedBranch(): void
-    {
-        $now = date('Y-m-d H:i:s');
-        $this->db->table('branches')->insert([
-            'id' => 1,
-            'name' => 'Main',
+        $this->db->table('products')->insert([
+            'code' => 'FG-1',
+            'name' => 'Finished Good',
+            'product_type' => 'standard',
+            'is_active' => 1,
+            'status' => 'active',
             'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->fgProductId = (int) $this->db->insertID();
+
+        $this->db->table('products')->insert([
+            'code' => 'COMP-1',
+            'name' => 'Component',
+            'product_type' => 'standard',
+            'is_active' => 1,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->componentProductId = (int) $this->db->insertID();
+
+        $this->db->table('stock_bins')->insert([
+            'product_id' => $this->componentProductId,
+            'variant_id' => null,
+            'branch_id' => 1,
+            'batch_id' => null,
+            'on_hand_qty' => 10,
+            'reserved_qty' => 0,
             'updated_at' => $now,
         ]);
     }
 
-    private function seedStock(): void
+    private function jsonHeaders(): array
     {
-        $now = date('Y-m-d H:i:s');
-        $this->db->table('stock_bins')->insertBatch([
-            ['product_id' => 1, 'variant_id' => null, 'branch_id' => 1, 'batch_id' => null, 'on_hand_qty' => 10, 'reserved_qty' => 0, 'updated_at' => $now],
-            ['product_id' => 2, 'variant_id' => null, 'branch_id' => 1, 'batch_id' => null, 'on_hand_qty' => 5, 'reserved_qty' => 0, 'updated_at' => $now],
-        ]);
+        return $this->authHeaders(['Content-Type' => 'application/json']);
     }
 
     private function decode($response): array
     {
         $raw = $response->getBody();
-        if (is_string($raw) && strpos($raw, '<!DOCTYPE html') !== false && preg_match('/<p>(.*?)<\\/p>/s', $raw, $m)) {
+        if (strpos($raw, '<!DOCTYPE html') !== false && preg_match('/<p>(.*?)<\\/p>/s', $raw, $m)) {
             $raw = html_entity_decode($m[1]);
         }
-        $decoded = json_decode($raw, true);
-        return is_array($decoded) ? $decoded : [];
+        return json_decode($raw, true);
     }
 }

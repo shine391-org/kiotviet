@@ -21,43 +21,48 @@ class ProductBatchesController extends BaseController
     /** List batches. @agent-use: GET /api/product-batches */
     public function index()
     {
-        return $this->wrap(fn () => $this->respond($this->service->list($this->request->getGet())));
+        $query = $this->request->getGet();
+        return $this->wrap('index', fn () => $this->respond($this->service->list($query)), ['query' => $query]);
     }
 
     /** Expiring batches. @agent-use: GET /api/product-batches/expiring */
     public function expiring()
     {
-        return $this->wrap(fn () => $this->respond($this->service->expiring($this->request->getGet())));
+        $query = $this->request->getGet();
+        return $this->wrap('expiring', fn () => $this->respond($this->service->expiring($query)), ['query' => $query]);
     }
 
     /** Show batch detail. @agent-use: GET /api/product-batches/{id} */
     public function show($id)
     {
-        return $this->wrap(fn () => $this->respond($this->service->show((int) $id)));
+        $batchId = (int) $id;
+        return $this->wrap('show', fn () => $this->respond($this->service->show($batchId)), ['id' => $batchId]);
     }
 
     /** Create batch. @agent-use: POST /api/product-batches */
     public function create()
     {
         $payload = $this->request->getJSON(true) ?? [];
-        return $this->wrap(fn () => $this->respondCreated($this->service->create($payload)));
+        return $this->wrap('create', fn () => $this->respondCreated($this->service->create($payload)), ['payload' => $payload]);
     }
 
     /** Update batch. @agent-use: PUT /api/product-batches/{id} */
     public function update($id)
     {
         $payload = $this->request->getJSON(true) ?? [];
-        return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $payload)));
+        $batchId = (int) $id;
+        return $this->wrap('update', fn () => $this->respond($this->service->update($batchId, $payload)), ['id' => $batchId, 'payload' => $payload]);
     }
 
     /** Adjust quantity. @agent-use: POST /api/product-batches/{id}/adjust-quantity */
     public function adjust($id)
     {
         $payload = $this->request->getJSON(true) ?? [];
-        return $this->wrap(fn () => $this->respond($this->service->adjustQuantity((int) $id, $payload)));
+        $batchId = (int) $id;
+        return $this->wrap('adjust', fn () => $this->respond($this->service->adjustQuantity($batchId, $payload)), ['id' => $batchId, 'payload' => $payload]);
     }
 
-    private function wrap(callable $action)
+    private function wrap(string $method, callable $action, array $context = [])
     {
         try {
             return $action();
@@ -66,7 +71,15 @@ class ProductBatchesController extends BaseController
         } catch (\RuntimeException $e) {
             return $this->failNotFound($e->getMessage());
         } catch (\Throwable $e) {
-            return $this->failServerError($e->getMessage());
+            $this->logger->error(
+                sprintf('ProductBatchesController::%s failed', $method),
+                [
+                    'exception' => $e,
+                    'trace' => $e->getTraceAsString(),
+                    'context' => $context,
+                ]
+            );
+            return $this->failServerError('Internal server error');
         }
     }
 }

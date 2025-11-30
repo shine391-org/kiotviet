@@ -7,6 +7,7 @@ use App\Services\Approvals\ApprovalRuleService;
 use App\Repositories\Approvals\ApprovalRepository;
 use App\Repositories\Approvals\ApprovalActionRepository;
 use App\Repositories\Approvals\ApprovalRuleRepository;
+use App\Repositories\Orders\OrderRepository;
 use App\Validators\ApprovalRequestValidator;
 use App\Validators\ApprovalRuleValidator;
 use CodeIgniter\Test\CIUnitTestCase;
@@ -33,7 +34,8 @@ class ApprovalServiceTest extends CIUnitTestCase
         $ruleService = new ApprovalRuleService($ruleRepo, new ApprovalRuleValidator());
         $approvalRepo = new ApprovalRepository(null, $db);
         $actionRepo = new ApprovalActionRepository(null, $db);
-        $this->service = new ApprovalService($approvalRepo, $actionRepo, $ruleService, new ApprovalRequestValidator());
+        $orderRepo = new OrderRepository(null, null, $db);
+        $this->service = new ApprovalService($approvalRepo, $actionRepo, $ruleService, new ApprovalRequestValidator(), $orderRepo);
 
         $ruleService->create([
             'name' => 'Over 1k',

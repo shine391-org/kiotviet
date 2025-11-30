@@ -24,11 +24,15 @@ class OrderValidator
         foreach ($items as $item) {
             $productId = (int) ($item['product_id'] ?? 0);
             if ($productId <= 0) { throw new InvalidArgumentException('product_id is required'); }
-            $qty = (float) ($item['quantity'] ?? 1);
+            $qtyInput = $item['quantity'] ?? 1;
+            $qty = (float) $qtyInput;
             if ($qty <= 0) { throw new InvalidArgumentException('quantity must be > 0'); }
             $serials = $this->serialNumbersFromInput($item['serial_numbers'] ?? []);
-            if (! empty($serials) && count($serials) !== (int) $qty) {
-                throw new InvalidArgumentException('serial_numbers count must match quantity');
+            if (! empty($serials)) {
+                $qtyIsInteger = is_int($qtyInput) || (is_numeric($qtyInput) && (float) $qtyInput === floor((float) $qtyInput));
+                if (! $qtyIsInteger || count($serials) !== (int) $qty) {
+                    throw new InvalidArgumentException('serial_numbers count must match quantity');
+                }
             }
             $mapped[] = [
                 'product_id' => $productId,

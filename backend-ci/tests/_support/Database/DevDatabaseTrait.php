@@ -64,7 +64,7 @@ trait DevDatabaseTrait
             'product_attribute_values','product_attribute_options','product_attributes',
             'product_images','product_category_links','product_categories',
             'product_variants_v2','product_batches','product_serial_numbers','delivery_note_items','delivery_notes','products',
-            'customers','branches','warehouses','users','factories',
+            'customers','companies','company_permissions','document_shares','audit_logs','branches','warehouses','users','factories',
             'inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
             'webhook_events','webhook_subscriptions',
             'approval_actions','approvals','order_approval_rules',

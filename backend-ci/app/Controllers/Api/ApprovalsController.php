@@ -22,7 +22,7 @@ class ApprovalsController extends BaseController
     public function submit()
     {
         $payload = $this->request->getJSON(true) ?? [];
-        $order = $this->loadOrder((int) ($payload['order_id'] ?? 0));
+        $order = $this->service->loadOrderWithItems((int) ($payload['order_id'] ?? 0));
         return $this->wrap(fn () => $this->respond($this->service->submitOrder($payload, $order)));
     }
 
@@ -48,14 +48,4 @@ class ApprovalsController extends BaseController
         catch (\Throwable $e) { return $this->failServerError($e->getMessage()); }
     }
 
-    private function loadOrder(int $orderId): array
-    {
-        if ($orderId <= 0) {
-            return [];
-        }
-        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
-        $order = $db->table('orders')->where('id', $orderId)->get()->getRowArray() ?? [];
-        $order['items'] = $db->table('order_items')->where('order_id', $orderId)->get()->getResultArray();
-        return $order;
-    }
 }

@@ -230,34 +230,36 @@ class OrderStatusService
                     'serial_number' => $serialString,
                     'movement_type' => $type,
                 ]);
-        } else {
-            $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta, (int) $branchId);
-            $this->movementLogger->log(
-                branchId: (int) $branchId,
-                productId: (int) $productId,
-                variantId: $variantId ? (int) $variantId : null,
-                type: $type,
-                quantity: $delta,
-                batchId: null,
-                serialNumber: $serialString,
-                referenceType: 'order',
-                referenceId: (int) $order['id'],
-                notes: $notes,
-                createdBy: $userId
-            );
+            } else {
+                $this->inventoryRepo->adjustStockWithLock((int)$productId, $variantId ? (int)$variantId : null, (int)$branchId, $delta, (int) $branchId);
+                $this->movementLogger->log(
+                    branchId: (int) $branchId,
+                    productId: (int) $productId,
+                    variantId: $variantId ? (int) $variantId : null,
+                    type: $type,
+                    quantity: $delta,
+                    batchId: null,
+                    serialNumber: $serialString,
+                    referenceType: 'order',
+                    referenceId: (int) $order['id'],
+                    notes: $notes,
+                    createdBy: $userId
+                );
+            }
+
+            if ($serials) {
+                if ($delta < 0) {
+                    $this->serialService->reserve([
+                        'serial_numbers' => $serials,
+                        'order_id' => (int) $order['id'],
+                    ]);
+                } elseif ($delta > 0) {
+                    $this->serialService->release($serials);
+                }
             }
         } catch (\Throwable $e) {
             // If locking fails or stock is insufficient, rethrow.
             throw new RuntimeException('Failed to adjust inventory: ' . $e->getMessage(), 0, $e);
-        }
-
-        if ($delta < 0 && $serials) {
-            $this->serialService->reserve([
-                'serial_numbers' => $serials,
-                'order_id' => (int) $order['id'],
-            ]);
-        } elseif ($delta > 0 && $serials) {
-            $this->serialService->release($serials);
         }
 
         $this->emitInventoryIfNeeded((int) $branchId, (int) $productId, $variantId ? (int) $variantId : null);

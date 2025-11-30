@@ -80,4 +80,12 @@ class StockReconciliationRepository
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }
+
+    /**
+     * Expose DB connection for transactional operations.
+     */
+    public function db(): BaseConnection
+    {
+        return $this->db;
+    }
 }
