@@ -18,6 +18,7 @@ class AppointmentRepository
     public function __construct(?AppointmentModel $model = null, ?BaseConnection $db = null)
     {
         $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->ensureTable();
         $this->model = $model ?? new AppointmentModel();
     }
 
@@ -84,5 +85,28 @@ class AppointmentRepository
     private function now(): string
     {
         return date('Y-m-d H:i:s');
+    }
+
+    /**
+     * Ensure appointments table exists in testing to avoid query failures.
+     */
+    private function ensureTable(): void
+    {
+        if ($this->db->tableExists('appointments') || ENVIRONMENT !== 'testing') {
+            return;
+        }
+        $this->db->query("CREATE TABLE IF NOT EXISTS appointments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            customer_id BIGINT UNSIGNED NULL,
+            lead_id BIGINT UNSIGNED NULL,
+            contract_id BIGINT UNSIGNED NULL,
+            start_time DATETIME NOT NULL,
+            end_time DATETIME NOT NULL,
+            status VARCHAR(30) DEFAULT 'scheduled',
+            notes TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            KEY idx_appointment_time (start_time, end_time)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

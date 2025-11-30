@@ -3,52 +3,35 @@
 namespace Tests\Services;
 
 use App\Services\ProductMedia\ProductMediaService;
+use App\Repositories\ProductMedia\ProductMediaRepository;
+use App\Validators\ProductMediaValidator;
+use App\Validators\ProductMediaDateValidator;
+use App\Validators\ProductMediaSearchValidator;
+use App\Transformers\ProductMediaTransformer;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
 
 class ProductMediaServiceTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
+
     private ProductMediaService $service;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
-        $this->resetSchema();
-        $this->service = new ProductMediaService();
-    }
-
-    private function resetSchema(): void
-    {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS product_images');
-        $this->db->query('DROP TABLE IF EXISTS product_variants_v2');
-        $this->db->query('DROP TABLE IF EXISTS products');
-
-        $this->db->query("CREATE TABLE products (
-            id INTEGER PRIMARY KEY {$auto},
-            code TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE product_variants_v2 (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            sku TEXT,
-            deleted_at TEXT
-        )");
-
-        $this->db->query("CREATE TABLE product_images (
-            id INTEGER PRIMARY KEY {$auto},
-            product_id INTEGER,
-            variant_id INTEGER,
-            image_url TEXT,
-            created_at TEXT,
-            deleted_at TEXT,
-            is_primary INTEGER,
-            sort_order INTEGER
-        )");
+        $this->setUpDatabase();
+        $this->resetCompleteSchema();
+        $repo = new ProductMediaRepository($this->db);
+        $this->service = new ProductMediaService(
+            $repo,
+            new ProductMediaValidator(),
+            new ProductMediaDateValidator(),
+            new ProductMediaSearchValidator(),
+            new ProductMediaTransformer()
+        );
     }
 
     public function test_library_returns_images(): void
@@ -104,12 +87,18 @@ class ProductMediaServiceTest extends CIUnitTestCase
 
     public function test_searchSku_finds_match(): void
     {
-        $this->db->table('products')->insert(['code' => 'PROD1', 'id' => 1]);
+        $this->db->table('products')->insert(['code' => 'PROD1', 'name' => 'Prod 1', 'id' => 1]);
         $this->db->table('product_images')->insert(['product_id' => 1, 'image_url' => 'found.jpg']);
 
         $result = $this->service->searchSku(['sku' => 'PROD1']);
         $this->assertTrue($result['success']);
         $this->assertCount(1, $result['data']);
         $this->assertEquals('found.jpg', $result['data'][0]['image_url']);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }

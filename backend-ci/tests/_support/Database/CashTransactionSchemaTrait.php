@@ -7,7 +7,19 @@ trait CashTransactionSchemaTrait
     protected function resetCashTransactionSchema(): void
     {
         $db = $this->getSchemaDb();
-        $tables = ['cash_transactions', 'orders', 'purchase_orders', 'branches', 'users'];
+        // Ensure schema exists (golden migration) if core tables missing
+        $existing = array_flip($db->listTables());
+        if (
+            ! isset($existing['branches'])
+            || ! isset($existing['users'])
+            || ! isset($existing['cash_transactions'])
+            || ! isset($existing['returns'])
+        ) {
+            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+            (new \App\Database\Migrations\TestSchemaSetup())->up();
+            $existing = array_flip($db->listTables());
+        }
+        $tables = ['cash_transactions', 'orders', 'purchase_orders', 'branches', 'users', 'returns'];
         $this->truncateTables($db, $tables);
     }
 

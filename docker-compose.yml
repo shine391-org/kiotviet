@@ -39,6 +39,7 @@ services:
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
     volumes:
       - db_data:/var/lib/mysql
+      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
 
   # MySQL test database (separate from dev)
   db-test:
@@ -50,6 +51,7 @@ services:
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
     volumes:
       - test_db_data:/var/lib/mysql
+      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     ports:
       - "3307:3306" # Different port to avoid conflict
 

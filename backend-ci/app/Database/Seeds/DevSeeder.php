@@ -88,6 +88,27 @@ class DevSeeder extends Seeder
             ['id' => 2, 'name' => 'Chi nhánh HCM',    'code' => 'HCM01', 'status' => 'active', 'created_at' => $now],
         ]);
 
+        // Company mặc định để các test/feature có company_id hợp lệ
+        $this->db->table('companies')->ignore(true)->insert([
+            'id' => 1,
+            'code' => 'COMP-DEFAULT',
+            'name' => 'Default Company',
+            'is_default' => 1,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        // Quyền công ty mẫu: user 1 có toàn quyền admin trên công ty mặc định
+        $this->db->table('company_permissions')->ignore(true)->insert([
+            'company_id' => 1,
+            'user_id' => 1,
+            'role_name' => 'admin',
+            'permissions' => json_encode(['admin', 'read', 'write', 'share']),
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         // Categories mẫu (có parent/child)
         $this->db->table('product_categories')->ignore(true)->insertBatch([
             ['id'=> 101, 'product_id'=>0, 'parent_id'=>null, 'level'=>1, 'is_variant_group'=>0, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],

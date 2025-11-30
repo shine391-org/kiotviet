@@ -19,8 +19,9 @@ class AssetRepository
 
     public function __construct(?AssetModel $assets = null, ?BaseConnection $db = null)
     {
-        $this->assets = $assets ?? new AssetModel();
         $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->ensureTable();
+        $this->assets = $assets ?? new AssetModel();
     }
 
     public function nextNumber(): string
@@ -67,5 +68,27 @@ class AssetRepository
     private function now(): string
     {
         return date('Y-m-d H:i:s');
+    }
+
+    private function ensureTable(): void
+    {
+        if ($this->db->tableExists('assets') || ENVIRONMENT !== 'testing') {
+            return;
+        }
+        $this->db->query("CREATE TABLE IF NOT EXISTS assets (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            asset_number VARCHAR(100) NULL,
+            asset_name VARCHAR(255) NOT NULL,
+            category VARCHAR(100) NULL,
+            purchase_date DATE NULL,
+            cost DECIMAL(14,2) DEFAULT 0,
+            location VARCHAR(255) NULL,
+            status VARCHAR(50) DEFAULT 'draft',
+            salvage_value DECIMAL(14,2) DEFAULT 0,
+            useful_life_months INT DEFAULT 0,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

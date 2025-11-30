@@ -18,6 +18,7 @@ class COARepository
     public function __construct(?ChartOfAccountModel $model = null, ?BaseConnection $db = null)
     {
         $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->ensureTable();
         $this->model = $model ?? new ChartOfAccountModel();
     }
 
@@ -70,5 +71,31 @@ class COARepository
     private function now(): string
     {
         return date('Y-m-d H:i:s');
+    }
+
+    /**
+     * Ensure chart_of_accounts table exists in testing to avoid query failures.
+     */
+    private function ensureTable(): void
+    {
+        if ($this->db->tableExists('chart_of_accounts')) {
+            return;
+        }
+        if (ENVIRONMENT !== 'testing') {
+            return;
+        }
+        $this->db->query("CREATE TABLE IF NOT EXISTS chart_of_accounts (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            account_type VARCHAR(50) NOT NULL,
+            currency VARCHAR(10) NULL,
+            parent_id BIGINT UNSIGNED NULL,
+            is_group TINYINT(1) DEFAULT 0,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            UNIQUE KEY uq_coa_code (code),
+            KEY idx_coa_parent (parent_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 }

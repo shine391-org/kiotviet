@@ -65,24 +65,25 @@ class CreateCompanyPermissionTables extends Migration
 
     private function createDocumentShares(): void
     {
-        $this->forge->addField([
-            'id' => ['type' => 'BIGINT', 'unsigned' => true, 'auto_increment' => true],
-            'company_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
-            'entity_type' => ['type' => 'VARCHAR', 'constraint' => 120, 'null' => false],
-            'entity_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
-            'shared_with_user_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
-            'shared_with_role' => ['type' => 'VARCHAR', 'constraint' => 100, 'null' => true],
-            'permissions' => ['type' => 'JSON', 'null' => true],
-            'expires_at' => ['type' => 'DATETIME', 'null' => true],
-            'created_by' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
-            'created_at' => ['type' => 'DATETIME', 'null' => true],
-            'updated_at' => ['type' => 'DATETIME', 'null' => true],
-        ]);
-        $this->forge->addKey('id', true);
-        $this->forge->addKey(['entity_type', 'entity_id']);
-        $this->forge->addKey('company_id');
-        $this->forge->addUniqueKey(['company_id', 'entity_type', 'entity_id', 'shared_with_user_id', 'shared_with_role']);
-        $this->forge->createTable('document_shares', true);
+        // Use raw SQL to control index name length (avoid MySQL identifier limit)
+        $this->db->query("
+            CREATE TABLE IF NOT EXISTS document_shares (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                company_id BIGINT UNSIGNED NOT NULL,
+                entity_type VARCHAR(120) NOT NULL,
+                entity_id BIGINT UNSIGNED NOT NULL,
+                shared_with_user_id BIGINT UNSIGNED NULL,
+                shared_with_role VARCHAR(100) NULL,
+                permissions JSON NULL,
+                expires_at DATETIME NULL,
+                created_by BIGINT UNSIGNED NULL,
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                UNIQUE KEY uq_doc_share_user (company_id, entity_type, entity_id, shared_with_user_id, shared_with_role),
+                KEY idx_document_shares_entity (entity_type, entity_id),
+                KEY idx_document_shares_company (company_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        ");
     }
 
     private function createAuditLogs(): void

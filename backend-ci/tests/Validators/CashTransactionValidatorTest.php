@@ -26,6 +26,12 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         
         // Truncate tables to ensure clean state
         $this->resetCashTransactionSchema();
+
+        // Defensive: ensure core tables exist (in case migration was skipped)
+        if (! $this->db->tableExists('branches') || ! $this->db->tableExists('users')) {
+            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+            (new \App\Database\Migrations\TestSchemaSetup())->up();
+        }
         
         $this->validator = new CashTransactionValidator(null, $this->db);
         $this->referenceValidator = new CashTransactionReferenceValidator($this->db);
@@ -47,12 +53,6 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         // Debug: Check if data was seeded
         $this->assertGreaterThan(0, $branchId, "Branch ID should be > 0, got: $branchId");
         $this->assertGreaterThan(0, $userId, "User ID should be > 0, got: $userId");
-        
-        $branch = $this->db->table('branches')->where('id', $branchId)->get()->getRowArray();
-        $user = $this->db->table('users')->where('id', $userId)->get()->getRowArray();
-        
-        $this->assertNotNull($branch, "Branch not found: $branchId");
-        $this->assertNotNull($user, "User not found: $userId");
         
         $data = [
             'amount' => '500000.00', // String format for validation

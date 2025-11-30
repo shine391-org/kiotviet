@@ -1,0 +1,11 @@
+[mysqld]
+# Larger buffer pool to cache data/indexes for tests
+innodb_buffer_pool_size = 1G
+# Faster (less durable) log flush for heavy transactional test load
+innodb_flush_log_at_trx_commit = 2
+# Allow more concurrent connections during parallel tests
+max_connections = 300
+# Avoid DNS lookups on connect
+skip_name_resolve = ON
+# Optional: reduce double buffering overhead
+innodb_flush_method = O_DIRECT

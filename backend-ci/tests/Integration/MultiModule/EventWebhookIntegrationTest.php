@@ -5,8 +5,8 @@ namespace Tests\Integration\MultiModule;
 use App\Services\Orders\OrderService;
 use App\Services\Webhooks\WebhookDispatcher;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
-use Tests\Support\Database\StatusSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
 
 /**
  * @agent-test: Event + webhook integration (order created)
@@ -14,93 +14,22 @@ use Tests\Support\Database\StatusSchemaTrait;
  */
 class EventWebhookIntegrationTest extends CIUnitTestCase
 {
-    use StatusSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
-    protected $db;
     protected OrderService $orders;
     protected WebhookDispatcher $dispatcher;
     private int $productId;
-
-    private function resetProducts(): void
-    {
-        $this->db->query('DROP TABLE IF EXISTS products');
-        $this->db->query('CREATE TABLE products (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(50),
-            name VARCHAR(255),
-            selling_price DECIMAL(14,2),
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL,
-            deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        // minimal price list tables to satisfy pricing service
-        $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            type VARCHAR(50) DEFAULT \'custom\',
-            apply_to_groups JSON NULL,
-            start_date DATE NULL,
-            end_date DATE NULL,
-            priority INT DEFAULT 0,
-            is_active TINYINT(1) DEFAULT 1,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL,
-            deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            price_list_id INT,
-            product_id INT,
-            variant_id INT NULL,
-            price DECIMAL(14,2) DEFAULT 0,
-            discount_percent DECIMAL(8,2) DEFAULT 0,
-            discount_amount DECIMAL(14,2) DEFAULT 0,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        $this->db->query('CREATE TABLE IF NOT EXISTS customers (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            customer_group_id INT NULL,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        foreach (['price_list_items','price_lists','products','customers'] as $tbl) {
-            if ($this->db->tableExists($tbl)) {
-                $this->db->table($tbl)->truncate();
-            }
-        }
-    }
+    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $config = config('Database');
-        $config->defaultGroup = 'tests';
-        $this->db = Database::connect('tests', false);
-        $this->resetStatusSchema();
-        $this->resetProducts();
+        $this->setUpDatabase();
+        $this->resetCompleteSchema();
+        $this->seedBase();
 
         // seed webhook subscription
-        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_subscriptions (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            event VARCHAR(100),
-            target_url VARCHAR(255),
-            secret VARCHAR(255),
-            is_active TINYINT(1),
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_events (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            event VARCHAR(100),
-            payload JSON NULL,
-            status VARCHAR(20),
-            attempts INT DEFAULT 0,
-            last_error TEXT NULL,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->table('webhook_subscriptions')->insert([
             'event' => 'order.created',
             'target_url' => 'https://hooks.test/order-created',
@@ -118,6 +47,13 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             'updated_at' => $now,
         ]);
         $this->productId = (int) $this->db->insertID();
+        $this->db->table('price_list_items')->insert([
+            'price_list_id' => 1,
+            'product_id' => $this->productId,
+            'price' => 100000,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
 
         $this->db->table('customers')->insert([
             'id' => 1,
@@ -134,6 +70,14 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
         });
     }
 
+    private function seedBase(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'code' => 'BR1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('price_lists')->insert(['id' => 1, 'name' => 'Default', 'type' => 'custom', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now]);
+    }
+
     /** @test */
     public function order_creation_dispatches_webhook(): void
     {
@@ -148,12 +92,27 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
 
         // inject dispatcher into order service
         $orderService = new OrderService(
-            null,
-            null,
-            service('priceCalculatorService'),
-            null,
-            null,
-            $this->dispatcher
+            orders: null,
+            validator: null,
+            pricing: service('priceCalculatorService'),
+            advancedPricing: null,
+            createValidator: null,
+            numberGen: null,
+            webhooks: $this->dispatcher,
+            paymentService: null,
+            movementLogger: null,
+            inventoryRepo: null,
+            batchService: null,
+            serialService: null,
+            posProfiles: null,
+            paymentSplit: null,
+            shiftService: null,
+            couponService: null,
+            loyaltyService: null,
+            paymentEntries: null,
+            taxService: null,
+            creditControl: null,
+            db: $this->db
         );
 
         $res = $orderService->create([
@@ -199,5 +158,11 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
         }
         $this->assertNotEmpty($events, 'Webhook event not queued');
         $this->assertEquals('order.created', $events[0]['event']);
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }

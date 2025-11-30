@@ -11,6 +11,8 @@ use CodeIgniter\Database\BaseConnection;
  */
 trait DevDatabaseTrait
 {
+    private static bool $schemaReady = false;
+
     protected function setUpDatabase(): void
     {
         // Luôn ép defaultGroup sang 'tests' để FeatureTestTrait/Services dùng cùng DB
@@ -46,9 +48,25 @@ trait DevDatabaseTrait
 
     private function ensureSchema(): void
     {
-        // chạy golden migration
-        require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
-        (new \App\Database\Migrations\TestSchemaSetup())->up();
+        $requiredTables = ['branches', 'users', 'orders', 'order_items', 'cash_transactions', 'returns', 'gl_entries'];
+        $needsMigrate = ! self::$schemaReady;
+        if (! $needsMigrate) {
+            $db = Database::connect('tests');
+            $existing = array_flip($db->listTables());
+            foreach ($requiredTables as $tbl) {
+                if (! isset($existing[$tbl])) {
+                    $needsMigrate = true;
+                    break;
+                }
+            }
+            $db->close();
+        }
+        if ($needsMigrate) {
+            // chạy golden migration (một lần cho mỗi process hoặc khi thiếu bảng)
+            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+            (new \App\Database\Migrations\TestSchemaSetup())->up();
+            self::$schemaReady = true;
+        }
     }
 
     /**

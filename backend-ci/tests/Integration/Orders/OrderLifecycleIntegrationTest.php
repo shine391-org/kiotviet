@@ -5,8 +5,8 @@ namespace Tests\Integration\Orders;
 use App\Services\Orders\OrderService;
 use App\Services\Orders\OrderStatusService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
-use Tests\Support\Database\StatusSchemaTrait;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\CompleteSchemaTrait;
 
 /**
  * @agent-test: Order lifecycle integration (POS + Shipping)
@@ -14,90 +14,34 @@ use Tests\Support\Database\StatusSchemaTrait;
  */
 class OrderLifecycleIntegrationTest extends CIUnitTestCase
 {
-    use StatusSchemaTrait;
+    use DevDatabaseTrait;
+    use CompleteSchemaTrait;
 
-    protected $db;
     protected OrderService $orders;
     protected OrderStatusService $statuses;
+    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $config = config('Database');
-        $config->defaultGroup = 'tests';
-
-        $this->db = Database::connect('tests', false);
-        $this->resetStatusSchema();
-        $this->resetProducts();
+        $this->setUpDatabase();
+        $this->resetCompleteSchema();
+        $this->seedBase();
 
         $this->orders = service('orderService');
         $this->statuses = service('orderStatusService');
     }
 
-    private function resetProducts(): void
+    private function seedBase(): void
     {
-        $this->db->query('DROP TABLE IF EXISTS products');
-        $this->db->query('CREATE TABLE products (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            code VARCHAR(50),
-            name VARCHAR(255),
-            selling_price DECIMAL(14,2) DEFAULT 0,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL,
-            deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-
-        // minimal price list tables required by price calculator
-        $this->db->query('CREATE TABLE IF NOT EXISTS price_lists (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            type VARCHAR(50) DEFAULT \'custom\',
-            description TEXT,
-            apply_to_groups JSON NULL,
-            start_date DATE NULL,
-            end_date DATE NULL,
-            priority INT DEFAULT 0,
-            is_active TINYINT(1) DEFAULT 1,
-            formula TEXT NULL,
-            base_price_list_id INT NULL,
-            auto_update TINYINT(1) DEFAULT 0,
-            rounding_rule VARCHAR(50) NULL,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL,
-            deleted_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-
-        $this->db->query('CREATE TABLE IF NOT EXISTS price_list_items (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            price_list_id INT,
-            product_id INT,
-            variant_id INT NULL,
-            price DECIMAL(14,2) DEFAULT 0,
-            discount_percent DECIMAL(8,2) DEFAULT 0,
-            discount_amount DECIMAL(14,2) DEFAULT 0,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-
-        $this->db->query('CREATE TABLE IF NOT EXISTS customers (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            name VARCHAR(255),
-            customer_group_id INT NULL,
-            created_at DATETIME NULL,
-            updated_at DATETIME NULL
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4');
-        foreach (['price_list_items','price_lists','products','customers'] as $tbl) {
-            if ($this->db->tableExists($tbl)) {
-                $this->db->table($tbl)->truncate();
-            }
-        }
-
         $now = date('Y-m-d H:i:s');
+        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'code' => 'BR1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('customers')->insertBatch([
             ['id' => 1, 'name' => 'Customer 1', 'customer_group_id' => null, 'created_at' => $now, 'updated_at' => $now],
             ['id' => 2, 'name' => 'Customer 2', 'customer_group_id' => null, 'created_at' => $now, 'updated_at' => $now],
         ]);
+        $this->db->table('price_lists')->insert(['id' => 1, 'name' => 'Default', 'type' => 'custom', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now]);
     }
 
     /** @test */
@@ -211,7 +155,7 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
 
     private function seedProduct(float $price): int
     {
-        $this->db->query('DELETE FROM products');
+        $this->db->table('products')->truncate();
         $row = [
             'code' => 'P' . random_int(100, 999),
             'name' => 'Product ' . random_int(1, 999),
@@ -222,6 +166,19 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
         ];
         $this->db->table('products')->insert($row);
         $id = (int) $this->db->insertID();
+        $this->db->table('price_list_items')->insert([
+            'price_list_id' => 1,
+            'product_id' => $id,
+            'price' => $price,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
         return $id;
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 }

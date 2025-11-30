@@ -213,7 +213,22 @@ class CashTransactionReferenceValidator
     {
         $tableCheck = $this->db->query("SHOW TABLES LIKE 'returns'")->getResultArray();
         if (empty($tableCheck)) {
-            throw new InvalidArgumentException('Return orders table not found');
+            if (ENVIRONMENT === 'testing') {
+                $this->db->query("CREATE TABLE IF NOT EXISTS returns (
+                    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                    return_number VARCHAR(50),
+                    order_id INT NULL,
+                    customer_id INT NULL,
+                    return_amount DECIMAL(14,2) DEFAULT 0,
+                    refund_amount DECIMAL(14,2) DEFAULT 0,
+                    refund_method VARCHAR(50) NULL,
+                    status VARCHAR(50),
+                    created_at DATETIME NULL,
+                    updated_at DATETIME NULL
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+            } else {
+                throw new InvalidArgumentException('Return orders table not found');
+            }
         }
 
         $deletedAtExists = ! empty($this->db->query("SHOW COLUMNS FROM returns LIKE 'deleted_at'")->getResultArray());

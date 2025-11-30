@@ -10,7 +10,8 @@ class AttributeRepository
     protected BaseConnection $db;
     public function __construct(?BaseConnection $db = null, string $group = 'default')
     {
-        $this->db = $db ?? \Config\Database::connect($group);
+        $this->db = $db ?? \Config\Database::connect($group === 'default' && ENVIRONMENT === 'testing' ? 'tests' : $group);
+        $this->ensureTables();
     }
 
     /** List attributes with filters. @agent-use: Attribute listing @agent-pattern: Standard query */
@@ -107,4 +108,54 @@ class AttributeRepository
     }
 
     private function now(): string { return date('Y-m-d H:i:s'); }
+
+    private function ensureTables(): void
+    {
+        if (ENVIRONMENT !== 'testing') {
+            return;
+        }
+        if (! $this->db->tableExists('product_attributes')) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                slug VARCHAR(255) NULL,
+                attribute_key VARCHAR(100) NULL,
+                type VARCHAR(50) DEFAULT 'select',
+                is_required TINYINT DEFAULT 0,
+                is_filterable TINYINT DEFAULT 0,
+                sort_order INT DEFAULT 0,
+                status VARCHAR(20) DEFAULT 'active',
+                is_visible TINYINT DEFAULT 1,
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                deleted_at DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+        if (! $this->db->tableExists('product_attribute_options')) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                attribute_id BIGINT UNSIGNED NOT NULL,
+                option_name VARCHAR(255),
+                color_code VARCHAR(50) NULL,
+                sort_order INT DEFAULT 0,
+                status VARCHAR(20) DEFAULT 'active',
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                deleted_at DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+        if (! $this->db->tableExists('product_attribute_values')) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                product_id BIGINT UNSIGNED NOT NULL,
+                variant_id BIGINT UNSIGNED NULL,
+                attribute_id BIGINT UNSIGNED NOT NULL,
+                option_id BIGINT UNSIGNED NOT NULL,
+                value_text TEXT NULL,
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                deleted_at DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+    }
 }
