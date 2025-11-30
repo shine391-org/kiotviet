@@ -110,6 +110,11 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('scheduler/tick', 'Api\\SchedulerController::tick');
     $routes->post('jobs/enqueue', 'Api\\JobsController::enqueue');
     $routes->post('jobs/run-next', 'Api\\JobsController::runNext');
+    $routes->get('reports/gl', 'Api\\ReportsController::gl');
+    $routes->get('reports/profit-loss', 'Api\\ReportsController::profitLoss');
+    $routes->get('reports/balance-sheet', 'Api\\ReportsController::balanceSheet');
+    $routes->get('reports/aging', 'Api\\ReportsController::aging');
+    $routes->get('reports/stock-balance', 'Api\\ReportsController::stockBalance');
     $routes->get('employees', 'Api\\EmployeesController::index');
     $routes->get('employees/(:num)', 'Api\\EmployeesController::show/$1');
     $routes->post('employees', 'Api\\EmployeesController::create');

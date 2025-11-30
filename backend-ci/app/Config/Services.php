@@ -254,6 +254,7 @@ use App\Services\Projects\ProjectService;
 use App\Services\Projects\TaskService;
 use App\Services\Projects\TimesheetService;
 use App\Services\Projects\ActivityCostService;
+use App\Services\Reports\ReportService;
 use App\Services\Inventory\StockEntryService;
 use App\Services\Inventory\PickPackService;
 use App\Services\Inventory\StockEntryReturnService;
@@ -263,6 +264,7 @@ use App\Validators\JobValidator;
 use App\Validators\PortalValidator;
 use App\Validators\NotificationValidator;
 use App\Validators\AssignmentValidator;
+use App\Validators\ReportValidator;
 use App\Services\Approvals\ApprovalRuleService;
 use App\Services\Approvals\ApprovalService;
 use App\Services\Approvals\ApprovalHook;
@@ -885,6 +887,11 @@ class Services extends BaseService
         return $getShared ? static::getSharedInstance('assignmentValidator') : new AssignmentValidator();
     }
 
+    public static function reportValidator(bool $getShared = true): ReportValidator
+    {
+        return $getShared ? static::getSharedInstance('reportValidator') : new ReportValidator();
+    }
+
     public static function employeeValidator(bool $getShared = true): EmployeeValidator
     {
         return $getShared ? static::getSharedInstance('employeeValidator') : new EmployeeValidator();
@@ -1253,6 +1260,15 @@ class Services extends BaseService
             static::assignmentRepository(false),
             static::assignmentValidator(false)
         );
+    }
+
+    public static function reportService(bool $getShared = true): ReportService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('reportService');
+        }
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new ReportService($db, static::reportValidator(false));
     }
 
     public static function projectService(bool $getShared = true): ProjectService
