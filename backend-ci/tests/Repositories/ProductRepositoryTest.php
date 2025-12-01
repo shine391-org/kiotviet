@@ -56,7 +56,7 @@ class ProductRepositoryTest extends CIUnitTestCase
     private function insertProduct(array $data): int
     {
         $payload = array_merge([
-            'product_type' => null,
+            'product_type' => 'goods',
             'code' => 'P' . random_int(1000, 9999),
             'barcode' => null,
             'name' => 'Sample',

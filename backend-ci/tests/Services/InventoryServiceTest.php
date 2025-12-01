@@ -232,9 +232,14 @@ class InventoryServiceTest extends CIUnitTestCase
         // Create tables if they don't exist
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         
+        $tables = ['inventory_alerts', 'inventory_valuation', 'inventory_movements', 'inventory_stock', 'warehouses'];
+        foreach ($tables as $table) {
+            $this->db->query("DROP TABLE IF EXISTS $table");
+        }
+
         // Create warehouses table
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS warehouses (
+            CREATE TABLE warehouses (
                 id INT PRIMARY KEY,
                 code VARCHAR(50) NOT NULL,
                 name VARCHAR(255) NOT NULL,
@@ -248,7 +253,7 @@ class InventoryServiceTest extends CIUnitTestCase
         
         // Create inventory_stock table
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS inventory_stock (
+            CREATE TABLE inventory_stock (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 branch_id INT NULL,
                 product_id INT NOT NULL,
@@ -266,7 +271,7 @@ class InventoryServiceTest extends CIUnitTestCase
         
         // Create inventory_movements table
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS inventory_movements (
+            CREATE TABLE inventory_movements (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 movement_type VARCHAR(20) NOT NULL,
                 product_id INT NOT NULL,
@@ -284,7 +289,7 @@ class InventoryServiceTest extends CIUnitTestCase
         
         // Create inventory_alerts table
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS inventory_alerts (
+            CREATE TABLE inventory_alerts (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 alert_type VARCHAR(50) NOT NULL,
                 product_id INT NOT NULL,
@@ -301,7 +306,7 @@ class InventoryServiceTest extends CIUnitTestCase
         
         // Create inventory_valuation table
         $this->db->query("
-            CREATE TABLE IF NOT EXISTS inventory_valuation (
+            CREATE TABLE inventory_valuation (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 warehouse_id INT NOT NULL,
                 product_id INT NOT NULL,
@@ -314,12 +319,6 @@ class InventoryServiceTest extends CIUnitTestCase
                 created_at DATETIME
             )
         ");
-        
-        // Truncate data
-        $tables = ['inventory_alerts', 'inventory_valuation', 'inventory_movements', 'inventory_stock', 'warehouses'];
-        foreach ($tables as $table) {
-            $this->db->query("TRUNCATE TABLE $table");
-        }
         
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
@@ -342,7 +341,7 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function seedStock(int $productId, ?int $variantId, int $warehouseId, float $qty, float $minStock = 0): void
     {
-        $this->db->table('inventory_stock')->insert([
+        $data = [
             'product_id' => $productId,
             'variant_id' => $variantId,
             'warehouse_id' => $warehouseId,
@@ -351,18 +350,8 @@ class InventoryServiceTest extends CIUnitTestCase
             'minimum_stock' => $minStock,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
-            'deleted_at' => null,
-        ]);
-        $insertId = $this->db->insertID();
-        error_log("DEBUG SEED: Inserted stock row with ID=$insertId for product=$productId, warehouse=$warehouseId, variant=$variantId, qty=$qty");
+        ];
         
-        // Verify insert
-        $query = $this->db->query("SELECT * FROM inventory_stock WHERE product_id = ? AND warehouse_id = ? AND variant_id IS NULL", [$productId, $warehouseId]);
-        if ($query) {
-            $check = $query->getRowArray();
-            error_log("DEBUG SEED VERIFY: " . json_encode($check));
-        } else {
-            error_log("DEBUG SEED VERIFY: Query failed - " . $this->db->error()['message']);
-        }
+        $this->db->table('inventory_stock')->insert($data);
     }
 }
