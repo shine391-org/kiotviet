@@ -1,15 +1,12 @@
 <?php
+
 namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-/**
- * Golden schema for test DB (group "tests").
- * Single source of truth to avoid scattered DDL in traits.
- */
 class TestSchemaSetup extends Migration
 {
-    protected $DBGroup = 'tests';
+    // protected $DBGroup = 'tests';
 
     public function up()
     {
@@ -91,6 +88,7 @@ class TestSchemaSetup extends Migration
                 $this->runStep($step);
             }
 
+            $this->db->resetDataCache(); // Clear cache to see new tables
             $this->validateSchema();
 
             error_log("DEBUG: TestSchemaSetup - Migration completed successfully");
@@ -199,9 +197,9 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS branches (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(20) NULL, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS warehouses (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(50) NULL, branch_id INT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS customers (id INT AUTO_INCREMENT PRIMARY KEY, organization_id INT UNSIGNED NOT NULL DEFAULT 1, customer_group_id INT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, phone VARCHAR(50) NULL, phone2 VARCHAR(50) NULL, gender ENUM('MALE','FEMALE','OTHER') NULL, facebook VARCHAR(255) NULL, customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL', company_name VARCHAR(255) NULL, tax_code VARCHAR(20) NULL, buyer_name VARCHAR(255) NULL, invoice_company_name VARCHAR(255) NULL, invoice_address VARCHAR(500) NULL, invoice_province VARCHAR(120) NULL, invoice_district VARCHAR(120) NULL, invoice_ward VARCHAR(120) NULL, invoice_email VARCHAR(255) NULL, invoice_phone VARCHAR(50) NULL, cccd_cmnd VARCHAR(50) NULL, id_number VARCHAR(50) NULL, bank_account VARCHAR(50) NULL, bank_name VARCHAR(255) NULL, notes TEXT NULL, code VARCHAR(50) NULL, address VARCHAR(500) NULL, province VARCHAR(120) NULL, district VARCHAR(120) NULL, ward VARCHAR(120) NULL, birthday DATE NULL, created_by INT NULL, status VARCHAR(20) DEFAULT 'active', last_transaction_at DATETIME NULL, current_debt DECIMAL(15,2) DEFAULT 0, total_sales DECIMAL(15,2) DEFAULT 0, total_sales_net DECIMAL(15,2) DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL, UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code), KEY idx_customers_tax_code (tax_code)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS branches (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(20) NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS warehouses (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(50) NULL, branch_id INT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS customers (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, organization_id INT UNSIGNED NOT NULL DEFAULT 1, customer_group_id INT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, phone VARCHAR(50) NULL, phone2 VARCHAR(50) NULL, gender ENUM('MALE','FEMALE','OTHER') NULL, facebook VARCHAR(255) NULL, customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL', company_name VARCHAR(255) NULL, tax_code VARCHAR(20) NULL, buyer_name VARCHAR(255) NULL, invoice_company_name VARCHAR(255) NULL, invoice_address VARCHAR(500) NULL, invoice_province VARCHAR(120) NULL, invoice_district VARCHAR(120) NULL, invoice_ward VARCHAR(120) NULL, invoice_email VARCHAR(255) NULL, invoice_phone VARCHAR(50) NULL, cccd_cmnd VARCHAR(50) NULL, id_number VARCHAR(50) NULL, bank_account VARCHAR(50) NULL, bank_name VARCHAR(255) NULL, notes TEXT NULL, code VARCHAR(50) NULL, address VARCHAR(500) NULL, province VARCHAR(120) NULL, district VARCHAR(120) NULL, ward VARCHAR(120) NULL, birthday DATE NULL, created_by INT NULL, status VARCHAR(20) DEFAULT 'active', last_transaction_at DATETIME NULL, current_debt DECIMAL(15,2) DEFAULT 0, total_sales DECIMAL(15,2) DEFAULT 0, total_sales_net DECIMAL(15,2) DEFAULT 0, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL, UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code), KEY idx_customers_tax_code (tax_code)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createCompanyScopeTables(): void
@@ -260,38 +258,38 @@ class TestSchemaSetup extends Migration
 
     private function createProductTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS products (id INT AUTO_INCREMENT PRIMARY KEY, product_type VARCHAR(50) NULL, code VARCHAR(100) NOT NULL, barcode VARCHAR(100) NULL, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NULL, brand VARCHAR(255) NULL, unit VARCHAR(50) NULL, has_variants TINYINT(1) DEFAULT 0, image VARCHAR(255) NULL, images TEXT NULL, weight DECIMAL(10,2) NULL, dimensions VARCHAR(100) NULL, description TEXT NULL, content TEXT NULL, is_active TINYINT(1) DEFAULT 1, is_available_online TINYINT(1) DEFAULT 0, is_featured TINYINT(1) DEFAULT 0, status ENUM('active','inactive') DEFAULT 'active', selling_price DECIMAL(10,2) DEFAULT 0, wholesale_price DECIMAL(10,2) DEFAULT 0, purchase_price DECIMAL(10,2) DEFAULT 0, stock_quantity INT DEFAULT 0, alert_stock INT DEFAULT 0, meta_title VARCHAR(255) NULL, meta_description VARCHAR(500) NULL, meta_keywords VARCHAR(500) NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS products (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_type VARCHAR(50) NULL, code VARCHAR(100) NOT NULL, barcode VARCHAR(100) NULL, name VARCHAR(255) NOT NULL, slug VARCHAR(255) NULL, brand VARCHAR(255) NULL, unit VARCHAR(50) NULL, has_variants TINYINT(1) DEFAULT 0, image VARCHAR(255) NULL, images TEXT NULL, weight DECIMAL(10,2) NULL, dimensions VARCHAR(100) NULL, description TEXT NULL, content TEXT NULL, is_active TINYINT(1) DEFAULT 1, is_available_online TINYINT(1) DEFAULT 0, is_featured TINYINT(1) DEFAULT 0, status ENUM('active','inactive') DEFAULT 'active', selling_price DECIMAL(10,2) DEFAULT 0, wholesale_price DECIMAL(10,2) DEFAULT 0, purchase_price DECIMAL(10,2) DEFAULT 0, stock_quantity INT DEFAULT 0, alert_stock INT DEFAULT 0, meta_title VARCHAR(255) NULL, meta_description VARCHAR(500) NULL, meta_keywords VARCHAR(500) NULL, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductCategoryTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_categories (id INT AUTO_INCREMENT PRIMARY KEY, parent_id INT NULL, product_id INT DEFAULT 0, level TINYINT DEFAULT 1, is_variant_group TINYINT DEFAULT 0, code VARCHAR(50), name VARCHAR(255), slug VARCHAR(255), description TEXT NULL, image VARCHAR(255) NULL, sort_order INT DEFAULT 0, status ENUM('active','inactive') DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_category_links (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, category_id INT, created_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_categories (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, parent_id INT NULL, product_id BIGINT UNSIGNED DEFAULT 0, level TINYINT DEFAULT 1, is_variant_group TINYINT DEFAULT 0, code VARCHAR(50), name VARCHAR(255), slug VARCHAR(255), description TEXT NULL, image VARCHAR(255) NULL, sort_order INT DEFAULT 0, status ENUM('active','inactive') DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_category_links (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_id BIGINT UNSIGNED, category_id BIGINT UNSIGNED, created_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductVariantTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_variants_v2 (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT NOT NULL, variant_name VARCHAR(255) NULL, variant_signature VARCHAR(255) NULL, sku VARCHAR(100) NULL, barcode VARCHAR(100) NULL, price DECIMAL(10,2) DEFAULT 0, cost_price DECIMAL(10,2) DEFAULT 0, stock_quantity DECIMAL(10,2) DEFAULT 0, min_stock DECIMAL(10,2) DEFAULT 0, max_stock DECIMAL(10,2) DEFAULT 0, image_url VARCHAR(255) NULL, attributes TEXT NULL, status ENUM('active','inactive') DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_variants_v2 (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_id BIGINT UNSIGNED NOT NULL, variant_name VARCHAR(255) NULL, variant_signature VARCHAR(255) NULL, sku VARCHAR(100) NULL, barcode VARCHAR(100) NULL, price DECIMAL(10,2) DEFAULT 0, cost_price DECIMAL(10,2) DEFAULT 0, stock_quantity DECIMAL(10,2) DEFAULT 0, min_stock DECIMAL(10,2) DEFAULT 0, max_stock DECIMAL(10,2) DEFAULT 0, image_url VARCHAR(255) NULL, attributes TEXT NULL, status ENUM('active','inactive') DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductImageTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_images (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT NULL, variant_id INT NULL, image_path VARCHAR(255) NULL, image_url VARCHAR(255) NULL, is_primary TINYINT DEFAULT 0, sort_order INT DEFAULT 0, file_name VARCHAR(255) NULL, deleted_at TIMESTAMP NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_images (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_id BIGINT UNSIGNED NULL, variant_id BIGINT UNSIGNED NULL, image_path VARCHAR(255) NULL, image_url VARCHAR(255) NULL, is_primary TINYINT DEFAULT 0, sort_order INT DEFAULT 0, file_name VARCHAR(255) NULL, deleted_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductAttributeTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), slug VARCHAR(255), attribute_key VARCHAR(100), type VARCHAR(50), is_required TINYINT DEFAULT 0, is_filterable TINYINT DEFAULT 0, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', is_visible TINYINT DEFAULT 1, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), slug VARCHAR(255), attribute_key VARCHAR(100), type VARCHAR(50), is_required TINYINT DEFAULT 0, is_filterable TINYINT DEFAULT 0, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', is_visible TINYINT DEFAULT 1, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductAttributeOptionTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (id INT AUTO_INCREMENT PRIMARY KEY, attribute_id INT, option_name VARCHAR(255), color_code VARCHAR(50) NULL, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, attribute_id INT, option_name VARCHAR(255), color_code VARCHAR(50) NULL, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductAttributeValueTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, variant_id INT NULL, attribute_id INT, option_id INT, value_text TEXT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_values (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_id BIGINT UNSIGNED, variant_id BIGINT UNSIGNED NULL, attribute_id INT, option_id INT, value_text TEXT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductBatchTables(): void
@@ -834,22 +832,22 @@ class TestSchemaSetup extends Migration
     }
     private function createPriceListTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'custom', description TEXT NULL, apply_to_groups JSON NULL, start_date DATE NULL, end_date DATE NULL, priority INT DEFAULT 0, is_active TINYINT(1) DEFAULT 1, formula TEXT NULL, base_price_list_id INT NULL, auto_update TINYINT(1) DEFAULT 0, rounding_rule VARCHAR(50) DEFAULT 'none', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS price_lists (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, type VARCHAR(50) DEFAULT 'custom', description TEXT NULL, apply_to_groups JSON NULL, start_date DATE NULL, end_date DATE NULL, priority INT DEFAULT 0, is_active TINYINT(1) DEFAULT 1, formula TEXT NULL, base_price_list_id INT NULL, auto_update TINYINT(1) DEFAULT 0, rounding_rule VARCHAR(50) DEFAULT 'none', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createPriceListItemTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS price_list_items (id INT AUTO_INCREMENT PRIMARY KEY, price_list_id INT NOT NULL, product_id INT NULL, variant_id INT NULL, price DECIMAL(10,2) NOT NULL, discount_percent DECIMAL(5,2) DEFAULT 0, discount_amount DECIMAL(10,2) DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS price_list_items (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, price_list_id INT NOT NULL, product_id BIGINT UNSIGNED NULL, variant_id BIGINT UNSIGNED NULL, price DECIMAL(10,2) NOT NULL, discount_percent DECIMAL(5,2) DEFAULT 0, discount_amount DECIMAL(10,2) DEFAULT 0, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createOrderSequenceTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS order_sequences (id INT AUTO_INCREMENT PRIMARY KEY, branch_id INT, sequence_number INT DEFAULT 1, prefix VARCHAR(20) DEFAULT 'ORD', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_sequences (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, branch_id INT, sequence_number INT DEFAULT 1, prefix VARCHAR(20) DEFAULT 'ORD', created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createPaymentMethodTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS payment_methods (id INT AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) UNIQUE, name VARCHAR(255) NOT NULL, name_translations JSON NULL, description TEXT NULL, is_active TINYINT(1) DEFAULT 1, display_order INT DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS payment_methods (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, code VARCHAR(50) UNIQUE, name VARCHAR(255) NOT NULL, name_translations JSON NULL, description TEXT NULL, is_active TINYINT(1) DEFAULT 1, display_order INT DEFAULT 0, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createPurchaseOrderTables(): void
@@ -998,9 +996,9 @@ class TestSchemaSetup extends Migration
             cancelled_at DATETIME NULL,
             cancellation_reason TEXT NULL,
             cod_collected TINYINT(1) DEFAULT 0,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
@@ -1009,8 +1007,8 @@ class TestSchemaSetup extends Migration
         $this->db->query("CREATE TABLE IF NOT EXISTS order_items (
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             order_id BIGINT UNSIGNED NOT NULL,
-            product_id INT NULL,
-            variant_id INT NULL,
+            product_id BIGINT UNSIGNED NULL,
+            variant_id BIGINT UNSIGNED NULL,
             batch_id BIGINT UNSIGNED NULL,
             serial_numbers TEXT NULL,
             quantity DECIMAL(14,3) DEFAULT 0,
@@ -1018,9 +1016,9 @@ class TestSchemaSetup extends Migration
             final_price DECIMAL(14,2) DEFAULT 0,
             price_list_id INT NULL,
             price_list_name VARCHAR(255) NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL,
-            deleted_at TIMESTAMP NULL
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
@@ -1046,27 +1044,27 @@ class TestSchemaSetup extends Migration
 
     private function createInvoiceTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS invoices (id INT AUTO_INCREMENT PRIMARY KEY, invoice_number VARCHAR(50) UNIQUE NULL, invoice_status VARCHAR(30), invoice_type VARCHAR(20), e_invoice_status VARCHAR(30), customer_id INT, branch_id INT, issue_date DATE NULL, due_date DATE NULL, subtotal DECIMAL(10,2) DEFAULT 0, goods_total DECIMAL(10,2) DEFAULT 0, discount_total DECIMAL(10,2) DEFAULT 0, net_total DECIMAL(10,2) DEFAULT 0, vat_rate DECIMAL(5,2) DEFAULT 0, vat_amount DECIMAL(10,2) DEFAULT 0, tax_amount DECIMAL(10,2) DEFAULT 0, other_fee DECIMAL(10,2) DEFAULT 0, shipping_fee DECIMAL(10,2) DEFAULT 0, customer_payable DECIMAL(10,2) DEFAULT 0, customer_paid DECIMAL(10,2) DEFAULT 0, cod_amount DECIMAL(10,2) DEFAULT 0, rounding_adjustment DECIMAL(10,2) DEFAULT 0, payment_status VARCHAR(20), total_paid DECIMAL(10,2) DEFAULT 0, currency_code VARCHAR(10) DEFAULT 'VND', exchange_rate DECIMAL(15,6) DEFAULT 1, last_payment_date DATETIME NULL, total DECIMAL(10,2) DEFAULT 0, pdf_path VARCHAR(255) NULL, notes TEXT NULL, meta JSON NULL, created_by INT NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS invoices (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, invoice_number VARCHAR(50) UNIQUE NULL, invoice_status VARCHAR(30), invoice_type VARCHAR(20), e_invoice_status VARCHAR(30), customer_id INT, branch_id INT, issue_date DATE NULL, due_date DATE NULL, subtotal DECIMAL(10,2) DEFAULT 0, goods_total DECIMAL(10,2) DEFAULT 0, discount_total DECIMAL(10,2) DEFAULT 0, net_total DECIMAL(10,2) DEFAULT 0, vat_rate DECIMAL(5,2) DEFAULT 0, vat_amount DECIMAL(10,2) DEFAULT 0, tax_amount DECIMAL(10,2) DEFAULT 0, other_fee DECIMAL(10,2) DEFAULT 0, shipping_fee DECIMAL(10,2) DEFAULT 0, customer_payable DECIMAL(10,2) DEFAULT 0, customer_paid DECIMAL(10,2) DEFAULT 0, cod_amount DECIMAL(10,2) DEFAULT 0, rounding_adjustment DECIMAL(10,2) DEFAULT 0, payment_status VARCHAR(20), total_paid DECIMAL(10,2) DEFAULT 0, currency_code VARCHAR(10) DEFAULT 'VND', exchange_rate DECIMAL(15,6) DEFAULT 1, last_payment_date DATETIME NULL, total DECIMAL(10,2) DEFAULT 0, pdf_path VARCHAR(255) NULL, notes TEXT NULL, meta JSON NULL, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInvoiceOrderTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS invoice_orders (id INT AUTO_INCREMENT PRIMARY KEY, invoice_id INT, order_id INT, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS invoice_orders (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, invoice_id INT, order_id INT, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInventoryStockTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_stock (id INT AUTO_INCREMENT PRIMARY KEY, branch_id INT, warehouse_id INT, product_id INT, variant_id INT, quantity_on_hand DECIMAL(10,2) DEFAULT 0, quantity_reserved DECIMAL(10,2) DEFAULT 0, minimum_stock DECIMAL(10,2) DEFAULT 0, last_movement_at TIMESTAMP NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_valuation (id INT AUTO_INCREMENT PRIMARY KEY, product_id INT, variant_id INT NULL, avg_cost DECIMAL(12,2) DEFAULT 0, total_cost DECIMAL(14,2) DEFAULT 0, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_stock (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, branch_id INT, warehouse_id INT, product_id BIGINT UNSIGNED, variant_id BIGINT UNSIGNED, quantity_on_hand DECIMAL(10,2) DEFAULT 0, quantity_reserved DECIMAL(10,2) DEFAULT 0, minimum_stock DECIMAL(10,2) DEFAULT 0, last_movement_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_valuation (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, product_id BIGINT UNSIGNED, variant_id BIGINT UNSIGNED NULL, avg_cost DECIMAL(12,2) DEFAULT 0, total_cost DECIMAL(14,2) DEFAULT 0, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInventoryMovementTables(): void
     {
         $this->db->query("CREATE TABLE IF NOT EXISTS inventory_movements (
-            id INT AUTO_INCREMENT PRIMARY KEY,
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             branch_id INT,
-            product_id INT,
-            variant_id INT NULL,
+            product_id BIGINT UNSIGNED,
+            variant_id BIGINT UNSIGNED NULL,
             batch_id BIGINT UNSIGNED NULL,
             serial_number VARCHAR(160) NULL,
             type VARCHAR(50),
@@ -1075,19 +1073,19 @@ class TestSchemaSetup extends Migration
             reference_id INT NULL,
             notes TEXT NULL,
             created_by INT NULL,
-            created_at TIMESTAMP NULL,
-            updated_at TIMESTAMP NULL
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInventoryAlertTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_alerts (id INT AUTO_INCREMENT PRIMARY KEY, alert_type VARCHAR(50), product_id INT, variant_id INT, warehouse_id INT, current_quantity DECIMAL(10,2), threshold_quantity DECIMAL(10,2), status VARCHAR(50), resolved_by INT NULL, resolved_at TIMESTAMP NULL, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS inventory_alerts (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, alert_type VARCHAR(50), product_id BIGINT UNSIGNED, variant_id BIGINT UNSIGNED, warehouse_id INT, current_quantity DECIMAL(10,2), threshold_quantity DECIMAL(10,2), status VARCHAR(50), resolved_by INT NULL, resolved_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createOrderStatusLogTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS order_status_logs (id INT AUTO_INCREMENT PRIMARY KEY, order_id INT NOT NULL, from_status VARCHAR(50) NULL, to_status VARCHAR(50) NOT NULL, changed_by INT NULL, notes TEXT NULL, changed_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_status_logs (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, order_id INT NOT NULL, from_status VARCHAR(50) NULL, to_status VARCHAR(50) NOT NULL, changed_by INT NULL, notes TEXT NULL, changed_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createPOSTables(): void
@@ -1761,8 +1759,8 @@ class TestSchemaSetup extends Migration
 
     private function createWebhookTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_subscriptions (id INT AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), target_url VARCHAR(500), secret VARCHAR(255) NULL, is_active TINYINT(1) DEFAULT 1, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_events (id INT AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), payload JSON, status VARCHAR(50), attempts INT DEFAULT 0, last_error TEXT NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_subscriptions (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), target_url VARCHAR(500), secret VARCHAR(255) NULL, is_active TINYINT(1) DEFAULT 1, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS webhook_events (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, event VARCHAR(100), payload JSON, status VARCHAR(50), attempts INT DEFAULT 0, last_error TEXT NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createAdvancedPricingTables(): void
