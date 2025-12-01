@@ -14,14 +14,14 @@ related_to:
   - id: "TEST-CHECKLIST-01"
     description: "Refer to this for mandatory testing checklist."
 updated: "2025-11-25"
-changes: "MySQL-only with golden schema (2025-11-27), truncate-only schema traits, DevDatabaseTrait auto-migration."
+changes: "MySQL-only with production migrations (tests group), DevDatabaseTrait runs migrate --all, optional truncate-only schema traits."
 ---
 
 # Testing Guide
 
-## 🚨 BREAKING CHANGE: MySQL-Only + Golden Schema
+## 🚨 BREAKING CHANGE: MySQL-Only + Production Migrations
 
-> **Note (2025-11-28):** Golden migration `app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php` là **single source of truth** cho test schema. DevDatabaseTrait tự chạy migration này và chỉ **truncate** dữ liệu (không drop bảng).
+> **Note (2025-12-01):** Tests dùng **bộ migration production** cho group `tests` (migrate --all) thay vì golden schema. DevDatabaseTrait tự chạy migration này, sau đó bạn có thể dùng schema trait để truncate dữ liệu nếu cần.
 
 **As of 2025-11-25, all tests use MySQL-only architecture. SQLite in-memory testing has been removed.**
 
@@ -80,10 +80,10 @@ docker exec meomeo2-api-1 php spark db:info tests
 ```
 
 ### MySQL-Only Configuration (Main DB + rollback)
-- **Database**: MySQL 8.4 (`lanocrm_shop`) – dùng **main database** cho test, rollback bảo vệ dữ liệu
-- **Connection**: `backend-ci/app/Config/Database.php` group `tests` trỏ về main DB, `DBPrefix` rỗng
+- **Database**: MySQL 8.4 (`lanocrm_test`/`lanocrm_shop` tùy env) – dùng rollback bảo vệ dữ liệu
+- **Connection**: `backend-ci/app/Config/Database.php` group `tests` trỏ về DB test, `DBPrefix` rỗng
 - **Test Config**: `phpunit.xml.dist` (group `tests`)
-- **Auto-migration**: `DevDatabaseTrait` chạy **golden migration** `2025-11-27-000999_TestSchemaSetup.php`, sau đó truncate-only (không drop bảng) qua schema traits.
+- **Auto-migration**: `DevDatabaseTrait` chạy `migrate --all` cho group `tests` (migration production), schema traits chỉ truncate dữ liệu nếu cần.
 
 ### Running Tests
 
@@ -140,7 +140,7 @@ class YourServiceTest extends CIUnitTestCase
 ### Key Benefits:
 - ✅ Automatic MySQL connection management
 - ✅ Transaction-based isolation (fast cleanup)
-- ✅ Schema auto-migration from golden migration + schema traits (truncate-only)
+- ✅ Schema auto-migration từ **migration production** (group `tests`) + schema traits (truncate-only)
 - ✅ No SQLite fallback complexity
 - ✅ Consistent with production environment
 
@@ -150,13 +150,13 @@ class YourServiceTest extends CIUnitTestCase
 
 ## Section 5: Main Database + Transaction Rollback (tóm tắt)
 
-- Mọi test chạy trên **main DB `lanocrm_shop`** nhưng luôn nằm trong transaction, rollback ở `tearDownDatabase()` ⇒ không làm bẩn dữ liệu thật.
+- Mọi test chạy trên DB group `tests` (MySQL) nhưng luôn nằm trong transaction, rollback ở `tearDownDatabase()` ⇒ không làm bẩn dữ liệu thật.
 - Cấu hình bắt buộc:
-  - `app/Config/Database.php` group `tests`: hostname `db`, database `lanocrm_shop`, `DBPrefix` rỗng.
+  - `app/Config/Database.php` group `tests`: hostname `db`/`db-test`, database `lanocrm_test` (hoặc main tùy env), `DBPrefix` rỗng.
   - `phpunit.xml.dist`: env `database.tests.*` khớp với config trên.
 - Quy trình: `setUpDatabase()` mở kết nối + `transBegin()`, `tearDownDatabase()` rollback. Luôn gọi cả hai.
-- Không dùng database/schema phụ; mọi *SchemaTrait* **chỉ truncate** bảng đã tạo bởi golden migration.
-- Nếu cần refresh schema thủ công: `docker exec meomeo2-api-1 php -r "require 'app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php'; (new \\App\\Database\\Migrations\\TestSchemaSetup())->up();"` hoặc `php run_test_schema.php` (đã kèm bootstrap).
+- Không dùng database/schema phụ; mọi *SchemaTrait* **chỉ truncate** bảng đã tạo bởi migration production.
+- Nếu cần refresh schema thủ công: `docker exec meomeo2-api-1 php spark migrate --all -g tests` (production migrations).
 
 ## Section 6: Common Issues & Solutions
 
