@@ -26,6 +26,11 @@ class EcommerceWebhooksApiTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetEcommerceSchema();
+        $this->db->table('products')->truncate();
+        $this->db->table('orders')->truncate();
+        $this->db->table('order_items')->truncate();
+        $this->db->table('branches')->truncate();
+        
         $this->seedBranch();
         putenv('ECOM_WEBHOOK_SECRET=' . $this->secret);
         $this->setUpAuthToken();
@@ -46,6 +51,7 @@ class EcommerceWebhooksApiTest extends CIUnitTestCase
             'data' => [
                 'code' => 'ECOM-1',
                 'name' => 'Ecom Product',
+                'product_type' => 'standard',
                 'price' => 20,
             ],
         ];

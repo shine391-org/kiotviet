@@ -26,6 +26,13 @@ class StockEntryApiTest extends CIUnitTestCase
         (new \App\Database\Migrations\TestSchemaSetup())->up();
 
         $this->setUpDatabase();
+        $this->db->table('products')->truncate();
+        $this->db->table('stock_bins')->truncate();
+        $this->db->table('branches')->truncate();
+        $this->db->table('warehouses')->truncate();
+        $this->db->table('stock_entries')->truncate();
+        $this->db->table('stock_moves')->truncate();
+        
         $this->setUpAuthToken();
         $this->seedBase();
     }
@@ -138,6 +145,16 @@ class StockEntryApiTest extends CIUnitTestCase
         $this->db->table('branches')->insert(['id' => 2, 'name' => 'HN', 'created_at' => $now]);
         $this->db->table('warehouses')->insert(['id' => 1, 'name' => 'Main WH', 'branch_id' => 1, 'status' => 'active', 'created_at' => $now]);
         $this->db->table('warehouses')->insert(['id' => 2, 'name' => 'Secondary WH', 'branch_id' => 2, 'status' => 'active', 'created_at' => $now]);
+        $this->db->table('products')->insert([
+            'id' => 1,
+            'code' => 'P1',
+            'name' => 'Item',
+            'product_type' => 'standard',
+            'selling_price' => 10,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
         $this->db->table('stock_bins')->insert([
             'product_id' => 1,
             'variant_id' => null,

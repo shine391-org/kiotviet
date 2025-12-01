@@ -236,6 +236,14 @@ class ProductBatchSerialApiTest extends CIUnitTestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        $this->db->table('warehouses')->insert([
+            'id' => 1,
+            'code' => 'WH-1',
+            'name' => 'Warehouse 1',
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
         $this->db->table('customers')->insert([
             'id' => 1,
             'name' => 'Customer A',

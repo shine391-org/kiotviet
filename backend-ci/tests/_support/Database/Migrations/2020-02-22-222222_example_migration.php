@@ -10,6 +10,11 @@ class ExampleMigration extends Migration
 
     public function up(): void
     {
+        // Avoid duplicate table errors when golden schema already present
+        if ($this->db->tableExists('factories')) {
+            return;
+        }
+
         $this->forge->addField('id');
         $this->forge->addField([
             'name'       => ['type' => 'varchar', 'constraint' => 31],
@@ -27,11 +32,11 @@ class ExampleMigration extends Migration
         $this->forge->addKey(['deleted_at', 'id']);
         $this->forge->addKey('created_at');
 
-        $this->forge->createTable('factories');
+        $this->forge->createTable('factories', true);
     }
 
     public function down(): void
     {
-        $this->forge->dropTable('factories');
+        $this->forge->dropTable('factories', true);
     }
 }

@@ -24,6 +24,7 @@ class AccountingPaymentEntryServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetAccountingTables();
         $this->seedAccounts();
         $this->service = new PaymentEntryService(null, null, new AccountingService());
     }
@@ -65,6 +66,16 @@ class AccountingPaymentEntryServiceTest extends CIUnitTestCase
 
         $glAfter = $this->db->table('gl_entries')->where('reference_id', $entry['id'])->get()->getResultArray();
         $this->assertCount(4, $glAfter);
+    }
+
+    private function resetAccountingTables(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        $this->db->table('payment_entry_allocations')->truncate();
+        $this->db->table('payment_entries')->truncate();
+        $this->db->table('gl_entries')->truncate();
+        $this->db->table('chart_of_accounts')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function seedAccounts(): void

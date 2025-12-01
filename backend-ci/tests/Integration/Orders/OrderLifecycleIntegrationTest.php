@@ -42,6 +42,21 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
             ['id' => 2, 'name' => 'Customer 2', 'customer_group_id' => null, 'created_at' => $now, 'updated_at' => $now],
         ]);
         $this->db->table('price_lists')->insert(['id' => 1, 'name' => 'Default', 'type' => 'custom', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('warehouses')->insert(['id' => 1, 'code' => 'WH-1', 'name' => 'Warehouse 1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('payment_methods')->insertBatch([
+            ['code' => 'CASH', 'name' => 'Cash', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now],
+            ['code' => 'BANK_TRANSFER', 'name' => 'Bank Transfer', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now],
+        ]);
+        $this->db->table('pos_profiles')->insert([
+            'id' => 1,
+            'name' => 'Default POS',
+            'user_id' => 1,
+            'branch_id' => 1,
+            'price_list_id' => 1,
+            'require_shift' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
     }
 
     /** @test */

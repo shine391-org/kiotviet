@@ -26,7 +26,10 @@ class ProductServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetSchema();
-        $this->service = new ProductService();
+        
+        // Inject repository with the test connection to share transaction
+        $repo = new \App\Repositories\Products\ProductRepository(null, null, null, $this->db);
+        $this->service = new ProductService($repo);
     }
     
     protected function tearDown(): void
@@ -398,7 +401,7 @@ class ProductServiceTest extends CIUnitTestCase
     private function seedProduct(array $data): int
     {
         $payload = array_merge([
-            'product_type' => null,
+            'product_type' => 'standard',
             'code' => 'P' . random_int(1000, 9999),
             'barcode' => null,
             'name' => 'Sample',

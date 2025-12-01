@@ -154,7 +154,7 @@ class TestSchemaSetup extends Migration
             'order_status_logs','order_subscriptions','order_template_items','order_templates','orders','packing_slip_items','packing_slips','payment_entries',
             'payment_entry_allocations','payment_methods','payment_schedules','payroll_entries','pick_list_items','pick_lists','portal_access_tokens','portal_users',
             'pos_offline_queue','pos_payment_methods','pos_profiles','pos_shift_logs','pos_shift_payments','pos_shifts','price_history','price_list_items',
-            'price_lists','pricing_rules','product_attribute_options','product_attribute_values','product_attributes','product_batches','product_categories','product_category_links',
+            'price_lists','pricing_rules','product_attribute_options','product_attribute_values','product_attributes','attributes','attribute_options','product_batches','product_categories','product_category_links',
             'product_images','product_serial_numbers','product_variants_v2','products','project_price_lists','projects','purchase_invoice_items','purchase_invoice_taxes',
             'purchase_invoices','purchase_order_items','purchase_orders','purchase_suggestions','quality_inspection_items','quality_inspections','quality_parameters','quotation_items',
             'quotations','regional_tax_rules','reorder_levels','return_items','returns','salary_components','salary_slips','sales_invoice_items',
@@ -279,11 +279,39 @@ class TestSchemaSetup extends Migration
 
     private function createProductAttributeTables(): void
     {
+        $this->db->query("CREATE TABLE IF NOT EXISTS attributes (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            slug VARCHAR(255) NULL,
+            attribute_key VARCHAR(100) NULL,
+            type VARCHAR(50) DEFAULT 'select',
+            is_required TINYINT DEFAULT 0,
+            is_filterable TINYINT DEFAULT 0,
+            sort_order INT DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'active',
+            is_visible TINYINT DEFAULT 1,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         $this->db->query("CREATE TABLE IF NOT EXISTS product_attributes (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), slug VARCHAR(255), attribute_key VARCHAR(100), type VARCHAR(50), is_required TINYINT DEFAULT 0, is_filterable TINYINT DEFAULT 0, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', is_visible TINYINT DEFAULT 1, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createProductAttributeOptionTables(): void
     {
+        $this->db->query("CREATE TABLE IF NOT EXISTS attribute_options (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            attribute_id BIGINT UNSIGNED NOT NULL,
+            option_name VARCHAR(255),
+            color_code VARCHAR(50) NULL,
+            sort_order INT DEFAULT 0,
+            status VARCHAR(20) DEFAULT 'active',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         $this->db->query("CREATE TABLE IF NOT EXISTS product_attribute_options (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, attribute_id INT, option_name VARCHAR(255), color_code VARCHAR(50) NULL, sort_order INT DEFAULT 0, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 

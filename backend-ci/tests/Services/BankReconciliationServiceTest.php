@@ -26,6 +26,7 @@ class BankReconciliationServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetAccountingTables();
         $this->seedAccounts();
         $accounting = new AccountingService();
         $this->payments = new PaymentEntryService(null, null, $accounting);
@@ -36,6 +37,16 @@ class BankReconciliationServiceTest extends CIUnitTestCase
     {
         $this->tearDownDatabase();
         parent::tearDown();
+    }
+
+    private function resetAccountingTables(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        $this->db->table('gl_entries')->truncate();
+        $this->db->table('chart_of_accounts')->truncate();
+        $this->db->table('bank_reconciliations')->truncate();
+        $this->db->table('bank_statements')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     /** @test */

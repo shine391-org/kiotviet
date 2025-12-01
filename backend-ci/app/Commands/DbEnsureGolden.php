@@ -26,7 +26,7 @@ class DbEnsureGolden extends BaseCommand
             $groups = ['tests'];
         }
 
-        require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+        require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
 
         foreach ($groups as $group) {
             CLI::write("Ensuring golden tables for group: {$group}", 'yellow');

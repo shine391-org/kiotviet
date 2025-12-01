@@ -17,7 +17,7 @@ class Database extends Config
     /**
      * Golden schema version identifier.
      */
-    public string $schemaVersion = '2025-11-27-000999';
+    public string $schemaVersion = '2025-11-21-000000';
 
     /**
      * Lets you choose which connection group to use if no other is specified.

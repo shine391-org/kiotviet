@@ -26,6 +26,7 @@ class CouponServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
         (new \App\Database\Migrations\TestSchemaSetup())->up();
+        $this->resetCoupons();
         $this->seedCoupons();
         $this->service = new CouponService(
             new CouponRepository(null, null, $this->db),
@@ -59,6 +60,18 @@ class CouponServiceTest extends CIUnitTestCase
     {
         $this->expectException(\RuntimeException::class);
         $this->service->apply('OLD', 100);
+    }
+
+    private function resetCoupons(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        if ($this->db->tableExists('coupon_usages')) {
+            $this->db->table('coupon_usages')->truncate();
+        }
+        if ($this->db->tableExists('coupons')) {
+            $this->db->table('coupons')->truncate();
+        }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     private function seedCoupons(): void

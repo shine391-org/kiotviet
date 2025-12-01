@@ -25,8 +25,11 @@ class ProductExportServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->service = service('productExportService');
-        $this->productService = service('productService');
+        $this->db->table('products')->truncate();
+        
+        $repo = new \App\Repositories\Products\ProductRepository(null, null, null, $this->db);
+        $this->productService = new ProductService($repo);
+        $this->service = new ProductExportService($this->productService);
     }
 
     protected function tearDown(): void

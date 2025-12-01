@@ -24,7 +24,11 @@ class ProductImportServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->service = service('productImportService');
+        $this->db->table('products')->truncate();
+        
+        $repo = new \App\Repositories\Products\ProductRepository(null, null, null, $this->db);
+        $productService = new \App\Services\Products\ProductService($repo);
+        $this->service = new ProductImportService($productService);
     }
 
     protected function tearDown(): void

@@ -71,7 +71,7 @@ class PricingServiceTest extends CIUnitTestCase
             'condition_type' => 'product',
             'product_id' => 1,
             'discount_percent' => 10,
-            'priority' => 10,
+            'priority' => 100,
         ]);
 
         $base = $this->service->getPrice([

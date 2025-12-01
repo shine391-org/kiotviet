@@ -18,6 +18,7 @@ class OrderPaymentServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetCompleteSchema();
         // Pass same db to cash service through constructor for consistent connection
         $this->service = new OrderPaymentService(null, null, null, null, $this->db);
         $this->seedOrder();
@@ -80,6 +81,10 @@ class OrderPaymentServiceTest extends CIUnitTestCase
         $now = date('Y-m-d H:i:s');
         $this->db->table('branches')->insert(['id' => 1, 'name' => 'Main', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('users')->insert(['id' => 1, 'username' => 'tester', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('payment_methods')->insertBatch([
+            ['code' => 'CASH', 'name' => 'Cash', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now],
+            ['code' => 'BANK_TRANSFER', 'name' => 'Bank Transfer', 'is_active' => 1, 'created_at' => $now, 'updated_at' => $now],
+        ]);
         $this->db->table('orders')->insert([
             'id' => 1,
             'order_number' => 'ORD-1',

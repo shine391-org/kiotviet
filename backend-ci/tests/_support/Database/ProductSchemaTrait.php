@@ -9,12 +9,12 @@ trait ProductSchemaTrait
         // Assumes $this->db is initialized and schema already created by DevDatabaseTrait.
         $tables = [
             'product_attribute_values',
+            'product_attribute_options',
+            'product_attributes',
             'product_images',
             'product_category_links',
             'product_variants_v2',
             'products',
-            'attributes',
-            'attribute_options',
             'branches',
             'users',
         ];

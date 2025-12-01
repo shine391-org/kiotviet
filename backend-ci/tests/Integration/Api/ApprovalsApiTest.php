@@ -55,6 +55,8 @@ class ApprovalsApiTest extends CIUnitTestCase
             ->post('/api/approvals/submit');
         $submitBody = $this->decodeResponse($submit);
         $this->assertTrue($submitBody['success'] ?? false, json_encode($submitBody));
+        $this->assertNotNull($submitBody['data'] ?? null, 'Submit response missing data');
+        $this->assertNotNull($submitBody['data']['id'] ?? null, 'Submit response missing id');
         $approvalId = $submitBody['data']['id'];
 
         // Approve level 1
@@ -87,7 +89,10 @@ class ApprovalsApiTest extends CIUnitTestCase
         $submit = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
             ->withBody(json_encode(['order_id' => 1, 'requested_by' => 2]))
             ->post('/api/approvals/submit');
-        $approvalId = $this->decodeResponse($submit)['data']['id'];
+        $submitBody = $this->decodeResponse($submit);
+        $this->assertNotNull($submitBody['data'] ?? null, 'Submit response missing data');
+        $this->assertNotNull($submitBody['data']['id'] ?? null, 'Submit response missing id');
+        $approvalId = $submitBody['data']['id'];
 
         $reject = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
             ->withBody(json_encode(['actor_id' => 20, 'notes' => 'Nope']))

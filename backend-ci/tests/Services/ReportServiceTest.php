@@ -26,8 +26,6 @@ class ReportServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         $this->resetCompleteSchema();
         $this->seedData($this->db);
-        $this->db->transCommit();
-        $this->db->transBegin();
         $this->glCount = $this->db->table('gl_entries')->countAllResults();
         $this->service = new ReportService($this->db, new ReportValidator());
     }

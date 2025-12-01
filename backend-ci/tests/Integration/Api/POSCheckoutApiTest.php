@@ -31,6 +31,20 @@ class POSCheckoutApiTest extends CIUnitTestCase
 
         $this->setUpDatabase();
         $this->resetPOSSchema();
+        $this->db->table('orders')->truncate();
+        $this->db->table('order_items')->truncate();
+        $this->db->table('order_payments')->truncate();
+        $this->db->table('pos_shifts')->truncate();
+        $this->db->table('pos_shift_logs')->truncate();
+        $this->db->table('pos_shift_payments')->truncate();
+        $this->db->table('products')->truncate();
+        $this->db->table('price_lists')->truncate();
+        $this->db->table('price_list_items')->truncate();
+        $this->db->table('branches')->truncate();
+        $this->db->table('users')->truncate();
+        $this->db->table('pos_profiles')->truncate();
+        $this->db->table('pos_payment_methods')->truncate();
+        $this->db->table('cash_transactions')->truncate();
         $this->seedBaseData();
         $this->setUpAuthToken();
     }
@@ -143,6 +157,7 @@ class POSCheckoutApiTest extends CIUnitTestCase
         $this->db->table('products')->insert([
             'id' => $this->productId,
             'code' => 'P001',
+            'product_type' => 'standard',
             'name' => 'POS Item',
             'selling_price' => 100,
             'created_at' => $now,

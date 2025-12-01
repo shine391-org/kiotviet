@@ -33,7 +33,7 @@ class ProductVariantServiceTest extends CIUnitTestCase
     private function seedProduct(array $data): int
     {
         $payload = array_merge([
-            'product_type' => null,
+            'product_type' => 'standard',
             'code' => 'P' . random_int(1000, 9999),
             'barcode' => null,
             'name' => 'Sample',

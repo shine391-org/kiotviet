@@ -24,6 +24,7 @@ class AccountingServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetAccountingTables();
         $this->service = new AccountingService();
         $this->coa = new COAService();
         $this->seedAccounts();
@@ -33,6 +34,14 @@ class AccountingServiceTest extends CIUnitTestCase
     {
         $this->tearDownDatabase();
         parent::tearDown();
+    }
+
+    private function resetAccountingTables(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        $this->db->table('gl_entries')->truncate();
+        $this->db->table('chart_of_accounts')->truncate();
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 
     /** @test */

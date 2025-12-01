@@ -21,6 +21,7 @@ class ShippingCODSettlementServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetCompleteSchema();
         $this->service = new ShippingCODSettlementService();
     }
 

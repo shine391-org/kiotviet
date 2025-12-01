@@ -29,7 +29,15 @@ class SalesInvoicesApiTest extends CIUnitTestCase
         (new \App\Database\Migrations\TestSchemaSetup())->up();
 
         $this->setUpDatabase();
+        $this->db->table('chart_of_accounts')->truncate();
+        $this->db->table('gl_entries')->truncate();
+        $this->db->table('sales_invoices')->truncate();
+        $this->db->table('sales_invoice_items')->truncate();
+        $this->db->table('customers')->truncate();
+        $this->db->table('products')->truncate();
+        
         $this->setUpAuthToken();
+        $this->seedBaseData();
         $this->seedAccounts();
     }
 
@@ -86,6 +94,27 @@ class SalesInvoicesApiTest extends CIUnitTestCase
             ->withBody(json_encode($payload))
             ->post('/api/sales-invoices');
         $res->assertStatus(400);
+    }
+
+    private function seedBaseData(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'Cust 1',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table('products')->insert([
+            'id' => 1,
+            'code' => 'P1',
+            'name' => 'Prod 1',
+            'product_type' => 'service',
+            'selling_price' => 200,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
     }
 
     private function seedAccounts(): void

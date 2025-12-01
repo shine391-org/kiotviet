@@ -132,6 +132,8 @@ class DeliveryNoteServiceTest extends CIUnitTestCase
     {
         $now = date('Y-m-d H:i:s');
         $this->db->table('branches')->insert(['id' => 1, 'name' => 'HN', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('warehouses')->insert(['id' => 1, 'code' => 'WH-1', 'name' => 'Warehouse 1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'Customer 1', 'phone' => '0123456789', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('products')->insert([
             'id' => 1,
             'code' => 'P1',

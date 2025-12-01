@@ -23,6 +23,7 @@ class SalesInvoiceServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetAccounts();
         $this->seedAccounts();
         $this->service = new SalesInvoiceService();
     }
@@ -110,5 +111,16 @@ class SalesInvoiceServiceTest extends CIUnitTestCase
             'account_type' => 'income',
             'parent_id' => $income['id'],
         ])['data']['id'];
+    }
+
+    private function resetAccounts(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach (['gl_entries', 'chart_of_accounts'] as $table) {
+            if ($this->db->tableExists($table)) {
+                $this->db->table($table)->truncate();
+            }
+        }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 }

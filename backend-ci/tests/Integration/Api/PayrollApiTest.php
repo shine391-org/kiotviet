@@ -26,6 +26,11 @@ class PayrollApiTest extends CIUnitTestCase
         (new \App\Database\Migrations\TestSchemaSetup())->up();
 
         $this->setUpDatabase();
+        $this->db->table('gl_entries')->truncate();
+        $this->db->table('employees')->truncate();
+        $this->db->table('chart_of_accounts')->truncate();
+        $this->db->table('payroll_runs')->truncate();
+        $this->db->table('payroll_slips')->truncate();
         $this->setUpAuthToken();
         $this->seedBase();
     }

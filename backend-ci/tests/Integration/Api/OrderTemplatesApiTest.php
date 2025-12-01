@@ -23,10 +23,21 @@ class OrderTemplatesApiTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->resetOrderTemplateSchema();
+        $this->db->table('order_templates')->truncate();
+        $this->db->table('order_template_items')->truncate();
+        $this->db->table('products')->truncate();
+        $this->db->table('branches')->truncate();
+        $this->db->table('price_lists')->truncate();
+        $this->db->table('price_list_items')->truncate();
+        $this->db->table('customers')->truncate();
+        
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('warehouses')->insert(['id' => 1, 'code' => 'WH-1', 'name' => 'Warehouse 1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
+        
         $this->seedProduct();
         $this->seedBranch();
         $this->seedPriceList(30);
+        $this->seedCustomer();
         $this->setUpAuthToken();
     }
 
@@ -110,6 +121,17 @@ class OrderTemplatesApiTest extends CIUnitTestCase
             'price' => $price,
             'discount_percent' => 0,
             'discount_amount' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }
+
+    private function seedCustomer(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'Cust 1',
             'created_at' => $now,
             'updated_at' => $now,
         ]);

@@ -46,6 +46,8 @@ class QualityInspectionsApiTest extends CIUnitTestCase
         ]))->post('/api/quality-parameters');
         $paramBody = $this->decode($paramResponse);
         $this->assertTrue($paramBody['success'] ?? false, json_encode($paramBody));
+        $this->assertNotNull($paramBody['data'] ?? null, 'Param response missing data');
+        $this->assertNotNull($paramBody['data']['id'] ?? null, 'Param response missing id');
         $parameterId = $paramBody['data']['id'];
 
         $createResponse = $this->withHeaders($headers)->withBody(json_encode([
@@ -58,6 +60,8 @@ class QualityInspectionsApiTest extends CIUnitTestCase
         ]))->post('/api/quality-inspections');
         $createBody = $this->decode($createResponse);
         $this->assertTrue($createBody['success'] ?? false, json_encode($createBody));
+        $this->assertNotNull($createBody['data'] ?? null, 'Create response missing data');
+        $this->assertNotNull($createBody['data']['id'] ?? null, 'Create response missing id');
         $inspectionId = $createBody['data']['id'];
 
         $submitResponse = $this->withHeaders($headers)->post('/api/quality-inspections/' . $inspectionId . '/submit');

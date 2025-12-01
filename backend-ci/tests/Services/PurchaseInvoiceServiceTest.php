@@ -23,6 +23,7 @@ class PurchaseInvoiceServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetAccounts();
         $this->seedAccounts();
         $this->service = new PurchaseInvoiceService();
     }
@@ -86,5 +87,16 @@ class PurchaseInvoiceServiceTest extends CIUnitTestCase
         $liab = $coa->create(['code' => '3000', 'name' => 'Liabilities', 'account_type' => 'liability', 'is_group' => true])['data'];
         $this->debitAccountId = $coa->create(['code' => '2100', 'name' => 'Stock in', 'account_type' => 'asset', 'parent_id' => $asset['id']])['data']['id'];
         $this->creditAccountId = $coa->create(['code' => '3100', 'name' => 'Accounts Payable', 'account_type' => 'liability', 'parent_id' => $liab['id']])['data']['id'];
+    }
+
+    private function resetAccounts(): void
+    {
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach (['gl_entries', 'chart_of_accounts'] as $table) {
+            if ($this->db->tableExists($table)) {
+                $this->db->table($table)->truncate();
+            }
+        }
+        $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 }

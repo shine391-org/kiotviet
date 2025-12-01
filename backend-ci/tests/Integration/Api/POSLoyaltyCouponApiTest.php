@@ -29,6 +29,22 @@ class POSLoyaltyCouponApiTest extends CIUnitTestCase
 
         $this->setUpDatabase();
         $this->resetPOSSchema();
+        $this->db->table('orders')->truncate();
+        $this->db->table('order_items')->truncate();
+        $this->db->table('order_payments')->truncate();
+        $this->db->table('products')->truncate();
+        $this->db->table('price_lists')->truncate();
+        $this->db->table('price_list_items')->truncate();
+        $this->db->table('branches')->truncate();
+        $this->db->table('users')->truncate();
+        $this->db->table('customers')->truncate();
+        $this->db->table('pos_profiles')->truncate();
+        $this->db->table('pos_payment_methods')->truncate();
+        $this->db->table('loyalty_programs')->truncate();
+        $this->db->table('loyalty_wallets')->truncate();
+        $this->db->table('coupons')->truncate();
+        $this->db->table('coupon_usages')->truncate();
+        $this->db->table('cash_transactions')->truncate();
         $this->seedBase();
         $this->setUpAuthToken();
     }
@@ -112,6 +128,7 @@ class POSLoyaltyCouponApiTest extends CIUnitTestCase
         $this->db->table('products')->insert([
             'id' => 1,
             'code' => 'P1',
+            'product_type' => 'standard',
             'name' => 'Item',
             'selling_price' => 100,
             'created_at' => $now,
@@ -124,8 +141,18 @@ class POSLoyaltyCouponApiTest extends CIUnitTestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+        $this->db->table('warehouses')->insert([
+            'id' => 1,
+            'code' => 'WH-1',
+            'name' => 'Main Warehouse',
+            'branch_id' => 1,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
         $this->db->table('inventory_stock')->insert([
             'branch_id' => 1,
+            'warehouse_id' => 1,
             'product_id' => 1,
             'variant_id' => null,
             'quantity_on_hand' => 10,

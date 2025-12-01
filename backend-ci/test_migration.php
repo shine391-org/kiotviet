@@ -18,7 +18,7 @@ $db = \Config\Database::connect('tests');
 echo "Connected to database: " . $db->getDatabase() . "\n";
 
 // Run migration
-require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
 echo "Starting migration...\n";
 
 try {

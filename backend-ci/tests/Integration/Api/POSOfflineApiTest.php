@@ -27,6 +27,19 @@ class POSOfflineApiTest extends CIUnitTestCase
 
         $this->setUpDatabase();
         $this->resetPOSSchema();
+        $this->db->table('orders')->truncate();
+        $this->db->table('order_items')->truncate();
+        $this->db->table('order_payments')->truncate();
+        $this->db->table('pos_offline_queue')->truncate();
+        $this->db->table('inventory_stock')->truncate();
+        $this->db->table('products')->truncate();
+        $this->db->table('price_lists')->truncate();
+        $this->db->table('price_list_items')->truncate();
+        $this->db->table('branches')->truncate();
+        $this->db->table('users')->truncate();
+        $this->db->table('pos_profiles')->truncate();
+        $this->db->table('pos_payment_methods')->truncate();
+        $this->db->table('cash_transactions')->truncate();
         $this->seedBase();
         $this->setUpAuthToken();
     }
@@ -89,6 +102,7 @@ class POSOfflineApiTest extends CIUnitTestCase
         $this->db->table('products')->insert([
             'id' => 1,
             'code' => 'P1',
+            'product_type' => 'standard',
             'name' => 'Item',
             'selling_price' => 100,
             'created_at' => $now,

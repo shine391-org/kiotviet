@@ -142,8 +142,13 @@ class CreateCashTransactionsTable extends Migration
         // Drop foreign keys first
         if ($this->db->tableExists('cash_transactions')) {
             // Drop foreign keys if they exist
-            $this->forge->dropForeignKey('cash_transactions', 'fk_cash_transactions_branch');
-            $this->forge->dropForeignKey('cash_transactions', 'fk_cash_transactions_user');
+            foreach (['fk_cash_transactions_branch', 'fk_cash_transactions_user'] as $fk) {
+                try {
+                    $this->forge->dropForeignKey('cash_transactions', $fk);
+                } catch (\Throwable $e) {
+                    // Ignore missing FKs to keep rollback idempotent
+                }
+            }
         }
 
         // Drop table

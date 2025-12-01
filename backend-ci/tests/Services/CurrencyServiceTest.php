@@ -20,6 +20,7 @@ class CurrencyServiceTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->resetExchangeRates();
         $this->service = new CurrencyService();
     }
 
@@ -27,6 +28,13 @@ class CurrencyServiceTest extends CIUnitTestCase
     {
         $this->tearDownDatabase();
         parent::tearDown();
+    }
+
+    private function resetExchangeRates(): void
+    {
+        if ($this->db->tableExists('exchange_rates')) {
+            $this->db->table('exchange_rates')->truncate();
+        }
     }
 
     /** @test */

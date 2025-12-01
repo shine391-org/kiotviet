@@ -47,7 +47,9 @@ class PricingApiTest extends CIUnitTestCase
             ->post('/api/pricing/preview');
         $body = $this->decode($resp);
         $this->assertTrue($body['success'] ?? false, json_encode($body));
-        $this->assertEquals('customer_price_list', $body['reason']['source']);
+        $this->assertNotNull($body['data'] ?? null, 'Response missing data');
+        $this->assertNotNull($body['data']['reason'] ?? null, 'Response missing reason');
+        $this->assertEquals('customer_price_list', $body['data']['reason']['source']);
     }
 
     private function seedBase(): void

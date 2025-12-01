@@ -24,6 +24,9 @@ class SubcontractingApiTest extends CIUnitTestCase
     {
         parent::setUp();
         $this->setUpDatabase();
+        $this->db->table('products')->truncate();
+        $this->db->table('stock_bins')->truncate();
+        $this->db->table('subcontracting_orders')->truncate();
         $this->setUpAuthToken();
         $this->seedProducts();
     }

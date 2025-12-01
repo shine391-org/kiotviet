@@ -24,7 +24,7 @@ class DbHealth extends BaseCommand
     public function run(array $params)
     {
         if (! class_exists(TestSchemaSetup::class)) {
-            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+            require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
         }
         $group = $params[0] ?? config(Database::class)->defaultGroup;
         $db    = Database::connect($group);
