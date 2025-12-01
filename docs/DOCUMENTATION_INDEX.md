@@ -51,9 +51,9 @@ linked_from: []
 - **[Frontend Tasks](./tasks/FEOrder.md)** - Frontend requirements
 
 ### 🧪 Testing Documentation
-- **[Testing Guide](./testing/TESTING-GUIDE.md)** - MySQL-only testing approach (main DB + rollback)
+- **[Testing Guide](./testing/TESTING-GUIDE.md)** - MySQL-only testing with production migrations (tests group) + rollback
 - **[Test Patterns](./testing/TESTING-PATTERNS.md)** - Copy-pasteable test patterns (DevDatabaseTrait + truncate-only)
-- **[Main DB Guide](./testing/TESTING-MAIN-DB-GUIDE.md)** - Golden schema & transaction model
+- **[Main DB Guide](./testing/TESTING-MAIN-DB-GUIDE.md)** - MySQL main DB usage & rollback model
 - **[Test Checklist](./testing/TEST-CHECKLIST.md)** - Mandatory testing checklist
 - **[Frontend Testing](./testing/FE-TESTING-GUIDE.md)** - Frontend testing strategy
 

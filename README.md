@@ -74,7 +74,7 @@ Request → Controller → Service → Repository → Model → Database
 
 ### Testing Backend
 ```bash
-# Unit tests (SQLite - fast)
+# Unit tests (MySQL - group tests, auto-migrate production schema)
 docker exec meomeo2-api-1 vendor/bin/phpunit
 
 # Integration tests (MySQL - real DB)
