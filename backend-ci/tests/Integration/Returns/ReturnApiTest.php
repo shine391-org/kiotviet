@@ -27,7 +27,7 @@ class ReturnApiTest extends CIUnitTestCase
         $config = config('Database');
         $config->defaultGroup = 'tests';
         \Config\Services::reset(true);
-        require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+        require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
         (new \App\Database\Migrations\TestSchemaSetup())->up();
         // Use local HTTP kernel without external server requirement.
         $this->db = Database::connect('tests');

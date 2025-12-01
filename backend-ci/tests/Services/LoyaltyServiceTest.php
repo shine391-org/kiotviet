@@ -23,7 +23,7 @@ class LoyaltyServiceTest extends CIUnitTestCase
         $config = config('Database');
         $config->tests['database'] = 'lanocrm_shop';
         $this->setUpDatabase();
-        require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+        require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
         (new \App\Database\Migrations\TestSchemaSetup())->up();
         $this->seedProgram();
         $this->service = new LoyaltyService(new LoyaltyRepository(null, null, null, $this->db));

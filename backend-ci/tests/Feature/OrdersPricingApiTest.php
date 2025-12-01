@@ -115,6 +115,7 @@ class OrdersPricingApiTest extends CIUnitTestCase
             'items' => [
                 ['product_id' => 1, 'quantity' => 1],
             ],
+            'order_type' => 'shipping',
         ];
 
         $res = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))

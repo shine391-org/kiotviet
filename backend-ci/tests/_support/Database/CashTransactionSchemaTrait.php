@@ -28,7 +28,7 @@ trait CashTransactionSchemaTrait
             || ! isset($existing['users'])
             || ! isset($existing['returns'])
         ) {
-            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+            require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
             try {
                 (new \App\Database\Migrations\TestSchemaSetup())->up();
             } catch (\Throwable $e) {

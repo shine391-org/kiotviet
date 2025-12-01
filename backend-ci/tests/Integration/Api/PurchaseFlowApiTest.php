@@ -25,7 +25,7 @@ class PurchaseFlowApiTest extends CIUnitTestCase
         parent::setUp();
         $config = config('Database');
         $config->tests['database'] = 'lanocrm_shop';
-        require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+        require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
         (new \App\Database\Migrations\TestSchemaSetup())->up();
 
         $this->setUpDatabase();
