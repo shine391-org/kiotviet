@@ -6,6 +6,7 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Config\Database;
 use Tests\Support\AuthTestTrait;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\InvoiceSchemaTrait;
 
 /**
@@ -16,6 +17,7 @@ class InvoiceApiTest extends CIUnitTestCase
 {
     use FeatureTestTrait;
     use AuthTestTrait;
+    use DevDatabaseTrait;
     use InvoiceSchemaTrait;
 
     protected $db;
@@ -23,7 +25,7 @@ class InvoiceApiTest extends CIUnitTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetInvoiceSchema();
         $this->seedLookup();
         $this->setUpAuthToken();
