@@ -87,7 +87,7 @@ class WebhookSubscriptionRepository
             return null;
         }
         
-        $row = $query->getFirstRow();
+        $row = ($query && method_exists($query, 'getRow')) ? $query->getRow() : null;
         return $row ? $this->hydrate((array) $row) : null;
     }
 

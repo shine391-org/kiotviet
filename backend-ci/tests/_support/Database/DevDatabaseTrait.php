@@ -24,6 +24,7 @@ trait DevDatabaseTrait
         $this->db = Database::connect('tests');
         $this->truncateData();
         $this->db->transBegin();
+        $this->bootstrapTestData();
     }
 
     protected function tearDownDatabase(): void
@@ -48,7 +49,10 @@ trait DevDatabaseTrait
 
     private function ensureSchema(): void
     {
-        $requiredTables = ['branches', 'users', 'orders', 'order_items', 'cash_transactions', 'returns', 'gl_entries'];
+        if (! class_exists(\App\Database\Migrations\TestSchemaSetup::class)) {
+            require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
+        }
+        $requiredTables = \App\Database\Migrations\TestSchemaSetup::expectedTables();
         $needsMigrate = ! self::$schemaReady;
         if (! $needsMigrate) {
             $db = Database::connect('tests');
@@ -62,11 +66,36 @@ trait DevDatabaseTrait
             $db->close();
         }
         if ($needsMigrate) {
+            // DEBUG: Log migration execution (only when verbose)
+            if (env('MIGRATION_VERBOSE', false)) {
+                error_log("DEBUG: DevDatabaseTrait - Running golden migration TestSchemaSetup");
+            }
+            
             // chạy golden migration (một lần cho mỗi process hoặc khi thiếu bảng)
+            $start = microtime(true);
             require_once APPPATH . 'Database/Migrations/2025-11-27-000999_TestSchemaSetup.php';
             (new \App\Database\Migrations\TestSchemaSetup())->up();
+            $db = Database::connect('tests');
+            $existing = array_flip($db->listTables());
+            $missing = array_values(array_filter($requiredTables, static fn ($t) => ! isset($existing[$t])));
+            if (! empty($missing)) {
+                throw new \RuntimeException('Missing tables after migration: ' . implode(', ', $missing));
+            }
             self::$schemaReady = true;
+            
+            if (env('MIGRATION_VERBOSE', false)) {
+                $duration = round(microtime(true) - $start, 3);
+                error_log("DEBUG: DevDatabaseTrait - Migration completed in {$duration}s");
+            }
         }
+    }
+
+    /**
+     * Hook cho test muốn seed thêm dữ liệu sau truncate + transBegin.
+     */
+    protected function bootstrapTestData(): void
+    {
+        // override trong test nếu cần
     }
 
     /**

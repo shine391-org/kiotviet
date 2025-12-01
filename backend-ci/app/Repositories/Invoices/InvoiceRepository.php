@@ -131,13 +131,13 @@ class InvoiceRepository
             ->where('invoice_id', $id)
             ->findAll();
         if ($this->db->tableExists('order_payments')) {
-            $row['payments'] = $this->db->table('order_payments op')
+            $query = $this->db->table('order_payments op')
                 ->select('op.id, op.order_id, op.method, op.amount, op.status, op.ref_code, op.paid_at')
                 ->join('invoice_orders io', 'io.order_id = op.order_id')
                 ->where('io.invoice_id', $id)
                 ->orderBy('op.paid_at', 'DESC')
-                ->get()
-                ->getResultArray();
+                ->get();
+            $row['payments'] = $query ? $query->getResultArray() : [];
         }
         return $row;
     }

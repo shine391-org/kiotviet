@@ -25,10 +25,11 @@ class OrderPaymentRepository
 
     public function sumByOrder(int $orderId): float
     {
-        $row = $this->db->table('order_payments')
+        $query = $this->db->table('order_payments')
             ->selectSum('amount', 'total')
             ->where('order_id', $orderId)
-            ->get()->getRow();
+            ->get();
+        $row = $query ? $query->getRow() : null;
         return (float) ($row->total ?? 0);
     }
 

@@ -9,8 +9,10 @@ for i in {1..30}; do
   echo "Waiting DB..."; sleep 2;
 done
 
-# Schema bootstrap via golden migration + optional demo seed
-php spark migrate --all || true
-php spark db:seed DevDemoSeeder || true
+# Schema bootstrap via golden migration + optional demo seed (default group)
+MIGRATION_VERBOSE=0 php spark migrate --all || true
+MIGRATION_VERBOSE=0 php spark db:seed DevDemoSeeder || true
+# Kiểm tra health cho group tests (golden schema) để đảm bảo môi trường test sẵn sàng
+MIGRATION_VERBOSE=0 php spark db:health tests || true
 
 exec apache2-foreground

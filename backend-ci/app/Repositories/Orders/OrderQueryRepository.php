@@ -85,18 +85,18 @@ class OrderQueryRepository
      */
     public function findWithItems(int $orderId): ?array
     {
-        $order = $this->baseSelect()
+        $orderQuery = $this->baseSelect()
             ->where('o.id', $orderId)
-            ->get()
-            ->getRowArray();
+            ->get();
+        $order = $orderQuery ? $orderQuery->getRowArray() : null;
         if (! $order) {
             return null;
         }
-        $items = $this->db->table('order_items')
+        $itemsQuery = $this->db->table('order_items')
             ->select('id, product_id, variant_id, quantity, base_price, final_price, price_list_name')
             ->where('order_id', $orderId)
-            ->get()
-            ->getResultArray();
+            ->get();
+        $items = $itemsQuery ? $itemsQuery->getResultArray() : [];
         $order['items'] = $items;
         return $order;
     }
@@ -148,7 +148,8 @@ class OrderQueryRepository
             $builder->where('o.order_date <=', $filters['date_to']);
         }
 
-        $row = $builder->get()->getRowArray();
+        $rowQuery = $builder->get();
+        $row = $rowQuery ? $rowQuery->getRowArray() : null;
         return [
             'total_amount' => (float) ($row['total_amount'] ?? 0),
             'paid_amount' => (float) ($row['paid_amount'] ?? 0),

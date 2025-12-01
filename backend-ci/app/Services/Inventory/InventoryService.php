@@ -118,7 +118,8 @@ class InventoryService
 
             foreach ($stockChanges as [$whId, $delta]) {
                 $row = $this->repo->stockRow($productId, $variantId, $whId);
-                $newQty = ($row['quantity_on_hand'] ?? 0) + $delta;
+                $currentQty = $row ? ($row['quantity_on_hand'] ?? 0) : 0;
+                $newQty = $currentQty + $delta;
                 if ($type !== 'IN' && $newQty < 0) {
                     throw new RuntimeException('Insufficient stock');
                 }

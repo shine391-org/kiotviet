@@ -126,10 +126,21 @@ class StockReconciliationService
         }
         $notes = $input['notes'] ?? ($recon['notes'] ?? null);
         $rejectedBy = $input['rejected_by'] ?? null;
-        $this->repo->updateStatus($id, 'rejected', [
-            'notes' => $notes,
-            'rejected_by' => $rejectedBy,
-        ]);
+        
+        $db = $this->repo->db();
+        $db->transBegin();
+        try {
+            $this->repo->updateStatus($id, 'rejected', [
+                'notes' => $notes,
+                'rejected_by' => $rejectedBy,
+            ]);
+            $db->transCommit();
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
+        
+        // Fetch fresh data after commit
         return ['success' => true, 'data' => $this->require($id)];
     }
 

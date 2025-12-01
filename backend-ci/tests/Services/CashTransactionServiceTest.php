@@ -28,7 +28,12 @@ class CashTransactionServiceTest extends CIUnitTestCase
         // Create supporting tables
         $this->createSupportingTables();
         
-        $this->service = new CashTransactionService();
+        $this->service = new CashTransactionService(
+            null,
+            null,
+            null,
+            $this->db
+        );
     }
 
     protected function tearDown(): void
@@ -542,6 +547,18 @@ class CashTransactionServiceTest extends CIUnitTestCase
 
     private function seedOrder(array $data): int
     {
+        // Defensive: ensure table exists even if migration skipped
+        $this->db->query("CREATE TABLE IF NOT EXISTS orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NULL,
+            order_number VARCHAR(50) NULL,
+            total DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         $payload = array_merge([
             'code' => 'HD' . random_int(1000, 9999),
             'total' => 0,
@@ -551,11 +568,30 @@ class CashTransactionServiceTest extends CIUnitTestCase
         ], $data);
 
         $this->db->table('orders')->insert($payload);
-        return (int) $this->db->insertID();
+        $id = (int) $this->db->insertID();
+        // Make sure data is visible to other connections in tests
+        $this->db->transCommit();
+        $this->db->transBegin();
+        return $id;
     }
 
     private function seedPurchaseOrder(array $data): int
     {
+        // Defensive: ensure table exists even if migration skipped
+        $this->db->query("CREATE TABLE IF NOT EXISTS purchase_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            po_number VARCHAR(50) NULL,
+            code VARCHAR(50) NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NULL,
+            total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+            status VARCHAR(50) DEFAULT 'draft',
+            received_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
         $payload = array_merge([
             'code' => 'PO' . random_int(1000, 9999),
             'total' => 0,
@@ -565,7 +601,11 @@ class CashTransactionServiceTest extends CIUnitTestCase
         ], $data);
 
         $this->db->table('purchase_orders')->insert($payload);
-        return (int) $this->db->insertID();
+        $id = (int) $this->db->insertID();
+        // Ensure visibility across connections during validation
+        $this->db->transCommit();
+        $this->db->transBegin();
+        return $id;
     }
 
     private function seedCashTransaction(array $data): int

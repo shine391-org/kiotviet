@@ -450,7 +450,8 @@ class OrderService
 
         $db = $this->db;
         if (! $db->tableExists('customers')) { return null; }
-        $row = $db->table('customers')->select('customer_group_id')->where('id', $customerId)->get()->getRowArray();
+        $query = $db->table('customers')->select('customer_group_id')->where('id', $customerId)->get();
+        $row = $query ? $query->getRowArray() : null;
         if (! $row) {
             throw new \InvalidArgumentException('Customer not found');
         }
@@ -491,11 +492,12 @@ class OrderService
 
         $db = $this->db;
         if (! $db->tableExists('inventory_stock')) { return; }
-        $row = $db->table('inventory_stock')
+        $query = $db->table('inventory_stock')
             ->select('quantity_on_hand, quantity_reserved')
             ->where('product_id', $productId)
             ->where('variant_id', $variantId)
-            ->get()->getRowArray();
+            ->get();
+        $row = $query ? $query->getRowArray() : null;
         if (! $row) { return; } // no stock record, allow
         $available = (float) ($row['quantity_on_hand'] ?? 0) - (float) ($row['quantity_reserved'] ?? 0);
         if ($available < $qty) {

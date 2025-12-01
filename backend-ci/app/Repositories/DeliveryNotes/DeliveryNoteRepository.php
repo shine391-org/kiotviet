@@ -119,13 +119,14 @@ class DeliveryNoteRepository
     /** Get next delivery number per branch. */
     public function nextNumber(int $branchId): string
     {
-        $row = $this->db->table('delivery_notes')
+        $query = $this->db->table('delivery_notes')
             ->select('delivery_number')
             ->where('branch_id', $branchId)
             ->orderBy('id', 'DESC')
             ->limit(1)
-            ->get()->getRowArray();
-
+            ->get();
+        
+        $row = $query ? $query->getRowArray() : null;
         $current = $row['delivery_number'] ?? null;
         $nextSeq = 1;
         if ($current && preg_match('/DN-' . $branchId . '-(\d{6})$/', $current, $m)) {

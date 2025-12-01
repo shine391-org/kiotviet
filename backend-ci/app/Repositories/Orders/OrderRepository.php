@@ -62,9 +62,11 @@ class OrderRepository
     /** Fetch order with items. */
     public function findById(int $id): ?array
     {
-        $order = $this->db->table('orders')->where('id', $id)->get()->getRowArray();
+        $orderQuery = $this->db->table('orders')->where('id', $id)->get();
+        $order = $orderQuery ? $orderQuery->getRowArray() : null;
         if (! $order) { return null; }
-        $items = $this->db->table('order_items')->where('order_id', $id)->get()->getResultArray();
+        $itemsQuery = $this->db->table('order_items')->where('order_id', $id)->get();
+        $items = $itemsQuery ? $itemsQuery->getResultArray() : [];
         $order['items'] = $items;
         return $order;
     }

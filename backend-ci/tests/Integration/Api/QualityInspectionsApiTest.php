@@ -73,7 +73,9 @@ class QualityInspectionsApiTest extends CIUnitTestCase
         $this->assertTrue($approveBody['success'] ?? false, json_encode($approveBody));
         $this->assertSame('approved', $approveBody['data']['status']);
 
-        $row = $this->db->table('quality_inspection_items')->where('inspection_id', $inspectionId)->get()->getRowArray();
+        $query = $this->db->table('quality_inspection_items')->where('inspection_id', $inspectionId)->get();
+        $row = $query ? $query->getRowArray() : null;
+        $this->assertNotNull($row, 'Quality inspection item should exist');
         $this->assertSame('1', (string) $row['pass_flag']);
     }
 

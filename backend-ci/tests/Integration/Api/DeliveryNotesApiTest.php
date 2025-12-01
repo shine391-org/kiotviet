@@ -6,7 +6,6 @@ use CodeIgniter\Test\CIUnitTestCase;
 use CodeIgniter\Test\FeatureTestTrait;
 use Tests\Support\AuthTestTrait;
 use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\CompleteSchemaTrait;
 
 /**
  * @agent-test: Delivery notes API
@@ -17,13 +16,11 @@ class DeliveryNotesApiTest extends CIUnitTestCase
     use FeatureTestTrait;
     use AuthTestTrait;
     use DevDatabaseTrait;
-    use CompleteSchemaTrait;
 
     protected function setUp(): void
     {
         parent::setUp();
         $this->setUpDatabase();
-        $this->resetCompleteSchema();
         $this->seedBaseData();
         $this->setUpAuthToken();
     }
@@ -63,7 +60,9 @@ class DeliveryNotesApiTest extends CIUnitTestCase
         $this->assertTrue($deliverBody['success'] ?? false, json_encode($deliverBody));
         $this->assertEquals('delivered', $deliverBody['data']['status']);
 
-        $stock = $this->db->table('stock_bins')->where('product_id', 1)->where('branch_id', 1)->get()->getRowArray();
+        $stockQuery = $this->db->table('stock_bins')->where('product_id', 1)->where('branch_id', 1)->get();
+        $stock = $stockQuery ? $stockQuery->getRowArray() : null;
+        $this->assertNotNull($stock, 'Stock bin should exist');
         $this->assertEquals(3.0, (float) $stock['on_hand_qty']);
     }
 

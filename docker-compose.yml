@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: backend-ci/Dockerfile
-    command: ["bash", "/var/www/html/docker-start.sh"]
+    command: [ "bash", "/var/www/html/docker-start.sh" ]
     ports:
       - "8000:80"
     env_file:
@@ -13,6 +13,9 @@ services:
     depends_on:
       - db
     volumes:
+      # Nếu source code ở Dev Drive F:
+      - F:/projects/lanocrm/backend-ci:/var/www/html
+      # Hoặc giữ relative path nếu docker-compose.yml đã ở F:
       - ./backend-ci:/var/www/html
 
   fe:
@@ -27,8 +30,12 @@ services:
     depends_on:
       - api
     volumes:
+      # Nếu ở Dev Drive
+      - F:/projects/lanocrm/lanocrm:/app
+      # Hoặc relative
       - ./lanocrm:/app
-      - /app/node_modules
+      # node_modules nên dùng named volume (QUAN TRỌNG)
+      - node_modules_cache:/app/node_modules
 
   db:
     image: mysql:8.4
@@ -38,10 +45,10 @@ services:
       MYSQL_USER: lanocrm_user
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
     volumes:
+      # Named volumes tự động dùng Docker data root (đã config ở F:)
       - db_data:/var/lib/mysql
       - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
 
-  # MySQL test database (separate from dev)
   db-test:
     image: mysql:8.4
     environment:
@@ -53,7 +60,7 @@ services:
       - test_db_data:/var/lib/mysql
       - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     ports:
-      - "3307:3306" # Different port to avoid conflict
+      - "3307:3306"
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -69,4 +76,5 @@ services:
 
 volumes:
   db_data:
-  test_db_data: # New volume for test data
+  test_db_data:
+  node_modules_cache: # Thêm volume này cho node_modules

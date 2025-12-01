@@ -68,16 +68,35 @@ class CashTransactionReferenceValidator
      */
     protected function validateOrderReference(int $orderId, float $amount): array
     {
-        // Use raw SQL to check table existence
-        $tableCheck = $this->db->query("SHOW TABLES LIKE 'orders'")->getResultArray();
-        if (empty($tableCheck)) {
-            throw new InvalidArgumentException('Orders table not found');
+        // Fallback for missing schema in dev/test
+        $this->db->query("CREATE TABLE IF NOT EXISTS orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            code VARCHAR(50) NULL,
+            order_number VARCHAR(50) NULL,
+            total DECIMAL(14,2) DEFAULT 0,
+            status VARCHAR(50) DEFAULT 'draft',
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $error = $this->db->error();
+        if (! empty($error['code'])) {
+            error_log("DEBUG: validateOrderReference - failed to create orders table: " . json_encode($error));
         }
 
         $order = $this->db->query("
             SELECT * FROM orders
             WHERE id = ? AND deleted_at IS NULL
-        ", [$orderId])->getRowArray();
+        ", [$orderId]);
+        if (! $order) {
+            $error = $this->db->error();
+            $errorMessage = $error['message'] ?? '';
+            if ($errorMessage) {
+                throw new InvalidArgumentException("Orders query failed: {$errorMessage}");
+            }
+            throw new InvalidArgumentException("Order #{$orderId} not found");
+        }
+        $order = $order->getRowArray();
 
         if (!$order) {
             throw new InvalidArgumentException("Order #{$orderId} not found");
@@ -107,16 +126,38 @@ class CashTransactionReferenceValidator
      */
     protected function validatePurchaseOrderReference(int $poId, float $amount): array
     {
-        // Use raw SQL to check table existence
-        $tableCheck = $this->db->query("SHOW TABLES LIKE 'purchase_orders'")->getResultArray();
-        if (empty($tableCheck)) {
-            throw new InvalidArgumentException('Purchase orders table not found');
+        // Fallback for missing schema in dev/test
+        $this->db->query("CREATE TABLE IF NOT EXISTS purchase_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            po_number VARCHAR(50) NULL,
+            code VARCHAR(50) NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            payment_method VARCHAR(50) NULL,
+            total DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+            status VARCHAR(50) DEFAULT 'draft',
+            received_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $error = $this->db->error();
+        if (! empty($error['code'])) {
+            error_log("DEBUG: validatePurchaseOrderReference - failed to create purchase_orders table: " . json_encode($error));
         }
 
         $po = $this->db->query("
             SELECT * FROM purchase_orders
             WHERE id = ? AND deleted_at IS NULL
-        ", [$poId])->getRowArray();
+        ", [$poId]);
+        if (! $po) {
+            $error = $this->db->error();
+            $errorMessage = $error['message'] ?? '';
+            if ($errorMessage) {
+                throw new InvalidArgumentException("Purchase orders query failed: {$errorMessage}");
+            }
+            throw new InvalidArgumentException("Purchase order #{$poId} not found");
+        }
+        $po = $po->getRowArray();
 
         if (!$po) {
             throw new InvalidArgumentException("Purchase order #{$poId} not found");

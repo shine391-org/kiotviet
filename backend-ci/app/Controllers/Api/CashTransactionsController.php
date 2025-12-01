@@ -23,7 +23,10 @@ class CashTransactionsController extends BaseController
 
     public function __construct()
     {
-        $db = \Config\Database::connect();
+        // Use 'tests' connection when in testing environment to match DevDatabaseTrait
+        $connectionGroup = (ENVIRONMENT === 'testing') ? 'tests' : null;
+        $db = \Config\Database::connect($connectionGroup);
+        
         $this->service = new CashTransactionService(
             null, // repository
             null, // validator

@@ -52,7 +52,9 @@ class StockReconciliationServiceTest extends CIUnitTestCase
         $approved = $this->service->approve($id, ['approved_by' => 9]);
         $this->assertEquals('approved', $approved['data']['status']);
 
-        $bin = $this->db->table('stock_bins')->where('product_id', 1)->get()->getRowArray();
+        $binQuery = $this->db->table('stock_bins')->where('product_id', 1)->get();
+        $bin = $binQuery ? $binQuery->getRowArray() : null;
+        $this->assertNotNull($bin, 'Stock bin should exist');
         $this->assertEquals(8.0, (float) $bin['on_hand_qty']);
     }
 

@@ -63,7 +63,9 @@ class ProductBatchSerialApiTest extends CIUnitTestCase
         $this->assertTrue($data['success'] ?? false, json_encode($data));
         $this->assertEquals(3.0, (float) $data['data']['current_quantity']);
 
-        $stock = $this->db->table('inventory_stock')->where('product_id', 1)->get()->getRowArray();
+        $stockQuery = $this->db->table('inventory_stock')->where('product_id', 1)->get();
+        $stock = $stockQuery ? $stockQuery->getRowArray() : null;
+        $this->assertNotNull($stock, 'Stock row should exist');
         $this->assertEquals(3.0, (float) $stock['quantity_on_hand']);
     }
 
@@ -106,7 +108,9 @@ class ProductBatchSerialApiTest extends CIUnitTestCase
         $return->assertStatus(200);
         $this->assertTrue(($this->decodeResponse($return)['success'] ?? false));
 
-        $row = $this->db->table('product_serial_numbers')->where('serial_number', 'API-SN-1')->get()->getRowArray();
+        $query = $this->db->table('product_serial_numbers')->where('serial_number', 'API-SN-1')->get();
+        $row = $query ? $query->getRowArray() : null;
+        $this->assertNotNull($row, 'Serial number row should exist');
         $this->assertEquals('returned', $row['status']);
     }
 
@@ -192,10 +196,14 @@ class ProductBatchSerialApiTest extends CIUnitTestCase
         $deliveredBody = $this->decodeResponse($delivered);
         $this->assertTrue($deliveredBody['success'] ?? false, json_encode($deliveredBody));
 
-        $batchRow = $this->db->table('product_batches')->where('id', $batchId)->get()->getRowArray();
+        $batchQuery = $this->db->table('product_batches')->where('id', $batchId)->get();
+        $batchRow = $batchQuery ? $batchQuery->getRowArray() : null;
+        $this->assertNotNull($batchRow, 'Batch row should exist');
         $this->assertEquals(0.0, (float) $batchRow['current_quantity']);
 
-        $serialRow = $this->db->table('product_serial_numbers')->where('serial_number', 'ORD-SN-1')->get()->getRowArray();
+        $serialQuery = $this->db->table('product_serial_numbers')->where('serial_number', 'ORD-SN-1')->get();
+        $serialRow = $serialQuery ? $serialQuery->getRowArray() : null;
+        $this->assertNotNull($serialRow, 'Serial row should exist');
         $this->assertEquals('reserved', $serialRow['status']);
 
         $complete = $this->withHeaders($this->authHeaders(['Content-Type' => 'application/json']))
@@ -204,7 +212,9 @@ class ProductBatchSerialApiTest extends CIUnitTestCase
         $completeBody = $this->decodeResponse($complete);
         $this->assertTrue($completeBody['success'] ?? false, json_encode($completeBody));
 
-        $serialRow = $this->db->table('product_serial_numbers')->where('serial_number', 'ORD-SN-1')->get()->getRowArray();
+        $serialQuery = $this->db->table('product_serial_numbers')->where('serial_number', 'ORD-SN-1')->get();
+        $serialRow = $serialQuery ? $serialQuery->getRowArray() : null;
+        $this->assertNotNull($serialRow, 'Serial row should exist after completion');
         $this->assertEquals('sold', $serialRow['status']);
     }
 

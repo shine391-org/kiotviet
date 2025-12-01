@@ -119,6 +119,7 @@ class EventWebhookIntegrationTest extends CIUnitTestCase
             'customer_id' => 1,
             'branch_id' => 1,
             'order_type' => 'pos',
+            'user_id' => 1,  // Required for POS orders
             'payment_method' => 'CASH',
             'payments' => [
                 ['payment_method' => 'CASH', 'amount' => 100000],

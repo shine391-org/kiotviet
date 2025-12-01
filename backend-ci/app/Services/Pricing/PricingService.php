@@ -146,9 +146,11 @@ class PricingService
         } else {
             $builder->where('variant_id', $variantId);
         }
-        $row = $builder->get()->getRowArray();
+        $query = $builder->get();
+        $row = $query ? $query->getRowArray() : null;
         if (! $row) {
-            $productRow = $this->db->table('products')->where('id', $productId)->get()->getRowArray();
+            $productQuery = $this->db->table('products')->where('id', $productId)->get();
+            $productRow = $productQuery ? $productQuery->getRowArray() : null;
             return (float) ($productRow['selling_price'] ?? 0);
         }
         return (float) ($row['price'] ?? 0);

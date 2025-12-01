@@ -44,6 +44,7 @@ class OrderTemplateServiceTest extends CIUnitTestCase
         $this->resetOrderTemplateSchema();
         $this->resetSchema(); // product tables
         $this->seedBranch();
+        $this->seedCustomer();
         $this->seedProduct(['id' => 1, 'code' => 'P1', 'name' => 'Prod 1', 'selling_price' => 50]);
         $this->seedPriceList(50);
 
@@ -182,6 +183,17 @@ class OrderTemplateServiceTest extends CIUnitTestCase
         $this->db->table('branches')->insert([
             'id' => 1,
             'name' => 'Main',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+    }
+
+    private function seedCustomer(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'Test Customer',
             'created_at' => $now,
             'updated_at' => $now,
         ]);

@@ -19,8 +19,12 @@ class CashTransactionRepository
 
     public function __construct(?CashTransactionModel $model = null, ?BaseConnection $db = null)
     {
-        $this->model = $model ?? new CashTransactionModel();
-        $this->db = $db ?? \Config\Database::connect();
+        $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->model = $model ?? new CashTransactionModel($this->db);
+        
+        // DEBUG: Log connection info
+        error_log("DEBUG: CashTransactionRepository::__construct() - Connection group: " . (ENVIRONMENT === 'testing' ? 'tests' : 'default'));
+        error_log("DEBUG: CashTransactionRepository::__construct() - Database name: " . $this->db->getDatabase());
     }
 
     /**
@@ -35,11 +39,93 @@ class CashTransactionRepository
             'created_at' => $this->now(),
             'updated_at' => $this->now(),
         ];
+        
+        // Ensure transaction_date is a valid date
+        if (isset($payload['transaction_date'])) {
+            $date = \DateTime::createFromFormat('Y-m-d', $payload['transaction_date']);
+            if ($date) {
+                $payload['transaction_date'] = $date->format('Y-m-d');
+            }
+        }
 
-        $this->model->insert($payload);
-        $payload['id'] = (int) $this->model->getInsertID();
+        // DEBUG: Log the insert operation
+        error_log("DEBUG: CashTransactionRepository::create() - About to insert payload: " . json_encode($payload));
+        
+        try {
+            error_log("DEBUG: CashTransactionRepository::create() - About to call model insert");
+            
+            // Check validation before insert
+            if (!$this->model->validate($payload)) {
+                $errors = $this->model->errors();
+                error_log("DEBUG: CashTransactionRepository::create() - Validation failed before insert: " . json_encode($errors));
+                throw new \Exception('Validation failed: ' . implode(', ', $errors));
+            }
+            
+            $this->model->insert($payload);
+            $insertId = $this->model->getInsertID();
+            
+            error_log("DEBUG: CashTransactionRepository::create() - Insert result: " . $insertId);
+            error_log("DEBUG: CashTransactionRepository::create() - Last query: " . $this->db->getLastQuery());
+            error_log("DEBUG: CashTransactionRepository::create() - DB error: " . json_encode($this->db->error()));
+            error_log("DEBUG: CashTransactionRepository::create() - Affected rows: " . $this->db->affectedRows());
+            error_log("DEBUG: CashTransactionRepository::create() - Model errors: " . json_encode($this->model->errors()));
+            
+            // Check if insert actually failed by querying the table
+            if ($insertId === 0) {
+                error_log("DEBUG: CashTransactionRepository::create() - Insert failed - checking table data");
+                $tableData = $this->db->table('cash_transactions')->get()->getResultArray();
+                error_log("DEBUG: CashTransactionRepository::create() - Current table data: " . json_encode($tableData));
+                
+                // Check table structure
+                $tableExists = $this->db->tableExists('cash_transactions');
+                error_log("DEBUG: CashTransactionRepository::create() - Table exists: " . ($tableExists ? 'true' : 'false'));
+                
+                if ($tableExists) {
+                    $fields = $this->db->getFieldData('cash_transactions');
+                    error_log("DEBUG: CashTransactionRepository::create() - Table fields: " . json_encode($fields));
+                }
+                
+                // Try direct SQL insert to see what happens
+                error_log("DEBUG: CashTransactionRepository::create() - Trying direct SQL insert");
+                $directSql = "INSERT INTO cash_transactions (type, amount, category, branch_id, created_by, transaction_date, description, payment_method, status, account_name, created_at, updated_at) VALUES ('PAYMENT', 200000, 'expense', 1, 1, '2025-11-26', 'Test direct insert', 'cash', 'approved', 'Tiền mặt', NOW(), NOW())";
+                $directResult = $this->db->query($directSql);
+                error_log("DEBUG: CashTransactionRepository::create() - Direct SQL result: " . ($directResult ? 'success' : 'failed'));
+                error_log("DEBUG: CashTransactionRepository::create() - Direct SQL error: " . $this->db->getError());
+            }
+            
+        } catch (\Exception $e) {
+            error_log("DEBUG: CashTransactionRepository::create() - Exception: " . $e->getMessage());
+            error_log("DEBUG: CashTransactionRepository::create() - Exception trace: " . $e->getTraceAsString());
+            throw $e;
+        }
+        
+        // Check if insert actually failed
+        if ($insertId === 0) {
+            error_log("DEBUG: CashTransactionRepository::create() - Insert failed - checking table structure");
+            $tableInfo = $this->db->table('cash_transactions')->get()->getResultArray();
+            error_log("DEBUG: CashTransactionRepository::create() - Current table data: " . json_encode($tableInfo));
+            
+            // Check if table exists and has correct structure
+            $tableExists = $this->db->tableExists('cash_transactions');
+            error_log("DEBUG: CashTransactionRepository::create() - Table exists: " . ($tableExists ? 'true' : 'false'));
+            
+            if ($tableExists) {
+                $fields = $this->db->getFieldData('cash_transactions');
+                error_log("DEBUG: CashTransactionRepository::create() - Table fields: " . json_encode($fields));
+            }
+        }
+        
+        // Re-fetch the inserted row to get actual database values
+        $insertedRow = $this->model->find($insertId);
+        error_log("DEBUG: CashTransactionRepository::create() - Inserted row from DB: " . json_encode($insertedRow));
+        
+        if (!$insertedRow) {
+            error_log("DEBUG: CashTransactionRepository::create() - Failed to re-fetch inserted row");
+            $payload['id'] = (int) $insertId;
+            return $this->hydrate($payload);
+        }
 
-        return $this->hydrate($payload);
+        return $this->hydrate($insertedRow);
     }
 
     /**
@@ -119,21 +205,21 @@ class CashTransactionRepository
 
         // Calculate RECEIPT total
         $receiptBuilder = clone $builder;
-        $receiptTotal = (float) $receiptBuilder
+        $query = $receiptBuilder
             ->where('type', CashTransactionModel::TYPE_RECEIPT)
             ->selectSum('amount', 'total')
-            ->get()
-            ->getRow()
-            ->total ?? 0;
+            ->get();
+        $row = $query ? $query->getRow() : null;
+        $receiptTotal = (float) ($row->total ?? 0);
 
         // Calculate PAYMENT total
         $paymentBuilder = clone $builder;
-        $paymentTotal = (float) $paymentBuilder
+        $query = $paymentBuilder
             ->where('type', CashTransactionModel::TYPE_PAYMENT)
             ->selectSum('amount', 'total')
-            ->get()
-            ->getRow()
-            ->total ?? 0;
+            ->get();
+        $row = $query ? $query->getRow() : null;
+        $paymentTotal = (float) ($row->total ?? 0);
 
         // Balance = RECEIPT - PAYMENT
         return $receiptTotal - $paymentTotal;
@@ -161,21 +247,21 @@ class CashTransactionRepository
 
         // Get RECEIPT total
         $receiptBuilder = clone $builder;
-        $receiptTotal = (float) $receiptBuilder
+        $query = $receiptBuilder
             ->where('type', CashTransactionModel::TYPE_RECEIPT)
             ->selectSum('amount', 'total')
-            ->get()
-            ->getRow()
-            ->total ?? 0;
+            ->get();
+        $row = $query ? $query->getRow() : null;
+        $receiptTotal = (float) ($row->total ?? 0);
 
         // Get PAYMENT total
         $paymentBuilder = clone $builder;
-        $paymentTotal = (float) $paymentBuilder
+        $query = $paymentBuilder
             ->where('type', CashTransactionModel::TYPE_PAYMENT)
             ->selectSum('amount', 'total')
-            ->get()
-            ->getRow()
-            ->total ?? 0;
+            ->get();
+        $row = $query ? $query->getRow() : null;
+        $paymentTotal = (float) ($row->total ?? 0);
 
         // Get transaction count
         $countBuilder = clone $builder;

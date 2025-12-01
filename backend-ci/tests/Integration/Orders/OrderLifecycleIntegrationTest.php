@@ -62,6 +62,7 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
             'customer_id' => 1,
             'branch_id' => 1,
             'order_type' => 'pos',
+            'user_id' => 1,  // Required for POS orders
             'payment_method' => 'CASH',
             'payments' => [
                 ['payment_method' => 'CASH', 'amount' => 500000],
@@ -83,11 +84,14 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
 
         $this->assertEquals('completed', $order['status']);
         $this->assertEquals(500000.0, (float) $order['total']);
-        $stock = $this->db->table('inventory_stock')->where('product_id', $productId)->get()->getRowArray();
+        $stockQuery = $this->db->table('inventory_stock')->where('product_id', $productId)->get();
+        $stock = $stockQuery ? $stockQuery->getRowArray() : null;
+        $this->assertNotNull($stock, 'Stock should exist');
         $this->assertEquals(45.0, (float) $stock['quantity_on_hand']);
 
         // đảm bảo có log trạng thái cho đơn POS
-        $log = $this->db->table('order_status_logs')->where('order_id', $order['id'])->get()->getRowArray();
+        $logQuery = $this->db->table('order_status_logs')->where('order_id', $order['id'])->get();
+        $log = $logQuery ? $logQuery->getRowArray() : null;
         if (! $log) {
             $this->db->table('order_status_logs')->insert([
                 'order_id' => $order['id'],
@@ -95,10 +99,12 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
                 'to_status' => $order['status'],
                 'changed_at' => date('Y-m-d H:i:s'),
             ]);
-            $log = $this->db->table('order_status_logs')->where('order_id', $order['id'])->get()->getRowArray();
+            $logQuery = $this->db->table('order_status_logs')->where('order_id', $order['id'])->get();
+            $log = $logQuery ? $logQuery->getRowArray() : null;
         }
         $this->assertNotNull($log);
-        $movement = $this->db->table('inventory_movements')->where('reference_id', $order['id'])->get()->getRowArray();
+        $movementQuery = $this->db->table('inventory_movements')->where('reference_id', $order['id'])->get();
+        $movement = $movementQuery ? $movementQuery->getRowArray() : null;
         $this->assertNotNull($movement);
     }
 
@@ -142,7 +148,9 @@ class OrderLifecycleIntegrationTest extends CIUnitTestCase
         $this->assertEquals('confirmed', $order['status']);
 
         $order = $this->statuses->updateStatus($order['id'], 'processing')['data'];
-        $stock = $this->db->table('inventory_stock')->where('product_id', $productId)->get()->getRowArray();
+        $stockQuery = $this->db->table('inventory_stock')->where('product_id', $productId)->get();
+        $stock = $stockQuery ? $stockQuery->getRowArray() : null;
+        $this->assertNotNull($stock, 'Stock should exist after processing');
         $this->assertGreaterThanOrEqual(90.0, (float) $stock['quantity_on_hand']);
 
         $order = $this->statuses->updateStatus($order['id'], 'shipping')['data'];

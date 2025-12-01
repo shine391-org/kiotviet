@@ -15,6 +15,11 @@ class Database extends Config
     public string $filesPath = APPPATH . 'Database' . DIRECTORY_SEPARATOR;
 
     /**
+     * Golden schema version identifier.
+     */
+    public string $schemaVersion = '2025-11-27-000999';
+
+    /**
      * Lets you choose which connection group to use if no other is specified.
      */
     public string $defaultGroup = 'default';

@@ -26,7 +26,8 @@ class InventoryRepository
 
     public function warehouseById(int $id): ?array
     {
-        $row = $this->db->table('warehouses')->where('id', $id)->where('deleted_at', null)->get()->getRowArray();
+        $query = $this->db->table('warehouses')->where('id', $id)->where('deleted_at', null)->get();
+        $row = $query ? $query->getRowArray() : null;
         return $row ?: null;
     }
 
@@ -51,11 +52,18 @@ class InventoryRepository
     /** Get stock row (or null). */
     public function stockRow(int $productId, ?int $variantId, int $warehouseId): ?array
     {
-        $row = $this->db->table('inventory_stock')
-            ->where('product_id', $productId)
-            ->where('warehouse_id', $warehouseId)
-            ->where('variant_id', $variantId)
-            ->get()->getRowArray();
+        // Use raw SQL for proper NULL handling
+        $table = $this->db->prefixTable('inventory_stock');
+        if ($variantId === null) {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id IS NULL LIMIT 1";
+            $params = [$productId, $warehouseId];
+        } else {
+            $sql = "SELECT * FROM {$table} WHERE product_id = ? AND warehouse_id = ? AND variant_id = ? LIMIT 1";
+            $params = [$productId, $warehouseId, $variantId];
+        }
+        
+        $query = $this->db->query($sql, $params);
+        $row = $query ? $query->getRowArray() : null;
         return $row ?: null;
     }
 
@@ -63,8 +71,7 @@ class InventoryRepository
     public function adjustStock(int $productId, ?int $variantId, int $warehouseId, float $deltaQty, ?int $branchId = null): array
     {
         $now = date('Y-m-d H:i:s');
-        $this->db->transStart();
-
+        
         $row = $this->stockRow($productId, $variantId, $warehouseId);
         if ($row) {
             // Use atomic SQL expression to avoid race condition
@@ -77,9 +84,9 @@ class InventoryRepository
             }
             $this->db->table('inventory_stock')->where('id', $row['id'])->set('quantity_on_hand', 'quantity_on_hand + ' . $this->db->escape($deltaQty), false)->set($set)->update();
             // Re-fetch to get the updated value
-            $row = $this->db->table('inventory_stock')->where('id', $row['id'])->get()->getRowArray();
+            $query = $this->db->table('inventory_stock')->where('id', $row['id'])->get();
+            $row = $query ? $query->getRowArray() : $row;
 
-            $this->db->transComplete();
             return $row;
         }
         $payload = [
@@ -95,7 +102,6 @@ class InventoryRepository
         ];
         $this->db->table('inventory_stock')->insert($payload);
         $payload['id'] = $this->db->insertID();
-        $this->db->transComplete();
         return $payload;
     }
 
@@ -125,7 +131,8 @@ class InventoryRepository
         if (strtolower($this->db->DBDriver) !== 'sqlite3') {
             $sql .= " FOR UPDATE";
         }
-        $row = $this->db->query($sql, $params)->getRowArray();
+        $query = $this->db->query($sql, $params);
+        $row = $query ? $query->getRowArray() : null;
 
         if (!$row) {
              // If row doesn't exist, create it
@@ -196,7 +203,8 @@ class InventoryRepository
     /** Find alert by id. */
     public function alertById(int $id): ?array
     {
-        $row = $this->db->table('inventory_alerts')->where('id', $id)->get()->getRowArray();
+        $query = $this->db->table('inventory_alerts')->where('id', $id)->get();
+        $row = $query ? $query->getRowArray() : null;
         return $row ?: null;
     }
 
@@ -238,7 +246,8 @@ class InventoryRepository
         if (strtolower($this->db->DBDriver) !== 'sqlite3') {
             $sql .= " FOR UPDATE";
         }
-        $row = $this->db->query($sql, $params)->getRowArray();
+        $query = $this->db->query($sql, $params);
+        $row = $query ? $query->getRowArray() : null;
 
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = ($row['quantity_reserved'] ?? 0) + $qty;
@@ -270,7 +279,8 @@ class InventoryRepository
         if (strtolower($this->db->DBDriver) !== 'sqlite3') {
             $sql .= " FOR UPDATE";
         }
-        $row = $this->db->query($sql, $params)->getRowArray();
+        $query = $this->db->query($sql, $params);
+        $row = $query ? $query->getRowArray() : null;
 
         if (! $row) { throw new \RuntimeException('Stock not found'); }
         $newReserved = max(0, ($row['quantity_reserved'] ?? 0) - $qty);

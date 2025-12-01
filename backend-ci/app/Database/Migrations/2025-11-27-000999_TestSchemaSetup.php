@@ -13,74 +13,91 @@ class TestSchemaSetup extends Migration
 
     public function up()
     {
-        $this->dropAll();
+        try {
+            error_log("DEBUG: TestSchemaSetup - Starting migration");
+            
+            $this->dropAll();
 
-        $this->createBaseTables();
-        $this->createCompanyScopeTables();
-        $this->createProductTables();
-        $this->createProductCategoryTables();
-        $this->createProductVariantTables();
-        $this->createProductImageTables();
-        $this->createProductAttributeTables();
-        $this->createProductAttributeOptionTables();
-        $this->createProductAttributeValueTables();
-        $this->createProductBatchTables();
-        $this->createProductSerialNumberTables();
-        $this->createDeliveryNoteTables();
-        $this->createApprovalTables();
-        $this->createStockLedgerTables();
-        $this->createStockEntryTables();
-        $this->createReorderPlanningTables();
-        $this->createAdvancedPricingTables();
-        $this->createPriceListTables();
-        $this->createPriceListItemTables();
-        $this->createPaymentMethodTables();
-        $this->createTaxTemplateTables();
-        $this->createLoyaltyTables();
-        $this->createCouponTables();
-        $this->createPurchaseOrderTables();
-        $this->createPurchaseOrderItemTables();
-        $this->createGoodsReceiptTables();
-        $this->createLandedCostTables();
-        $this->createSubcontractingTables();
-        $this->createOrderTables();
-        $this->createOrderItemTables();
-        $this->createOrderPaymentTables();
-        $this->createPaymentEntryTables();
-        $this->createBankReconciliationTables();
-        $this->createAccountingTables();
-        $this->createOrderSequenceTables();
-        $this->createPOSTables();
-        $this->createPOSOfflineTables();
-        $this->createLeadTables();
-        $this->createOpportunityTables();
-        $this->createQuotationTables();
-        $this->createCampaignTables();
-        $this->createSupportTables();
-        $this->createContractTables();
-        $this->createSalesInvoiceTables();
-        $this->createPurchaseInvoiceTables();
-        $this->createReturnTables();
-        $this->createReturnItemTables();
-        $this->createInvoiceTables();
-        $this->createInvoiceOrderTables();
-        $this->createInventoryStockTables();
-        $this->createInventoryMovementTables();
-        $this->createInventoryAlertTables();
-        $this->createOrderStatusLogTables();
-        $this->createWebhookTables();
-        $this->createQualityTables();
-        $this->createOrderTemplateTables();
-        $this->createEcommerceTables();
-        $this->createManufacturingTables();
-        $this->createSubscriptionTables();
-        $this->createCashTransactionTables();
-        $this->createAssetTables();
-        $this->createPortalNotificationTables();
-        $this->createHRPayrollTables();
-        $this->createRegionalTaxTables();
-        $this->createSchedulerTables();
-        $this->createProjectTables();
+            $steps = [
+                'createBaseTables',
+                'createCompanyScopeTables',
+                'createProductTables',
+                'createProductCategoryTables',
+                'createProductVariantTables',
+                'createProductImageTables',
+                'createProductAttributeTables',
+                'createProductAttributeOptionTables',
+                'createProductAttributeValueTables',
+                'createProductBatchTables',
+                'createProductSerialNumberTables',
+                'createDeliveryNoteTables',
+                'createApprovalTables',
+                'createStockLedgerTables',
+                'createStockEntryTables',
+                'createReorderPlanningTables',
+                'createAdvancedPricingTables',
+                'createPriceListTables',
+                'createPriceListItemTables',
+                'createPaymentMethodTables',
+                'createTaxTemplateTables',
+                'createLoyaltyTables',
+                'createCouponTables',
+                'createPurchaseOrderTables',
+                'createPurchaseOrderItemTables',
+                'createGoodsReceiptTables',
+                'createLandedCostTables',
+                'createSubcontractingTables',
+                'createOrderTables',
+                'createOrderItemTables',
+                'createOrderPaymentTables',
+                'createPaymentEntryTables',
+                'createBankReconciliationTables',
+                'createAccountingTables',
+                'createOrderSequenceTables',
+                'createPOSTables',
+                'createPOSOfflineTables',
+                'createLeadTables',
+                'createOpportunityTables',
+                'createQuotationTables',
+                'createCampaignTables',
+                'createSupportTables',
+                'createContractTables',
+                'createSalesInvoiceTables',
+                'createPurchaseInvoiceTables',
+                'createReturnTables',
+                'createReturnItemTables',
+                'createInvoiceTables',
+                'createInvoiceOrderTables',
+                'createInventoryStockTables',
+                'createInventoryMovementTables',
+                'createInventoryAlertTables',
+                'createOrderStatusLogTables',
+                'createWebhookTables',
+                'createQualityTables',
+                'createOrderTemplateTables',
+                'createEcommerceTables',
+                'createManufacturingTables',
+                'createSubscriptionTables',
+                'createCashTransactionTables',
+                'createAssetTables',
+                'createPortalNotificationTables',
+                'createHRPayrollTables',
+                'createRegionalTaxTables',
+                'createSchedulerTables',
+                'createProjectTables',
+            ];
+
+            foreach ($steps as $step) {
+                $this->runStep($step);
+            }
+
+            $this->validateSchema();
+
+            error_log("DEBUG: TestSchemaSetup - Migration completed successfully");
+        } catch (\Throwable $e) {
+            error_log("DEBUG: TestSchemaSetup - Migration failed: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function down()
@@ -90,56 +107,71 @@ class TestSchemaSetup extends Migration
 
     private function dropAll(): void
     {
-        $tables = [
-            'users','companies','company_permissions','document_shares','audit_logs','branches','customers','factories',
-            'warehouses','inventory_valuation',
-            'attributes','attribute_options',
-            'products','product_categories','product_category_links','product_variants_v2',
-            'product_images','product_attributes','product_attribute_options','product_attribute_values',
-            'product_batches','product_serial_numbers','delivery_note_items','delivery_notes',
-            'approval_actions','approvals','order_approval_rules',
-            'stock_entry_items','stock_entries','pick_list_items','pick_lists','packing_slip_items','packing_slips',
-            'stock_reconciliation_items','stock_reconciliations','stock_bins','stock_ledgers','reorder_levels','purchase_suggestions',
-            'pricing_rules','customer_price_lists','project_price_lists','price_history',
-            'price_lists','price_list_items',
-            'payment_methods','purchase_orders',
-            'purchase_order_items','goods_receipts','goods_receipt_items','landed_cost_vouchers','landed_cost_items','subcontracting_orders','subcontracting_materials',
-            'chart_of_accounts','gl_entries',
-            'bank_reconciliation_logs','bank_reconciliations','bank_statements','payment_entry_allocations',
-            'purchase_invoice_taxes','purchase_invoice_items','purchase_invoices',
-            'sales_invoice_taxes','sales_invoice_items','sales_invoices','payment_schedules',
-            'withholding_rules','credit_limits','tax_template_items',
-            'exchange_rates',
-            'orders','order_items','order_sequences','order_payments','order_status_logs',
-            'returns','return_items',
-            'invoices','invoice_orders',
-            'inventory_stock','inventory_movements','inventory_alerts',
-            'maintenance_work_orders','maintenance_schedules','depreciation_schedule_lines','depreciation_schedules','assets',
-            'job_logs','job_queue','scheduler_rules',
-            'tax_certificate_records','e_invoice_logs','regional_tax_rules',
-            'assignment_logs','assignment_rules','notifications','notification_rules','knowledge_base_articles','knowledge_base_categories','portal_access_tokens','portal_users',
-            'salary_components','salary_slips','payroll_entries','attendances','leave_applications','leave_types','employees',
-            'projects','tasks','timesheets','timesheet_details','activity_types',
-            'webhook_subscriptions','webhook_events',
-            'quality_inspection_items','quality_inspections','quality_parameters',
-            'order_template_items','order_templates','order_subscriptions',
-            'ecommerce_webhook_logs',
-            'subscription_cycles','subscriptions',
-            'bom_items','bill_of_materials','work_orders',
-            'cash_transactions',
-            'pos_profiles','pos_payment_methods','pos_shifts','pos_shift_payments','pos_shift_logs','pos_offline_queue',
-            'loyalty_programs','loyalty_wallets','loyalty_transactions','coupons','coupon_usages',
-            'tax_templates','tax_charges','payment_entries',
-            'leads','opportunities','opportunity_items','quotations','quotation_items',
-            'campaigns','campaign_members','email_campaigns','email_campaign_logs',
-            'ticket_events','ticket_communications','support_tickets',
-            'contract_templates','contracts','contract_terms','appointments'
-        ];
+        $tables = self::expectedTables();
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($tables as $table) {
             $this->forge->dropTable($table, true);
         }
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    private function runStep(string $method): void
+    {
+        if (! method_exists($this, $method)) {
+            throw new \RuntimeException("Migration step {$method} not found");
+        }
+
+        $this->log("DEBUG: TestSchemaSetup - Running {$method}");
+        $this->{$method}();
+        $this->log("DEBUG: TestSchemaSetup - Completed {$method}");
+    }
+
+    private function validateSchema(): void
+    {
+        $expected = self::expectedTables();
+        $existing = array_flip($this->db->listTables());
+
+        $missing = array_values(array_filter($expected, static fn ($t) => ! isset($existing[$t])));
+        if (! empty($missing)) {
+            $this->log("DEBUG: TestSchemaSetup - Missing tables: " . implode(', ', $missing));
+            throw new \RuntimeException('Missing tables after migration: ' . implode(', ', $missing));
+        }
+    }
+
+    /**
+     * Danh sách bảng chuẩn (golden schema).
+     */
+    public static function expectedTables(): array
+    {
+        return [
+            'activity_types','appointments','approval_actions','approvals','assets','assignment_logs','assignment_rules','attendances',
+            'audit_logs','bank_reconciliation_logs','bank_reconciliations','bank_statements','bill_of_materials','bom_items','branches',
+            'campaign_members','campaigns','cash_transactions','chart_of_accounts','companies','company_permissions','contract_templates','contract_terms',
+            'contracts','coupon_usages','coupons','credit_limits','customer_price_lists','customers','delivery_note_items','delivery_notes',
+            'depreciation_schedule_lines','depreciation_schedules','document_shares','e_invoice_logs','ecommerce_webhook_logs','email_campaign_logs','email_campaigns','employees',
+            'exchange_rates','gl_entries','goods_receipt_items','goods_receipts','inventory_alerts','inventory_movements','inventory_stock','inventory_valuation',
+            'invoice_orders','invoices','job_logs','job_queue','knowledge_base_articles','knowledge_base_categories','landed_cost_items','landed_cost_vouchers',
+            'leads','leave_applications','leave_types','loyalty_programs','loyalty_transactions','loyalty_wallets','maintenance_schedules','maintenance_work_orders',
+            'notification_rules','notifications','opportunities','opportunity_items','order_approval_rules','order_items','order_payments','order_sequences',
+            'order_status_logs','order_subscriptions','order_template_items','order_templates','orders','packing_slip_items','packing_slips','payment_entries',
+            'payment_entry_allocations','payment_methods','payment_schedules','payroll_entries','pick_list_items','pick_lists','portal_access_tokens','portal_users',
+            'pos_offline_queue','pos_payment_methods','pos_profiles','pos_shift_logs','pos_shift_payments','pos_shifts','price_history','price_list_items',
+            'price_lists','pricing_rules','product_attribute_options','product_attribute_values','product_attributes','product_batches','product_categories','product_category_links',
+            'product_images','product_serial_numbers','product_variants_v2','products','project_price_lists','projects','purchase_invoice_items','purchase_invoice_taxes',
+            'purchase_invoices','purchase_order_items','purchase_orders','purchase_suggestions','quality_inspection_items','quality_inspections','quality_parameters','quotation_items',
+            'quotations','regional_tax_rules','reorder_levels','return_items','returns','salary_components','salary_slips','sales_invoice_items',
+            'sales_invoice_taxes','sales_invoices','scheduler_rules','stock_bins','stock_entries','stock_entry_items','stock_ledgers','stock_reconciliation_items',
+            'stock_reconciliations','subcontracting_materials','subcontracting_orders','subscription_cycles','subscriptions','support_tickets','tasks','tax_certificate_records',
+            'tax_charges','tax_template_items','tax_templates','ticket_communications','ticket_events','timesheet_details','timesheets','users',
+            'warehouses','webhook_events','webhook_subscriptions','withholding_rules','work_orders'
+        ];
+    }
+
+    private function log(string $message): void
+    {
+        if (env('MIGRATION_VERBOSE', false)) {
+            error_log($message);
+        }
     }
 
     private function createBaseTables(): void
@@ -167,7 +199,7 @@ class TestSchemaSetup extends Migration
             updated_at DATETIME NULL,
             deleted_at DATETIME NULL
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
-        $this->db->query("CREATE TABLE IF NOT EXISTS branches (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(20) NULL, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS branches (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(20) NULL, status VARCHAR(20) DEFAULT 'active', created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS warehouses (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, code VARCHAR(50) NULL, branch_id INT NULL, status VARCHAR(20) DEFAULT 'active', created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         $this->db->query("CREATE TABLE IF NOT EXISTS customers (id INT AUTO_INCREMENT PRIMARY KEY, organization_id INT UNSIGNED NOT NULL DEFAULT 1, customer_group_id INT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NULL, phone VARCHAR(50) NULL, phone2 VARCHAR(50) NULL, gender ENUM('MALE','FEMALE','OTHER') NULL, facebook VARCHAR(255) NULL, customer_type ENUM('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL', company_name VARCHAR(255) NULL, tax_code VARCHAR(20) NULL, buyer_name VARCHAR(255) NULL, invoice_company_name VARCHAR(255) NULL, invoice_address VARCHAR(500) NULL, invoice_province VARCHAR(120) NULL, invoice_district VARCHAR(120) NULL, invoice_ward VARCHAR(120) NULL, invoice_email VARCHAR(255) NULL, invoice_phone VARCHAR(50) NULL, cccd_cmnd VARCHAR(50) NULL, id_number VARCHAR(50) NULL, bank_account VARCHAR(50) NULL, bank_name VARCHAR(255) NULL, notes TEXT NULL, code VARCHAR(50) NULL, address VARCHAR(500) NULL, province VARCHAR(120) NULL, district VARCHAR(120) NULL, ward VARCHAR(120) NULL, birthday DATE NULL, created_by INT NULL, status VARCHAR(20) DEFAULT 'active', last_transaction_at DATETIME NULL, current_debt DECIMAL(15,2) DEFAULT 0, total_sales DECIMAL(15,2) DEFAULT 0, total_sales_net DECIMAL(15,2) DEFAULT 0, created_at TIMESTAMP NULL, updated_at TIMESTAMP NULL, deleted_at TIMESTAMP NULL, UNIQUE KEY unique_tax_code_per_org (organization_id, tax_code), KEY idx_customers_tax_code (tax_code)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }

@@ -198,9 +198,7 @@ class AttributeServiceTest extends CIUnitTestCase
         $payload = array_merge([
             'attribute_id' => $attributeId,
             'option_name' => 'Default',
-            'option_value' => null,
             'color_code' => null,
-            'image_url' => null,
             'sort_order' => 0,
             'status' => 'active',
             'created_at' => date('Y-m-d H:i:s'),
