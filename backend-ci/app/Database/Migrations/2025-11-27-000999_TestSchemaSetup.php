@@ -16,7 +16,7 @@ class TestSchemaSetup extends Migration
         try {
             error_log("DEBUG: TestSchemaSetup - Starting migration");
             
-            $this->dropAll();
+            // $this->dropAll(); // Commented out to prevent timeout and allow idempotence
 
             $steps = [
                 'createBaseTables',

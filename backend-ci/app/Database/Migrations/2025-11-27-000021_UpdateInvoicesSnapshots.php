@@ -24,6 +24,7 @@ class UpdateInvoicesSnapshots extends Migration
             ],
         ]);
 
+        $db = \Config\Database::connect($this->DBGroup);
         $fields = [
             'invoice_status' => ['type' => 'VARCHAR', 'constraint' => 30, 'default' => 'draft', 'null' => false],
             'invoice_type' => ['type' => 'VARCHAR', 'constraint' => 20, 'default' => 'standard', 'null' => false],
@@ -44,7 +45,12 @@ class UpdateInvoicesSnapshots extends Migration
             'exchange_rate' => ['type' => 'DECIMAL', 'constraint' => '15,6', 'default' => 1, 'null' => false],
             'last_payment_date' => ['type' => 'DATETIME', 'null' => true],
         ];
-        $this->forge->addColumn('invoices', $fields);
+        
+        foreach ($fields as $fieldName => $fieldDef) {
+            if (! $db->fieldExists($fieldName, 'invoices')) {
+                $this->forge->addColumn('invoices', [$fieldName => $fieldDef]);
+            }
+        }
 
         // Order payments table for multi-method payments.
         if (! $this->db->tableExists('order_payments')) {

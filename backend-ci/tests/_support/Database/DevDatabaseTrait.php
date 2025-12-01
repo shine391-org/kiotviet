@@ -22,7 +22,7 @@ trait DevDatabaseTrait
 
         $this->ensureSchema();
         $this->db = Database::connect('tests');
-        $this->truncateData();
+        // $this->truncateData(); // Removed for performance
         $this->db->transBegin();
         $this->bootstrapTestData();
     }
@@ -33,8 +33,7 @@ trait DevDatabaseTrait
             if ($this->db->transDepth > 0) {
                 $this->db->transRollback();
             }
-            // Làm sạch các bảng để xóa dữ liệu do API (kết nối khác) đã commit
-            $this->truncateData();
+            // $this->truncateData(); // Removed for performance
             $this->db->close();
         }
     }

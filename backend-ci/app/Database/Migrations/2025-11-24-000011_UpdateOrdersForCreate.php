@@ -14,15 +14,10 @@ class UpdateOrdersForCreate extends Migration
 {
     public function up()
     {
-        // If columns already exist (rerun), skip to avoid duplicate errors.
-        $db = \Config\Database::connect();
-        $fields = array_map('strtolower', $db->getFieldNames('orders'));
-        if (in_array('payment_method', $fields, true)) {
-            return;
-        }
-
+        $db = \Config\Database::connect($this->DBGroup);
+        
         // Extra columns for orders
-        $this->forge->addColumn('orders', [
+        $fields = [
             'order_number' => [
                 'type' => 'VARCHAR',
                 'constraint' => 30,
@@ -107,7 +102,13 @@ class UpdateOrdersForCreate extends Migration
                 'null' => true,
                 'after' => 'shipping_city',
             ],
-        ]);
+        ];
+
+        foreach ($fields as $fieldName => $fieldDef) {
+            if (! $db->fieldExists($fieldName, 'orders')) {
+                $this->forge->addColumn('orders', [$fieldName => $fieldDef]);
+            }
+        }
 
         // indexes
         $this->forge->addKey('order_number');
