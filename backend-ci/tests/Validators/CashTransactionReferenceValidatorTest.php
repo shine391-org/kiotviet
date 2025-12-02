@@ -27,7 +27,16 @@ class CashTransactionReferenceValidatorTest extends CIUnitTestCase
         if (! $this->db->tableExists('returns')) {
             $this->markTestSkipped('returns table unavailable for reference validation tests');
         }
+        $this->seedMasterData();
         $this->validator = new CashTransactionReferenceValidator($this->db);
+    }
+
+    private function seedMasterData(): void
+    {
+        $now = date('Y-m-d H:i:s');
+        $this->db->table('customers')->insert(['id' => 1, 'name' => 'Test Customer', 'customer_type' => 'individual', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('branches')->insert(['id' => 1, 'name' => 'Main', 'code' => 'B1', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('orders')->insert(['id' => 1, 'order_number' => 'ORD001', 'branch_id' => 1, 'customer_id' => 1, 'order_date' => date('Y-m-d'), 'total' => 0, 'created_at' => $now, 'updated_at' => $now]);
     }
 
     protected function tearDown(): void

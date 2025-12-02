@@ -98,6 +98,8 @@ class ReportServiceTest extends CIUnitTestCase
                 throw new \RuntimeException('Seed gl_entries failed: ' . ($err['message'] ?? ''));
             }
         }
+        $db->table('branches')->insert(['id' => 1, 'name' => 'Branch 1', 'code' => 'B1', 'created_at' => $now, 'updated_at' => $now]);
+        $db->table('products')->insert(['id' => 1, 'name' => 'Product 1', 'code' => 'P1', 'status' => 'active', 'created_at' => $now, 'updated_at' => $now]);
         $db->table('stock_bins')->insert([
             'product_id' => 1,
             'variant_id' => null,
