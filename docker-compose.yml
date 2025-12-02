@@ -1,5 +1,5 @@
 services:
-  api:
+  web:
     build:
       context: .
       dockerfile: backend-ci/Dockerfile
@@ -12,7 +12,14 @@ services:
     environment:
       - CI_ENVIRONMENT=development
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:80/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     volumes:
       # Development: mount source code for live reload
       - ./backend-ci:/var/www/html
@@ -25,9 +32,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - VITE_API_URL=http://api
+      - VITE_API_URL=http://web
     depends_on:
-      - api
+      - web
     volumes:
       # Sử dụng relative path để tránh conflict
       - ./lanocrm:/app
@@ -41,6 +48,11 @@ services:
       MYSQL_DATABASE: lanocrm_shop
       MYSQL_USER: lanocrm_user
       MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "lanocrm_user", "-pKP7n4RjcDbedSE2W8GgA" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       # Named volumes tự động dùng Docker data root (đã config ở F:)
       - db_data:/var/lib/mysql

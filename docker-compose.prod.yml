@@ -1,10 +1,8 @@
 # Docker Compose for Production Environment
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-version: '3.8'
-
 services:
-  api:
+  web:
     volumes:
       # Production volume mapping (read-only source code)
       - ./backend-ci:/var/www/html:ro
@@ -25,16 +23,19 @@ services:
           memory: 256M
 
   fe:
+    build:
+      context: ./lanocrm
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"
     volumes:
-      # Production volume mapping (read-only source code)
-      - ./lanocrm:/app:ro
-      # Writable directories only
-      - fe_build:/app/dist
+      # Nginx logs
       - fe_logs:/var/log/nginx
     environment:
       # Production environment
       - NODE_ENV=production
-    # Remove development overrides
+    depends_on:
+      - web
     deploy:
       resources:
         limits:

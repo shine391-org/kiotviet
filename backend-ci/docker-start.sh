@@ -41,10 +41,14 @@ if [ ! -f "$DB_INITIALIZED_FILE" ]; then
     if [ $MIGRATION_STATUS -eq 0 ]; then
         echo "✓ Migrations completed successfully"
         
-        # Optional: Seed demo data (only in dev/staging)
-        if [ "${CI_ENVIRONMENT:-production}" != "production" ]; then
-            echo "Seeding demo data..."
-            php spark db:seed DevDemoSeeder 2>&1 || echo "⚠ Demo seeder skipped or failed (non-critical)"
+        # Seeding based on environment
+        CURRENT_ENV=${CI_ENVIRONMENT:-production}
+        
+        if [ "$CURRENT_ENV" != "production" ]; then
+            echo "Environment: $CURRENT_ENV - Running Unified DemoSeeder..."
+            php spark db:seed DemoSeeder 2>&1 || echo "⚠ DemoSeeder skipped or failed"
+        else
+            echo "Environment: Production - Skipping auto-seeding (Manual seeding required)"
         fi
         
         # Create marker file

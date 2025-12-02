@@ -3,503 +3,64 @@
 # Exit on error
 set -e
 
-# --- Frontend Build ---
-echo "Building frontend..."
-cd lanocrm
-npm install
-npm run build
-cd ..
-
-echo "Frontend build complete."
-
-# --- Prepare deployment directory ---
-echo "Preparing deployment directory..."
-rm -rf dist
-mkdir -p dist
-
-# --- Copy backend ---
-echo "Copying backend files..."
-cp -r backend-ci dist/
-
-# --- Copy docker-start.sh to backend ---
-echo "Copying docker-start.sh..."
-cp backend-ci/docker-start.sh dist/backend-ci/
-chmod +x dist/backend-ci/docker-start.sh
-
-# --- Copy frontend ---
-echo "Copying frontend files..."
-cp -r lanocrm/build/* dist/
-
-# --- Create .htaccess files ---
-echo "Creating .htaccess files..."
-
-# Root .htaccess for React app
-cat > dist/.htaccess << EOL
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteCond %{REQUEST_FILENAME} !-l
-  RewriteRule . /index.html [L]
-</IfModule>
-EOL
-
-# Backend .htaccess for CodeIgniter
-cat > dist/backend-ci/.htaccess << EOL
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php/ [L]
-</IfModule>
-EOL
-
-echo "Htaccess files created."
-
-# --- Create Dockerfile ---
-echo "Creating Dockerfile..."
-cat > dist/Dockerfile << EOL
-FROM php:8.4-apache
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install PHP extensions
-RUN docker-php-ext-install \
-    mysqli \
-    pdo_mysql \
-    zip \
-    gd \
-    && docker-php-ext-enable mysqli pdo_mysql zip gd
-
-# Enable Apache modules
-RUN a2enmod rewrite
-
-# Set working directory
-WORKDIR /var/www/html
-
-# Copy application files
-COPY . /var/www/html/
-
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html \
-    && chmod -R 755 /var/www/html \
-    && chmod -R 777 /var/www/html/backend-ci/writable
-
-# Copy and set permissions for docker-start.sh
-COPY backend-ci/docker-start.sh /usr/local/bin/docker-start.sh
-RUN chmod +x /usr/local/bin/docker-start.sh
-
-# Expose port 80
-EXPOSE 80
-
-# Use docker-start.sh as entrypoint (handles DB wait + migration)
-CMD ["/usr/local/bin/docker-start.sh"]
-EOL
-
-echo "Dockerfile created."
-
-# --- Create docker-compose.yml ---
-echo "Creating docker-compose.yml..."
-cat > docker-compose.yml << EOL
-version: '3.8'
-
-services:
-  web:
-    build:
-      context: ./dist
-      dockerfile: Dockerfile
-    ports:
-      - "8000:80"
-    volumes:
-      - ./dist:/var/www/html
-    depends_on:
-      - db
-    environment:
-      # Environment variables
-      CI_ENVIRONMENT: production
-      APP_BASEURL: http://localhost:8000
-      # Database configuration
-      DB_HOST: db
-      DB_NAME: lanocrm_shop
-      DB_USER: lanocrm_user
-      DB_PASS: KP7n4RjcDbedSE2W8GgA
-
-  db:
-    image: mysql:8.4
-    environment:
-      MYSQL_ROOT_PASSWORD: root_password # Change this in production
-      MYSQL_DATABASE: lanocrm_shop
-      MYSQL_USER: lanocrm_user
-      MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
-    volumes:
-      - db_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    command: --default-authentication-plugin=mysql_native_password
-
-volumes:
-  db_data:
-EOL
-
-echo "docker-compose.yml created."
-
-# --- Create production environment file ---
-echo "Creating production environment file..."
-cat > dist/backend-ci/.env << EOL
-# Production Environment
-CI_ENVIRONMENT = production
-
-# Database Configuration
-database.default.hostname = db
-database.default.database = lanocrm_shop
-database.default.username = lanocrm_user
-database.default.password = KP7n4RjcDbedSE2W8GgA
-database.default.DBDriver = MySQLi
-database.default.DBPrefix = 
-database.default.port = 3306
-
-# App Configuration
-app.baseURL = 'http://localhost:8000/'
-app.indexPage = ''
-app.appTimezone = 'UTC'
-
-# Security
-app.sessionDriver = 'file'
-app.sessionSavePath = WRITEPATH . 'session'
-app.sessionMatchIP = false
-app.sessionTimeToUpdate = 300
-app.sessionRegenerateDestroy = false
-
-# Cookie
-app.cookiePrefix = ''
-app.cookieHTTPOnly = true
-app.cookieSecure = false
-app.cookieSameSite = 'Lax'
-
-# CSRF Protection
-app.CSRFProtection = true
-app.CSRFTokenName = 'csrf_test_name'
-app.CSRFCookieName = 'csrf_cookie_name'
-app.CSRFExpire = 7200
-app.CSRFRegenerate = true
-app.CSRFExcludeURIs = []
-app.CSRFSameSite = 'Lax'
-
-# Content Security Policy
-app.CSPEnabled = false
-EOL
-
-echo "Production environment file created."
-
-# --- Create deployment instructions ---
-echo "Creating deployment instructions..."
-cat > DEPLOYMENT.md << 'EOL'
-# Deployment Instructions
-
-## Prerequisites
-- Docker & Docker Compose
-- Git
-- Bash shell
-
-## Quick Deploy
-
-1. Clone repository:
-   ```bash
-   git clone <repository-url>
-   cd <repository-name>
-   ```
-
-2. Run deployment script:
-   ```bash
-   chmod +x deploy.sh
-   ./deploy.sh
-   ```
-
-3. Start application:
-   ```bash
-   docker-compose up -d --build
-   ```
-
-4. Monitor startup (wait for migration to complete):
-   ```bash
-   docker-compose logs -f api
-   ```
-   
-   Look for: `✓ Database initialization completed`
-
-5. Verify setup:
-   ```bash
-   chmod +x scripts/check-migration-status.sh
-   ./scripts/check-migration-status.sh
-   ```
-
-6. Access application:
-   - Frontend: http://localhost:8000
-   - Backend API: http://localhost:8000/backend-ci/api
-
-## Database Setup
-
-### Automatic Setup (Recommended)
-
-Database is **automatically initialized** on first container start:
-
-- ✓ Waits for database connection
-- ✓ Runs migrations automatically
-- ✓ Seeds demo data (non-production only)
-- ✓ Creates initialization marker
-
-**No manual steps required!**
-
-### Manual Setup (If Automatic Fails)
-
-If automatic migration fails:
-
-1. **Check logs:**
-   ```bash
-   docker-compose logs api | grep -i error
-   docker exec meomeo2-api-1 cat /tmp/migration.log
-   ```
-
-2. **Re-run migration:**
-   ```bash
-   # Remove marker to trigger re-run
-   docker exec meomeo2-api-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
-   
-   # Restart container
-   docker-compose restart api
-   
-   # Watch logs
-   docker-compose logs -f api
-   ```
-
-3. **Or run manually:**
-   ```bash
-   docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
-   ```
-
-### Migration Troubleshooting
-
-For detailed troubleshooting guide:
-```bash
-cat docs/MIGRATION-TROUBLESHOOTING.md
-```
-
-Quick diagnostics:
-```bash
-./scripts/check-migration-status.sh
-```
-
-## Production Deployment
-
-### 1. Pre-Deployment Checklist
-
-- [ ] Backup current database
-- [ ] Test migrations on staging
-- [ ] Update environment variables
-- [ ] Change default passwords
-- [ ] Review security settings
-
-### 2. Security Configuration
-
-**Change passwords in docker-compose.yml:**
-```yaml
-environment:
-  MYSQL_ROOT_PASSWORD: <strong-password>
-  MYSQL_PASSWORD: <strong-password>
-```
-
-**Update backend-ci/.env:**
-```ini
-CI_ENVIRONMENT = production
-# Disable demo seeder
-# Set proper base URLs
-# Configure secure session settings
-```
-
-### 3. Database Strategy for Production
-
-**Option A: Use Database Dump (Recommended)**
-```bash
-# On staging (after successful migration):
-docker exec meomeo2-db-1 mysqldump -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop > production.sql
-
-# On production:
-docker exec -i meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop < production.sql
-docker exec meomeo2-api-1 touch /var/www/html/backend-ci/writable/.db_initialized
-```
-
-**Option B: Let Auto-Migration Run**
-```bash
-# Just start containers, migration runs automatically
-docker-compose up -d --build
-
-# Monitor progress
-docker-compose logs -f api
-```
-
-### 4. Backup Strategy
-
-**Before deploy:**
-```bash
-./scripts/db-backup.sh
-```
-
-**Schedule regular backups:**
-```bash
-# Add to crontab
-0 2 * * * /path/to/scripts/db-backup.sh
-```
-
-### 5. Monitoring
-
-**Check migration status:**
-```bash
-./scripts/check-migration-status.sh
-```
-
-**Monitor logs:**
-```bash
-docker-compose logs -f api
-docker-compose logs -f db
-```
-
-**Health check:**
-```bash
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark db:health"
-```
-
-## Troubleshooting
-
-### Migration Issues
-
-See detailed guide: `docs/MIGRATION-TROUBLESHOOTING.md`
-
-**Quick fixes:**
-
-1. **Migration timeout:**
-   ```bash
-   # Check logs
-   docker exec meomeo2-api-1 cat /tmp/migration.log
-   
-   # Increase timeout in docker-start.sh if needed
-   ```
-
-2. **Tables missing:**
-   ```bash
-   # Re-run migration
-   docker exec meomeo2-api-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
-   docker-compose restart api
-   ```
-
-3. **Database connection failed:**
-   ```bash
-   # Check db container
-   docker-compose ps db
-   docker-compose logs db
-   
-   # Restart database
-   docker-compose restart db
-   sleep 10
-   docker-compose restart api
-   ```
-
-### Permission Issues
-
-```bash
-docker exec meomeo2-api-1 chmod -R 777 /var/www/html/backend-ci/writable
-```
-
-### Container Issues
-
-```bash
-# Check container status
-docker-compose ps
-
-# View logs
-docker-compose logs api
-docker-compose logs db
-
-# Restart services
-docker-compose restart api
-docker-compose restart db
-```
-
-### Frontend Not Loading
-
-```bash
-# Check if build completed
-ls -la dist/
-
-# Verify .htaccess
-cat dist/.htaccess
-
-# Check Apache logs
-docker-compose logs api | grep -i error
-```
-
-## Rollback Procedure
-
-If deployment fails:
-
-1. **Stop containers:**
-   ```bash
-   docker-compose down
-   ```
-
-2. **Restore database:**
-   ```bash
-   ./scripts/db-restore.sh backups/lanocrm_shop_YYYY-MM-DD_HH-MM-SS.sql
-   ```
-
-3. **Revert code:**
-   ```bash
-   git checkout <previous-commit>
-   ./deploy.sh
-   docker-compose up -d --build
-   ```
-
-## Performance Optimization
-
-### Database
-
-```yaml
-# In docker-compose.yml, add to db service:
-command:
-  - --default-authentication-plugin=mysql_native_password
-  - --max_connections=200
-  - --innodb_buffer_pool_size=1G
-```
-
-### PHP
-
-```dockerfile
-# In Dockerfile, add:
-RUN echo "memory_limit = 512M" > /usr/local/etc/php/conf.d/memory.ini
-RUN echo "opcache.enable=1" > /usr/local/etc/php/conf.d/opcache.ini
-```
-
-## Support
-
-For issues:
-1. Check logs: `docker-compose logs`
-2. Run diagnostics: `./scripts/check-migration-status.sh`
-3. Review troubleshooting guide: `docs/MIGRATION-TROUBLESHOOTING.md`
-4. Check migration log: `docker exec meomeo2-api-1 cat /tmp/migration.log`
-EOL
-
-echo "Deployment script complete."
+echo "=== LanoCRM Deployment Script ==="
+echo "Environment: Production"
+echo "Date: $(date)"
+echo ""
+
+# 1. Check Prerequisites
+echo "1. Checking prerequisites..."
+if ! command -v docker &> /dev/null; then
+    echo "Error: docker is not installed."
+    exit 1
+fi
+
+if ! command -v docker &> /dev/null; then
+    echo "Error: docker is not installed."
+    exit 1
+fi
+
+# Check for docker compose (v2) or docker-compose (v1)
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+else
+    echo "Error: docker-compose or docker compose is not installed."
+    exit 1
+fi
+
+# 2. Prepare Environment
+echo "2. Preparing environment..."
+if [ ! -f backend-ci/.env ]; then
+    echo "Creating backend-ci/.env from example..."
+    cp backend-ci/.env.example backend-ci/.env
+    echo "⚠️  Please update backend-ci/.env with production secrets!"
+fi
+
+# 3. Build and Deploy
+echo "3. Building and deploying containers..."
+$DOCKER_COMPOSE -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+# 4. Wait for Services
+echo "4. Waiting for services to start..."
+echo "   Waiting for Web Service to be ready..."
+sleep 10
+
+# 5. Verify Deployment
+echo "5. Verifying deployment..."
+if [ -f scripts/check-migration-status.sh ]; then
+    chmod +x scripts/check-migration-status.sh
+    ./scripts/check-migration-status.sh
+else
+    echo "   Skipping migration check (script not found)"
+fi
+
+echo ""
+echo "=== Deployment Complete ==="
+echo "Frontend: http://localhost (or your domain)"
+echo "Backend:  http://localhost/backend-ci/api"
 echo ""
 echo "Next steps:"
-echo "1. Review docker-compose.yml for production settings"
-echo "2. Run 'docker-compose up -d --build' to start"
-echo "3. See DEPLOYMENT.md for detailed instructions"
-echo ""
-echo "Application will be available at: http://localhost:8000"
+echo "1. Verify logs: $DOCKER_COMPOSE logs -f web"
+echo "2. Check health: curl http://localhost/backend-ci/api/health"

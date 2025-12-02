@@ -2,10 +2,8 @@
 # This file extends docker-compose.yml with development-specific configurations
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
 
-version: '3.8'
-
 services:
-  api:
+  web:
     volumes:
       # Override with local development volume
       - ./backend-ci:/var/www/html
@@ -28,10 +26,8 @@ services:
       - NODE_ENV=development
 
   db:
+    # Image inherited from docker-compose.yml
     volumes:
-      # Add custom MySQL configuration for development
-      - db_data:/var/lib/mysql
-      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
       # Add logs volume for debugging
       - ./logs/mysql:/var/log/mysql
     environment:
@@ -40,10 +36,8 @@ services:
       - MYSQL_LONG_QUERY_TIME=2
 
   db-test:
+    # Image inherited from docker-compose.yml
     volumes:
-      # Add custom MySQL configuration for testing
-      - test_db_data:/var/lib/mysql
-      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
       # Add logs volume for debugging
       - ./logs/mysql-test:/var/log/mysql
 

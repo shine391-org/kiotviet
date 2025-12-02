@@ -25,7 +25,7 @@ cd meomeo2
 docker-compose up -d --build
 
 # Monitor startup (wait for migration to complete)
-docker-compose logs -f api
+docker-compose logs -f web
 
 # Verify setup
 chmod +x scripts/check-migration-status.sh
@@ -35,9 +35,9 @@ chmod +x scripts/check-migration-status.sh
 ### What Happens Automatically
 
 1. ✅ Database container starts
-2. ✅ API container waits for database (max 60s)
+2. ✅ Web container waits for database (max 60s)
 3. ✅ Migrations run automatically (if not already run)
-4. ✅ Demo data seeded automatically
+4. ✅ Unified Demo data seeded automatically (DemoSeeder)
 5. ✅ Apache starts
 6. ✅ Frontend dev server starts
 
@@ -68,25 +68,25 @@ database.default.password = KP7n4RjcDbedSE2W8GgA
 
 **Reset database:**
 ```bash
-docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
-docker-compose restart api
+docker exec meomeo2-web-1 rm -f /var/www/html/writable/.db_initialized
+docker-compose restart web
 ```
 
 **Re-seed demo data:**
 ```bash
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 ```
 
 **View logs:**
 ```bash
-docker-compose logs -f api
+docker-compose logs -f web
 docker-compose logs -f fe
 docker-compose logs -f db
 ```
 
 **Run tests:**
 ```bash
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec meomeo2-web-1 vendor/bin/phpunit
 ```
 
 ---
@@ -147,7 +147,7 @@ app.baseURL = 'https://staging.yourdomain.com/'
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # Monitor startup
-docker-compose logs -f api
+docker-compose logs -f web
 
 # Verify migration
 ./scripts/check-migration-status.sh
@@ -156,12 +156,12 @@ docker-compose logs -f api
 #### 4. Seed Staging Data
 
 ```bash
-# Option 1: Use demo data
-docker exec staging-api php spark db:seed DevDemoSeeder
+# Option 1: Use unified demo data (Recommended)
+docker exec staging-web php spark db:seed DemoSeeder
 
 # Option 2: Import from production backup (sanitized)
 docker exec -i staging-db mysql -u lanocrm_user -p lanocrm_staging < staging-data.sql
-docker exec staging-api touch /var/www/html/writable/.db_initialized
+docker exec staging-web touch /var/www/html/writable/.db_initialized
 ```
 
 ### Docker Compose Files Used
@@ -176,7 +176,7 @@ docker exec staging-api touch /var/www/html/writable/.db_initialized
 docker-compose ps
 
 # View logs
-docker-compose logs -f api
+docker-compose logs -f web
 
 # Check migration status
 ./scripts/check-migration-status.sh
@@ -288,29 +288,29 @@ services:
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # Monitor migration
-docker-compose logs -f api
+docker-compose logs -f web
 
 # Verify
 ./scripts/check-migration-status.sh
 
 # Seed production master data only
-docker exec prod-api php spark db:seed ProductionSeeder
+docker exec prod-web php spark db:seed ProductionSeeder
 ```
 
 **Option B: Database Import (Recommended for migrations)**
 
 ```bash
-# Stop API to prevent writes
-docker-compose stop api
+# Stop Web Service to prevent writes
+docker-compose stop web
 
 # Import database from staging/backup
 docker exec -i prod-db mysql -u lanocrm_user -p lanocrm_prod < production-ready.sql
 
 # Create marker to skip migration
-docker exec prod-api touch /var/www/html/writable/.db_initialized
+docker exec prod-web touch /var/www/html/writable/.db_initialized
 
-# Start API
-docker-compose start api
+# Start Web Service
+docker-compose start web
 
 # Verify
 ./scripts/check-migration-status.sh
@@ -334,10 +334,10 @@ docker-compose ps
 curl https://yourdomain.com/api/health
 
 # 4. Check logs for errors
-docker-compose logs api | grep -i error
+docker-compose logs web | grep -i error
 
 # 5. Verify database connections
-docker exec prod-api php -r "new mysqli('db','lanocrm_user','password','lanocrm_prod');"
+docker exec prod-web php -r "new mysqli('db','lanocrm_user','password','lanocrm_prod');"
 
 # 6. Test frontend access
 curl -I https://yourdomain.com
@@ -359,10 +359,10 @@ curl -I https://yourdomain.com
 
 ```bash
 # View real-time logs
-docker-compose logs -f api
+docker-compose logs -f web
 
 # Check for errors
-docker-compose logs api | grep -i error | tail -50
+docker-compose logs web | grep -i error | tail -50
 
 # Monitor database
 docker-compose logs db | grep -i error
@@ -476,7 +476,7 @@ sudo apt update && sudo apt upgrade -y
 | **Environment** | Local Docker | Server | Server |
 | **Data** | Demo data | Sanitized prod data | Real data |
 | **Migration** | Auto on start | Auto on deploy | Manual/Import |
-| **Seeding** | DevDemoSeeder | StagingSeeder | ProductionSeeder |
+| **Seeding** | DemoSeeder | DemoSeeder | ProductionSeeder |
 | **Monitoring** | Logs only | Basic | Full monitoring |
 | **Backup** | Not required | Daily | Hourly + Daily + Weekly |
 | **SSL** | Not required | Recommended | Required |
@@ -492,8 +492,8 @@ sudo apt update && sudo apt upgrade -y
 **Problem:** Migration not running  
 **Solution:** Remove marker and restart
 ```bash
-docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
-docker-compose restart api
+docker exec meomeo2-web-1 rm -f /var/www/html/writable/.db_initialized
+docker-compose restart web
 ```
 
 **Problem:** Port already in use  
