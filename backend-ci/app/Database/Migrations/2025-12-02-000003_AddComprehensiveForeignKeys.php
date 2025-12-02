@@ -37,9 +37,8 @@ class AddComprehensiveForeignKeys extends Migration
 
                 $this->alignColumnToReference($table, $column, $refTable, $refColumn);
 
-                $this->forge->addColumn($table, [
-                    "CONSTRAINT {$constraint} FOREIGN KEY ({$column}) REFERENCES {$refTable}({$refColumn}) ON DELETE {$onDelete} ON UPDATE {$onUpdate}",
-                ]);
+                $sql = "ALTER TABLE {$table} ADD CONSTRAINT {$constraint} FOREIGN KEY ({$column}) REFERENCES {$refTable}({$refColumn}) ON DELETE {$onDelete} ON UPDATE {$onUpdate}";
+                $this->db->query($sql);
             }
         }
     }
@@ -113,6 +112,10 @@ class AddComprehensiveForeignKeys extends Migration
                 ['campaign_id', 'campaigns'],
                 ['customer_id', 'customers', 'id', 'SET NULL'],
                 ['lead_id', 'leads', 'id', 'SET NULL'],
+            ],
+            'cash_transactions' => [
+                ['branch_id', 'branches', 'id', 'SET NULL'],
+                ['created_by', 'users', 'id', 'SET NULL'],
             ],
             'chart_of_accounts' => [
                 ['parent_id', 'chart_of_accounts', 'id', 'SET NULL'],
