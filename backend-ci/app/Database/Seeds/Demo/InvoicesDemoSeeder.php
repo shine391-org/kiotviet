@@ -52,7 +52,9 @@ class InvoicesDemoSeeder extends Seeder
             $dueDate = $issueDate->modify('+12 days');
             $summary = $this->summarizeOrder($order, $orderItems[$order['id']] ?? []);
             [$vatRate, $vatAmount] = $this->resolveVat($order, $summary, $taxTemplates, $idx);
-            $total = round($summary['net_before_vat'] + $vatAmount, 2);
+            $total = $summary['order_total'] > 0
+                ? (float) $summary['order_total']
+                : round($summary['net_before_vat'] + $vatAmount, 2);
             $paidAmount = min((float) ($order['paid_amount'] ?? 0), $total);
             $paymentStatus = $this->paymentStatus($total, $paidAmount);
 
@@ -145,20 +147,19 @@ class InvoicesDemoSeeder extends Seeder
 
     private function summarizeOrder(array $order, array $items): array
     {
-        $goods = 0.0;
-        $discount = 0.0;
-        foreach ($items as $item) {
-            $qty = (float) ($item['quantity'] ?? 0);
-            $base = (float) ($item['base_price'] ?? 0);
-            $final = (float) ($item['final_price'] ?? 0);
-            $goods += $base * $qty;
-            $discount += max(0, ($base - $final) * $qty);
-        }
-        $shipping = (float) ($order['shipping_fee'] ?? 0);
-        $netBeforeVat = round($goods - $discount + $shipping, 2);
-        // Fallback if goods not present
-        if ($netBeforeVat <= 0 && isset($order['total'])) {
-            $netBeforeVat = (float) $order['total'];
+        // Ưu tiên lấy trực tiếp từ order để tránh sai lệch làm trôi total
+        $goods = isset($order['subtotal']) ? (float) $order['subtotal'] : 0.0;
+        $discount = isset($order['discount_total']) ? (float) $order['discount_total'] : 0.0;
+        $shipping = isset($order['shipping_fee']) ? (float) $order['shipping_fee'] : 0.0;
+
+        // Net trước VAT = (subtotal - discount) + shipping
+        $netBeforeVat = round(max(0, $goods - $discount) + $shipping, 2);
+        $orderTotal = isset($order['total']) ? (float) $order['total'] : 0.0;
+        $orderTax = isset($order['tax_total']) ? (float) $order['tax_total'] : 0.0;
+
+        // Nếu đã có total trong order thì khóa theo total để invoice khớp 1:1
+        if ($orderTotal > 0) {
+            $netBeforeVat = max(0, round($orderTotal - $orderTax, 2));
         }
 
         return [
@@ -166,6 +167,8 @@ class InvoicesDemoSeeder extends Seeder
             'discount_total' => round($discount, 2),
             'shipping_fee' => $shipping,
             'net_before_vat' => $netBeforeVat,
+            'order_total' => $orderTotal,
+            'order_tax' => $orderTax,
         ];
     }
 
@@ -190,7 +193,7 @@ class InvoicesDemoSeeder extends Seeder
     private function resolveVat(array $order, array $summary, array $taxTemplates, int $idx): array
     {
         $net = (float) $summary['net_before_vat'];
-        $vatAmount = isset($order['tax_total']) ? (float) $order['tax_total'] : 0.0;
+        $vatAmount = (float) ($summary['order_tax'] ?? ($order['tax_total'] ?? 0.0));
         $vatRate = 0.0;
 
         if (! empty($order['tax_template_id']) && isset($taxTemplates[$order['tax_template_id']])) {

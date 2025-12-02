@@ -329,11 +329,23 @@ class OrdersDemoSeeder extends Seeder
             ->get()
             ->getResultArray();
 
+        // Clean legacy orders không có order_number để tránh dữ liệu lệch total
+        $legacy = $this->db->table('orders')
+            ->select('id, order_number')
+            ->where('order_number', null)
+            ->get()
+            ->getResultArray();
+
+        $allOrders = array_merge($existing, $legacy);
+
         if (empty($existing)) {
-            return;
+            // vẫn phải xóa dữ liệu rác nếu có legacy
+            if (empty($legacy)) {
+                return;
+            }
         }
 
-        $orderIds = array_map(static fn ($row) => (int) $row['id'], $existing);
+        $orderIds = array_map(static fn ($row) => (int) $row['id'], $allOrders);
         if ($this->db->tableExists('order_status_logs')) {
             $this->db->table('order_status_logs')->whereIn('order_id', $orderIds)->delete();
         }
