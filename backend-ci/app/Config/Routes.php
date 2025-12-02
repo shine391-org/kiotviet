@@ -24,6 +24,11 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     // Backward-compat alias for legacy FE calling /users/login
     $routes->post('users/login', 'Api\\AuthController::login');
     $routes->get('health', 'Api\\HealthController::index');
+    $routes->get('dashboard/kpi-today', 'Api\\DashboardController::kpiToday');
+    $routes->get('dashboard/revenue-chart', 'Api\\DashboardController::revenueChart');
+    $routes->get('dashboard/top-products', 'Api\\DashboardController::topProducts');
+    $routes->get('dashboard/top-customers', 'Api\\DashboardController::topCustomers');
+    $routes->get('dashboard/activities', 'Api\\DashboardController::activities');
     $routes->get('products', 'Api\\ProductsController::index');
     $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');
     $routes->get('products/(:num)/detail-with-variants', 'Api\\ProductsController::detailWithVariants/$1');

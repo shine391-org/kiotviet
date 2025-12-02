@@ -55,6 +55,7 @@ use App\Repositories\DeliveryNotes\DeliveryNoteRepository;
 use App\Repositories\DeliveryNotes\DeliveryNoteItemRepository;
 use App\Repositories\Inventory\InventoryMovementRepository;
 use App\Repositories\Customers\CustomerRepository;
+use App\Repositories\Dashboard\DashboardRepository;
 use App\Repositories\OrderStatusLogs\OrderStatusLogRepository;
 use App\Repositories\Orders\OrderRepository;
 use App\Repositories\Orders\OrderPaymentRepository;
@@ -78,6 +79,7 @@ use App\Repositories\Ecommerce\EcommerceWebhookLogRepository;
 use App\Repositories\Quality\QualityInspectionRepository;
 use App\Repositories\Quality\QualityParameterRepository;
 use App\Services\Customers\CustomerService;
+use App\Services\Dashboard\DashboardService;
 use App\Services\Products\ProductService;
 use App\Services\Products\ProductImportService;
 use App\Services\Products\ProductExportService;
@@ -157,6 +159,7 @@ use App\Validators\ProductMediaDateValidator;
 use App\Validators\ProductMediaSearchValidator;
 use App\Validators\ProductMediaValidator;
 use App\Validators\CompanyValidator;
+use App\Validators\DashboardValidator;
 use App\Validators\PermissionValidator;
 use App\Validators\ShareValidator;
 use App\Validators\ProductValidator;
@@ -1317,6 +1320,37 @@ class Services extends BaseService
         }
         $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
         return new ReportService($db, static::reportValidator(false));
+    }
+
+    public static function dashboardRepository(bool $getShared = true): DashboardRepository
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('dashboardRepository');
+        }
+
+        $db = \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        return new DashboardRepository($db);
+    }
+
+    public static function dashboardValidator(bool $getShared = true): DashboardValidator
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('dashboardValidator');
+        }
+
+        return new DashboardValidator();
+    }
+
+    public static function dashboardService(bool $getShared = true): DashboardService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') {
+            return static::getSharedInstance('dashboardService');
+        }
+
+        return new DashboardService(
+            static::dashboardRepository(false),
+            static::dashboardValidator(false)
+        );
     }
 
     public static function regionalTaxService(bool $getShared = true): RegionalTaxService
