@@ -31,10 +31,10 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => '',
-        'password'     => '',
-        'database'     => '',
+        'hostname'     => 'db',
+        'username'     => 'lanocrm_user',
+        'password'     => 'KP7n4RjcDbedSE2W8GgA',
+        'database'     => 'lanocrm_shop',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -203,6 +203,12 @@ class Database extends Config
         // we don't accidentally run tests against the production database.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
+        }
+
+        // Dynamic DB Name from Environment Variable
+        $envDbName = getenv('DB_NAME');
+        if ($envDbName) {
+            $this->default['database'] = $envDbName;
         }
 
         // Load test connection from .env if provided

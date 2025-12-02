@@ -11,7 +11,6 @@
 # Environments:
 #   dev      - Development (default)
 #   staging  - Staging
-#   prod     - Production (requires confirmation)
 ###############################################################################
 
 set -e  # Exit on error
@@ -127,19 +126,9 @@ setup_environment() {
             log "Setting up staging environment..."
             COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
             ;;
-        prod)
-            warning "Production deployment test!"
-            read -p "Are you sure you want to test production deployment? (yes/no): " confirm
-            if [ "$confirm" != "yes" ]; then
-                error "Production deployment cancelled"
-                exit 1
-            fi
-            log "Setting up production environment..."
-            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
-            ;;
         *)
             error "Invalid environment: $ENVIRONMENT"
-            echo "Valid environments: dev, staging, prod"
+            echo "Valid environments: dev, staging"
             exit 1
             ;;
     esac
@@ -242,9 +231,17 @@ test_services() {
         exit 1
     fi
     
+    # Determine DB name based on environment
+    DB_NAME="lanocrm_shop"
+    if [ "$ENVIRONMENT" = "dev" ]; then
+        DB_NAME="lanocrm_dev"
+    elif [ "$ENVIRONMENT" = "staging" ]; then
+        DB_NAME="lanocrm_staging"
+    fi
+    
     # Count tables
-    log "Counting database tables..."
-    TABLE_COUNT=$(docker-compose $COMPOSE_FILES exec -T db mysql -u root -proot_password -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lanocrm_shop'" 2>/dev/null | tail -1)
+    log "Counting database tables in $DB_NAME..."
+    TABLE_COUNT=$(docker-compose $COMPOSE_FILES exec -T db mysql -u root -proot_password -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = '$DB_NAME'" 2>/dev/null | tail -1)
     if [ "$TABLE_COUNT" -ge 160 ]; then
         success "Database has $TABLE_COUNT tables (expected ~164)"
     else
@@ -298,11 +295,6 @@ test_seeding() {
         staging)
             # Check Staging Seeding
             echo "Run: docker exec staging-web php spark db:seed DemoSeeder" | tee -a "$LOG_FILE"
-            ;;
-        prod)
-            log "Production seeding test..."
-            warning "Manual seeding required for production"
-            echo "Run: docker exec prod-api php spark db:seed ProductionSeeder" | tee -a "$LOG_FILE"
             ;;
     esac
 }

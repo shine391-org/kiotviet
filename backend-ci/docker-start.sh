@@ -9,9 +9,11 @@ echo "=== Starting Application Setup ==="
 # Wait for database to be ready
 echo "Waiting for database connection..."
 for i in {1..30}; do
-  php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); exit(0);}catch(Throwable $e){ exit(1);}' 2>/dev/null
+  # Use DB_NAME from environment or default to lanocrm_shop
+  DB_NAME="${DB_NAME:-lanocrm_shop}"
+  php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); exit(0);}catch(Throwable $e){ exit(1);}' 2>/dev/null
   if [ $? -eq 0 ]; then
-    echo "✓ Database connection established"
+    echo "✓ Database connection established to $DB_NAME"
     break
   fi
   echo "  Attempt $i/30: Waiting for database..."
@@ -19,7 +21,8 @@ for i in {1..30}; do
 done
 
 # Check if we successfully connected
-php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); exit(0);}catch(Throwable $e){ echo "ERROR: Cannot connect to database\n"; exit(1);}' 2>/dev/null
+DB_NAME="${DB_NAME:-lanocrm_shop}"
+php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); exit(0);}catch(Throwable $e){ echo "ERROR: Cannot connect to database\n"; exit(1);}' 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "✗ Failed to connect to database after 60 seconds"
     exit 1

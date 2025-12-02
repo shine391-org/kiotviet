@@ -18,7 +18,13 @@ echo ""
 
 # Check database connection
 echo "Checking database connection..."
-docker exec meomeo2-api-1 php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); echo "✓ Database connected\n"; exit(0);}catch(Throwable $e){ echo "✗ Database connection failed: " . $e->getMessage() . "\n"; exit(1);}' 2>/dev/null
+# Get DB_NAME from container environment or default
+DB_NAME=$(docker exec meomeo2-api-1 printenv DB_NAME)
+DB_NAME=${DB_NAME:-lanocrm_shop}
+
+echo "Target Database: $DB_NAME"
+
+docker exec meomeo2-api-1 php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); echo "✓ Database connected\n"; exit(0);}catch(Throwable $e){ echo "✗ Database connection failed: " . $e->getMessage() . "\n"; exit(1);}' 2>/dev/null
 
 if [ $? -ne 0 ]; then
     echo "  Check if db container is running: docker-compose ps db"
@@ -46,7 +52,7 @@ echo ""
 
 # Check table count
 echo "Checking table count..."
-TABLE_COUNT=$(docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'lanocrm_shop'" -s -N 2>/dev/null)
+TABLE_COUNT=$(docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA $DB_NAME -e "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = '$DB_NAME'" -s -N 2>/dev/null)
 
 if [ -n "$TABLE_COUNT" ]; then
     echo "✓ Found $TABLE_COUNT tables in database"

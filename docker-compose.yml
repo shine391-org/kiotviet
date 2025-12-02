@@ -6,7 +6,7 @@ services:
     # docker-start.sh is now copied into container and set as CMD in Dockerfile
     # No need to override command here
     ports:
-      - "8000:80"
+      - "${APP_PORT:-8000}:80"
     env_file:
       - backend-ci/.env
     environment:
@@ -30,7 +30,7 @@ services:
       dockerfile: Dockerfile
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
     ports:
-      - "3000:3000"
+      - "${FE_PORT:-3000}:3000"
     environment:
       - VITE_API_URL=http://web
     depends_on:
@@ -44,46 +44,46 @@ services:
   db:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: lanocrm_shop
-      MYSQL_USER: lanocrm_user
-      MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_DATABASE:-lanocrm_shop} # Default database name
+      MYSQL_USER: ${DB_USER:-lanocrm_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "lanocrm_user", "-pKP7n4RjcDbedSE2W8GgA" ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "${DB_USER:-lanocrm_user}", "-p${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}" ]
       interval: 10s
       timeout: 5s
       retries: 5
     volumes:
       # Named volumes tự động dùng Docker data root (đã config ở F:)
-      - db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql # Standard volume name
       - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
 
   db-test:
     image: mysql:8.4
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
       MYSQL_DATABASE: lanocrm_test
-      MYSQL_USER: lanocrm_user
-      MYSQL_PASSWORD: KP7n4RjcDbedSE2W8GgA
+      MYSQL_USER: ${DB_USER:-lanocrm_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}
     volumes:
       - test_db_data:/var/lib/mysql
       - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     ports:
-      - "3307:3306"
+      - "${DB_TEST_PORT:-3307}:3306"
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     environment:
       PMA_HOSTS: db,db-test
-      PMA_USER: lanocrm_user
-      PMA_PASSWORD: KP7n4RjcDbedSE2W8GgA
+      PMA_USER: ${DB_USER:-lanocrm_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}
     ports:
-      - "8080:80"
+      - "${PMA_PORT:-8080}:80"
     depends_on:
       - db
       - db-test
 
 volumes:
-  db_data:
+  db_data: # Standard volume name
   test_db_data:
   node_modules_cache: # Thêm volume này cho node_modules

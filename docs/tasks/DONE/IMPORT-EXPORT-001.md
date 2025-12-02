@@ -1,44 +1,16 @@
+```yaml
 ---
-title: "IMPORT-EXPORT-001 - Import/Export Products Excel"
-id: "IMPORT-EXPORT-001-PRODUCTS-EXCEL"
-priority: "P1"
-status: "Done"
-module: "Products"
-type: "Implementation"
-tags: ["import", "export", "excel", "products", "phpspreadsheet"]
-purpose: "Implement Excel import/export functionality for products with validation and error handling"
-location: "docs/tasks/DONE"
-
-# Relationships
-dependencies: "REFACTOR-001-PRODUCT-SERVICE"
-related_to: "TESTING-PATTERNS-01, AGENT-GUIDE-01"
-implements: "PRODUCT-IMPORT-EXPORT-REQUIREMENTS"
-part_of: "PRODUCT-MODULE-ENHANCEMENT"
-
-# Metadata
-author: "AI Agent"
-created_date: "2025-11-22"
-last_updated: "2025-11-22"
-version: "1.0"
-estimated_effort: "2-3 days"
-actual_effort: "2 days"
-complexity: "Medium"
-risk_level: "Low"
-
-# Testing Information
-test_coverage: "80%"
-test_files: ["tests/Services/ProductImportServiceTest.php", "tests/Services/ProductExportServiceTest.php", "tests/Integration/Api/ProductsImportExportTest.php"]
-integration_tests: "Yes"
-
-# Deployment Information
-deployment_status: "Done"
-deployment_date: "2025-11-22"
-rollback_plan: "Yes"
-
-# Documentation Network
-links_to: ["REFACTOR-001-PRODUCT-SERVICE", "TESTING-PATTERNS-01"]
-linked_from: ["SESSION-2025-11-22-IMPORT-EXPORT"]
+title: IMPORT-EXPORT-001 - Import/Export Products Excel
+task_id: IMPORT-EXPORT-001
+priority: HIGH
+estimate: 2-3 days
+dependencies:
+  - PHPSpreadsheet library
+  - ProductService (existing)
+  - ProductValidator (existing)
+repo: backend-ci
 ---
+```
 
 ## 🎯 MỤC TIÊU
 

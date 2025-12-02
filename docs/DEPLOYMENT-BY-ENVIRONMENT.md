@@ -2,541 +2,259 @@
 
 ## 📋 Overview
 
-This guide provides specific deployment instructions for each environment: Development, Staging, and Production.
+This document explains how to deploy and manage different environments in the KiotViet CRM system.
 
----
+## 🏗️ Environment Architecture
 
-## 🏠 Development (Local Docker)
+We use a multi-environment setup with Docker Compose override files to separate concerns:
 
-### Prerequisites
-- Docker & Docker Compose
-- Git
-- 8GB RAM minimum
-- 20GB free disk space
-
-### Quick Start
-
-```bash
-# Clone repository
-git clone <repository-url>
-cd meomeo2
-
-# Start all services
-docker-compose up -d --build
-
-# Monitor startup (wait for migration to complete)
-docker-compose logs -f web
-
-# Verify setup
-chmod +x scripts/check-migration-status.sh
-./scripts/check-migration-status.sh
+```
+├── docker-compose.yml              # Base configuration
+├── docker-compose.override.yml      # Development overrides
+├── docker-compose.staging.yml       # Staging overrides
+└── docker-compose.prod.yml          # Production overrides (legacy)
 ```
 
-### What Happens Automatically
+## 🚀 Environment Types
 
-1. ✅ Database container starts
-2. ✅ Web container waits for database (max 60s)
-3. ✅ Migrations run automatically (if not already run)
-4. ✅ Unified Demo data seeded automatically (DemoSeeder)
-5. ✅ Apache starts
-6. ✅ Frontend dev server starts
+### 1. Development Environment
 
-### Access Points
+**Purpose**: Local development with hot reload and debugging
 
-- **Frontend:** http://localhost:3000
-- **Backend API:** http://localhost:8000/api
-- **phpMyAdmin:** http://localhost:8080
-- **Database:** localhost:3306
-
-### Environment Variables
-
-File: `backend-ci/.env`
-```ini
-CI_ENVIRONMENT = development
-database.default.hostname = db
-database.default.database = lanocrm_shop
-database.default.username = lanocrm_user
-database.default.password = KP7n4RjcDbedSE2W8GgA
-```
-
-### Docker Compose Files Used
-
+**Configuration Files**:
 - `docker-compose.yml` (base)
-- `docker-compose.override.yml` (dev overrides - auto-loaded)
+- `docker-compose.override.yml` (dev-specific)
 
-### Common Tasks
+**Database**: `lanocrm_dev` (Port 3306)
 
-**Reset database:**
+**Ports**:
+- Frontend: http://localhost:3000
+- Backend: http://localhost:8000
+- Database: localhost:3306
+- Test DB: localhost:3307
+- phpMyAdmin: http://localhost:8080
+
+**Features**:
+- Hot reload for frontend
+- Source code mounted for live editing
+- Debug logs enabled
+- Slow query logging enabled
+
+**Deployment Commands**:
 ```bash
-docker exec meomeo2-web-1 rm -f /var/www/html/writable/.db_initialized
-docker-compose restart web
-```
-
-**Re-seed demo data:**
-```bash
-docker exec meomeo2-web-1 php spark db:seed DemoSeeder
-```
-
-**View logs:**
-```bash
-docker-compose logs -f web
-docker-compose logs -f fe
-docker-compose logs -f db
-```
-
-**Run tests:**
-```bash
-docker exec meomeo2-web-1 vendor/bin/phpunit
-```
-
----
-
-## 🧪 Staging
-
-### Prerequisites
-- Server with Docker & Docker Compose
-- SSH access
-- Domain name (optional)
-- SSL certificate (recommended)
-
-### Deployment Steps
-
-#### 1. Prepare Server
-
-```bash
-# SSH to staging server
-ssh user@staging-server
-
-# Install Docker if not installed
-curl -fsSL https://get.docker.com | sh
-sudo usermod -aG docker $USER
-
-# Install Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-```
-
-#### 2. Clone & Configure
-
-```bash
-# Clone repository
-git clone <repository-url>
-cd meomeo2
-
-# Create staging environment file
-cp backend-ci/.env.example backend-ci/.env
-
-# Edit environment variables
-nano backend-ci/.env
-```
-
-**Staging `.env` settings:**
-```ini
-CI_ENVIRONMENT = staging
-database.default.hostname = db
-database.default.database = lanocrm_staging
-database.default.username = lanocrm_user
-database.default.password = <STRONG_PASSWORD>
-app.baseURL = 'https://staging.yourdomain.com/'
-```
-
-#### 3. Deploy
-
-```bash
-# Build and start services
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-
-# Monitor startup
-docker-compose logs -f web
-
-# Verify migration
-./scripts/check-migration-status.sh
-```
-
-#### 4. Seed Staging Data
-
-```bash
-# Option 1: Use unified demo data (Recommended)
-docker exec staging-web php spark db:seed DemoSeeder
-
-# Option 2: Import from production backup (sanitized)
-docker exec -i staging-db mysql -u lanocrm_user -p lanocrm_staging < staging-data.sql
-docker exec staging-web touch /var/www/html/writable/.db_initialized
-```
-
-### Docker Compose Files Used
-
-- `docker-compose.yml` (base)
-- `docker-compose.prod.yml` (production-like settings)
-
-### Monitoring
-
-```bash
-# Check container status
-docker-compose ps
+# Start development environment
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
 # View logs
-docker-compose logs -f web
+docker-compose -f docker-compose.yml -f docker-compose.override.yml logs -f
 
-# Check migration status
-./scripts/check-migration-status.sh
-
-# Monitor resources
-docker stats
+# Stop development environment
+docker-compose -f docker-compose.yml -f docker-compose.override.yml down
 ```
 
-### Backup Strategy
+### 2. Staging Environment
 
-```bash
-# Daily backup (add to crontab)
-0 2 * * * /path/to/scripts/db-backup.sh
+**Purpose**: Production-like testing environment
 
-# Manual backup before deploy
-./scripts/db-backup.sh
-```
-
----
-
-## 🚀 Production
-
-### Prerequisites
-- Production server with Docker & Docker Compose
-- Domain name with DNS configured
-- SSL certificate (Let's Encrypt recommended)
-- Backup strategy in place
-- Monitoring system (optional but recommended)
-
-### Pre-Deployment Checklist
-
-- [ ] Backup current database
-- [ ] Test deployment on staging
-- [ ] Review all environment variables
-- [ ] Change all default passwords
-- [ ] Verify SSL certificate
-- [ ] Plan rollback strategy
-- [ ] Notify team of deployment window
-
-### Deployment Steps
-
-#### 1. Prepare Production Server
-
-```bash
-# SSH to production server
-ssh user@production-server
-
-# Ensure Docker is installed and updated
-docker --version
-docker-compose --version
-
-# Create deployment directory
-mkdir -p /opt/lanocrm
-cd /opt/lanocrm
-```
-
-#### 2. Clone & Configure
-
-```bash
-# Clone repository (use specific tag/release)
-git clone --branch v1.0.0 <repository-url> .
-
-# Create production environment file
-cp backend-ci/.env.example backend-ci/.env
-
-# Edit with production settings
-nano backend-ci/.env
-```
-
-**Production `.env` settings:**
-```ini
-CI_ENVIRONMENT = production
-database.default.hostname = db
-database.default.database = lanocrm_prod
-database.default.username = lanocrm_user
-database.default.password = <VERY_STRONG_PASSWORD>
-app.baseURL = 'https://yourdomain.com/'
-
-# Security settings
-app.CSRFProtection = true
-app.sessionMatchIP = true
-app.cookieSecure = true
-app.cookieSameSite = 'Strict'
-
-# Logging
-LOG_THRESHOLD = 1  # Errors only
-```
-
-#### 3. Update docker-compose.prod.yml
-
-```yaml
-# Update passwords in docker-compose.prod.yml
-services:
-  db:
-    environment:
-      MYSQL_ROOT_PASSWORD: <VERY_STRONG_ROOT_PASSWORD>
-      MYSQL_PASSWORD: <VERY_STRONG_PASSWORD>
-```
-
-#### 4. Deploy Strategy
-
-**Option A: Fresh Install (Recommended for first deploy)**
-
-```bash
-# Backup first (if upgrading)
-./scripts/db-backup.sh
-
-# Build and start
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-
-# Monitor migration
-docker-compose logs -f web
-
-# Verify
-./scripts/check-migration-status.sh
-
-# Seed production master data only
-docker exec prod-web php spark db:seed ProductionSeeder
-```
-
-**Option B: Database Import (Recommended for migrations)**
-
-```bash
-# Stop Web Service to prevent writes
-docker-compose stop web
-
-# Import database from staging/backup
-docker exec -i prod-db mysql -u lanocrm_user -p lanocrm_prod < production-ready.sql
-
-# Create marker to skip migration
-docker exec prod-web touch /var/www/html/writable/.db_initialized
-
-# Start Web Service
-docker-compose start web
-
-# Verify
-./scripts/check-migration-status.sh
-```
-
-### Docker Compose Files Used
-
+**Configuration Files**:
 - `docker-compose.yml` (base)
-- `docker-compose.prod.yml` (production settings)
+- `docker-compose.staging.yml` (staging-specific)
 
-### Post-Deployment Verification
+**Database**: `lanocrm_staging` (Port 3308)
 
+**Ports**:
+- Frontend: http://localhost (port 80)
+- Backend: http://localhost/api (nginx proxy)
+- Database: localhost:3308
+- Test DB: localhost:3309
+- phpMyAdmin: http://localhost:8081
+
+**Features**:
+- Production build (optimized)
+- No source code mounting
+- Limited logging
+- Resource limits applied
+- Separate database from development
+
+**Deployment Commands**:
 ```bash
-# 1. Check all containers running
-docker-compose ps
+# Deploy staging environment
+./scripts/deploy-staging.sh
 
-# 2. Verify migration status
-./scripts/check-migration-status.sh
+# Or manually:
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
 
-# 3. Test API endpoints
-curl https://yourdomain.com/api/health
+# View logs
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml logs -f
 
-# 4. Check logs for errors
-docker-compose logs web | grep -i error
-
-# 5. Verify database connections
-docker exec prod-web php -r "new mysqli('db','lanocrm_user','password','lanocrm_prod');"
-
-# 6. Test frontend access
-curl -I https://yourdomain.com
+# Stop staging environment
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml down
 ```
 
-### Production Monitoring
+### 3. Production Environment (Legacy)
 
-#### Health Checks
+**Purpose**: Production deployment (legacy configuration)
 
-```bash
-# Add to crontab for monitoring
-*/5 * * * * curl -f https://yourdomain.com/api/health || alert-team
+**Configuration Files**:
+- `docker-compose.yml` (base)
+- `docker-compose.prod.yml` (production-specific)
 
-# Check migration status daily
-0 6 * * * /opt/lanocrm/scripts/check-migration-status.sh | mail -s "DB Status" admin@yourdomain.com
+**Database**: `lanocrm_shop` (Port 3306)
+
+**Note**: This configuration is being phased out in favor of the staging environment.
+
+## 🗄️ Database Separation
+
+| Environment | Database | Port | Volume | Purpose |
+|-------------|----------|------|--------|---------|
+| Development | lanocrm_dev | 3306 | db_dev_data | Local development |
+| Test | lanocrm_test | 3307 | test_db_data | Unit/Integration tests |
+| Staging | lanocrm_staging | 3308 | db_staging_data | Production-like testing |
+| Production (Legacy) | lanocrm_shop | 3306 | db_data | Production data |
+
+## 🔄 Git Branch to Environment Mapping
+
+```
+GitHub Branch → Environment
+├── Feat/BE → Development (local)
+├── feature/* → Development (local)
+└── main → Staging (production-like)
 ```
 
-#### Log Monitoring
+## 🛠️ Deployment Scripts
+
+### Development Deployment
 
 ```bash
-# View real-time logs
-docker-compose logs -f web
+# Quick start development
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
 
-# Check for errors
-docker-compose logs web | grep -i error | tail -50
-
-# Monitor database
-docker-compose logs db | grep -i error
+# With rebuild
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
 ```
 
-#### Resource Monitoring
+### Staging Deployment
 
 ```bash
-# Container stats
-docker stats
+# Automated staging deployment
+./scripts/deploy-staging.sh
 
-# Disk usage
-df -h
-docker system df
-
-# Database size
-docker exec prod-db mysql -u lanocrm_user -p -e "SELECT table_schema AS 'Database', ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS 'Size (MB)' FROM information_schema.tables WHERE table_schema = 'lanocrm_prod';"
+# Manual staging deployment
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d --build
 ```
 
-### Backup Strategy
+## 🔧 Environment Variables
 
-#### Automated Backups
+### Development Environment Variables
+```yaml
+CI_ENVIRONMENT: development
+LOG_THRESHOLD: 4
+DB_NAME: lanocrm_dev
+NODE_ENV: development
+VITE_API_URL: http://localhost:8000
+MYSQL_SLOW_QUERY_LOG: 1
+MYSQL_LONG_QUERY_TIME: 2
+```
+
+### Staging Environment Variables
+```yaml
+CI_ENVIRONMENT: staging
+LOG_THRESHOLD: 2
+DB_NAME: lanocrm_staging
+NODE_ENV: staging
+VITE_API_BASE_URL: /api
+MYSQL_INNODB_BUFFER_POOL_SIZE: 1G
+MYSQL_MAX_CONNECTIONS: 200
+```
+
+## 📊 Resource Allocation
+
+### Development Resources
+- **Backend**: No limits (development)
+- **Frontend**: No limits (development)
+- **Database**: Default limits
+
+### Staging Resources
+- **Backend**: 512MB limit, 256MB reservation
+- **Frontend**: 256MB limit, 128MB reservation
+- **Database**: 1GB limit, 512MB reservation
+
+## 🔍 Troubleshooting
+
+### Port Conflicts
+If you encounter port conflicts, check which ports are in use:
 
 ```bash
-# Add to crontab
-# Daily backup at 2 AM
-0 2 * * * /opt/lanocrm/scripts/db-backup.sh
+# Check all Docker ports
+docker ps --format "table {{.Names}}\t{{.Ports}}"
 
-# Weekly full backup
-0 3 * * 0 /opt/lanocrm/scripts/db-backup.sh && cp /opt/lanocrm/backups/latest.sql /backup/weekly/$(date +\%Y-\%W).sql
-
-# Monthly archive
-0 4 1 * * /opt/lanocrm/scripts/db-backup.sh && cp /opt/lanocrm/backups/latest.sql /backup/monthly/$(date +\%Y-\%m).sql
+# Check specific ports
+netstat -tulpn | grep :3000
+netstat -tulpn | grep :80
+netstat -tulpn | grep :3306
 ```
 
-#### Backup Verification
+### Database Issues
+```bash
+# Check database logs
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml logs db
+
+# Connect to database
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml exec db mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_staging
+```
+
+### Container Issues
+```bash
+# Check container status
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml ps
+
+# View container logs
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml logs [service_name]
+
+# Restart specific service
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml restart [service_name]
+```
+
+## 🚀 Best Practices
+
+1. **Always use the appropriate environment** for your workflow
+2. **Never commit sensitive data** to any environment
+3. **Use staging for testing** before deploying to production
+4. **Keep databases separate** to avoid data contamination
+5. **Monitor resource usage** in staging to catch performance issues early
+6. **Use environment-specific variables** for configuration
+7. **Test migrations** in staging before running in production
+
+## 📝 Migration from Legacy Production
+
+If you're migrating from the legacy production setup:
+
+1. **Backup existing data** from `lanocrm_shop` database
+2. **Deploy staging environment** using the new configuration
+3. **Migrate data** to `lanocrm_staging` database
+4. **Test thoroughly** in staging
+5. **Update deployment scripts** to use new configuration
+6. **Decommission legacy setup** after successful migration
+
+## 🔄 Environment Switching
+
+To switch between environments:
 
 ```bash
-# Test restore on staging
-scp production-backup.sql staging-server:/tmp/
-ssh staging-server "docker exec -i staging-db mysql -u lanocrm_user -p lanocrm_staging < /tmp/production-backup.sql"
+# Stop current environment
+docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+# OR
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml down
+
+# Start desired environment
+docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+# OR
+docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 ```
 
-### Rollback Procedure
+## 📚 Additional Resources
 
-If deployment fails:
-
-```bash
-# 1. Stop new containers
-docker-compose down
-
-# 2. Restore database
-./scripts/db-restore.sh backups/pre-deploy-backup.sql
-
-# 3. Checkout previous version
-git checkout <previous-tag>
-
-# 4. Rebuild and start
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-
-# 5. Verify
-./scripts/check-migration-status.sh
-```
-
-### Security Hardening
-
-#### 1. Firewall Rules
-
-```bash
-# Allow only necessary ports
-sudo ufw allow 22/tcp   # SSH
-sudo ufw allow 80/tcp   # HTTP
-sudo ufw allow 443/tcp  # HTTPS
-sudo ufw enable
-```
-
-#### 2. SSL/TLS Setup
-
-```bash
-# Using Let's Encrypt
-sudo apt install certbot
-sudo certbot certonly --standalone -d yourdomain.com
-
-# Update docker-compose.prod.yml to mount certificates
-```
-
-#### 3. Database Security
-
-```bash
-# Restrict database access to internal network only
-# In docker-compose.prod.yml, remove ports exposure for db service
-```
-
-#### 4. Regular Updates
-
-```bash
-# Update Docker images monthly
-docker-compose pull
-docker-compose up -d --build
-
-# Update system packages
-sudo apt update && sudo apt upgrade -y
-```
-
----
-
-## 📊 Comparison Matrix
-
-| Feature | Development | Staging | Production |
-|---------|-------------|---------|------------|
-| **Environment** | Local Docker | Server | Server |
-| **Data** | Demo data | Sanitized prod data | Real data |
-| **Migration** | Auto on start | Auto on deploy | Manual/Import |
-| **Seeding** | DemoSeeder | DemoSeeder | ProductionSeeder |
-| **Monitoring** | Logs only | Basic | Full monitoring |
-| **Backup** | Not required | Daily | Hourly + Daily + Weekly |
-| **SSL** | Not required | Recommended | Required |
-| **Resources** | 2GB RAM | 4GB RAM | 8GB+ RAM |
-| **Compose Files** | yml + override | yml + prod | yml + prod |
-
----
-
-## 🆘 Troubleshooting by Environment
-
-### Development Issues
-
-**Problem:** Migration not running  
-**Solution:** Remove marker and restart
-```bash
-docker exec meomeo2-web-1 rm -f /var/www/html/writable/.db_initialized
-docker-compose restart web
-```
-
-**Problem:** Port already in use  
-**Solution:** Change ports in docker-compose.yml or stop conflicting service
-
-### Staging Issues
-
-**Problem:** Out of disk space  
-**Solution:** Clean up old images and volumes
-```bash
-docker system prune -a
-docker volume prune
-```
-
-**Problem:** Slow performance  
-**Solution:** Increase resources in docker-compose.prod.yml
-
-### Production Issues
-
-**Problem:** Database connection timeout  
-**Solution:** Check database container and increase connection pool
-
-**Problem:** High memory usage  
-**Solution:** Optimize PHP memory limit and database buffer pool
-
----
-
-## 📚 Related Documentation
-
-- **Migration Guide:** [`docs/MIGRATION-TROUBLESHOOTING.md`](MIGRATION-TROUBLESHOOTING.md)
-- **Seeding Strategy:** [`docs/SEEDING-STRATEGY.md`](SEEDING-STRATEGY.md)
-- **Quick Reference:** [`docs/MIGRATION-QUICK-REFERENCE.md`](MIGRATION-QUICK-REFERENCE.md)
-- **Main Deployment:** [`DEPLOYMENT.md`](../DEPLOYMENT.md)
-
----
-
-## 🎯 Next Steps After Deployment
-
-1. ✅ Verify all services running
-2. ✅ Test critical API endpoints
-3. ✅ Check frontend loads correctly
-4. ✅ Verify database migration status
-5. ✅ Set up monitoring alerts
-6. ✅ Configure automated backups
-7. ✅ Document any custom configurations
-8. ✅ Train team on deployment process
+- [Docker Compose Documentation](https://docs.docker.com/compose/)
+- [Environment Variables Guide](../ENVIRONMENT-VARIABLES.md)
+- [Database Management Guide](../DATABASE-MANAGEMENT.md)
+- [Troubleshooting Guide](../TROUBLESHOOTING.md)

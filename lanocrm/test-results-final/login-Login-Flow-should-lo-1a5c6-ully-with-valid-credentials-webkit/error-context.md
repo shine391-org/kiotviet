@@ -1,0 +1,391 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link "LanoCRM" [ref=e7] [cursor=pointer]:
+          - /url: /dashboard
+          - img "LanoCRM" [ref=e8]
+        - generic [ref=e9]:
+          - button "Notifications" [ref=e10] [cursor=pointer]:
+            - img "bell" [ref=e11]:
+              - img [ref=e12]
+            - generic [ref=e14]: "3"
+          - button "Settings" [ref=e15] [cursor=pointer]:
+            - img "setting" [ref=e16]:
+              - img [ref=e17]
+          - button "User menu" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: A
+            - generic [ref=e22]: Admin
+      - navigation [ref=e24]:
+        - list [ref=e26]:
+          - listitem [ref=e27]:
+            - link "appstore Tổng quan" [ref=e28] [cursor=pointer]:
+              - /url: /dashboard
+              - img "appstore" [ref=e30]:
+                - img [ref=e31]
+              - generic [ref=e33]: Tổng quan
+          - listitem [ref=e34]:
+            - button "shopping Hàng hóa" [ref=e36] [cursor=pointer]:
+              - img "shopping" [ref=e38]:
+                - img [ref=e39]
+              - generic [ref=e41]: Hàng hóa
+          - listitem [ref=e42]:
+            - button "file-text Đơn hàng" [ref=e44] [cursor=pointer]:
+              - img "file-text" [ref=e46]:
+                - img [ref=e47]
+              - generic [ref=e49]: Đơn hàng
+          - listitem [ref=e50]:
+            - button "team Khách hàng" [ref=e52] [cursor=pointer]:
+              - img "team" [ref=e54]:
+                - img [ref=e55]
+              - generic [ref=e57]: Khách hàng
+          - listitem [ref=e58]:
+            - link "wallet Sổ quỹ" [ref=e59] [cursor=pointer]:
+              - /url: /cash
+              - img "wallet" [ref=e61]:
+                - img [ref=e62]
+              - generic [ref=e64]: Sổ quỹ
+          - listitem [ref=e65]:
+            - button "bar-chart Báo cáo" [ref=e67] [cursor=pointer]:
+              - img "bar-chart" [ref=e69]:
+                - img [ref=e70]
+              - generic [ref=e72]: Báo cáo
+          - listitem [ref=e73]:
+            - link "shop Bán online" [ref=e74] [cursor=pointer]:
+              - /url: /online
+              - img "shop" [ref=e76]:
+                - img [ref=e77]
+              - generic [ref=e79]: Bán online
+        - link "shopping-cart Bán hàng" [ref=e80] [cursor=pointer]:
+          - /url: /sales
+          - img "shopping-cart" [ref=e81]:
+            - img [ref=e82]
+          - generic [ref=e84]: Bán hàng
+    - main [ref=e85]:
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - paragraph [ref=e90]: Tổng quan
+            - heading "Xin chào, devadmin!" [level=1] [ref=e91]
+            - paragraph [ref=e92]: Ảnh chụp nhanh hiệu suất bán hàng hôm nay
+          - generic [ref=e93]:
+            - generic [ref=e95]: Cập nhật Vừa cập nhật
+            - button "Làm mới dữ liệu" [ref=e96] [cursor=pointer]:
+              - img "reload" [ref=e97]:
+                - img [ref=e98]
+              - generic [ref=e100]: Làm mới
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - generic [ref=e106]: Kết quả bán hàng hôm nay
+              - generic [ref=e107]:
+                - generic [ref=e108]:
+                  - generic [ref=e109]:
+                    - generic [ref=e110]: 💰
+                    - generic [ref=e111]:
+                      - paragraph [ref=e112]: Doanh thu
+                      - paragraph [ref=e113]: 68,190,000 đ
+                  - generic [ref=e114]:
+                    - generic [ref=e115]: 📦
+                    - generic [ref=e116]:
+                      - paragraph [ref=e117]: Trả hàng
+                      - paragraph [ref=e118]: 0 đ
+                  - generic [ref=e119]:
+                    - generic [ref=e120]: 📉
+                    - generic [ref=e121]:
+                      - paragraph [ref=e122]: Doanh thu thuần
+                      - paragraph [ref=e123]: 66,190,000 đ
+                      - generic [ref=e124]:
+                        - img "arrow-down" [ref=e125]:
+                          - img [ref=e126]
+                        - generic [ref=e128]: "-47.78%"
+                        - generic [ref=e129]: so với cùng kỳ tháng trước
+                - paragraph [ref=e130]: Không thể tải KPI, hiển thị dữ liệu mẫu.
+            - generic [ref=e131]:
+              - generic [ref=e133]:
+                - generic [ref=e134]: Doanh thu thuần
+                - generic [ref=e136]:
+                  - generic [ref=e137]: Tổng
+                  - generic [ref=e138]: 66,190,000
+                  - generic [ref=e139]: Dữ liệu mẫu
+              - generic [ref=e140]:
+                - generic [ref=e141]:
+                  - generic [ref=e142]:
+                    - button "Cột dọc" [ref=e143] [cursor=pointer]:
+                      - img "column-height" [ref=e144]:
+                        - img [ref=e145]
+                    - button "Thanh ngang" [ref=e147] [cursor=pointer]:
+                      - img "bar-chart" [ref=e148]:
+                        - img [ref=e149]
+                  - generic [ref=e151] [cursor=pointer]:
+                    - generic [ref=e152]:
+                      - generic "Tháng này" [ref=e153]
+                      - combobox [ref=e154]
+                    - img "down" [ref=e156]:
+                      - img [ref=e157]
+                  - radiogroup "segmented control" [ref=e159]:
+                    - generic [ref=e160]:
+                      - generic [ref=e161] [cursor=pointer]:
+                        - radio "Theo ngày" [checked]
+                        - radio "Theo ngày" [checked] [ref=e162]
+                      - generic [ref=e163] [cursor=pointer]:
+                        - radio "Theo giờ"
+                        - radio "Theo giờ" [ref=e164]
+                      - generic [ref=e165] [cursor=pointer]:
+                        - radio "Theo thứ"
+                        - radio "Theo thứ" [ref=e166]
+                - generic [ref=e167]:
+                  - img "Biểu đồ doanh thu" [ref=e168]:
+                    - img [ref=e169]
+                  - paragraph [ref=e170]: Không thể tải biểu đồ, hiển thị dữ liệu mẫu.
+            - generic [ref=e171]:
+              - generic [ref=e172]:
+                - generic [ref=e174]:
+                  - generic [ref=e175]: Top 10 hàng bán chạy
+                  - generic [ref=e177]:
+                    - generic [ref=e178] [cursor=pointer]:
+                      - generic [ref=e179]:
+                        - generic "Theo doanh thu thuần" [ref=e180]
+                        - combobox [ref=e181]
+                      - img "down" [ref=e183]:
+                        - img [ref=e184]
+                    - generic [ref=e186] [cursor=pointer]:
+                      - generic [ref=e187]:
+                        - generic "Tháng này" [ref=e188]
+                        - combobox [ref=e189]
+                      - img "down" [ref=e191]:
+                        - img [ref=e192]
+                - generic [ref=e194]:
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: Dữ liệu mẫu
+                    - generic [ref=e197]:
+                      - generic "Túi Clutch da sáp ong mạ khóa handmade khâu tay thủ công Lano TLHD..." [ref=e198]:
+                        - generic [ref=e199]: "1."
+                        - text: Túi Clutch da sáp ong mạ khóa handmade khâu tay thủ công Lano TLHD...
+                      - generic [ref=e202]: 8.0 tr
+                    - generic [ref=e203]:
+                      - generic "Cặp nam công sở da bò cao cấp CD013" [ref=e204]:
+                        - generic [ref=e205]: "2."
+                        - text: Cặp nam công sở da bò cao cấp CD013
+                      - generic [ref=e208]: 4.7 tr
+                    - generic [ref=e209]:
+                      - generic "Túi gài theo chiều da sáp ong khâu tay thủ công 100% Lano TLHD..." [ref=e210]:
+                        - generic [ref=e211]: "3."
+                        - text: Túi gài theo chiều da sáp ong khâu tay thủ công 100% Lano TLHD...
+                      - generic [ref=e214]: 3.0 tr
+                    - generic [ref=e215]:
+                      - generic "Cặp sách nam da bò có gài mạ đồng Lano VCTK05 - D" [ref=e216]:
+                        - generic [ref=e217]: "4."
+                        - text: Cặp sách nam da bò có gài mạ đồng Lano VCTK05 - D
+                      - generic [ref=e220]: 2.1 tr
+                    - generic [ref=e221]:
+                      - generic "Ví dài nam da bò handmade dập logo" [ref=e222]:
+                        - generic [ref=e223]: "5."
+                        - text: Ví dài nam da bò handmade dập logo
+                      - generic [ref=e226]: 2.0 tr
+                    - generic [ref=e227]:
+                      - generic "Dây lưng da bò handmade da sáp" [ref=e228]:
+                        - generic [ref=e229]: "6."
+                        - text: Dây lưng da bò handmade da sáp
+                      - generic [ref=e232]: 1.9 tr
+                    - generic [ref=e233]:
+                      - generic "Ví da nam cao cấp màu đen Lano CN-01" [ref=e234]:
+                        - generic [ref=e235]: "7."
+                        - text: Ví da nam cao cấp màu đen Lano CN-01
+                      - generic [ref=e238]: 1.6 tr
+                    - generic [ref=e239]:
+                      - generic "Cặp nam da bò cao cấp mã mới 2020 - Dan" [ref=e240]:
+                        - generic [ref=e241]: "8."
+                        - text: Cặp nam da bò cao cấp mã mới 2020 - Dan
+                      - generic [ref=e244]: 1.5 tr
+                    - generic [ref=e245]:
+                      - generic "Cặp nam đeo chéo cao cấp da bò CD013 - NS" [ref=e246]:
+                        - generic [ref=e247]: "9."
+                        - text: Cặp nam đeo chéo cao cấp da bò CD013 - NS
+                      - generic [ref=e250]: 900,000
+                    - generic [ref=e251]:
+                      - generic "Cặp sách nam công sở da bò đen khóa kéo Lano TLHD7" [ref=e252]:
+                        - generic [ref=e253]: "10."
+                        - text: Cặp sách nam công sở da bò đen khóa kéo Lano TLHD7
+                      - generic [ref=e256]: 800,000
+                  - paragraph [ref=e257]: Hiển thị dữ liệu mẫu do lỗi tải.
+              - generic [ref=e258]:
+                - generic [ref=e260]:
+                  - generic [ref=e261]: Top 10 khách mua nhiều nhất
+                  - generic [ref=e263] [cursor=pointer]:
+                    - generic [ref=e264]:
+                      - generic "Tháng này" [ref=e265]
+                      - combobox [ref=e266]
+                    - img "down" [ref=e268]:
+                      - img [ref=e269]
+                - generic [ref=e271]:
+                  - generic [ref=e272]:
+                    - generic [ref=e273]: Dữ liệu mẫu
+                    - generic [ref=e274]:
+                      - generic "Thái Anh" [ref=e275]:
+                        - generic [ref=e276]: "1."
+                        - text: Thái Anh
+                      - generic [ref=e279]: 8.0 tr
+                    - generic [ref=e280]:
+                      - generic "chu Hiếu" [ref=e281]:
+                        - generic [ref=e282]: "2."
+                        - text: chu Hiếu
+                      - generic [ref=e285]: 4.5 tr
+                    - generic [ref=e286]:
+                      - generic "A.Triều" [ref=e287]:
+                        - generic [ref=e288]: "3."
+                        - text: A.Triều
+                      - generic [ref=e291]: 4.2 tr
+                    - generic [ref=e292]:
+                      - generic "Anh Vũ" [ref=e293]:
+                        - generic [ref=e294]: "4."
+                        - text: Anh Vũ
+                      - generic [ref=e297]: 4.0 tr
+                    - generic [ref=e298]:
+                      - generic "C trang" [ref=e299]:
+                        - generic [ref=e300]: "5."
+                        - text: C trang
+                      - generic [ref=e303]: 3.7 tr
+                    - generic [ref=e304]:
+                      - generic "Lê Thanh Hà" [ref=e305]:
+                        - generic [ref=e306]: "6."
+                        - text: Lê Thanh Hà
+                      - generic [ref=e309]: 3.0 tr
+                    - generic [ref=e310]:
+                      - generic "A Trí" [ref=e311]:
+                        - generic [ref=e312]: "7."
+                        - text: A Trí
+                      - generic [ref=e315]: 2.9 tr
+                    - generic [ref=e316]:
+                      - generic "A Mạnh" [ref=e317]:
+                        - generic [ref=e318]: "8."
+                        - text: A Mạnh
+                      - generic [ref=e321]: 2.7 tr
+                    - generic [ref=e322]:
+                      - generic "Nguyễn Đình Long" [ref=e323]:
+                        - generic [ref=e324]: "9."
+                        - text: Nguyễn Đình Long
+                      - generic [ref=e327]: 2.4 tr
+                    - generic [ref=e328]:
+                      - generic "a Hoàng" [ref=e329]:
+                        - generic [ref=e330]: "10."
+                        - text: a Hoàng
+                      - generic [ref=e333]: 2.1 tr
+                  - paragraph [ref=e334]: Hiển thị dữ liệu mẫu do lỗi tải.
+          - generic [ref=e335]:
+            - generic [ref=e337]:
+              - generic [ref=e338]: Hoạt động gần đây
+              - generic [ref=e340] [cursor=pointer]:
+                - generic [ref=e341]:
+                  - generic "15 mục" [ref=e342]
+                  - combobox [ref=e343]
+                - img "down" [ref=e345]:
+                  - img [ref=e346]
+            - generic [ref=e348]:
+              - list [ref=e349]:
+                - listitem [ref=e350]:
+                  - generic [ref=e351]: 🚚
+                  - generic [ref=e352]:
+                    - generic [ref=e353]:
+                      - generic [ref=e354]: nhung
+                      - generic [ref=e355]: Giao hàng
+                    - generic [ref=e356]:
+                      - link "2,150,000 đ" [ref=e357] [cursor=pointer]:
+                        - /url: "#/invoices?code=GYNTHBCE"
+                      - generic [ref=e358]: 18 giờ trước
+                - listitem [ref=e359]:
+                  - generic [ref=e360]: ↩️
+                  - generic [ref=e361]:
+                    - generic [ref=e362]:
+                      - generic [ref=e363]: nhung
+                      - generic [ref=e364]: Nhận trả hàng
+                    - generic [ref=e365]:
+                      - link "1,800,000 đ" [ref=e366] [cursor=pointer]:
+                        - /url: "#/returns?code=GYNT8435"
+                      - generic [ref=e367]: 2 ngày trước
+                - listitem [ref=e368]:
+                  - generic [ref=e369]: 📦
+                  - generic [ref=e370]:
+                    - generic [ref=e371]:
+                      - generic [ref=e372]: Chị Phương Anh
+                      - generic [ref=e373]: Nhập hàng
+                    - generic [ref=e374]:
+                      - link "1,050,000 đ" [ref=e375] [cursor=pointer]:
+                        - /url: "#/purchase-orders/po-1050"
+                      - generic [ref=e376]: 2 ngày trước
+                - listitem [ref=e377]:
+                  - generic [ref=e378]: 🧾
+                  - generic [ref=e379]:
+                    - generic [ref=e380]:
+                      - generic [ref=e381]: nhung
+                      - generic [ref=e382]: Bán đơn hàng
+                    - generic [ref=e383]:
+                      - link "1,800,000 đ" [ref=e384] [cursor=pointer]:
+                        - /url: "#/invoices?code=INV-1800"
+                      - generic [ref=e385]: 2 ngày trước
+                - listitem [ref=e386]:
+                  - generic [ref=e387]: 🚚
+                  - generic [ref=e388]:
+                    - generic [ref=e389]:
+                      - generic [ref=e390]: nhung
+                      - generic [ref=e391]: Giao hàng
+                    - generic [ref=e392]:
+                      - link "1,800,000 đ" [ref=e393] [cursor=pointer]:
+                        - /url: "#/deliveries/GYNT783X"
+                      - generic [ref=e394]: 2 ngày trước
+                - listitem [ref=e395]:
+                  - generic [ref=e396]: 📦
+                  - generic [ref=e397]:
+                    - generic [ref=e398]:
+                      - generic [ref=e399]: Chị Phương Anh
+                      - generic [ref=e400]: Nhập hàng
+                    - generic [ref=e401]:
+                      - link "1,050,000 đ" [ref=e402] [cursor=pointer]:
+                        - /url: "#/purchase-orders/PO-21"
+                      - generic [ref=e403]: 2 ngày trước
+                - listitem [ref=e404]:
+                  - generic [ref=e405]: ↩️
+                  - generic [ref=e406]:
+                    - generic [ref=e407]:
+                      - generic [ref=e408]: Chị Phương Anh
+                      - generic [ref=e409]: Nhận trả hàng
+                    - generic [ref=e410]:
+                      - link "1,050,000 đ" [ref=e411] [cursor=pointer]:
+                        - /url: "#/returns/RT-1050"
+                      - generic [ref=e412]: 2 ngày trước
+                - listitem [ref=e413]:
+                  - generic [ref=e414]: 🧾
+                  - generic [ref=e415]:
+                    - generic [ref=e416]:
+                      - generic [ref=e417]: nhung
+                      - generic [ref=e418]: Bán đơn hàng
+                    - generic [ref=e419]:
+                      - link "800,000 đ" [ref=e420] [cursor=pointer]:
+                        - /url: "#/invoices/INV-800"
+                      - generic [ref=e421]: 2 ngày trước
+                - listitem [ref=e422]:
+                  - generic [ref=e423]: 🚚
+                  - generic [ref=e424]:
+                    - generic [ref=e425]:
+                      - generic [ref=e426]: nhung
+                      - generic [ref=e427]: Giao hàng nhanh
+                    - generic [ref=e428]:
+                      - link "1,800,000 đ" [ref=e429] [cursor=pointer]:
+                        - /url: "#/deliveries/GYNTDEEP"
+                      - generic [ref=e430]: 3 ngày trước
+                - listitem [ref=e431]:
+                  - generic [ref=e432]: 🧾
+                  - generic [ref=e433]:
+                    - generic [ref=e434]:
+                      - generic [ref=e435]: nhung
+                      - generic [ref=e436]: Bán đơn hàng
+                    - generic [ref=e437]:
+                      - link "1,500,000 đ" [ref=e438] [cursor=pointer]:
+                        - /url: "#/invoices/INV-1500"
+                      - generic [ref=e439]: 3 ngày trước
+              - paragraph [ref=e440]: Hiển thị dữ liệu mẫu do lỗi tải.
+  - region "Notifications Alt+T"
+```

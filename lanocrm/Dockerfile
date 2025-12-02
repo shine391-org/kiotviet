@@ -11,4 +11,6 @@ COPY . .
 
 EXPOSE 3000
 
-CMD ["npm","run","dev","--","--host","0.0.0.0","--port","3000"]
+# Use shell form to allow variable expansion if needed, but exec form is preferred for signal handling
+# However, for dev server with npm install, shell form is practical
+CMD ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0 --port 3000"]

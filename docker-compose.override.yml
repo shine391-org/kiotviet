@@ -13,8 +13,10 @@ services:
       # Enable debug mode in development
       - CI_ENVIRONMENT=development
       - LOG_THRESHOLD=4
+      - DB_NAME=lanocrm_dev
 
   fe:
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
     volumes:
       # Override with local development volume
       - ./lanocrm:/app
@@ -22,16 +24,20 @@ services:
       - node_modules_cache:/app/node_modules
     environment:
       # Enable hot reload in development
-      - VITE_API_URL=http://localhost:8000
+      - VITE_API_URL=http://web
       - NODE_ENV=development
+      - DB_NAME=lanocrm_dev
 
   db:
     # Image inherited from docker-compose.yml
     volumes:
+      # Override with dev data volume
+      - db_dev_data:/var/lib/mysql
       # Add logs volume for debugging
       - ./logs/mysql:/var/log/mysql
     environment:
       # Enable slow query log in development
+      - MYSQL_DATABASE=lanocrm_dev
       - MYSQL_SLOW_QUERY_LOG=1
       - MYSQL_LONG_QUERY_TIME=2
 
@@ -43,6 +49,8 @@ services:
 
 volumes:
   # Define additional volumes for development
+  db_dev_data:
+    driver: local
   api_logs:
     driver: local
   mysql_logs:
