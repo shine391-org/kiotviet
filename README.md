@@ -29,6 +29,8 @@ This file contains:
 
 **Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide
 
+**Testing:** See [TESTING.md](TESTING.md) for testing guide and commands
+
 ---
 
 ## 🏗️ Architecture Quick Reference
