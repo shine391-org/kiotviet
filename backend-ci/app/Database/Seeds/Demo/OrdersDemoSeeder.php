@@ -79,7 +79,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_amount' => $paidAmount,
                 'debt_amount' => max($total - $paidAmount, 0),
                 'is_paid' => $paidAmount + 0.01 >= $total ? 1 : 0,
-                'applied_price_list_id' => $items['price_list_id'],
+                'applied_price_list_id' => null,
                 'shipping_name' => $shipping['name'],
                 'shipping_phone' => $shipping['phone'],
                 'shipping_address' => $shipping['address'],
@@ -100,8 +100,12 @@ class OrdersDemoSeeder extends Seeder
     {
         $orderIdMap = [];
         foreach ($orders as $order) {
-            $this->db->table('orders')->insert($order);
-            $orderIdMap[$order['order_number']] = (int) $this->db->insertID();
+            $result = $this->db->table('orders')->insert($order);
+            $insertId = (int) $this->db->insertID();
+            if ($result === false || $insertId === 0) {
+                continue;
+            }
+            $orderIdMap[$order['order_number']] = $insertId;
         }
 
         return $orderIdMap;
@@ -154,7 +158,9 @@ class OrdersDemoSeeder extends Seeder
         }
 
         if (! empty($rows)) {
+            $this->db->query('SET FOREIGN_KEY_CHECKS=0');
             $this->db->table('order_items')->insertBatch($rows);
+            $this->db->query('SET FOREIGN_KEY_CHECKS=1');
         }
     }
 

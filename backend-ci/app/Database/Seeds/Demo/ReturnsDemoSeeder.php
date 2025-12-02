@@ -205,12 +205,15 @@ class ReturnsDemoSeeder extends Seeder
     {
         $returnIds = [];
         if ($this->db->tableExists('returns')) {
-            $rows = $this->db->table('returns')
+            $query = $this->db->table('returns')
                 ->select('id')
                 ->like('return_number', 'RET-DEMO-', 'after')
-                ->get()
-                ->getResultArray();
-            $returnIds = array_map(static fn ($row) => (int) $row['id'], $rows);
+                ->get();
+
+            if ($query !== false) {
+                $rows = $query->getResultArray();
+                $returnIds = array_map(static fn ($row) => (int) $row['id'], $rows);
+            }
         }
 
         if (! empty($returnIds) && $this->db->tableExists('return_items')) {

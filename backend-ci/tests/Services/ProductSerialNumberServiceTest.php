@@ -25,7 +25,8 @@ class ProductSerialNumberServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetProductBatchSerialSchema();
-        $repo = new ProductSerialNumberRepository(null, $this->db);
+        $model = new \App\Models\ProductSerialNumberModel($this->db);
+        $repo = new ProductSerialNumberRepository($model, $this->db);
         $this->service = new ProductSerialNumberService($repo, new ProductSerialValidator());
         $this->seedProduct();
     }
@@ -120,6 +121,22 @@ class ProductSerialNumberServiceTest extends CIUnitTestCase
             'code' => 'SN-P',
             'name' => 'Serial Product',
             'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        // Seed Orders
+        $this->db->table('orders')->insert([
+            'id' => 5,
+            'order_number' => 'ORD-005',
+            'status' => 'completed',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table('orders')->insert([
+            'id' => 9,
+            'order_number' => 'ORD-009',
+            'status' => 'pending',
             'created_at' => $now,
             'updated_at' => $now,
         ]);

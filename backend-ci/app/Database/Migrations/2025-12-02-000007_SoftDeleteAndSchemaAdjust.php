@@ -59,6 +59,10 @@ class SoftDeleteAndSchemaAdjust extends Migration
         if (! $this->db->tableExists('orders')) {
             return;
         }
+
+        $this->fillMissingOrderNumbers();
+        $this->normalizeOrderMoneyNulls();
+
         $cols = [
             'order_number' => 'VARCHAR(50) NOT NULL',
             'tax_total' => 'DECIMAL(15,2) NOT NULL DEFAULT 0.00',
@@ -73,7 +77,9 @@ class SoftDeleteAndSchemaAdjust extends Migration
             'debt_amount' => 'DECIMAL(15,2) NOT NULL DEFAULT 0.00',
         ];
         foreach ($cols as $col => $type) {
-            $this->db->query("ALTER TABLE orders MODIFY {$col} {$type}");
+            if ($this->columnExists('orders', $col)) {
+                $this->db->query("ALTER TABLE orders MODIFY {$col} {$type}");
+            }
         }
     }
 
@@ -109,10 +115,61 @@ class SoftDeleteAndSchemaAdjust extends Migration
             }
             foreach ($keys as $cols) {
                 $name = 'idx_' . implode('_', $cols);
+                if ($this->indexExists($table, $name)) {
+                    continue;
+                }
                 $this->forge->addKey($cols, false, false, $name);
                 $this->forge->processIndexes($table);
             }
         }
+    }
+
+    private function indexExists(string $table, string $indexName): bool
+    {
+        $sql = 'SELECT 1 FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ? LIMIT 1';
+        return (bool) $this->db->query($sql, [$this->db->getDatabase(), $table, $indexName])->getRowArray();
+    }
+
+    private function fillMissingOrderNumbers(): void
+    {
+        if (! $this->columnExists('orders', 'order_number')) {
+            return;
+        }
+
+        // Đảm bảo giá trị non-null trước khi set NOT NULL
+        $this->db->query("UPDATE orders SET order_number = CONCAT('ORD-', LPAD(id, 6, '0')) WHERE order_number IS NULL OR order_number = ''");
+    }
+
+    private function normalizeOrderMoneyNulls(): void
+    {
+        $numericCols = [
+            'tax_total',
+            'rounding_adjustment',
+            'coupon_discount',
+            'loyalty_discount',
+            'subtotal',
+            'discount_total',
+            'shipping_fee',
+            'total',
+            'paid_amount',
+            'debt_amount',
+        ];
+
+        foreach ($numericCols as $col) {
+            if ($this->columnExists('orders', $col)) {
+                $this->db->query("UPDATE orders SET {$col} = 0 WHERE {$col} IS NULL");
+            }
+        }
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        if (! $this->db->tableExists($table)) {
+            return false;
+        }
+
+        $sql = "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+        return (bool) $this->db->query($sql, [$this->db->getDatabase(), $table, $column])->getRowArray();
     }
 
     private function isSqlite(): bool

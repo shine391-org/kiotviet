@@ -28,9 +28,14 @@ class ProductBatchServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetProductBatchSerialSchema();
+        
         $repo = new ProductBatchRepository(null, $this->db);
         $inventoryRepo = new InventoryRepository(null, $this->db);
-        $movementRepo = new InventoryMovementRepository(null, $this->db);
+        
+        // Fix: Inject connection into Model to share transaction
+        $movementModel = new \App\Models\InventoryMovementModel($this->db);
+        $movementRepo = new InventoryMovementRepository($movementModel, $this->db);
+        
         $logger = new InventoryMovementLogger($movementRepo);
         $this->service = new ProductBatchService($repo, new ProductBatchValidator(), $inventoryRepo, $logger);
         $this->seedProduct();
@@ -141,6 +146,29 @@ class ProductBatchServiceTest extends CIUnitTestCase
     private function seedProduct(): void
     {
         $now = date('Y-m-d H:i:s');
+        
+        // Seed Branch
+        $this->db->table('branches')->insert([
+            'id' => 1,
+            'name' => 'Headquarters',
+            'code' => 'HQ',
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        // Seed Warehouse
+        $this->db->table('warehouses')->insert([
+            'id' => 1,
+            'branch_id' => 1,
+            'name' => 'Main Warehouse',
+            'code' => 'WH001',
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
+        // Seed Product
         $this->db->table('products')->insert([
             'id' => 1,
             'code' => 'P-001',

@@ -47,7 +47,12 @@ class DemoSeedersIntegrityTest extends CIUnitTestCase
             if (! array_key_exists($orderId, $paymentSum)) {
                 $missingPayments[] = $order['order_number'];
             } else {
-                $this->assertEqualsWithDelta((float) ($order['paid_amount'] ?? 0), $paymentSum[$orderId], 0.01, 'Order payments must sum to paid_amount');
+                $this->assertEqualsWithDelta(
+                    (float) ($order['paid_amount'] ?? 0),
+                    $paymentSum[$orderId],
+                    0.01,
+                    'Order payments must sum to paid_amount for ' . $order['order_number']
+                );
             }
         }
         $this->assertEmpty($missingPayments, 'All demo orders must have order_payments');
@@ -162,7 +167,8 @@ class DemoSeedersIntegrityTest extends CIUnitTestCase
 
     private function seedDemo(): void
     {
-        $seeder = \Config\Database::seeder();
+        // Bắt buộc dùng DB group "tests" để seed đúng database test (tránh ghi vào dev/staging).
+        $seeder = \Config\Database::seeder('tests');
         ob_start();
         try {
             $seeder->call('DemoSeeder');

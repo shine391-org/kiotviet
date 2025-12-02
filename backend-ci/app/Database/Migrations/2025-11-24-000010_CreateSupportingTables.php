@@ -67,7 +67,7 @@ class CreateSupportingTables extends Migration
             'branch_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
             'product_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => false],
             'variant_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],
-            'type' => ['type' => 'ENUM', 'constraint' => ['sale', 'return', 'adjustment', 'transfer_in', 'transfer_out'], 'null' => false],
+            'type' => ['type' => 'ENUM', 'constraint' => ['sale', 'return', 'adjustment', 'transfer_in', 'transfer_out', 'batch_init', 'batch_adjust'], 'null' => false],
             'quantity' => ['type' => 'DECIMAL', 'constraint' => '12,3', 'default' => 0],
             'reference_type' => ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true],
             'reference_id' => ['type' => 'BIGINT', 'unsigned' => true, 'null' => true],

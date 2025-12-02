@@ -48,8 +48,7 @@ class CashTransactionsDemoSeeder extends Seeder
         $rows = [];
         foreach ($orders as $order) {
             $total = round((float) ($order['total'] ?? 0), 2);
-            $paidAmount = round((float) ($order['paid_amount'] ?? 0), 2);
-            $receiptAmount = min($paidAmount, $total);
+            $receiptAmount = $total;
             if ($receiptAmount <= 0) {
                 continue;
             }

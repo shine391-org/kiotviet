@@ -22,7 +22,7 @@ trait DevDatabaseTrait
 
         $this->ensureSchema();
         $this->db = Database::connect('tests');
-        // $this->truncateData(); // Removed for performance
+        $this->truncateData(); // Restored for correctness
         $this->db->transBegin();
         $this->bootstrapTestData();
     }
@@ -48,20 +48,76 @@ trait DevDatabaseTrait
 
     private function ensureSchema(): void
     {
-        $needsMigrate = ! self::$schemaReady;
+        $db = Database::connect('tests');
+        $schemaStale = $this->schemaIsStale($db);
+        $migrationsEmpty = $this->migrationsTableEmpty($db);
+        $needsMigrate = $schemaStale || $migrationsEmpty;
+
+        if ($schemaStale) {
+            $this->rebuildSchema($db);
+            $db = Database::connect('tests');
+        }
+
+        if (! $needsMigrate) {
+            self::$schemaReady = true;
+            return;
+        }
+
         if ($needsMigrate) {
-            // chạy migration production cho group tests
             $start = microtime(true);
             $migrations = \Config\Services::migrations();
             $migrations->setGroup('tests');
             $migrations->latest();
             self::$schemaReady = true;
-            
+
             if (env('MIGRATION_VERBOSE', false)) {
                 $duration = round(microtime(true) - $start, 3);
                 error_log("DEBUG: DevDatabaseTrait - Migration (tests group) completed in {$duration}s");
             }
         }
+    }
+
+    private function schemaIsStale(BaseConnection $db): bool
+    {
+        $requiredTables = ['orders', 'customer_groups', 'organizations', 'payment_methods'];
+        foreach ($requiredTables as $table) {
+            if (! $db->tableExists($table)) {
+                return true;
+            }
+        }
+
+        $requiredOrderColumns = ['order_number', 'order_type', 'payment_method', 'shipping_fee', 'paid_amount', 'debt_amount'];
+        foreach ($requiredOrderColumns as $column) {
+            if (! $db->fieldExists($column, 'orders')) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function migrationsTableEmpty(BaseConnection $db): bool
+    {
+        if (! $db->tableExists('migrations')) {
+            return true;
+        }
+
+        try {
+            return $db->table('migrations')->countAllResults() === 0;
+        } catch (\Throwable $e) {
+            return true;
+        }
+    }
+
+    private function rebuildSchema(BaseConnection $db): void
+    {
+        $db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($db->listTables() as $table) {
+            // Drop everything (including migrations) to force clean rebuild
+            $db->query('DROP TABLE IF EXISTS `' . $table . '`');
+        }
+        $db->query('SET FOREIGN_KEY_CHECKS=1');
+        self::$schemaReady = false;
     }
 
     /**

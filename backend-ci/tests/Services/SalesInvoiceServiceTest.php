@@ -25,7 +25,18 @@ class SalesInvoiceServiceTest extends CIUnitTestCase
         $this->setUpDatabase();
         $this->resetAccounts();
         $this->seedAccounts();
-        $this->service = new SalesInvoiceService();
+        $this->seedCustomer();
+        $this->seedCustomer();
+        
+        $invoices = new \App\Models\SalesInvoiceModel($this->db);
+        $items = new \App\Models\SalesInvoiceItemModel($this->db);
+        $taxes = new \App\Models\SalesInvoiceTaxModel($this->db);
+        $schedules = new \App\Models\PaymentScheduleModel($this->db);
+
+        $repo = new \App\Repositories\Accounting\SalesInvoiceRepository(
+            $invoices, $items, $taxes, $schedules, $this->db
+        );
+        $this->service = new SalesInvoiceService($repo);
     }
 
     protected function tearDown(): void
@@ -122,5 +133,18 @@ class SalesInvoiceServiceTest extends CIUnitTestCase
             }
         }
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    private function seedCustomer(): void
+    {
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'Test Customer',
+            'email' => 'customer@test.com',
+            'phone' => '1234567890',
+            'status' => 'active',
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
     }
 }

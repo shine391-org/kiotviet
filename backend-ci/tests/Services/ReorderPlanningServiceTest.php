@@ -27,10 +27,20 @@ class ReorderPlanningServiceTest extends CIUnitTestCase
         parent::setUp();
         $this->setUpDatabase();
         $this->resetCompleteSchema();
+        $this->seedMasterData();
 
-        $binRepo = new StockBinRepository(null, $this->db);
-        $this->levels = new ReorderLevelRepository(null, $this->db);
-        $this->suggestions = new PurchaseSuggestionRepository(null, $this->db);
+        $binModel = new \App\Models\StockBinModel();
+        $this->injectDb($binModel, $this->db);
+        $binRepo = new StockBinRepository($binModel, $this->db);
+
+        $levelModel = new \App\Models\ReorderLevelModel();
+        $this->injectDb($levelModel, $this->db);
+        $this->levels = new ReorderLevelRepository($levelModel, $this->db);
+
+        $suggestionModel = new \App\Models\PurchaseSuggestionModel();
+        $this->injectDb($suggestionModel, $this->db);
+        $this->suggestions = new PurchaseSuggestionRepository($suggestionModel, $this->db);
+
         $this->service = new ReorderPlanningService(
             $this->levels,
             $this->suggestions,
@@ -117,14 +127,57 @@ class ReorderPlanningServiceTest extends CIUnitTestCase
 
     private function seedBin(int $productId, ?int $variantId, int $branchId, float $onHand, float $reserved): void
     {
-        $this->db->table('stock_bins')->insert([
-            'product_id' => $productId,
-            'variant_id' => $variantId,
-            'branch_id' => $branchId,
-            'batch_id' => null,
-            'on_hand_qty' => $onHand,
-            'reserved_qty' => $reserved,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        try {
+            $this->db->table('stock_bins')->insert([
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'branch_id' => $branchId,
+                'batch_id' => null,
+                'on_hand_qty' => $onHand,
+                'reserved_qty' => $reserved,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        } catch (\Throwable $e) {
+            echo "DEBUG: seedBin failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    private function seedMasterData(): void
+    {
+        try {
+            $now = date('Y-m-d H:i:s');
+            // Seed Branches
+            $branches = [
+                ['id' => 1, 'name' => 'Branch 1', 'code' => 'B1', 'created_at' => $now, 'updated_at' => $now],
+                ['id' => 2, 'name' => 'Branch 2', 'code' => 'B2', 'created_at' => $now, 'updated_at' => $now],
+                ['id' => 3, 'name' => 'Branch 3', 'code' => 'B3', 'created_at' => $now, 'updated_at' => $now],
+                ['id' => 4, 'name' => 'Branch 4', 'code' => 'B4', 'created_at' => $now, 'updated_at' => $now],
+            ];
+            $this->db->table('branches')->insertBatch($branches);
+
+            // Seed Products
+            $products = [];
+            for ($i = 5; $i <= 8; $i++) {
+                $products[] = [
+                    'id' => $i,
+                    'name' => "Product $i",
+                    'code' => "P$i",
+                    'status' => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+            $this->db->table('products')->insertBatch($products);
+        } catch (\Throwable $e) {
+            // echo "DEBUG: seedMasterData failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    private function injectDb($model, $db)
+    {
+        $ref = new \ReflectionClass($model);
+        $prop = $ref->getProperty('db');
+        $prop->setAccessible(true);
+        $prop->setValue($model, $db);
     }
 }

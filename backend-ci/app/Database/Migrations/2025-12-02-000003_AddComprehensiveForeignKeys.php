@@ -301,7 +301,7 @@ class AddComprehensiveForeignKeys extends Migration
                 ['payment_entry_id', 'payment_entries'],
             ],
             'payment_schedules' => [
-                ['invoice_id', 'invoices'],
+                ['invoice_id', 'sales_invoices'],
             ],
             'pick_list_items' => [
                 ['pick_list_id', 'pick_lists'],

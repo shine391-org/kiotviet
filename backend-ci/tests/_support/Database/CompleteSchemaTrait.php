@@ -12,6 +12,9 @@ trait CompleteSchemaTrait
         $db = method_exists($this, 'getTestDb') ? $this->getTestDb() : \Config\Database::connect('tests');
         $db->query('SET FOREIGN_KEY_CHECKS=0');
         foreach ($db->listTables() as $table) {
+            if ($table === 'migrations') {
+                continue;
+            }
             $db->table($table)->truncate();
         }
         $db->query('SET FOREIGN_KEY_CHECKS=1');

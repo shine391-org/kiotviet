@@ -418,6 +418,17 @@ class ProductServiceTest extends CIUnitTestCase
 
     private function seedCategoryLink(int $productId, int $categoryId): void
     {
+        // Ensure category exists
+        if ($this->db->table('product_categories')->where('id', $categoryId)->countAllResults() === 0) {
+            $this->db->table('product_categories')->insert([
+                'id' => $categoryId,
+                'name' => 'Category ' . $categoryId,
+                'code' => 'CAT' . $categoryId,
+                'status' => 'active',
+                'created_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
         $this->db->table('product_category_links')->insert([
             'product_id' => $productId,
             'category_id' => $categoryId,

@@ -24,6 +24,7 @@ class AddMasterEntities extends Migration
         $this->createDevices();
         $this->createTempQueue();
 
+        $this->seedDefaultMasterData();
         $this->linkCustomers();
         $this->linkLoyaltyPrograms();
         $this->linkOrders();
@@ -192,6 +193,8 @@ class AddMasterEntities extends Migration
         }
         $this->db->query('ALTER TABLE customers MODIFY customer_group_id BIGINT UNSIGNED NULL');
         $this->db->query('ALTER TABLE customers MODIFY organization_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('customers', 'customer_group_id', 'customer_groups');
+        $this->nullifyMissingRefs('customers', 'organization_id', 'organizations');
 
         if (! $this->foreignKeyExists('customers', 'fk_customers_customer_group')) {
             $this->forge->addColumn('customers', [
@@ -211,6 +214,7 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE loyalty_programs MODIFY customer_group_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('loyalty_programs', 'customer_group_id', 'customer_groups');
         if (! $this->foreignKeyExists('loyalty_programs', 'fk_loyalty_programs_customer_group')) {
             $this->forge->addColumn('loyalty_programs', [
                 'CONSTRAINT fk_loyalty_programs_customer_group FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL ON UPDATE CASCADE',
@@ -224,6 +228,7 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE orders MODIFY customer_group_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('orders', 'customer_group_id', 'customer_groups');
         if (! $this->foreignKeyExists('orders', 'fk_orders_customer_group')) {
             $this->forge->addColumn('orders', [
                 'CONSTRAINT fk_orders_customer_group FOREIGN KEY (customer_group_id) REFERENCES customer_groups(id) ON DELETE SET NULL ON UPDATE CASCADE',
@@ -237,6 +242,7 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE purchase_invoices MODIFY supplier_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('purchase_invoices', 'supplier_id', 'suppliers');
         if (! $this->foreignKeyExists('purchase_invoices', 'fk_purchase_invoices_supplier')) {
             $this->forge->addColumn('purchase_invoices', [
                 'CONSTRAINT fk_purchase_invoices_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL ON UPDATE CASCADE',
@@ -250,6 +256,7 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE subcontracting_orders MODIFY supplier_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('subcontracting_orders', 'supplier_id', 'suppliers');
         if (! $this->foreignKeyExists('subcontracting_orders', 'fk_subcontracting_orders_supplier')) {
             $this->forge->addColumn('subcontracting_orders', [
                 'CONSTRAINT fk_subcontracting_orders_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE SET NULL ON UPDATE CASCADE',
@@ -263,6 +270,7 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE pos_offline_queue MODIFY device_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('pos_offline_queue', 'device_id', 'devices');
         if (! $this->foreignKeyExists('pos_offline_queue', 'fk_pos_offline_queue_device')) {
             $this->forge->addColumn('pos_offline_queue', [
                 'CONSTRAINT fk_pos_offline_queue_device FOREIGN KEY (device_id) REFERENCES devices(id) ON DELETE SET NULL ON UPDATE CASCADE',
@@ -276,11 +284,76 @@ class AddMasterEntities extends Migration
             return;
         }
         $this->db->query('ALTER TABLE inventory_stock MODIFY warehouse_id BIGINT UNSIGNED NULL');
+        $this->nullifyMissingRefs('inventory_stock', 'warehouse_id', 'warehouses');
         if (! $this->foreignKeyExists('inventory_stock', 'fk_inventory_stock_warehouse')) {
             $this->forge->addColumn('inventory_stock', [
                 'CONSTRAINT fk_inventory_stock_warehouse FOREIGN KEY (warehouse_id) REFERENCES warehouses(id) ON DELETE SET NULL ON UPDATE CASCADE',
             ]);
         }
+    }
+
+    private function seedDefaultMasterData(): void
+    {
+        $now = date('Y-m-d H:i:s');
+
+        if ($this->db->tableExists('organizations')) {
+            $this->db->table('organizations')->ignore(true)->insert([
+                'id' => 1,
+                'code' => 'DEFAULT-ORG',
+                'name_vi' => 'Default Organization',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        if ($this->db->tableExists('customer_groups')) {
+            $this->db->table('customer_groups')->ignore(true)->insert([
+                'id' => 1,
+                'code' => 'DEFAULT-GROUP',
+                'name_vi' => 'Default Customer Group',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        if ($this->db->tableExists('suppliers')) {
+            $this->db->table('suppliers')->ignore(true)->insert([
+                'id' => 1,
+                'code' => 'DEFAULT-SUP',
+                'name_vi' => 'Default Supplier',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        if ($this->db->tableExists('devices')) {
+            $this->db->table('devices')->ignore(true)->insert([
+                'id' => 1,
+                'code' => 'DEFAULT-DEVICE',
+                'name' => 'Default Device',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+    }
+
+    private function nullifyMissingRefs(string $table, string $column, string $refTable, string $refColumn = 'id'): void
+    {
+        if (! $this->db->tableExists($table) || ! $this->db->tableExists($refTable)) {
+            return;
+        }
+
+        $existing = array_map(
+            static fn ($row) => (int) $row[$refColumn],
+            $this->db->table($refTable)->select($refColumn)->get()->getResultArray()
+        );
+
+        if (empty($existing)) {
+            $this->db->table($table)->set($column, null)->update();
+            return;
+        }
+
+        $this->db->table($table)->whereNotIn($column, $existing)->set($column, null)->update();
     }
 
     private function foreignKeyExists(string $table, string $constraint): bool

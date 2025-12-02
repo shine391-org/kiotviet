@@ -67,6 +67,7 @@ class StrengthenOrderRelations extends Migration
         $add('code', ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true, 'comment' => 'Business code', 'after' => 'order_number']);
         $add('pos_profile_id', ['type' => 'BIGINT', 'unsigned' => true, 'null' => true, 'after' => 'order_type']);
         $add('pos_shift_id', ['type' => 'BIGINT', 'unsigned' => true, 'null' => true, 'after' => 'pos_profile_id']);
+        $add('payment_method', ['type' => 'VARCHAR', 'constraint' => 50, 'null' => true, 'after' => 'order_type']);
         $add('tax_template_id', ['type' => 'INT', 'unsigned' => true, 'null' => true, 'after' => 'pos_shift_id']);
         $add('tax_total', ['type' => 'DECIMAL', 'constraint' => '14,2', 'default' => 0, 'after' => 'discount_total']);
         $add('rounding_adjustment', ['type' => 'DECIMAL', 'constraint' => '14,2', 'default' => 0, 'after' => 'tax_total']);
@@ -221,9 +222,19 @@ class StrengthenOrderRelations extends Migration
     {
         // Align types with referenced tables for FK compatibility
         $collation = $this->resolveUtf8mb4Collation();
-        $this->db->query('ALTER TABLE orders MODIFY customer_id BIGINT UNSIGNED NULL');
-        $this->db->query('ALTER TABLE orders MODIFY branch_id BIGINT UNSIGNED NULL');
-        $this->db->query("ALTER TABLE orders MODIFY payment_method VARCHAR(50) CHARACTER SET utf8mb4 COLLATE {$collation} NULL");
+
+        if ($this->columnExists('orders', 'customer_id')) {
+            $this->db->query('ALTER TABLE orders MODIFY customer_id BIGINT UNSIGNED NULL');
+        }
+
+        if ($this->columnExists('orders', 'branch_id')) {
+            $this->db->query('ALTER TABLE orders MODIFY branch_id BIGINT UNSIGNED NULL');
+        }
+
+        if ($this->columnExists('orders', 'payment_method')) {
+            $this->db->query("ALTER TABLE orders MODIFY payment_method VARCHAR(50) CHARACTER SET utf8mb4 COLLATE {$collation} NULL");
+        }
+
         if ($this->db->tableExists('returns') && $this->db->fieldExists('customer_id', 'returns')) {
             $this->db->query('ALTER TABLE returns MODIFY customer_id BIGINT UNSIGNED NULL');
         }
@@ -387,18 +398,22 @@ class StrengthenOrderRelations extends Migration
             return;
         }
 
-        $this->cleanupOrphans('cash_transactions', 'branch_id', 'branches');
-        $this->cleanupOrphans('cash_transactions', 'created_by', 'users');
-
-        if (! $this->foreignKeyExists('cash_transactions', 'fk_cash_transactions_branch')) {
-            $this->forge->addColumn('cash_transactions', [
-                'CONSTRAINT fk_cash_transactions_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE ON UPDATE CASCADE',
-            ]);
+        if ($this->db->tableExists('branches')) {
+            $this->cleanupOrphans('cash_transactions', 'branch_id', 'branches');
+            if (! $this->foreignKeyExists('cash_transactions', 'fk_cash_transactions_branch')) {
+                $this->forge->addColumn('cash_transactions', [
+                    'CONSTRAINT fk_cash_transactions_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE ON UPDATE CASCADE',
+                ]);
+            }
         }
-        if (! $this->foreignKeyExists('cash_transactions', 'fk_cash_transactions_user')) {
-            $this->forge->addColumn('cash_transactions', [
-                'CONSTRAINT fk_cash_transactions_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE',
-            ]);
+
+        if ($this->db->tableExists('users')) {
+            $this->cleanupOrphans('cash_transactions', 'created_by', 'users');
+            if (! $this->foreignKeyExists('cash_transactions', 'fk_cash_transactions_user')) {
+                $this->forge->addColumn('cash_transactions', [
+                    'CONSTRAINT fk_cash_transactions_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE',
+                ]);
+            }
         }
     }
 
