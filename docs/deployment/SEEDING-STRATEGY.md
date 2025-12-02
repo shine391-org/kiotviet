@@ -67,16 +67,11 @@ php spark db:seed DemoSeeder
 
 **What runs:**
 ```bash
-# Option 1: Use demo data
 php spark db:seed DevDemoSeeder
-
-# Option 2: Use production-like data
-php spark db:seed StagingSeeder  # (to be created)
 ```
 
 **Data loaded:**
-- ✅ Production-like master data
-- ✅ Sanitized production data (optional)
+- ✅ Demo/master data giống dev
 - ✅ Test accounts for QA
 - ⚠️ NO real customer data
 
@@ -86,25 +81,7 @@ php spark db:seed StagingSeeder  # (to be created)
 
 ### Production
 
-**When:** Initial setup only OR after major schema changes
-
-**What runs:**
-```bash
-# Only master data, NO demo data
-php spark db:seed ProductionSeeder  # (to be created)
-```
-
-**Data loaded:**
-- ✅ Essential master data only:
-  - Payment methods
-  - Tax templates
-  - Default roles/permissions
-  - System configuration
-- ❌ NO demo customers
-- ❌ NO demo orders
-- ❌ NO test data
-
-**Trigger:** Manual, carefully controlled
+Hiện chưa dùng seeding cho production; chỉ chạy DemoSeeder/DevDemoSeeder ở dev/staging. Khi cần prod seeding sẽ tạo hướng dẫn riêng.
 
 ---
 
@@ -127,7 +104,6 @@ php spark db:seed ProductionSeeder  # (to be created)
 
 | Seeder | Priority | Purpose |
 |--------|----------|---------|
-| ProductionSeeder | 🔴 HIGH | Master data for production |
 | DemoSeeder    | 🟡 MEDIUM | Unified demo/staging data    |
 | UsersDemoSeeder | 🟡 MEDIUM | Demo users with different roles |
 | BranchesDemoSeeder | 🟡 MEDIUM | Demo branches/warehouses |
@@ -191,46 +167,6 @@ php spark db:seed ProductionSeeder  # (to be created)
 
 ---
 
-### For Production Data
-
-1. **Create file in Seeds/ folder:**
-   ```bash
-   touch backend-ci/app/Database/Seeds/ProductionSeeder.php
-   ```
-
-2. **Use this template:**
-   ```php
-   <?php
-   namespace App\Database\Seeds;
-   
-   use CodeIgniter\Database\Seeder;
-   
-   /**
-    * @agent-seeder: Production master data
-    * @agent-pattern: Idempotent production seeder
-    */
-   class ProductionSeeder extends Seeder
-   {
-       public function run(): void
-       {
-           // NEVER run in development
-           if (ENVIRONMENT === 'development') {
-               echo "ProductionSeeder cannot run in development\n";
-               return;
-           }
-           
-           // Seed essential master data only
-           $this->call('PaymentMethodSeeder');
-           $this->call('TaxTemplateSeeder');
-           $this->call('DefaultRolesSeeder');
-           
-           echo "✓ Production master data seeded\n";
-       }
-   }
-   ```
-
----
-
 ## 🔒 Idempotency Patterns
 
 ### Pattern 1: Truncate (Simple, Fast)
@@ -280,7 +216,6 @@ foreach ($data as $row) {
 |-------------|-------------------|---------------|
 | Development | 50-500 | ~5,000 |
 | Staging | 500-5,000 | ~50,000 |
-| Production | Real data | Unlimited |
 
 ---
 
@@ -300,16 +235,6 @@ docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 # After deployment
 docker exec staging-web php spark db:seed DemoSeeder
 ```
-
-### Production (Careful!)
-```bash
-# Only on initial setup or major changes
-# ALWAYS backup first!
-./scripts/db-backup.sh
-docker exec prod-api php spark db:seed ProductionSeeder
-```
-
----
 
 ## 🔄 Reset Demo Data
 
@@ -401,17 +326,11 @@ $this->call('OrdersDemoSeeder');     // Then (depends on customers)
 
 ### Immediate (High Priority)
 
-1. **Create ProductionSeeder**
-   - Payment methods
-   - Tax templates
-   - Default roles
-   - System config
-
-2. **Create Missing Demo Seeders**
+1. **Create Missing Demo Seeders**
    - UsersDemoSeeder
    - BranchesDemoSeeder
 
-3. **Document Seeder Dependencies**
+2. **Document Seeder Dependencies**
    - Create dependency graph
    - Ensure correct order
 

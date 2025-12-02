@@ -26,7 +26,7 @@ mkdir -p backups/mysql
 
 ### 3. Development Deployment
 ```bash
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 ### 4. Production Deployment

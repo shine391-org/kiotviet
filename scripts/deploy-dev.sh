@@ -52,14 +52,22 @@ if [ ! -f "docker-compose.yml" ]; then
 fi
 
 # Check if development compose file exists
-if [ ! -f "docker-compose.override.yml" ]; then
-    print_error "docker-compose.override.yml not found."
+if [ ! -f "docker-compose.dev.yml" ]; then
+    print_error "docker-compose.dev.yml not found."
     exit 1
 fi
 
+# Load .env values (fallback defaults)
+set -a
+[ -f .env ] && source .env
+set +a
+
+# DB password from env (use DB_PASSWORD or MYSQL_PASSWORD or default placeholder)
+DB_PASSWORD="${DB_PASSWORD:-${MYSQL_PASSWORD:-KP7n4RjcDbedSE2W8GgA}}"
+
 # Stop any existing containers
 print_status "Stopping existing containers..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml down --remove-orphans
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down --remove-orphans
 
 # Pull latest changes from specified branch
 print_status "Pulling latest changes from $BRANCH_NAME branch..."
@@ -69,7 +77,7 @@ git pull origin $BRANCH_NAME
 
 # Build and start development containers
 print_status "Building and starting development containers..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # Wait for services to be ready
 print_status "Waiting for services to be ready..."
@@ -77,13 +85,13 @@ sleep 10
 
 # Check if containers are running
 print_status "Checking container status..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml ps
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml ps
 
 # Wait for database to be ready
 print_status "Waiting for database to be ready..."
 timeout=60
 while [ $timeout -gt 0 ]; do
-    if docker-compose -f docker-compose.yml -f docker-compose.override.yml exec -T db mysqladmin ping -h"localhost" -u"lanocrm_user" -p"KP7n4RjcDbedSE2W8GgA" --silent; then
+    if DB_PASSWORD="$DB_PASSWORD" docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec -T db mysqladmin ping -h"localhost" -u"lanocrm_user" -p"$DB_PASSWORD" --silent; then
         print_status "Database is ready!"
         break
     fi
@@ -99,11 +107,11 @@ fi
 
 # Run database migrations
 print_status "Running database migrations..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml exec web php spark migrate --all
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web php spark migrate --all
 
 # Seed demo data if needed
 print_status "Seeding demo data..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml exec web php spark db:seed DemoSeeder
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec web php spark db:seed DemoSeeder
 
 # Check frontend health
 print_status "Checking frontend health..."
@@ -133,9 +141,9 @@ echo "  Test DB: localhost:${DB_TEST_PORT} (lanocrm_test)"
 echo "  phpMyAdmin: http://localhost:${PMA_PORT}"
 echo ""
 echo "🔧 Useful Commands:"
-echo "  View logs: docker-compose -f docker-compose.yml -f docker-compose.override.yml logs -f"
-echo "  Stop development: docker-compose -f docker-compose.yml -f docker-compose.override.yml down"
-echo "  Restart development: docker-compose -f docker-compose.yml -f docker-compose.override.yml restart"
+echo "  View logs: docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f"
+echo "  Stop development: docker-compose -f docker-compose.yml -f docker-compose.dev.yml down"
+echo "  Restart development: docker-compose -f docker-compose.yml -f docker-compose.dev.yml restart"
 echo ""
 echo "🌿 Git Information:"
 echo "  Current branch: $(git branch --show-current)"

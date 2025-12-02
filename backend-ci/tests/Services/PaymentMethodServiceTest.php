@@ -127,7 +127,7 @@ class PaymentMethodServiceTest extends CIUnitTestCase
     public function it_updates_and_toggles_active_state()
     {
         $method = $this->repo->create([
-            'code' => 'E_WALLET',
+            'code' => 'EWALLET',
             'name' => 'E Wallet',
             'is_active' => true,
         ]);

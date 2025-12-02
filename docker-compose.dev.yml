@@ -1,6 +1,6 @@
-# Docker Compose Override for Development Environment
+# Docker Compose Dev for Development Environment
 # This file extends docker-compose.yml with development-specific configurations
-# Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
 
 services:
   web:

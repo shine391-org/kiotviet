@@ -239,7 +239,7 @@ docker-compose exec web php spark migrate --all
 
 **Problem:** Vite proxy cannot connect to backend
 
-**Solution:** Check `docker-compose.override.yml`:
+**Solution:** Check `docker-compose.dev.yml`:
 
 ```yaml
 # Should be:
@@ -338,7 +338,7 @@ nano .env  # Edit if needed
 
 ```bash
 # Stop dev
-docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 
 # Stop staging
 docker-compose -f docker-compose.yml -f docker-compose.staging.yml down

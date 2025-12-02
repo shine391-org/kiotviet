@@ -24,7 +24,7 @@ class POSPaymentSplitServiceTest extends CIUnitTestCase
     {
         $result = $this->service->validate(
             [
-                ['payment_method' => 'cash', 'amount' => 60],
+                ['payment_method' => 'CASH', 'amount' => 60],
                 ['payment_method' => 'CARD', 'amount' => 40],
             ],
             ['CASH', 'CARD'],

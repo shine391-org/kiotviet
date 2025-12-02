@@ -54,7 +54,7 @@ class PaymentMethodSeeder extends Seeder
                 'updated_at' => $now,
             ],
             [
-                'code' => 'E_WALLET',
+                'code' => 'EWALLET',
                 'name' => 'Ví điện tử',
                 'description' => 'Thanh toán qua MoMo, ZaloPay, VNPay',
                 'is_active' => 1,

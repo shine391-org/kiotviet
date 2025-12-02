@@ -41,7 +41,7 @@ export const PAYMENT_METHODS = [
   { value: 'BANK_TRANSFER', label: 'Chuyển khoản' },
   { value: 'CARD', label: 'Thẻ' },
   { value: 'COD', label: 'Thu hộ (COD)' },
-  { value: 'E_WALLET', label: 'Ví điện tử' },
+  { value: 'EWALLET', label: 'Ví điện tử' },
 ];
 
 export const SALES_CHANNELS = [

@@ -40,6 +40,7 @@ class DemoSeeder extends Seeder
             'UsersDemoSeeder',      // More users
             'BranchesDemoSeeder',   // Branches & Warehouses
             'WarehousesDemoSeeder', // More warehouses
+            'TaxTemplatesDemoSeeder', // VAT templates
             // 'SuppliersDemoSeeder',  // Suppliers - Table doesn't exist
             'CustomersDemoSeeder',  // Customers
             // 'HRDemoSeeder',         // Employees (needs Users) - Table doesn't exist
@@ -50,13 +51,13 @@ class DemoSeeder extends Seeder
             // 'ManufacturingDemoSeeder',   // BOM (needs Products) - Table doesn't exist
 
             // Transaction Data
-            'OrdersDemoSeeder',          // Orders (needs Customers, Products)
-            'InvoicesDemoSeeder',        // Invoices (needs Orders)
-            'DeliveryNotesDemoSeeder',   // Delivery Notes (needs Orders)
-            'ReturnsDemoSeeder',         // Returns (needs Orders)
+            'OrdersDemoSeeder',            // Orders (needs Customers, Products)
+            'DeliveryNotesDemoSeeder',     // Delivery Notes (needs Orders)
+            'InvoicesDemoSeeder',          // Invoices (needs Orders)
+            'ReturnsDemoSeeder',           // Returns (needs Orders)
+            'StockLedgersDemoSeeder',      // Stock ledgers (needs orders/deliveries/returns)
             // 'PurchaseOrdersDemoSeeder',  // POs (needs Suppliers, Products) - Table doesn't exist
-            // 'StockMovementsDemoSeeder',  // Stock (needs Warehouses, Products) - Table doesn't exist
-            'CashTransactionsDemoSeeder',// Cash (needs Invoices/POs) - Table doesn't exist
+            'CashTransactionsDemoSeeder',  // Cash linked to orders/returns
             
             // Other Modules
             // 'CRMDemoSeeder',             // CRM (needs Customers, Users) - Table doesn't exist

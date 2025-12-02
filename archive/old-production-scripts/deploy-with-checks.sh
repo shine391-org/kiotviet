@@ -65,7 +65,7 @@ print_status "Stopped existing containers"
 # 4. Build and deploy
 echo ""
 echo "4. Building and deploying containers..."
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 
 # 5. Wait for containers to start
 echo ""

@@ -18,7 +18,8 @@ class StockMovementsDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        echo "   → Demo stock movements...\n";
+        echo "   → Demo stock movements skipped (replaced by StockLedgersDemoSeeder)...\n";
+        return;
         
         $now = Time::now();
 

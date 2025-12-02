@@ -3,521 +3,184 @@
 namespace App\Database\Seeds\Demo;
 
 use CodeIgniter\Database\Seeder;
+use CodeIgniter\I18n\Time;
 
 /**
- * Seed rich demo data for cash transactions (thu/chi) to help FE/QA flows.
+ * Seed demo cash transactions linked to real orders/returns.
+ * Destructive for demo rows only: guarded by environment and selective delete.
  *
  * @agent-seeder: Cash transactions demo data
- * @agent-pattern: Truncate + insertBatch idempotent seeder
+ * @agent-pattern: Selective delete + linked references
  * @agent-reusable: MEDIUM
  */
 class CashTransactionsDemoSeeder extends Seeder
 {
-    /**
-     * Insert 20 transactions (10 thu, 10 chi) covering all categories & payment methods.
-     *
-     * @agent-use: Dev demo dataset for cash module
-     * @agent-pattern: Idempotent dev seeding
-     */
     public function run(): void
     {
+        if (ENVIRONMENT === 'production') {
+            echo "      ⚠️  CashTransactionsDemoSeeder skipped in production\n";
+            return;
+        }
+
         if (! $this->db->tableExists('cash_transactions')) {
             return;
         }
 
-        $now = date('Y-m-d H:i:s');
-        $today = new \DateTimeImmutable('today');
+        echo "   → Demo cash transactions...\n";
 
-        // Helper to build rows with consistent defaults
-        $make = function (array $row) use ($now) {
-            return array_merge([
-                'description'      => null,
-                'reference_type'   => null,
-                'reference_id'     => null,
-                'reference_code'   => null,
-                'payment_method'   => null,
-                'status'           => 'approved',
-                'account_name'     => null,
-                'bank_account'     => null,
-                'created_by_name'  => null,
-                'staff_name'       => null,
-                'payer_code'       => null,
-                'payer_name'       => null,
-                'payer_phone'      => null,
-                'payer_address'    => null,
-                'transfer_note'    => null,
-                'note'             => null,
-                'created_at'       => $now,
-                'updated_at'       => $now,
-            ], $row);
-        };
+        // Chỉ xóa dữ liệu demo (tham chiếu đơn/return demo hoặc mô tả chứa Demo)
+        $this->db->table('cash_transactions')
+            ->groupStart()
+                ->like('reference_code', 'DH-DEMO-', 'after')
+                ->orLike('reference_code', 'RET-DEMO-', 'after')
+                ->orLike('description', 'demo', 'both')
+                ->orWhereIn('created_by', [1, 2]) // demo users
+            ->groupEnd()
+            ->delete();
 
-        $rows = [
-            // RECEIPT (Thu)
-            $make([
+        $orders = DemoOrderHelper::orders($this->db);
+        $orders = array_filter($orders, static fn ($row) => ($row['status'] ?? '') !== 'cancelled');
+        ksort($orders);
+        $returns = $this->fetchReturns();
+        $customers = $this->customerMap();
+        $now = Time::now()->toDateTimeString();
+
+        $rows = [];
+        foreach ($orders as $order) {
+            $total = round((float) ($order['total'] ?? 0), 2);
+            $paidAmount = round((float) ($order['paid_amount'] ?? 0), 2);
+            $receiptAmount = min($paidAmount, $total);
+            if ($receiptAmount <= 0) {
+                continue;
+            }
+            $rows[] = $this->makeRow([
                 'type' => 'RECEIPT',
-                'amount' => 1500000,
+                'amount' => $receiptAmount,
                 'category' => 'sales',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Thu tiền đơn hàng HD1001',
+                'payment_method' => $this->normalizeMethod($order['payment_method'] ?? 'CASH'),
+                'account_name' => 'Quỹ demo',
+                'description' => 'Thu đơn ' . ($order['order_number'] ?? '') . ' (' . ($order['payment_status'] ?? 'unpaid') . ')',
                 'reference_type' => 'order',
-                'reference_id' => 1001,
-                'reference_code' => 'HD1001',
-                'branch_id' => 1,
+                'reference_id' => (int) $order['id'],
+                'reference_code' => $order['order_number'] ?? null,
+                'branch_id' => $order['branch_id'] ?? 1,
                 'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'nhung',
-                'payer_code' => 'KH1001',
-                'payer_name' => 'Nguyễn Minh',
-                'payer_phone' => '0912000111',
-                'payer_address' => 'Hà Nội',
-                'transaction_date' => $today->modify('-7 days')->format('Y-m-d'),
-                'note' => 'Khách thanh toán đủ',
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 820000,
-                'category' => 'sales',
-                'payment_method' => 'bank',
-                'status' => 'approved',
-                'account_name' => 'VCB Chi nhánh HN',
-                'bank_account' => '9704-0000-8888',
-                'description' => 'Chuyển khoản đơn hàng HD1002',
-                'reference_type' => 'order_payment',
-                'reference_id' => 1002,
-                'reference_code' => 'HD1002',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'trung',
-                'payer_code' => 'KH1002',
-                'payer_name' => 'Trần Hải',
-                'payer_phone' => '0988777666',
-                'payer_address' => 'Hà Nội',
-                'transfer_note' => 'Thanh toán đủ HD1002',
-                'transaction_date' => $today->modify('-6 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 560000,
+                'created_by_name' => 'Demo Admin',
+                'staff_name' => 'demo-staff',
+                'payer_code' => 'CUST-' . ($order['customer_id'] ?? 'NA'),
+                'payer_name' => $customers[$order['customer_id']]['name'] ?? 'Khách demo',
+                'payer_phone' => $customers[$order['customer_id']]['phone'] ?? null,
+                'payer_address' => $customers[$order['customer_id']]['address'] ?? null,
+                'transaction_date' => $order['order_date'] ?? date('Y-m-d'),
+                'note' => $receiptAmount + 0.01 >= $total ? 'Thanh toán đủ' : 'Thanh toán một phần',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
+
+        foreach ($returns as $ret) {
+            $refundAmount = round((float) $ret['refund_amount'], 2);
+            if ($refundAmount <= 0) {
+                continue;
+            }
+            $rows[] = $this->makeRow([
+                'type' => 'PAYMENT',
+                'amount' => $refundAmount,
                 'category' => 'refund',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Khách trả hàng HD0999',
+                'payment_method' => $this->normalizeMethod($ret['refund_method'] ?? 'CASH'),
+                'account_name' => 'Quỹ demo',
+                'description' => 'Hoàn tiền trả hàng ' . $ret['return_number'],
                 'reference_type' => 'return_order',
-                'reference_id' => 999,
-                'reference_code' => 'RT0999',
-                'branch_id' => 1,
+                'reference_id' => $ret['id'],
+                'reference_code' => $ret['return_number'],
+                'branch_id' => $ret['branch_id'] ?? 1,
                 'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'anh',
-                'payer_code' => 'KH0999',
-                'payer_name' => 'Phạm Huy',
-                'payer_phone' => '0903456789',
-                'transaction_date' => $today->modify('-5 days')->format('Y-m-d'),
-                'note' => 'Hoàn tiền vào quỹ sau trả hàng',
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 2000000,
-                'category' => 'deposit',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'ACB HCM 6688',
-                'bank_account' => '9704-0000-6688',
-                'description' => 'Nộp quỹ đầu ngày CN HCM',
-                'reference_type' => 'manual',
-                'branch_id' => 2,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'huy',
-                'payer_code' => 'BRHCM',
-                'payer_name' => 'Chi nhánh HCM',
-                'payer_phone' => '0909666888',
-                'payer_address' => 'Hồ Chí Minh',
-                'transfer_note' => 'Nộp quỹ ca sáng',
-                'transaction_date' => $today->modify('-4 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 350000,
-                'category' => 'other_income',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Thu từ bán phế liệu',
-                'reference_type' => 'expense',
-                'reference_id' => 88,
-                'reference_code' => 'EXP88',
-                'branch_id' => 1,
-                'created_by' => 3,
-                'created_by_name' => 'Viewer Test',
-                'staff_name' => 'nhung',
-                'payer_code' => 'PL001',
-                'payer_name' => 'Thu gom phế liệu',
-                'payer_phone' => '0903000222',
-                'transaction_date' => $today->modify('-3 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 980000,
-                'category' => 'shipping_cod',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'VCB 9988',
-                'bank_account' => '9704-0000-9988',
-                'description' => 'ĐVVC đối soát COD tuần 47',
-                'reference_type' => 'shipping_settlement',
-                'reference_id' => 4701,
-                'reference_code' => 'SS-47',
-                'branch_id' => 1,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'nhung',
-                'payer_code' => 'DVVC01',
-                'payer_name' => 'Giao nhanh',
-                'payer_phone' => '0911999000',
-                'transfer_note' => 'COD tuần 47',
-                'transaction_date' => $today->modify('-2 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 1200000,
-                'category' => 'sales',
-                'payment_method' => 'ewallet',
-                'status' => 'approved',
-                'account_name' => 'Momo cửa hàng',
-                'bank_account' => '0912000123',
-                'description' => 'Thanh toán ví đơn hàng HD1005',
-                'reference_type' => 'order',
-                'reference_id' => 1005,
-                'reference_code' => 'HD1005',
-                'branch_id' => 2,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'trung',
-                'payer_code' => 'KH1005',
-                'payer_name' => 'Hoàng Gia',
-                'payer_phone' => '0908777555',
-                'payer_address' => 'HCM',
-                'transaction_date' => $today->modify('-1 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 450000,
-                'category' => 'refund',
-                'payment_method' => 'cash',
-                'status' => 'pending',
-                'account_name' => 'Quỹ tiền mặt HCM',
-                'description' => 'Thu hồi tạm ứng nhân viên',
-                'reference_type' => 'manual',
-                'branch_id' => 2,
-                'created_by' => 3,
-                'created_by_name' => 'Viewer Test',
-                'staff_name' => 'anh',
-                'payer_code' => 'EMP22',
-                'payer_name' => 'Trà My',
-                'payer_phone' => '0908888111',
-                'transaction_date' => $today->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 1750000,
-                'category' => 'deposit',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'Techcombank 6868',
-                'bank_account' => '1903-6868-6868',
-                'description' => 'Khách đặt cọc đơn sản xuất',
-                'reference_type' => 'order',
-                'reference_id' => 1010,
-                'reference_code' => 'HD1010',
-                'branch_id' => 1,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'payer_code' => 'KH1010',
-                'payer_name' => 'Lê Phúc',
-                'payer_phone' => '0934000333',
-                'transaction_date' => $today->modify('-8 days')->format('Y-m-d'),
-                'note' => 'Đặt cọc 50%',
-            ]),
-            $make([
-                'type' => 'RECEIPT',
-                'amount' => 260000,
-                'category' => 'other_income',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Thu phí giao hàng nhanh',
-                'reference_type' => 'manual',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'nhung',
-                'payer_code' => 'FEE-GHN',
-                'payer_name' => 'Giao Hàng Nhanh',
-                'payer_phone' => '19006464',
-                'transaction_date' => $today->modify('-10 days')->format('Y-m-d'),
-                'note' => 'Phí hỗ trợ giao nhanh',
-            ]),
+                'created_by_name' => 'Demo Manager',
+                'staff_name' => 'demo-staff',
+                'payer_code' => 'CUST-' . ($ret['customer_id'] ?? 'NA'),
+                'payer_name' => $customers[$ret['customer_id']]['name'] ?? 'Khách demo',
+                'payer_phone' => $customers[$ret['customer_id']]['phone'] ?? null,
+                'payer_address' => $customers[$ret['customer_id']]['address'] ?? null,
+                'transaction_date' => $ret['created_at'] ?? date('Y-m-d'),
+                'note' => 'Hoàn tiền theo phiếu trả hàng',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ]);
+        }
 
-            // PAYMENT (Chi)
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 520000,
-                'category' => 'purchase',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'VCB 9988',
-                'bank_account' => '9704-0000-9988',
-                'description' => 'Thanh toán PO1002',
-                'reference_type' => 'purchase_order',
-                'reference_id' => 1002,
-                'reference_code' => 'PO1002',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'trung',
-                'payer_code' => 'NCC01',
-                'payer_name' => 'Nhà cung cấp A',
-                'payer_phone' => '0988111222',
-                'payer_address' => 'Hà Nội',
-                'transfer_note' => 'Thanh toán 50% PO1002',
-                'transaction_date' => $today->modify('-9 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 300000,
-                'category' => 'shipping_fee',
-                'payment_method' => 'ewallet',
-                'status' => 'approved',
-                'account_name' => 'Momo cửa hàng',
-                'bank_account' => '0912000123',
-                'description' => 'Đối soát phí ship tuần 47',
-                'reference_type' => 'shipping_settlement',
-                'reference_id' => 4701,
-                'reference_code' => 'SS-47',
-                'branch_id' => 1,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'nhung',
-                'payer_code' => 'SHIP-01',
-                'payer_name' => 'ĐVVC Nhanh',
-                'payer_phone' => '0909888777',
-                'payer_address' => 'HCM',
-                'transfer_note' => 'Phí ship tuần 47',
-                'transaction_date' => $today->modify('-8 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 1250000,
-                'category' => 'salary',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'VCB Payroll',
-                'bank_account' => '9704-1111-2222',
-                'description' => 'Lương tháng 11 - NV kho',
-                'reference_type' => 'expense',
-                'reference_id' => 501,
-                'reference_code' => 'EXP-SAL-11',
-                'branch_id' => 1,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'kho',
-                'payer_code' => 'EMP05',
-                'payer_name' => 'Đặng Tuấn',
-                'payer_phone' => '0933222111',
-                'transaction_date' => $today->modify('-7 days')->format('Y-m-d'),
-                'note' => 'Trả lương qua bank',
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 420000,
-                'category' => 'expense',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Chi văn phòng phẩm',
-                'reference_type' => 'expense',
-                'reference_id' => 601,
-                'reference_code' => 'EXP-PP-11',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'anh',
-                'payer_code' => 'NCC02',
-                'payer_name' => 'Văn phòng phẩm A',
-                'payer_phone' => '0938111222',
-                'transaction_date' => $today->modify('-6 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 980000,
-                'category' => 'withdrawal',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'Techcombank 6868',
-                'bank_account' => '1903-6868-6868',
-                'description' => 'Rút tiền về quỹ tiền mặt',
-                'reference_type' => 'manual',
-                'branch_id' => 1,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'nhung',
-                'payer_code' => 'BRHN',
-                'payer_name' => 'Chi nhánh HN',
-                'transaction_date' => $today->modify('-5 days')->format('Y-m-d'),
-                'transfer_note' => 'Rút quỹ cho tuần mới',
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 660000,
-                'category' => 'other_expense',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HCM',
-                'description' => 'Chi bảo trì thiết bị',
-                'reference_type' => 'expense',
-                'reference_id' => 777,
-                'reference_code' => 'EXP-BT-01',
-                'branch_id' => 2,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'trung',
-                'payer_code' => 'NCC-BT01',
-                'payer_name' => 'Bảo trì 24h',
-                'payer_phone' => '0909222333',
-                'payer_address' => 'HCM',
-                'transaction_date' => $today->modify('-4 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 240000,
-                'category' => 'refund',
-                'payment_method' => 'cash',
-                'status' => 'pending',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Hoàn tiền KH đơn HD0990',
-                'reference_type' => 'order_payment',
-                'reference_id' => 990,
-                'reference_code' => 'HD0990',
-                'branch_id' => 1,
-                'created_by' => 3,
-                'created_by_name' => 'Viewer Test',
-                'staff_name' => 'nhung',
-                'payer_code' => 'KH0990',
-                'payer_name' => 'Vũ Minh',
-                'payer_phone' => '0912111222',
-                'transaction_date' => $today->modify('-3 days')->format('Y-m-d'),
-                'note' => 'Chờ duyệt kế toán',
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 310000,
-                'category' => 'expense',
-                'payment_method' => 'bank',
-                'status' => 'approved',
-                'account_name' => 'ACB HCM 6688',
-                'bank_account' => '9704-0000-6688',
-                'description' => 'Chi marketing Facebook Ads',
-                'reference_type' => 'expense',
-                'reference_id' => 888,
-                'reference_code' => 'EXP-MKT-11',
-                'branch_id' => 2,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'staff_name' => 'huy',
-                'payer_code' => 'FACEBOOK',
-                'payer_name' => 'Facebook Ireland',
-                'payer_phone' => '0000000000',
-                'transaction_date' => $today->modify('-2 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 150000,
-                'category' => 'shipping_fee',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HCM',
-                'description' => 'Trả phí ship đơn lẻ',
-                'reference_type' => 'shipping_settlement',
-                'reference_id' => 4702,
-                'reference_code' => 'SS-47-2',
-                'branch_id' => 2,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'anh',
-                'payer_code' => 'SHIP-02',
-                'payer_name' => 'ĐVVC Tiết kiệm',
-                'payer_phone' => '0912000999',
-                'transaction_date' => $today->modify('-1 days')->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 450000,
-                'category' => 'purchase',
-                'payment_method' => 'bank_transfer',
-                'status' => 'approved',
-                'account_name' => 'VCB 9988',
-                'bank_account' => '9704-0000-9988',
-                'description' => 'Nhập hàng đợt 2 PO1003',
-                'reference_type' => 'purchase_order',
-                'reference_id' => 1003,
-                'reference_code' => 'PO1003',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'trung',
-                'payer_code' => 'NCC01',
-                'payer_name' => 'Nhà cung cấp A',
-                'payer_phone' => '0988111222',
-                'transaction_date' => $today->format('Y-m-d'),
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 880000,
-                'category' => 'withdrawal',
-                'payment_method' => 'bank_transfer',
-                'status' => 'cancelled',
-                'account_name' => 'Techcombank 6868',
-                'bank_account' => '1903-6868-6868',
-                'description' => 'Rút tiền nhưng bị huỷ',
-                'reference_type' => 'manual',
-                'branch_id' => 2,
-                'created_by' => 1,
-                'created_by_name' => 'Dev Admin',
-                'payer_code' => 'BRHCM',
-                'payer_name' => 'Chi nhánh HCM',
-                'transaction_date' => $today->modify('-11 days')->format('Y-m-d'),
-                'note' => 'Huỷ do nhập sai số tiền',
-            ]),
-            $make([
-                'type' => 'PAYMENT',
-                'amount' => 540000,
-                'category' => 'other_expense',
-                'payment_method' => 'cash',
-                'status' => 'approved',
-                'account_name' => 'Quỹ tiền mặt HN',
-                'description' => 'Tiếp khách đối tác',
-                'reference_type' => 'expense',
-                'reference_id' => 910,
-                'reference_code' => 'EXP-TK-910',
-                'branch_id' => 1,
-                'created_by' => 2,
-                'created_by_name' => 'Manager Test',
-                'staff_name' => 'anh',
-                'payer_code' => 'PARTNER01',
-                'payer_name' => 'Công ty ABC',
-                'payer_phone' => '0987333444',
-                'transaction_date' => $today->modify('-12 days')->format('Y-m-d'),
-            ]),
-        ];
+        if (! empty($rows)) {
+            $this->db->table('cash_transactions')->insertBatch($rows);
+        }
+    }
 
-        // Idempotent for dev environment: truncate then insert demo rows
-        $this->db->table('cash_transactions')->truncate();
-        $this->db->table('cash_transactions')->insertBatch($rows);
+    private function fetchReturns(): array
+    {
+        if (! $this->db->tableExists('returns')) {
+            return [];
+        }
+
+        $rows = $this->db->table('returns r')
+            ->select('r.id, r.return_number, r.customer_id, r.refund_amount, r.refund_method, r.created_at, o.branch_id')
+            ->join('orders o', 'o.id = r.order_id', 'left')
+            ->like('r.return_number', 'RET-DEMO-', 'after')
+            ->whereIn('r.status', ['approved', 'completed'])
+            ->get()
+            ->getResultArray();
+
+        return array_map(static function ($row) {
+            $row['id'] = (int) $row['id'];
+            $row['branch_id'] = isset($row['branch_id']) ? (int) $row['branch_id'] : null;
+            return $row;
+        }, $rows);
+    }
+
+    private function customerMap(): array
+    {
+        if (! $this->db->tableExists('customers')) {
+            return [];
+        }
+        $rows = $this->db->table('customers')->select('id, name, phone, address')->get()->getResultArray();
+        $map = [];
+        foreach ($rows as $row) {
+            $map[(int) $row['id']] = [
+                'name' => $row['name'] ?? 'Khách demo',
+                'phone' => $row['phone'] ?? null,
+                'address' => $row['address'] ?? null,
+            ];
+        }
+        return $map;
+    }
+
+    private function makeRow(array $row): array
+    {
+        return array_merge([
+            'description' => null,
+            'reference_type' => null,
+            'reference_id' => null,
+            'reference_code' => null,
+            'payment_method' => null,
+            'status' => 'approved',
+            'account_name' => null,
+            'bank_account' => null,
+            'created_by_name' => null,
+            'staff_name' => null,
+            'payer_code' => null,
+            'payer_name' => null,
+            'payer_phone' => null,
+            'payer_address' => null,
+            'transfer_note' => null,
+            'note' => null,
+            'transaction_date' => date('Y-m-d'),
+        ], $row);
+    }
+
+    private function normalizeMethod(?string $method): string
+    {
+        $upper = strtoupper($method ?? '');
+        if ($upper === 'E_WALLET') {
+            return 'EWALLET';
+        }
+        $allowed = ['CASH', 'BANK_TRANSFER', 'CARD', 'COD', 'EWALLET'];
+        return in_array($upper, $allowed, true) ? $upper : 'CASH';
     }
 }

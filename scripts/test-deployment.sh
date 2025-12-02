@@ -120,7 +120,7 @@ setup_environment() {
     case "$ENVIRONMENT" in
         dev)
             log "Setting up development environment..."
-            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.override.yml"
+            COMPOSE_FILES="-f docker-compose.yml -f docker-compose.dev.yml"
             ;;
         staging)
             log "Setting up staging environment..."

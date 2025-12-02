@@ -10,7 +10,7 @@ We use a multi-environment setup with Docker Compose override files to separate 
 
 ```
 ├── docker-compose.yml              # Base configuration
-├── docker-compose.override.yml      # Development overrides
+├── docker-compose.dev.yml      # Development overrides
 ├── docker-compose.staging.yml       # Staging overrides
 └── docker-compose.prod.yml          # Production overrides (legacy)
 ```
@@ -23,7 +23,7 @@ We use a multi-environment setup with Docker Compose override files to separate 
 
 **Configuration Files**:
 - `docker-compose.yml` (base)
-- `docker-compose.override.yml` (dev-specific)
+- `docker-compose.dev.yml` (dev-specific)
 
 **Database**: `lanocrm_dev` (Port 3306)
 
@@ -43,13 +43,13 @@ We use a multi-environment setup with Docker Compose override files to separate 
 **Deployment Commands**:
 ```bash
 # Start development environment
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # View logs
-docker-compose -f docker-compose.yml -f docker-compose.override.yml logs -f
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
 
 # Stop development environment
-docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
 ### 2. Staging Environment
@@ -127,10 +127,10 @@ GitHub Branch → Environment
 
 ```bash
 # Quick start development
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # With rebuild
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d --build
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 ### Staging Deployment
@@ -242,12 +242,12 @@ To switch between environments:
 
 ```bash
 # Stop current environment
-docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 # OR
 docker-compose -f docker-compose.yml -f docker-compose.staging.yml down
 
 # Start desired environment
-docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 # OR
 docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 ```

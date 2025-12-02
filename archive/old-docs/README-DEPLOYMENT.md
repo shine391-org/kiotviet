@@ -8,7 +8,7 @@ This project uses a **Dev + Staging** environment setup with Docker Compose over
 
 ```
 ├── docker-compose.yml              # Base configuration
-├── docker-compose.override.yml      # Development overrides
+├── docker-compose.dev.yml      # Development overrides
 ├── docker-compose.staging.yml       # Staging overrides
 └── scripts/
     ├── deploy-dev.sh              # Development deployment
@@ -48,10 +48,10 @@ This project uses a **Dev + Staging** environment setup with Docker Compose over
 ./scripts/deploy-dev.sh
 
 # View logs
-docker-compose -f docker-compose.yml -f docker-compose.override.yml logs -f
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml logs -f
 
 # Stop development
-docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
 ### Staging

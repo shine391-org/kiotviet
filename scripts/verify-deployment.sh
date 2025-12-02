@@ -34,7 +34,7 @@ fi
 # Determine configuration based on environment
 case "$ENVIRONMENT" in
     dev)
-        COMPOSE_FILES="-f docker-compose.yml -f docker-compose.override.yml"
+        COMPOSE_FILES="-f docker-compose.yml -f docker-compose.dev.yml"
         DB_NAME="lanocrm_dev"
         API_URL="http://localhost:${APP_PORT:-8000}"
         FE_URL="http://localhost:${FE_PORT:-3000}"
