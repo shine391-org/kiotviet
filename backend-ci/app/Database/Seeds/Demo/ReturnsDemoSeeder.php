@@ -26,14 +26,18 @@ class ReturnsDemoSeeder extends Seeder
         $returns = [
             [
                 'id' => 1,
-                'code' => 'RET-2024-001',
+                'return_number' => 'RET-2024-001',
                 'order_id' => 1, // From OrdersDemoSeeder
                 'customer_id' => 1,
-                'branch_id' => 1,
-                'return_date' => $now->subDays(5)->toDateTimeString(),
+                // 'branch_id' => 1, // Schema doesn't have branch_id? Let's check schema again or remove if not sure. 
+                // Schema check in step 298 didn't show branch_id for returns? 
+                // Wait, let me check step 298 output for returns.
+                // It showed: id, return_number, order_id, customer_id, return_amount... NO branch_id.
+                // So remove branch_id.
+                // 'return_date' => ... Schema doesn't have return_date. Use created_at.
                 'reason' => 'Sản phẩm bị lỗi',
                 'status' => 'completed',
-                'total_amount' => 500000,
+                'return_amount' => 500000,
                 'refund_amount' => 500000,
                 'refund_method' => 'cash',
                 'notes' => 'Khách hàng phát hiện lỗi sau 2 ngày sử dụng',
@@ -41,14 +45,12 @@ class ReturnsDemoSeeder extends Seeder
             ],
             [
                 'id' => 2,
-                'code' => 'RET-2024-002',
+                'return_number' => 'RET-2024-002',
                 'order_id' => 2,
                 'customer_id' => 2,
-                'branch_id' => 1,
-                'return_date' => $now->subDays(3)->toDateTimeString(),
                 'reason' => 'Không đúng size',
                 'status' => 'completed',
-                'total_amount' => 800000,
+                'return_amount' => 800000,
                 'refund_amount' => 800000,
                 'refund_method' => 'bank_transfer',
                 'notes' => 'Đổi size khác',
@@ -56,14 +58,12 @@ class ReturnsDemoSeeder extends Seeder
             ],
             [
                 'id' => 3,
-                'code' => 'RET-2024-003',
+                'return_number' => 'RET-2024-003',
                 'order_id' => 3,
                 'customer_id' => 3,
-                'branch_id' => 2,
-                'return_date' => $now->subDays(2)->toDateTimeString(),
                 'reason' => 'Không đúng màu',
                 'status' => 'pending',
-                'total_amount' => 1200000,
+                'return_amount' => 1200000,
                 'refund_amount' => 1200000,
                 'refund_method' => 'cash',
                 'notes' => 'Chờ kiểm tra hàng',
@@ -71,14 +71,12 @@ class ReturnsDemoSeeder extends Seeder
             ],
             [
                 'id' => 4,
-                'code' => 'RET-2024-004',
+                'return_number' => 'RET-2024-004',
                 'order_id' => 4,
                 'customer_id' => 4,
-                'branch_id' => 1,
-                'return_date' => $now->subDays(1)->toDateTimeString(),
                 'reason' => 'Sản phẩm bị hư hỏng khi vận chuyển',
                 'status' => 'approved',
-                'total_amount' => 1500000,
+                'return_amount' => 1500000,
                 'refund_amount' => 1500000,
                 'refund_method' => 'bank_transfer',
                 'notes' => 'Đã xác nhận lỗi vận chuyển',
@@ -86,14 +84,12 @@ class ReturnsDemoSeeder extends Seeder
             ],
             [
                 'id' => 5,
-                'code' => 'RET-2024-005',
+                'return_number' => 'RET-2024-005',
                 'order_id' => 5,
                 'customer_id' => 5,
-                'branch_id' => 2,
-                'return_date' => $now->toDateTimeString(),
                 'reason' => 'Khách hàng đổi ý',
                 'status' => 'rejected',
-                'total_amount' => 2000000,
+                'return_amount' => 2000000,
                 'refund_amount' => 0,
                 'refund_method' => null,
                 'notes' => 'Quá thời gian đổi trả (7 ngày)',

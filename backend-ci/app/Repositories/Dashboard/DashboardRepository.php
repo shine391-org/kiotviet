@@ -118,16 +118,29 @@ class DashboardRepository
     }
 
     /**
-     * Get top products by metric - SIMPLIFIED
-     * @agent-pattern: Simplified ranking query
+     * Get top products by metric
+     * @agent-pattern: Ranking query with JOIN and aggregation
      */
     public function getTopProducts(string $metric, string $range, int $limit = 10): array
     {
         [$startDate, $endDate] = $this->getDateRangeFromFilter($range);
         
-        // Simplified - just return empty since we have no data and complex joins fail
-        // When data exists, this can be enhanced
-        return [];
+        $this->db->query("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+        
+        $builder = $this->db->table('order_items oi')
+            ->select('oi.product_id as id')
+            ->select('p.name')
+            ->select('SUM(oi.quantity * oi.final_price) as value')
+            ->join('orders o', 'o.id = oi.order_id', 'inner')
+            ->join('products p', 'p.id = oi.product_id', 'inner')
+            ->where('DATE(o.order_date) >=', $startDate)
+            ->where('DATE(o.order_date) <=', $endDate)
+            ->where('o.status !=', 'cancelled')
+            ->groupBy('oi.product_id')
+            ->orderBy('value', 'DESC')
+            ->limit($limit);
+        
+        return $builder->get()->getResultArray();
     }
 
     /**
@@ -157,9 +170,59 @@ class DashboardRepository
 
     public function getRecentActivities(int $limit = 15): array
     {
-        // Simplified - return empty since tables have no data
-        // When data exists, build UNION query with actual columns
-        return [];
+        $sql = "
+            (SELECT 
+                CONCAT('inv-', i.id) as id,
+                'invoice' as type,
+                COALESCE(u.username, 'System') as username,
+                'Bán đơn hàng' as action,
+                i.total as amount,
+                i.issue_date as timestamp,
+                CONCAT('INV-', i.id) as related_code,
+                CONCAT('#/invoices/', i.id) as linked_page
+            FROM invoices i
+            LEFT JOIN users u ON u.id = i.created_by
+            WHERE (i.invoice_status != 'cancelled' OR i.invoice_status IS NULL)
+            ORDER BY i.issue_date DESC
+            LIMIT {$limit})
+            
+            UNION ALL
+            
+            (SELECT 
+                CONCAT('ret-', r.id) as id,
+                'return' as type,
+                COALESCE(u.username, 'System') as username,
+                'Nhận trả hàng' as action,
+                COALESCE(r.return_amount, 0) as amount,
+                r.updated_at as timestamp,
+                r.return_number as related_code,
+                CONCAT('#/returns/', r.id) as linked_page
+            FROM returns r
+            LEFT JOIN users u ON u.id = r.created_by
+            WHERE r.status = 'completed'
+            ORDER BY r.updated_at DESC
+            LIMIT {$limit})
+            
+            UNION ALL
+            
+            (SELECT 
+                CONCAT('dn-', d.id) as id,
+                'delivery' as type,
+                'System' as username,
+                'Giao hàng' as action,
+                0 as amount,
+                d.delivery_date as timestamp,
+                d.delivery_number as related_code,
+                CONCAT('#/deliveries/', d.id) as linked_page
+            FROM delivery_notes d
+            ORDER BY d.delivery_date DESC
+            LIMIT {$limit})
+            
+            ORDER BY timestamp DESC
+            LIMIT {$limit}
+        ";
+        
+        return $this->db->query($sql)->getResultArray();
     }
 
     /**
@@ -182,6 +245,10 @@ class DashboardRepository
             'month' => [
                 date('Y-m-01'), // First day of current month
                 date('Y-m-t')   // Last day of current month
+            ],
+            'year' => [
+                date('Y-01-01'),
+                date('Y-12-31')
             ],
             default => [
                 date('Y-m-01'),
