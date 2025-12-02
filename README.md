@@ -27,6 +27,8 @@ This file contains:
 
 **Current Status:** [docs/plans/BACKEND-REFACTOR-PLAN.md](docs/plans/BACKEND-REFACTOR-PLAN.md)
 
+**Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide
+
 ---
 
 ## 🏗️ Architecture Quick Reference
