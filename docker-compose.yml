@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   api:
     build:
@@ -13,9 +11,7 @@ services:
     depends_on:
       - db
     volumes:
-      # Nếu source code ở Dev Drive F:
-      - F:/projects/lanocrm/backend-ci:/var/www/html
-      # Hoặc giữ relative path nếu docker-compose.yml đã ở F:
+      # Sử dụng relative path để tránh conflict
       - ./backend-ci:/var/www/html
 
   fe:
@@ -30,9 +26,7 @@ services:
     depends_on:
       - api
     volumes:
-      # Nếu ở Dev Drive
-      - F:/projects/lanocrm/lanocrm:/app
-      # Hoặc relative
+      # Sử dụng relative path để tránh conflict
       - ./lanocrm:/app
       # node_modules nên dùng named volume (QUAN TRỌNG)
       - node_modules_cache:/app/node_modules

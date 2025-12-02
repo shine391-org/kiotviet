@@ -18,27 +18,6 @@ Desktop.ini
 $RECYCLE.BIN/
 
 # ========================================
-# Database Files (Dumps & Exports)
-# ========================================
-# Database dumps from local PHP environment
-db_lano*
-*.sql
-*.sql.gz
-*.dump
-*.backup
-
-# ========================================
-# Docker & Environment Files
-# ========================================
-# Environment files (security risk)
-.env
-.env.local
-.env.*.local
-
-# Docker volumes and temporary data
-tmp/
-
-# ========================================
 # Logs & Debug Files
 # ========================================
 *.log
@@ -82,23 +61,12 @@ tramp
 # ========================================
 # Backup & Temporary Files
 # ========================================
-*.bak
-*.backup
 *.tmp
 *.temp
 *.old
 *.orig
 *.rej
 ~*
-
-# ========================================
-# Build & Distribution Files
-# ========================================
-build/
-dist/
-out/
-coverage/
-
 # ========================================
 # Node.js (Common files)
 # ========================================
@@ -127,13 +95,6 @@ test-results/
 playwright-report/
 
 # ========================================
-# Documentation Generated Files
-# ========================================
-/docs/build/
-/docs/_build/
-/site/
-
-# ========================================
 # Cache & Performance
 # ========================================
 .cache/
@@ -155,6 +116,11 @@ config/local.*
 secrets.*
 credentials.*
 
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # ========================================
 # Project Specific
 # ========================================
@@ -163,13 +129,15 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 
-# Database exports from development
-db_lano
-db_lano.gz
+# Docker volumes and data
+docker-data/
+docker-volumes/
 
-# Generated documentation
-docs/generated/
-api-docs/
+# Database dumps and backups
+*.sql
+*.sql.gz
+*.dump
+db-backups/
 
 # ========================================
 # Keep these directories but ignore contents

@@ -9,9 +9,22 @@ for i in {1..30}; do
   echo "Waiting DB..."; sleep 2;
 done
 
+# Check if database is already initialized
+DB_INITIALIZED_FILE="/var/www/html/writable/.db_initialized"
+
 # Schema bootstrap via golden migration + optional demo seed (default group)
-MIGRATION_VERBOSE=0 php spark migrate --all || true
-MIGRATION_VERBOSE=0 php spark db:seed DevDemoSeeder || true
+# Only run migration/seeder if database is not initialized
+if [ ! -f "$DB_INITIALIZED_FILE" ]; then
+    echo "Database not initialized, running setup..."
+    MIGRATION_VERBOSE=0 php spark migrate --all || true
+    MIGRATION_VERBOSE=0 php spark db:seed DevDemoSeeder || true
+    # Create marker file to indicate database is initialized
+    touch "$DB_INITIALIZED_FILE"
+    echo "Database initialization completed."
+else
+    echo "Database already initialized, skipping setup..."
+fi
+
 # Kiểm tra health cho group tests (golden schema) để đảm bảo môi trường test sẵn sàng
 MIGRATION_VERBOSE=0 php spark db:health tests || true
 

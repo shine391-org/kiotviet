@@ -1,0 +1,57 @@
+# Docker Compose Override for Development Environment
+# This file extends docker-compose.yml with development-specific configurations
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.override.yml up
+
+version: '3.8'
+
+services:
+  api:
+    volumes:
+      # Override with local development volume
+      - ./backend-ci:/var/www/html
+      # Add writable logs volume for debugging
+      - ./logs/api:/var/log/apache2
+    environment:
+      # Enable debug mode in development
+      - CI_ENVIRONMENT=development
+      - LOG_THRESHOLD=4
+
+  fe:
+    volumes:
+      # Override with local development volume
+      - ./lanocrm:/app
+      # Add node_modules cache
+      - node_modules_cache:/app/node_modules
+    environment:
+      # Enable hot reload in development
+      - VITE_API_URL=http://localhost:8000
+      - NODE_ENV=development
+
+  db:
+    volumes:
+      # Add custom MySQL configuration for development
+      - db_data:/var/lib/mysql
+      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      # Add logs volume for debugging
+      - ./logs/mysql:/var/log/mysql
+    environment:
+      # Enable slow query log in development
+      - MYSQL_SLOW_QUERY_LOG=1
+      - MYSQL_LONG_QUERY_TIME=2
+
+  db-test:
+    volumes:
+      # Add custom MySQL configuration for testing
+      - test_db_data:/var/lib/mysql
+      - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
+      # Add logs volume for debugging
+      - ./logs/mysql-test:/var/log/mysql
+
+volumes:
+  # Define additional volumes for development
+  api_logs:
+    driver: local
+  mysql_logs:
+    driver: local
+  mysql_test_logs:
+    driver: local

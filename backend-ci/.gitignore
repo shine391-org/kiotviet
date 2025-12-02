@@ -21,6 +21,9 @@ writable/tests/*
 writable/debugbar/*
 !writable/debugbar/index.html
 
+# Database initialization marker
+writable/.db_initialized
+
 # ========================================
 # PHP Specific
 # ========================================
@@ -80,3 +83,11 @@ dist/
 # Test Results
 # ========================================
 /results/
+
+# ========================================
+# Docker Specific
+# ========================================
+# Docker-specific files that shouldn't be in repo
+.dockerignore
+# Note: All Docker files are kept for multi-machine development
+# Dockerfile.dev, docker-compose.override.yml, docker-compose.prod.yml are needed

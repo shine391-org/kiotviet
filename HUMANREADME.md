@@ -8,20 +8,26 @@ React + CodeIgniter 4 CRM System
 - Docker & Docker Compose
 - Node.js 18+ & npm
 
-### Start Backend & Database
+### Start All Services (Recommended)
+```bash
+docker compose up -d
+```
+This starts: API (port 8000), Frontend (port 3000), Database, phpMyAdmin (port 8080)
+
+### Start Backend Only
 ```bash
 docker compose up -d db api
 ```
 - API: http://localhost:8000/api
 - Database: MySQL 8.4
 
-### Start Frontend
+### Start Frontend (if not using Docker)
 ```bash
 cd lanocrm
 npm install
 npm run dev
 ```
-- Frontend: http://localhost:5173
+- Frontend: http://localhost:3000 (Docker) or http://localhost:5173 (local)
 
 ## Default Credentials
 
@@ -38,15 +44,32 @@ POST http://localhost:8000/api/auth/login
 }
 ```
 
-**Legacy Frontend (if needed):**
+## Docker Workflow (IMPORTANT)
+
+### ✅ DO THIS - Use Docker containers
 ```bash
-POST http://localhost:3000/backend-ci/api/users/login
+# Start all services
+docker compose up -d
+
+# Run commands in Docker
+docker exec meomeo2-api-1 php spark migrate
+docker exec meomeo2-api-1 vendor/bin/phpunit
+
+# Or use helper scripts
+./backend-ci/docker-spark migrate
+./backend-ci/docker-php --version
+```
+
+### ❌ DON'T DO THIS - WSL/Local PHP
+```bash
+# WRONG - Don't run PHP directly when Docker is running
+cd backend-ci && php spark serve
 ```
 
 ## Seed Sample Data
 
 ```bash
-docker exec -it meomeo2-api-1 php spark db:seed DevSeeder
+docker exec -it meomeo2-api-1 php spark db:seed DevDemoSeeder
 ```
 
 Creates:
@@ -59,12 +82,12 @@ Creates:
 
 ### Backend Tests
 
-**Unit Tests (SQLite in-memory):**
+**Unit Tests (MySQL with transactions):**
 ```bash
 docker exec meomeo2-api-1 vendor/bin/phpunit
 ```
 
-**Integration Tests (MySQL):**
+**Integration Tests (MySQL full stack):**
 ```bash
 docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
 ```
@@ -72,6 +95,11 @@ docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
 **Route Coverage Test:**
 ```bash
 docker exec meomeo2-api-1 vendor/bin/phpunit --filter ApiRoutesTest
+```
+
+**Validate Models (check for db_ prefixes):**
+```bash
+docker exec meomeo2-api-1 php spark validate:models
 ```
 
 ### Frontend Tests
@@ -130,10 +158,26 @@ meomeo2/
 └── docs/               # Documentation
 ```
 
-## Common Issues
+## Common Issues & Solutions
 
-### Docker Warnings
-The `version` field in `docker-compose.yml` is deprecated but harmless. You can remove it if desired.
+### Docker Environment Issues
+**Problem:** "Table 'lanocrm_shop.db_products' doesn't exist"
+**Solution:** Always use Docker commands, not local PHP
+```bash
+# Correct
+docker exec meomeo2-api-1 php spark serve
+
+# Wrong
+cd backend-ci && php spark serve
+```
+
+### Database Connection Issues
+**Problem:** "Connection refused"
+**Solution:** Check containers are running
+```bash
+docker ps
+docker compose restart db
+```
 
 ### Authentication
 Current auth is development-level (JWT). Production deployment will need:
@@ -143,7 +187,7 @@ Current auth is development-level (JWT). Production deployment will need:
 - HTTPS
 
 ### Xdebug
-Xdebug is enabled in the container for coverage reporting.
+Xdebug is enabled in container for coverage reporting.
 
 ## Development Notes
 
@@ -151,6 +195,33 @@ Xdebug is enabled in the container for coverage reporting.
 - Frontend uses Redux for state management
 - All API endpoints require JWT token (except auth endpoints)
 - Soft deletes used throughout (`deleted_at` column)
+- **Always work through Docker containers**
+- **Use helper scripts in backend-ci/docker-* for consistency**
+
+## Useful Commands
+
+```bash
+# Check container status
+docker ps
+
+# View logs
+docker logs meomeo2-api-1
+
+# Access database
+docker exec -it meomeo2-db-1 mysql -u lanocrm_user -p lanocrm_shop
+
+# Reset demo data
+docker compose down -v && docker compose up -d
+
+# Validate environment
+docker exec meomeo2-api-1 php spark validate:models
+```
+
+## Documentation
+
+- Docker Workflow Guide: `docs/testing/docker-workflow-guide.md`
+- Testing Guide: `docs/testing/TESTING-GUIDE.md`
+- Architecture Guide: `docs/AGENT-GUIDE-01.md`
 
 ## License
 
