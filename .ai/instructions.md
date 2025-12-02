@@ -17,10 +17,9 @@ TECH STACK: PHP 8.4 + CodeIgniter 4.5 + MySQL 8.4
 TÀI LIỆU CHÍNH:
 1. AGENTS.md - Hướng dẫn kiến trúc, patterns, workflow (MySQL-only)
 2. docs/DOCUMENTATION_INDEX.md - **Central index** tất cả docs
-3. docs/testing/TESTING-GUIDE.md - MySQL-only (DevDatabaseTrait)
-4. docs/testing/TESTING-PATTERNS.md - Patterns (DevDatabaseTrait + truncate-only)
-5. docs/testing/TESTING-MAIN-DB-GUIDE.md - Golden schema + rollback
-6. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
+3. docs/testing/BACKEND-TESTING.md - MySQL testing guide
+4. docs/testing/FRONTEND-TESTING.md - React/Vitest/Playwright guide
+5. docs/testing/TEST-CHECKLIST.md - Checklist bắt buộc cho PR
 
 **📋 Audit Reports (Latest):**
 - docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md - Comprehensive FE/BE test coverage analysis
