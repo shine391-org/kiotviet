@@ -1,0 +1,93 @@
+# ========================================
+# LANO CRM - Backend .gitignore
+# ========================================
+# This file contains PHP/CodeIgniter specific ignore rules
+# Common rules are in the root .gitignore file
+
+# ========================================
+# CodeIgniter 4 Specific
+# ========================================
+# Writable directories (keep structure, ignore content)
+writable/cache/*
+!writable/cache/index.html
+writable/logs/*
+!writable/logs/index.html
+writable/session/*
+!writable/session/index.html
+writable/uploads/*
+!writable/uploads/index.html
+writable/tests/*
+!writable/tests/index.html
+writable/debugbar/*
+!writable/debugbar/index.html
+
+# Database initialization marker
+writable/.db_initialized
+
+# ========================================
+# PHP Specific
+# ========================================
+# PHP errors
+php_errors.log
+
+# Composer (already in root but keeping for clarity)
+vendor/
+composer.phar
+
+# ========================================
+# Testing Specific
+# ========================================
+# PHPUnit coverage and cache
+tests/coverage*
+.phpunit/cache/code-coverage/
+phpunit
+
+# ========================================
+# CodeIgniter Development
+# ========================================
+# User Guide Temp Files
+user_guide_src/build/*
+user_guide_src/cilexer/build/*
+user_guide_src/cilexer/dist/*
+user_guide_src/cilexer/pycilexer.egg-info/*
+
+# ========================================
+# PHP Development Tools
+# ========================================
+# phpenv local config
+.php-version
+
+# ========================================
+# Build & Distribution
+# ========================================
+# Build directories
+builds/
+nbbuild/
+nbdist/
+dist/
+
+# ========================================
+# IDE Specific (PHP focused)
+# ========================================
+# NetBeans
+/nbproject/
+/nbactions.xml
+/nb-configuration.xml
+/.nb-gradle/
+
+# Sublime Text PHP specific
+.phpintel
+/api/
+
+# ========================================
+# Test Results
+# ========================================
+/results/
+
+# ========================================
+# Docker Specific
+# ========================================
+# Docker-specific files that shouldn't be in repo
+.dockerignore
+# Note: All Docker files are kept for multi-machine development
+# Dockerfile.dev, docker-compose.override.yml, docker-compose.prod.yml are needed

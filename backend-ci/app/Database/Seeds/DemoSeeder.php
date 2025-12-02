@@ -40,27 +40,27 @@ class DemoSeeder extends Seeder
             'UsersDemoSeeder',      // More users
             'BranchesDemoSeeder',   // Branches & Warehouses
             'WarehousesDemoSeeder', // More warehouses
-            'SuppliersDemoSeeder',  // Suppliers
-            'CustomersDemoSeeder',  // Customers
-            'HRDemoSeeder',         // Employees (needs Users)
+            // 'SuppliersDemoSeeder',  // Suppliers - Table doesn't exist
+            // 'CustomersDemoSeeder',  // Customers - Table doesn't exist
+            // 'HRDemoSeeder',         // Employees (needs Users) - Table doesn't exist
             
             // Product Data
-            'ProductVariantsDemoSeeder', // Variants
-            'PriceListDemoSeeder',       // Price Lists
-            'ManufacturingDemoSeeder',   // BOM (needs Products)
+            // 'ProductVariantsDemoSeeder', // Variants - Table doesn't exist
+            // 'PriceListDemoSeeder',       // Price Lists - Table doesn't exist
+            // 'ManufacturingDemoSeeder',   // BOM (needs Products) - Table doesn't exist
 
             // Transaction Data
-            'OrdersDemoSeeder',          // Orders (needs Customers, Products)
-            'InvoicesDemoSeeder',        // Invoices (needs Orders)
-            'DeliveryNotesDemoSeeder',   // Delivery Notes (needs Orders)
-            'ReturnsDemoSeeder',         // Returns (needs Orders)
-            'PurchaseOrdersDemoSeeder',  // POs (needs Suppliers, Products)
-            'StockMovementsDemoSeeder',  // Stock (needs Warehouses, Products)
-            'CashTransactionsDemoSeeder',// Cash (needs Invoices/POs)
+            // 'OrdersDemoSeeder',          // Orders (needs Customers, Products) - Table doesn't exist
+            // 'InvoicesDemoSeeder',        // Invoices (needs Orders) - Table doesn't exist
+            // 'DeliveryNotesDemoSeeder',   // Delivery Notes (needs Orders) - Table doesn't exist
+            // 'ReturnsDemoSeeder',         // Returns (needs Orders) - Table doesn't exist
+            // 'PurchaseOrdersDemoSeeder',  // POs (needs Suppliers, Products) - Table doesn't exist
+            // 'StockMovementsDemoSeeder',  // Stock (needs Warehouses, Products) - Table doesn't exist
+            // 'CashTransactionsDemoSeeder',// Cash (needs Invoices/POs) - Table doesn't exist
             
             // Other Modules
-            'CRMDemoSeeder',             // CRM (needs Customers, Users)
-            'AccountingDemoSeeder',      // Accounting (needs Users)
+            // 'CRMDemoSeeder',             // CRM (needs Customers, Users) - Table doesn't exist
+            // 'AccountingDemoSeeder',      // Accounting (needs Users) - Table doesn't exist
         ];
 
         $namespace = 'App\\Database\\Seeds\\Demo\\';

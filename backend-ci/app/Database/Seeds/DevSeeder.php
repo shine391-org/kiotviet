@@ -111,9 +111,9 @@ class DevSeeder extends Seeder
 
         // Categories mẫu (có parent/child)
         $this->db->table('product_categories')->ignore(true)->insertBatch([
-            ['id'=> 101, 'product_id'=>0, 'parent_id'=>null, 'level'=>1, 'is_variant_group'=>0, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
-            ['id'=> 102, 'product_id'=>0, 'parent_id'=>null, 'level'=>1, 'is_variant_group'=>0, 'code'=>'VI',  'name'=>'Ví',      'slug'=>'vi',        'sort_order'=>2, 'status'=>'active', 'created_at'=>$now],
-            ['id'=> 103, 'product_id'=>0, 'parent_id'=>101, 'level'=>2, 'is_variant_group'=>0, 'code'=>'TUI-DA','name'=>'Túi da',  'slug'=>'tui-da',   'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
+            ['id'=> 101, 'parent_id'=>null, 'level'=>1, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
+            ['id'=> 102, 'parent_id'=>null, 'level'=>1, 'code'=>'VI',  'name'=>'Ví',      'slug'=>'vi',        'sort_order'=>2, 'status'=>'active', 'created_at'=>$now],
+            ['id'=> 103, 'parent_id'=>101, 'level'=>2, 'code'=>'TUI-DA','name'=>'Túi da',  'slug'=>'tui-da',   'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
         ]);
 
         // Thuộc tính + options mẫu

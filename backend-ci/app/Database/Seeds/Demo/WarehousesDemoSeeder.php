@@ -27,9 +27,6 @@ class WarehousesDemoSeeder extends Seeder
                 'branch_id' => 1,
                 'code' => 'WH-HN-MAIN',
                 'name' => 'Kho chính Hà Nội',
-                'type' => 'main',
-                'address' => 'Khu công nghiệp Thăng Long, Hà Nội',
-                'capacity' => 10000.00,
                 'status' => 'active',
             ],
             [
@@ -37,9 +34,6 @@ class WarehousesDemoSeeder extends Seeder
                 'branch_id' => 1,
                 'code' => 'WH-HN-RETAIL',
                 'name' => 'Kho bán lẻ Hà Nội',
-                'type' => 'retail',
-                'address' => '123 Phố Huế, Hà Nội',
-                'capacity' => 500.00,
                 'status' => 'active',
             ],
             [
@@ -47,9 +41,6 @@ class WarehousesDemoSeeder extends Seeder
                 'branch_id' => 2,
                 'code' => 'WH-HCM-MAIN',
                 'name' => 'Kho chính HCM',
-                'type' => 'main',
-                'address' => 'Khu công nghiệp Tân Bình, HCM',
-                'capacity' => 15000.00,
                 'status' => 'active',
             ],
         ];

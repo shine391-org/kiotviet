@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-# Change to backend directory
-cd /var/www/html/backend-ci
+# Change to application directory
+cd /var/www/html
 
 echo "=== Starting Application Setup ==="
 
@@ -26,7 +26,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # Check if database is already initialized
-DB_INITIALIZED_FILE="/var/www/html/backend-ci/writable/.db_initialized"
+DB_INITIALIZED_FILE="/var/www/html/writable/.db_initialized"
 
 # Run migrations if not initialized
 if [ ! -f "$DB_INITIALIZED_FILE" ]; then

@@ -4,8 +4,14 @@
 services:
   web:
     volumes:
-      # Production volume mapping (read-only source code)
-      - ./backend-ci:/var/www/html:ro
+      # Production volume mapping - mount only necessary directories
+      - ./backend-ci/app:/var/www/html/app:ro
+      - ./backend-ci/public:/var/www/html/public:ro
+      - ./backend-ci/vendor:/var/www/html/vendor:ro
+      - ./backend-ci/composer.json:/var/www/html/composer.json:ro
+      - ./backend-ci/composer.lock:/var/www/html/composer.lock:ro
+      - ./backend-ci/spark:/var/www/html/spark:ro
+      - ./backend-ci/env:/var/www/html/env:ro
       # Writable directories only
       - api_uploads:/var/www/html/uploads
       - api_writable:/var/www/html/writable
@@ -36,6 +42,8 @@ services:
       - NODE_ENV=production
     depends_on:
       - web
+    # Override command from base compose file
+    command: [ "nginx", "-g", "daemon off;" ]
     deploy:
       resources:
         limits:
