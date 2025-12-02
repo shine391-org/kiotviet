@@ -2,17 +2,40 @@
 
 React + CodeIgniter 4 CRM System
 
-## Quick Start (Development)
+## 🚀 Quick Start (Development)
 
 ### Prerequisites
 - Docker & Docker Compose
 - Node.js 18+ & npm
+- 8GB RAM minimum
+- 20GB free disk space
 
 ### Start All Services (Recommended)
 ```bash
-docker compose up -d
+# Start all services
+docker compose up -d --build
+
+# Monitor startup (wait for migration to complete)
+docker compose logs -f api
+
+# Verify setup
+chmod +x scripts/check-migration-status.sh
+./scripts/check-migration-status.sh
 ```
-This starts: API (port 8000), Frontend (port 3000), Database, phpMyAdmin (port 8080)
+
+**What happens automatically:**
+- ✅ Database starts and waits for readiness
+- ✅ Migrations run automatically (first time only)
+- ✅ Demo data seeded automatically (development only)
+- ✅ API server starts on port 8000
+- ✅ Frontend dev server starts on port 3000
+- ✅ phpMyAdmin available on port 8080
+
+**Access points:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000/api
+- phpMyAdmin: http://localhost:8080
+- Database: localhost:3306
 
 ### Start Backend Only
 ```bash
@@ -66,17 +89,57 @@ docker exec meomeo2-api-1 vendor/bin/phpunit
 cd backend-ci && php spark serve
 ```
 
-## Seed Sample Data
+## 📊 Database & Seeding
 
+### Automatic Setup (First Start)
+
+Database is automatically initialized on first container start:
+1. Waits for database connection (max 60s)
+2. Runs migrations if not already run
+3. Seeds demo data (development only)
+4. Creates marker file to prevent re-running
+
+### Manual Seeding
+
+**Re-seed demo data:**
 ```bash
-docker exec -it meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
 ```
 
-Creates:
+**Reset database completely:**
+```bash
+# Remove marker to trigger re-initialization
+docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+
+# Restart container
+docker compose restart api
+
+# Watch logs
+docker compose logs -f api
+```
+
+**Demo data includes:**
 - Users: devadmin/Admin@123, manager1, viewer1
-- Branches, categories
+- Branches, warehouses, categories
 - Attributes & options
 - Sample products with variants & images
+- Demo customers, orders, invoices
+- Cash transactions, price lists
+
+### Migration Status
+
+**Check migration status:**
+```bash
+./scripts/check-migration-status.sh
+```
+
+**View migration logs:**
+```bash
+docker exec meomeo2-api-1 cat /tmp/migration.log
+```
+
+**For detailed troubleshooting:**
+See [`docs/MIGRATION-TROUBLESHOOTING.md`](docs/MIGRATION-TROUBLESHOOTING.md)
 
 ## Testing
 
@@ -158,25 +221,61 @@ meomeo2/
 └── docs/               # Documentation
 ```
 
-## Common Issues & Solutions
+## 🔧 Common Issues & Solutions
+
+### Migration Issues
+
+**Problem:** Tables missing after deploy
+**Solution:** Check migration status and re-run if needed
+```bash
+./scripts/check-migration-status.sh
+docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+docker compose restart api
+```
+
+**Problem:** Migration timeout
+**Solution:** Check logs and database performance
+```bash
+docker exec meomeo2-api-1 cat /tmp/migration.log
+docker compose logs db
+```
+
+**For detailed troubleshooting:** See [`docs/MIGRATION-TROUBLESHOOTING.md`](docs/MIGRATION-TROUBLESHOOTING.md)
 
 ### Docker Environment Issues
+
 **Problem:** "Table 'lanocrm_shop.db_products' doesn't exist"
 **Solution:** Always use Docker commands, not local PHP
 ```bash
 # Correct
-docker exec meomeo2-api-1 php spark serve
+docker exec meomeo2-api-1 php spark migrate
 
 # Wrong
-cd backend-ci && php spark serve
+cd backend-ci && php spark migrate
+```
+
+**Problem:** Container won't start
+**Solution:** Check logs and rebuild
+```bash
+docker compose logs api
+docker compose up -d --build
 ```
 
 ### Database Connection Issues
+
 **Problem:** "Connection refused"
 **Solution:** Check containers are running
 ```bash
 docker ps
 docker compose restart db
+sleep 10
+docker compose restart api
+```
+
+**Problem:** Database not ready
+**Solution:** Wait for database initialization
+```bash
+docker compose logs -f db  # Wait for "ready for connections"
 ```
 
 ### Authentication
@@ -198,30 +297,99 @@ Xdebug is enabled in container for coverage reporting.
 - **Always work through Docker containers**
 - **Use helper scripts in backend-ci/docker-* for consistency**
 
-## Useful Commands
+## 🛠️ Useful Commands
 
+### Container Management
 ```bash
 # Check container status
 docker ps
 
 # View logs
-docker logs meomeo2-api-1
+docker compose logs -f api
+docker compose logs -f fe
+docker compose logs -f db
 
+# Restart services
+docker compose restart api
+docker compose restart db
+
+# Rebuild containers
+docker compose up -d --build
+```
+
+### Database Operations
+```bash
 # Access database
 docker exec -it meomeo2-db-1 mysql -u lanocrm_user -p lanocrm_shop
 
-# Reset demo data
-docker compose down -v && docker compose up -d
+# Backup database
+./scripts/db-backup.sh
 
-# Validate environment
-docker exec meomeo2-api-1 php spark validate:models
+# Restore database
+./scripts/db-restore.sh backups/latest.sql
+
+# Check migration status
+./scripts/check-migration-status.sh
+
+# View migration log
+docker exec meomeo2-api-1 cat /tmp/migration.log
 ```
 
-## Documentation
+### Development
+```bash
+# Run migrations
+docker exec meomeo2-api-1 php spark migrate
 
-- Docker Workflow Guide: `docs/testing/docker-workflow-guide.md`
-- Testing Guide: `docs/testing/TESTING-GUIDE.md`
-- Architecture Guide: `docs/AGENT-GUIDE-01.md`
+# Seed demo data
+docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+
+# Validate models
+docker exec meomeo2-api-1 php spark validate:models
+
+# Run tests
+docker exec meomeo2-api-1 vendor/bin/phpunit
+
+# Reset everything
+docker compose down -v && docker compose up -d --build
+```
+
+### Debugging
+```bash
+# Check migration marker
+docker exec meomeo2-api-1 test -f /var/www/html/writable/.db_initialized && echo "Initialized" || echo "NOT initialized"
+
+# Count tables
+docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lanocrm_shop'"
+
+# Check disk space
+docker system df
+
+# View container stats
+docker stats
+```
+
+## 📚 Documentation
+
+### Core Guides
+- **Architecture:** [`AGENTS.md`](AGENTS.md) - Complete development guide
+- **Testing:** [`docs/testing/TESTING-GUIDE.md`](docs/testing/TESTING-GUIDE.md)
+- **Docker Workflow:** [`docs/testing/docker-workflow-guide.md`](docs/testing/docker-workflow-guide.md)
+
+### Deployment & DevOps
+- **Migration Guide:** [`docs/MIGRATION-TROUBLESHOOTING.md`](docs/MIGRATION-TROUBLESHOOTING.md)
+- **Quick Reference:** [`docs/MIGRATION-QUICK-REFERENCE.md`](docs/MIGRATION-QUICK-REFERENCE.md)
+- **Seeding Strategy:** [`docs/SEEDING-STRATEGY.md`](docs/SEEDING-STRATEGY.md)
+- **Deployment by Environment:** [`docs/DEPLOYMENT-BY-ENVIRONMENT.md`](docs/DEPLOYMENT-BY-ENVIRONMENT.md)
+- **Production Deployment:** [`DEPLOYMENT.md`](DEPLOYMENT.md) (generated by deploy.sh)
+
+### Testing Documentation
+- **Backend Testing:** [`docs/testing/TESTING-PATTERNS.md`](docs/testing/TESTING-PATTERNS.md)
+- **Frontend Testing:** [`docs/testing/FE-TESTING-GUIDE.md`](docs/testing/FE-TESTING-GUIDE.md)
+- **Test Checklists:** [`docs/testing/TEST-CHECKLIST.md`](docs/testing/TEST-CHECKLIST.md)
+
+### Audit Reports
+- **Test Coverage:** [`docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md`](docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md)
+- **Documentation Index:** [`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md)
 
 ## License
 

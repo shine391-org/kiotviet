@@ -1,31 +1,72 @@
 #!/bin/bash
 set -e
-cd /var/www/html
 
-# wait for DB
+# Change to backend directory
+cd /var/www/html/backend-ci
+
+echo "=== Starting Application Setup ==="
+
+# Wait for database to be ready
+echo "Waiting for database connection..."
 for i in {1..30}; do
-  php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); exit(0);}catch(Throwable $e){ exit(1);}';
-  if [ $? -eq 0 ]; then echo "DB ready"; break; fi
-  echo "Waiting DB..."; sleep 2;
+  php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); exit(0);}catch(Throwable $e){ exit(1);}' 2>/dev/null
+  if [ $? -eq 0 ]; then
+    echo "✓ Database connection established"
+    break
+  fi
+  echo "  Attempt $i/30: Waiting for database..."
+  sleep 2
 done
 
-# Check if database is already initialized
-DB_INITIALIZED_FILE="/var/www/html/writable/.db_initialized"
-
-# Schema bootstrap via golden migration + optional demo seed (default group)
-# Only run migration/seeder if database is not initialized
-if [ ! -f "$DB_INITIALIZED_FILE" ]; then
-    echo "Database not initialized, running setup..."
-    MIGRATION_VERBOSE=0 php spark migrate --all || true
-    MIGRATION_VERBOSE=0 php spark db:seed DevDemoSeeder || true
-    # Create marker file to indicate database is initialized
-    touch "$DB_INITIALIZED_FILE"
-    echo "Database initialization completed."
-else
-    echo "Database already initialized, skipping setup..."
+# Check if we successfully connected
+php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop"); exit(0);}catch(Throwable $e){ echo "ERROR: Cannot connect to database\n"; exit(1);}' 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "✗ Failed to connect to database after 60 seconds"
+    exit 1
 fi
 
-# Kiểm tra health cho group tests (golden schema) để đảm bảo môi trường test sẵn sàng
-MIGRATION_VERBOSE=0 php spark db:health tests || true
+# Check if database is already initialized
+DB_INITIALIZED_FILE="/var/www/html/backend-ci/writable/.db_initialized"
 
+# Run migrations if not initialized
+if [ ! -f "$DB_INITIALIZED_FILE" ]; then
+    echo ""
+    echo "=== Database Initialization ==="
+    echo "Running migrations..."
+    
+    # Run migrations with timeout protection
+    timeout 300 php spark migrate --all 2>&1 | tee /tmp/migration.log
+    MIGRATION_STATUS=${PIPESTATUS[0]}
+    
+    if [ $MIGRATION_STATUS -eq 0 ]; then
+        echo "✓ Migrations completed successfully"
+        
+        # Optional: Seed demo data (only in dev/staging)
+        if [ "${CI_ENVIRONMENT:-production}" != "production" ]; then
+            echo "Seeding demo data..."
+            php spark db:seed DevDemoSeeder 2>&1 || echo "⚠ Demo seeder skipped or failed (non-critical)"
+        fi
+        
+        # Create marker file
+        touch "$DB_INITIALIZED_FILE"
+        echo "✓ Database initialization completed"
+    else
+        echo "✗ Migration failed with status: $MIGRATION_STATUS"
+        echo "Check logs at /tmp/migration.log"
+        cat /tmp/migration.log
+        exit 1
+    fi
+else
+    echo "✓ Database already initialized (marker file exists)"
+    echo "  To re-run migrations, delete: $DB_INITIALIZED_FILE"
+fi
+
+# Health check (non-blocking)
+echo ""
+echo "=== Health Check ==="
+php spark db:health tests 2>&1 || echo "⚠ Health check warning (non-critical)"
+
+echo ""
+echo "=== Starting Apache ==="
+cd /var/www/html
 exec apache2-foreground

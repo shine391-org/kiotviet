@@ -3,15 +3,18 @@ services:
     build:
       context: .
       dockerfile: backend-ci/Dockerfile
-    command: [ "bash", "/var/www/html/docker-start.sh" ]
+    # docker-start.sh is now copied into container and set as CMD in Dockerfile
+    # No need to override command here
     ports:
       - "8000:80"
     env_file:
       - backend-ci/.env
+    environment:
+      - CI_ENVIRONMENT=development
     depends_on:
       - db
     volumes:
-      # Sử dụng relative path để tránh conflict
+      # Development: mount source code for live reload
       - ./backend-ci:/var/www/html
 
   fe:
