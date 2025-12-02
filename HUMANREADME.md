@@ -103,7 +103,7 @@ Database is automatically initialized on first container start:
 
 **Re-seed demo data:**
 ```bash
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 ```
 
 **Reset database completely:**
@@ -341,7 +341,7 @@ docker exec meomeo2-api-1 cat /tmp/migration.log
 docker exec meomeo2-api-1 php spark migrate
 
 # Seed demo data
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 
 # Validate models
 docker exec meomeo2-api-1 php spark validate:models

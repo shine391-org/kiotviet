@@ -85,7 +85,7 @@ docker-compose exec api php spark migrate
 docker-compose exec api vendor/bin/phpunit
 
 # Seed demo data
-docker-compose exec api php spark db:seed DevDemoSeeder
+docker-compose exec web php spark db:seed DemoSeeder
 ```
 
 ### Database Operations
@@ -168,7 +168,7 @@ docker-compose exec api php spark migrate
 
 **Seed Demo Data:**
 ```bash
-docker-compose exec api php spark db:seed DevDemoSeeder
+docker-compose exec web php spark db:seed DemoSeeder
 ```
 
 **Reset Database:**

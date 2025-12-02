@@ -97,6 +97,6 @@ npm run test:coverage
 - **Keep it Simple**: Tests should be readable documentation.
 - **Clean Up**: Reset mocks in `afterEach`.
 - **Stateful flows**: Khi test Redux/RTK Query, wrap component với store provider stub; seed store state qua preloadedState.
-- **Data shape**: Bám sát backend golden schema/seed (DevDemoSeeder) để tránh mismatch field names.
+- **Data shape**: Bám sát backend golden schema/seed (DemoSeeder) để tránh mismatch field names.
 
 **See Patterns**: [FE-TESTING-PATTERNS.md](./FE-TESTING-PATTERNS.md)

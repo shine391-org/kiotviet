@@ -22,7 +22,7 @@ This document defines the complete seeding strategy for all environments (dev, s
 
 ```
 backend-ci/app/Database/Seeds/
-├── DevDemoSeeder.php          # Main entry point (auto-runs all Demo seeders)
+├── DemoSeeder.php             # Main entry point (auto-runs all Demo seeders)
 ├── DevSeeder.php              # Base dev data (users, roles, master data)
 ├── ProductSeeder.php          # Standalone product seeder
 ├── PaymentMethodSeeder.php    # Standalone payment methods
@@ -46,7 +46,7 @@ backend-ci/app/Database/Seeds/
 **What runs:**
 ```bash
 php spark migrate --all
-php spark db:seed DevDemoSeeder
+php spark db:seed DemoSeeder
 ```
 
 **Data loaded:**
@@ -114,7 +114,7 @@ php spark db:seed ProductionSeeder  # (to be created)
 
 | Seeder | Location | Purpose | Status |
 |--------|----------|---------|--------|
-| DevDemoSeeder | Seeds/ | Auto-run all Demo seeders | ✅ Active |
+| DemoSeeder    | Seeds/ | Auto-run all Demo seeders | ✅ Active |
 | DevSeeder | Seeds/ | Base dev data | ✅ Active |
 | CustomersDemoSeeder | Seeds/Demo/ | Demo customers | ✅ Active |
 | ProductVariantsDemoSeeder | Seeds/Demo/ | Demo product variants | ✅ Active |
@@ -128,7 +128,7 @@ php spark db:seed ProductionSeeder  # (to be created)
 | Seeder | Priority | Purpose |
 |--------|----------|---------|
 | ProductionSeeder | 🔴 HIGH | Master data for production |
-| StagingSeeder | 🟡 MEDIUM | Production-like data for staging |
+| DemoSeeder    | 🟡 MEDIUM | Unified demo/staging data    |
 | UsersDemoSeeder | 🟡 MEDIUM | Demo users with different roles |
 | BranchesDemoSeeder | 🟡 MEDIUM | Demo branches/warehouses |
 | EmployeesDemoSeeder | 🟢 LOW | Demo employees for HR module |
@@ -184,7 +184,7 @@ php spark db:seed ProductionSeeder  # (to be created)
 
 3. **Test it:**
    ```bash
-   docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+   docker exec meomeo2-web-1 php spark db:seed DemoSeeder
    ```
 
 4. **No need to register!** DevDemoSeeder auto-discovers it.
@@ -292,13 +292,13 @@ foreach ($data as $row) {
 docker-compose up -d
 
 # Or manually
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 ```
 
 ### Staging (Manual)
 ```bash
 # After deployment
-docker exec staging-api php spark db:seed StagingSeeder
+docker exec staging-web php spark db:seed DemoSeeder
 ```
 
 ### Production (Careful!)

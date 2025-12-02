@@ -19,6 +19,6 @@ echo "[reset-demo] Starting API, FE and phpMyAdmin..."
 docker-compose up -d api fe phpmyadmin
 
 echo "[reset-demo] Seeding demo data..."
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder || true
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder || true
 
 echo "[reset-demo] Done. API: http://localhost:8000  phpMyAdmin: http://localhost:8080"

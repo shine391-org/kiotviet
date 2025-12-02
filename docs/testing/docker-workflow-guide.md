@@ -40,7 +40,7 @@ docker logs meomeo2-fe-1 -f
 docker-compose down -v      # xoá volume data (phá toàn bộ data dev)
 docker-compose up -d        # DB tự import lại snapshot demo
 # hoặc
-docker exec meomeo2-api-1 php spark db:seed DevDemoSeeder
+docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 ./scripts/reset-demo.sh     # script tiện dụng (tự down -v, up, seed)
 ```
 - Seeder demo được auto-scan trong thư mục `App/Database/Seeds/Demo/` (xem docs/seeding/DEV-DEMO-SEEDER.md).

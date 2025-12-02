@@ -146,7 +146,7 @@
 
 - [ ] **Seed Staging Data (Optional)**
   ```bash
-  docker exec staging-api php spark db:seed StagingSeeder
+  docker exec staging-web php spark db:seed DemoSeeder
   ```
 
 ### Post-Deploy Verification

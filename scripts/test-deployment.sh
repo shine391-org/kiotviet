@@ -288,17 +288,16 @@ test_seeding() {
     
     case "$ENVIRONMENT" in
         dev)
-            log "Checking DevDemoSeeder execution..."
-            if docker-compose $COMPOSE_FILES logs api 2>&1 | grep -q "DevDemoSeeder"; then
-                success "DevDemoSeeder executed"
+            log "Checking DemoSeeder execution..."
+            if docker-compose $COMPOSE_FILES logs web 2>&1 | grep -q "DemoSeeder"; then
+                success "DemoSeeder executed"
             else
-                warning "DevDemoSeeder may not have executed"
+                warning "DemoSeeder may not have executed"
             fi
             ;;
         staging)
-            log "Staging seeding test..."
-            warning "Manual seeding required for staging"
-            echo "Run: docker exec staging-api php spark db:seed StagingSeeder" | tee -a "$LOG_FILE"
+            # Check Staging Seeding
+            echo "Run: docker exec staging-web php spark db:seed DemoSeeder" | tee -a "$LOG_FILE"
             ;;
         prod)
             log "Production seeding test..."
