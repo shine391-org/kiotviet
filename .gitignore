@@ -138,6 +138,7 @@ docker-volumes/
 *.sql.gz
 *.dump
 db-backups/
+backups/
 
 # ========================================
 # Keep these directories but ignore contents
