@@ -459,10 +459,10 @@ class YourServiceTest extends CIUnitTestCase
 ### Test Patterns (Copy từ đây)
 
 **👉 BẮT BUỘC: Copy patterns từ file sau:**
-`docs/testing/TESTING-PATTERNS.md`
+`docs/testing/BACKEND-TESTING.md`
 
-**📖 NEW: Read main database guide:**
-`docs/testing/TESTING-MAIN-DB-GUIDE.md`
+**📖 Quick Reference:**
+See `TESTING.md` at root for quick commands and links to detailed guides.
 **📖 NEW: Golden schema:** `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php`
 
 File này chứa mẫu chuẩn cho:
@@ -472,15 +472,14 @@ File này chứa mẫu chuẩn cho:
 
 **Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
-**📗 Documentation Network (YAML-linked):**
-- `docs/DOCUMENTATION_INDEX.md` - **CENTRAL INDEX** cho tất cả documentation
-- `docs/testing/TESTING-GUIDE.md` - Main testing guide (links to all others)
-- `docs/testing/TESTING-PATTERNS.md` - Code patterns to copy
-- `docs/testing/TESTING-MAIN-DB-GUIDE.md` - Main database approach
+**📗 Documentation (Consolidated):**
+- `TESTING.md` - **Quick reference** for all testing
+- `DEPLOYMENT.md` - **Quick reference** for deployment
+- `docs/README.md` - **CENTRAL INDEX** for all documentation
+- `docs/testing/BACKEND-TESTING.md` - Backend testing guide (MySQL, DevDatabaseTrait)
+- `docs/testing/FRONTEND-TESTING.md` - Frontend testing guide (Vitest, Playwright)
 - `docs/testing/TEST-CHECKLIST.md` - Mandatory PR checklist
-- `docs/testing/FE-TESTING-GUIDE.md` - Frontend testing guide
-- `docs/testing/FE-TESTING-PATTERNS.md` - Frontend code patterns
-- `docs/testing/FE-TEST-CHECKLIST.md` - Frontend PR checklist
+- `docs/deployment/` - Migration and seeding guides
 
 **📋 Audit Reports (Latest):**
 - `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` - Comprehensive FE/BE test coverage analysis
@@ -506,15 +505,16 @@ $this->resetYourSchema();  // MUST call this!
 ```
 
 **Q: Tests pass riêng lẻ, fail khi chạy cùng?**
-A: Thiếu tearDownDatabase(). Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+A: Thiếu tearDownDatabase(). Xem pattern trong `docs/testing/BACKEND-TESTING.md`
 
 **Q: Data có bị ảnh hưởng sau test không?**
 A: KHÔNG! Transaction rollback tự động khôi phục data.
 
 **Đọc thêm**:
-- `docs/testing/TESTING-GUIDE.md` (MySQL-only, main DB + rollback)
-- `docs/testing/docker-workflow-guide.md` (Docker-only workflow + demo data)
-- `docs/seeding/DEV-DEMO-SEEDER.md` (Quy ước seed demo tự động)
+- `TESTING.md` (Quick reference cho mọi testing)
+- `docs/testing/BACKEND-TESTING.md` (MySQL-only, DevDatabaseTrait)
+- `docs/testing/docker-workflow-guide.md` (Docker workflow)
+- `docs/deployment/SEEDING-STRATEGY.md` (Seeding guide)
 - `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` (Coverage checkpoint)
 
 ---
@@ -522,9 +522,9 @@ A: KHÔNG! Transaction rollback tự động khôi phục data.
 ## ⚡ Quy trình testing FE (Frontend)
 
 **Tài liệu chi tiết:**
-- 📘 **Guide**: `docs/testing/FE-TESTING-GUIDE.md`
-- 🧩 **Patterns**: `docs/testing/FE-TESTING-PATTERNS.md`
-- ✅ **Checklist**: `docs/testing/FE-TEST-CHECKLIST.md`
+- 📘 **Guide**: `docs/testing/FRONTEND-TESTING.md`
+- ✅ **Checklist**: `docs/testing/TEST-CHECKLIST.md`
+- 🚀 **Quick Ref**: `TESTING.md` (root)
 
 ### FE Testing: Best Practices
 1. **Unit Test**: Test logic & render. Mock hết API.
@@ -547,7 +547,7 @@ A task is complete when:
 - [x] **Unit tests written and pass (Backend + Frontend)**
 - [x] **Integration tests written and pass**
 - [x] **Test coverage >= 70%** _(Automatically enforced in CI)_
-- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)** _(Automatically validated in CI)_
+- [x] **Test Checklist completed (docs/testing/TEST-CHECKLIST.md)** _(Automatically validated in CI)_
 - [x] **Inline docs added (@agent- annotations)**
 - [x] API endpoints work
 - [x] Task status updated
