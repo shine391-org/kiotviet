@@ -10,7 +10,7 @@ class ReturnModel extends Model
     protected $table = 'returns';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $allowedFields = [
         'return_number',
         'order_id',
@@ -30,6 +30,7 @@ class ReturnModel extends Model
         'notes',
         'lock_version',
         'created_by',
+        'deleted_at',
         'created_at',
         'updated_at',
     ];

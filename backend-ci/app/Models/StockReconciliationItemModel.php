@@ -10,11 +10,11 @@ class StockReconciliationItemModel extends Model
     protected $table = 'stock_reconciliation_items';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
+    protected $useSoftDeletes = true;
     protected $allowedFields = [
         'reconciliation_id','product_id','variant_id','batch_id',
         'counted_qty','current_qty','variance_qty','unit_cost','remarks',
-        'created_at','updated_at',
+        'created_at','updated_at','deleted_at',
     ];
-    protected $useSoftDeletes = false;
     protected $useTimestamps = false;
 }

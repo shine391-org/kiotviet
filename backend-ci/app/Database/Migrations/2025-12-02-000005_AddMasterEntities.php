@@ -43,6 +43,7 @@ class AddMasterEntities extends Migration
         $this->dropFkIfExists('customers', 'fk_customers_customer_group');
         $this->dropFkIfExists('loyalty_programs', 'fk_loyalty_programs_customer_group');
         $this->dropFkIfExists('orders', 'fk_orders_customer_group');
+        $this->dropFkIfExists('customers', 'fk_customers_organization');
         $this->dropFkIfExists('purchase_invoices', 'fk_purchase_invoices_supplier');
         $this->dropFkIfExists('subcontracting_orders', 'fk_subcontracting_orders_supplier');
         $this->dropFkIfExists('pos_offline_queue', 'fk_pos_offline_queue_device');
@@ -271,7 +272,7 @@ class AddMasterEntities extends Migration
 
     private function linkInventoryStockWarehouse(): void
     {
-        if (! $this->db->tableExists('inventory_stock')) {
+        if (! $this->db->tableExists('inventory_stock') || ! $this->db->tableExists('warehouses')) {
             return;
         }
         $this->db->query('ALTER TABLE inventory_stock MODIFY warehouse_id BIGINT UNSIGNED NULL');
@@ -286,6 +287,13 @@ class AddMasterEntities extends Migration
     {
         $sql = "SELECT 1 FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=? AND TABLE_NAME=? AND CONSTRAINT_NAME=? LIMIT 1";
         return (bool) $this->db->query($sql, [$this->db->getDatabase(), $table, $constraint])->getRowArray();
+    }
+
+    private function dropFkIfExists(string $table, string $constraint): void
+    {
+        if ($this->foreignKeyExists($table, $constraint)) {
+            $this->forge->dropForeignKey($table, $constraint);
+        }
     }
 
     private function isSqlite(): bool

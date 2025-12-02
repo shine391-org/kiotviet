@@ -10,12 +10,13 @@ class ReturnItemModel extends Model
     protected $table = 'return_items';
     protected $primaryKey = 'id';
     protected $returnType = 'array';
-    protected $useSoftDeletes = false;
+    protected $useSoftDeletes = true;
     protected $allowedFields = [
         'return_id',
         'order_item_id',
         'quantity_returned',
         'item_condition',
+        'deleted_at',
         'created_at',
         'updated_at',
     ];
