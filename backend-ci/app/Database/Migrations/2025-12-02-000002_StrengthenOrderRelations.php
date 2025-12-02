@@ -286,6 +286,13 @@ class StrengthenOrderRelations extends Migration
             return;
         }
 
+        // Đồng bộ kiểu cột để khớp orders/customers/users (bigint unsigned)
+        $this->alignColumnType('returns', 'order_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'customer_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'approved_by', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'rejected_by', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'created_by', 'BIGINT UNSIGNED NULL');
+
         if ($this->db->tableExists('orders')) {
             $this->cleanupOrphans('returns', 'order_id', 'orders');
             if (! $this->foreignKeyExists('returns', 'fk_returns_order')) {
@@ -303,6 +310,21 @@ class StrengthenOrderRelations extends Migration
                 ]);
             }
         }
+    }
+
+    private function alignColumnType(string $table, string $column, string $type): void
+    {
+        if (! $this->db->tableExists($table) || ! $this->columnExists($table, $column)) {
+            return;
+        }
+        $sql = "ALTER TABLE {$table} MODIFY {$column} {$type}";
+        $this->db->query($sql);
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        $sql = "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+        return (bool) $this->db->query($sql, [$this->db->getDatabase(), $table, $column])->getRowArray();
     }
 
     private function addDeliveryForeignKeys(): void
@@ -392,7 +414,8 @@ class StrengthenOrderRelations extends Migration
         );
 
         if (empty($existing)) {
-            $this->db->table($table)->truncate();
+            // Dùng delete thay vì truncate để tránh lỗi FK đã có sẵn
+            $this->db->table($table)->where('id IS NOT NULL', null, false)->delete();
             return;
         }
 

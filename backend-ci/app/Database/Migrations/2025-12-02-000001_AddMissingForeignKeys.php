@@ -19,6 +19,8 @@ class AddMissingForeignKeys extends Migration
             return;
         }
 
+        $this->alignInvoiceOrderColumns();
+        $this->alignReturnItemColumns();
         $this->addInvoiceOrderFks();
         $this->addReturnItemFks();
     }
@@ -75,6 +77,45 @@ class AddMissingForeignKeys extends Migration
                 'CONSTRAINT fk_return_items_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE ON UPDATE CASCADE',
             ]);
         }
+    }
+
+    private function alignInvoiceOrderColumns(): void
+    {
+        $this->alignColumnType('invoice_orders', 'invoice_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('invoice_orders', 'order_id', 'BIGINT UNSIGNED NULL');
+    }
+
+    private function alignReturnItemColumns(): void
+    {
+        $this->alignColumnType('return_items', 'return_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('return_items', 'order_item_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'id', 'BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        $this->alignColumnType('return_items', 'id', 'BIGINT UNSIGNED NOT NULL AUTO_INCREMENT');
+        $this->alignReturnColumns();
+    }
+
+    private function alignReturnColumns(): void
+    {
+        $this->alignColumnType('returns', 'order_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'customer_id', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'approved_by', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'rejected_by', 'BIGINT UNSIGNED NULL');
+        $this->alignColumnType('returns', 'created_by', 'BIGINT UNSIGNED NULL');
+    }
+
+    private function alignColumnType(string $table, string $column, string $type): void
+    {
+        if (! $this->db->tableExists($table) || ! $this->columnExists($table, $column)) {
+            return;
+        }
+        $sql = "ALTER TABLE {$table} MODIFY {$column} {$type}";
+        $this->db->query($sql);
+    }
+
+    private function columnExists(string $table, string $column): bool
+    {
+        $sql = "SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ? LIMIT 1";
+        return (bool) $this->db->query($sql, [$this->db->getDatabase(), $table, $column])->getRowArray();
     }
 
     private function cleanupOrphanedRows(string $table, string $column, string $refTable): void

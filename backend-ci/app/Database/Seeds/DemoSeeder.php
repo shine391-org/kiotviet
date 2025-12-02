@@ -4,6 +4,7 @@ namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
 use App\Database\Seeds\DevSeeder;
+use App\Database\Seeds\MasterDataSeeder;
 use CodeIgniter\I18n\Time;
 
 /**
@@ -28,6 +29,11 @@ class DemoSeeder extends Seeder
         if (class_exists(DevSeeder::class)) {
             echo "Seeding base dev data: " . DevSeeder::class . "\n";
             $this->call(DevSeeder::class);
+        }
+
+        // 1b. Master data mới
+        if (class_exists(MasterDataSeeder::class)) {
+            $this->call(MasterDataSeeder::class);
         }
 
         // 2. Add Staging/Test Users (Unified Set)
@@ -137,7 +143,7 @@ class DemoSeeder extends Seeder
                 if (strpos($userData['username'], 'admin') !== false) $roleId = 1;
                 if (strpos($userData['username'], 'manager') !== false) $roleId = 3;
 
-                $this->db->table('model_has_roles')->insert([
+                $this->db->table('model_has_roles')->ignore(true)->insert([
                     'role_id' => $roleId,
                     'model_type' => 'App\\Models\\User',
                     'model_id' => $userId
