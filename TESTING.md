@@ -45,6 +45,7 @@ npm run test:e2e -- --ui
 - ✅ **Integration tests** for API endpoints
 - ✅ **E2E tests** for critical user flows
 - ⛔ **Cấm** chạy `DROP DATABASE`/`DROP TABLE`/`DROP INDEX` để dọn dữ liệu (kể cả DB test); dùng transaction rollback + truncate/reset schema traits.
+- ✅ **DB chuẩn**: chạy `php spark migrate --all` rồi `php spark db:seed DemoSeeder` hoặc import dump `backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql` để có đủ 176 bảng/301 FK + dữ liệu demo. DevDatabaseTrait không drop schema.
 
 ## Documentation
 

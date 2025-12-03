@@ -5,6 +5,7 @@
 **Chúng ta đã đơn giản hóa testing!**
 - ❌ **Trước**: 2 database (db + db-test) → Phức tạp
 - ✅ **Hiện**: 1 database chính (lanocrm_shop) + transaction rollback → Đơn giản
+- ✅ **Seed chuẩn**: chạy `php spark migrate --all` + `php spark db:seed DemoSeeder` **hoặc** import dump `backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql` để có đủ schema (176 bảng / 301 FK) + dữ liệu demo.
 
 ## 🎯 Lợi Ích
 
@@ -23,9 +24,19 @@ docker-compose up -d db api
 ### 2. Chạy migration (lần đầu tiên)
 ```bash
 docker exec meomeo2-api-1 php spark migrate
+docker exec meomeo2-api-1 php spark migrate --all  # gồm migration bổ sung cột seed-support
 ```
 
-### 3. Chạy tests
+### 3. Seed dữ liệu demo (tuỳ chọn nhưng khuyến nghị)
+```bash
+# Cách 1: Seed trực tiếp
+docker exec meomeo2-api-1 php spark db:seed DemoSeeder
+
+# Cách 2: Import dump đã seed
+docker exec -i meomeo2-db-1 mysql -u root -proot_password lanocrm_shop < backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql
+```
+
+### 4. Chạy tests
 ```bash
 # Unit tests (nhanh nhất)
 docker exec meomeo2-api-1 vendor/bin/phpunit

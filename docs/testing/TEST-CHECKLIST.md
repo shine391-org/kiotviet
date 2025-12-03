@@ -27,6 +27,7 @@ related_to:
 - [ ] MySQL test container running: `docker-compose up -d db-test`
 - [ ] DB connection works: `docker exec meomeo2-api-1 php spark db:info tests`
 - [ ] DevDatabaseTrait used properly (no SQLite fallback)
+- [ ] Schema + data chuẩn: đã chạy `php spark migrate --all` **và** `php spark db:seed DemoSeeder` (hoặc import dump `backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql`) để có đủ 176 bảng/301 FK + demo data.
 
 ### New Pattern Required ✓
 Your tests MUST follow this pattern:
