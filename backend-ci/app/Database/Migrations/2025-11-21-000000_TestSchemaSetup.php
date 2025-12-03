@@ -6,14 +6,15 @@ use CodeIgniter\Database\Migration;
 
 class TestSchemaSetup extends Migration
 {
-    // protected $DBGroup = 'tests';
+    protected $DBGroup = 'tests';
 
     public function up()
     {
         try {
             error_log("DEBUG: TestSchemaSetup - Starting migration");
             
-            // $this->dropAll(); // Commented out to prevent timeout and allow idempotence
+            // Rebuild toàn bộ để tránh giữ lại schema cũ thiếu cột (ví dụ products chỉ còn cột id).
+            $this->dropAll();
 
             $steps = [
                 'createBaseTables',
@@ -27,7 +28,6 @@ class TestSchemaSetup extends Migration
                 'createProductAttributeValueTables',
                 'createProductBatchTables',
                 'createProductSerialNumberTables',
-                'createDeliveryNoteTables',
                 'createApprovalTables',
                 'createStockLedgerTables',
                 'createStockEntryTables',
@@ -46,6 +46,7 @@ class TestSchemaSetup extends Migration
                 'createSubcontractingTables',
                 'createOrderTables',
                 'createOrderItemTables',
+                'createDeliveryNoteTables',
                 'createOrderPaymentTables',
                 'createPaymentEntryTables',
                 'createBankReconciliationTables',
@@ -389,6 +390,10 @@ class TestSchemaSetup extends Migration
             delivered_at DATETIME NULL,
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_delivery_notes_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL ON UPDATE CASCADE,
+            CONSTRAINT fk_delivery_notes_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL ON UPDATE CASCADE,
+            CONSTRAINT fk_delivery_notes_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL ON UPDATE CASCADE,
             UNIQUE KEY uq_delivery_number (delivery_number),
             KEY idx_delivery_order_branch (order_id, branch_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -406,6 +411,9 @@ class TestSchemaSetup extends Migration
             notes TEXT NULL,
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_delivery_note_items_note FOREIGN KEY (delivery_note_id) REFERENCES delivery_notes(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_delivery_note_items_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
             KEY idx_dn_items_note (delivery_note_id),
             KEY idx_dn_items_product (product_id, variant_id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -982,10 +990,10 @@ class TestSchemaSetup extends Migration
             id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
             code VARCHAR(50) NULL,
             order_number VARCHAR(50) NULL,
-            customer_id INT NULL,
+            customer_id BIGINT UNSIGNED NULL,
             customer_group_id INT NULL,
-            branch_id INT NULL,
-            warehouse_id INT NULL,
+            branch_id BIGINT UNSIGNED NULL,
+            warehouse_id BIGINT UNSIGNED NULL,
             order_date DATE NULL,
             order_type VARCHAR(50) DEFAULT 'online',
             pos_profile_id BIGINT UNSIGNED NULL,
@@ -1026,7 +1034,10 @@ class TestSchemaSetup extends Migration
             cod_collected TINYINT(1) DEFAULT 0,
             created_at DATETIME NULL,
             updated_at DATETIME NULL,
-            deleted_at DATETIME NULL
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL ON UPDATE CASCADE,
+            CONSTRAINT fk_orders_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE SET NULL ON UPDATE CASCADE,
+            CONSTRAINT fk_orders_payment_method FOREIGN KEY (payment_method) REFERENCES payment_methods(code) ON DELETE SET NULL ON UPDATE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
@@ -1052,22 +1063,109 @@ class TestSchemaSetup extends Migration
 
     private function createOrderPaymentTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS order_payments (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, order_id BIGINT UNSIGNED NOT NULL, payment_method VARCHAR(20), amount DECIMAL(15,2) NOT NULL DEFAULT 0, paid_at DATETIME NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS order_payments (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            order_id BIGINT UNSIGNED NOT NULL,
+            payment_method VARCHAR(50) NULL,
+            amount DECIMAL(15,2) NOT NULL DEFAULT 0,
+            paid_at DATETIME NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            CONSTRAINT fk_order_payments_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_order_payments_method FOREIGN KEY (payment_method) REFERENCES payment_methods(code) ON DELETE SET NULL ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createCashTransactionTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS cash_transactions (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, type ENUM('RECEIPT','PAYMENT') NOT NULL, amount DECIMAL(12,2) NOT NULL, category VARCHAR(50) NOT NULL, payment_method VARCHAR(50) NULL, status VARCHAR(20) NULL, account_name VARCHAR(120) NULL, description TEXT NULL, reference_type VARCHAR(50) NULL, reference_id BIGINT UNSIGNED NULL, reference_code VARCHAR(100) NULL, branch_id BIGINT UNSIGNED NOT NULL, created_by BIGINT UNSIGNED NOT NULL, created_by_name VARCHAR(120) NULL, staff_name VARCHAR(120) NULL, payer_code VARCHAR(60) NULL, payer_name VARCHAR(180) NULL, payer_phone VARCHAR(50) NULL, payer_address VARCHAR(255) NULL, bank_account VARCHAR(60) NULL, transfer_note VARCHAR(255) NULL, transaction_date DATE NOT NULL, note TEXT NULL, created_at DATETIME NULL, updated_at DATETIME NULL, deleted_at DATETIME NULL, KEY idx_type_category (type, category), KEY idx_branch (branch_id), KEY idx_reference (reference_type, reference_id), KEY idx_transaction_date (transaction_date), KEY idx_created_by (created_by), KEY idx_deleted_at (deleted_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS cash_transactions (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            type ENUM('RECEIPT','PAYMENT') NOT NULL,
+            amount DECIMAL(12,2) NOT NULL,
+            category VARCHAR(50) NOT NULL,
+            payment_method VARCHAR(50) NULL,
+            status VARCHAR(20) NULL,
+            account_name VARCHAR(120) NULL,
+            description TEXT NULL,
+            reference_type VARCHAR(50) NULL,
+            reference_id BIGINT UNSIGNED NULL,
+            reference_code VARCHAR(100) NULL,
+            branch_id BIGINT UNSIGNED NOT NULL,
+            created_by BIGINT UNSIGNED NOT NULL,
+            created_by_name VARCHAR(120) NULL,
+            staff_name VARCHAR(120) NULL,
+            payer_code VARCHAR(60) NULL,
+            payer_name VARCHAR(180) NULL,
+            payer_phone VARCHAR(50) NULL,
+            payer_address VARCHAR(255) NULL,
+            bank_account VARCHAR(60) NULL,
+            transfer_note VARCHAR(255) NULL,
+            transaction_date DATE NOT NULL,
+            note TEXT NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_cash_transactions_branch FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_cash_transactions_user FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            KEY idx_type_category (type, category),
+            KEY idx_branch (branch_id),
+            KEY idx_reference (reference_type, reference_id),
+            KEY idx_transaction_date (transaction_date),
+            KEY idx_created_by (created_by),
+            KEY idx_deleted_at (deleted_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createReturnTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS returns (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, return_number VARCHAR(50) UNIQUE, order_id INT, customer_id INT, return_amount DECIMAL(14,2), refund_shipping_fee TINYINT(1), refund_amount DECIMAL(14,2), refund_method VARCHAR(50) NULL, reason VARCHAR(50), reason_detail TEXT NULL, status VARCHAR(50), approved_by INT NULL, approved_at DATETIME NULL, rejected_by INT NULL, rejected_at DATETIME NULL, completed_at DATETIME NULL, notes TEXT NULL, lock_version INT DEFAULT 0, created_by INT NULL, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Chuẩn hóa kiểu dữ liệu sang BIGINT để tương thích FK và các migration sau
+        $this->db->query("CREATE TABLE IF NOT EXISTS returns (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            return_number VARCHAR(50) UNIQUE,
+            order_id BIGINT UNSIGNED NULL,
+            customer_id BIGINT UNSIGNED NULL,
+            return_amount DECIMAL(14,2),
+            refund_shipping_fee TINYINT(1),
+            refund_amount DECIMAL(14,2),
+            refund_method VARCHAR(50) NULL,
+            reason VARCHAR(50),
+            reason_detail TEXT NULL,
+            status VARCHAR(50),
+            approved_by BIGINT UNSIGNED NULL,
+            approved_at DATETIME NULL,
+            rejected_by BIGINT UNSIGNED NULL,
+            rejected_at DATETIME NULL,
+            completed_at DATETIME NULL,
+            notes TEXT NULL,
+            lock_version INT DEFAULT 0,
+            created_by BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_returns_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_returns_customer FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE SET NULL ON UPDATE CASCADE,
+            KEY idx_returns_order (order_id),
+            KEY idx_returns_customer (customer_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createReturnItemTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS return_items (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, return_id INT, order_item_id INT, quantity_returned DECIMAL(14,3), item_condition VARCHAR(50), created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        // Tạo bảng con với khóa ngoại ngay từ golden schema để test không thiếu FK
+        $this->db->query("CREATE TABLE IF NOT EXISTS return_items (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            return_id BIGINT UNSIGNED NULL,
+            order_item_id BIGINT UNSIGNED NULL,
+            quantity_returned DECIMAL(14,3),
+            item_condition VARCHAR(50),
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            deleted_at DATETIME NULL,
+            CONSTRAINT fk_return_items_return FOREIGN KEY (return_id) REFERENCES returns(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_return_items_order_item FOREIGN KEY (order_item_id) REFERENCES order_items(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            KEY idx_return_items_return (return_id),
+            KEY idx_return_items_order_item (order_item_id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInvoiceTables(): void
@@ -1077,7 +1175,15 @@ class TestSchemaSetup extends Migration
 
     private function createInvoiceOrderTables(): void
     {
-        $this->db->query("CREATE TABLE IF NOT EXISTS invoice_orders (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, invoice_id INT, order_id INT, created_at DATETIME NULL, updated_at DATETIME NULL) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        $this->db->query("CREATE TABLE IF NOT EXISTS invoice_orders (
+            id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+            invoice_id BIGINT UNSIGNED NULL,
+            order_id BIGINT UNSIGNED NULL,
+            created_at DATETIME NULL,
+            updated_at DATETIME NULL,
+            CONSTRAINT fk_invoice_orders_invoice FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE ON UPDATE CASCADE,
+            CONSTRAINT fk_invoice_orders_order FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE ON UPDATE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     }
 
     private function createInventoryStockTables(): void

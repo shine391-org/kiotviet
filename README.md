@@ -91,6 +91,8 @@ docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/ProductServiceTest.p
 docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
 ```
 
+> Data safety: Không chạy `DROP DATABASE`/`DROP TABLE` để cleanup tests (kể cả DB test). Dùng transaction rollback + truncate/reset schema traits.
+
 ### Testing Frontend
 ```bash
 cd lanocrm

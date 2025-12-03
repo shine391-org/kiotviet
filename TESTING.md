@@ -44,6 +44,7 @@ npm run test:e2e -- --ui
 - ✅ **All tests must pass** before commit
 - ✅ **Integration tests** for API endpoints
 - ✅ **E2E tests** for critical user flows
+- ⛔ **Cấm** chạy `DROP DATABASE`/`DROP TABLE`/`DROP INDEX` để dọn dữ liệu (kể cả DB test); dùng transaction rollback + truncate/reset schema traits.
 
 ## Documentation
 

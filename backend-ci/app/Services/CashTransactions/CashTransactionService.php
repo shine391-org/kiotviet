@@ -302,7 +302,7 @@ class CashTransactionService
             ->where('permissions.deleted_at', null)
             ->first();
 
-        return (bool) $perm;
+        return !empty($perm);
     }
 
     /**

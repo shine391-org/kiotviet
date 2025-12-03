@@ -47,27 +47,28 @@ class DemoSeeder extends Seeder
             'BranchesDemoSeeder',   // Branches & Warehouses
             'WarehousesDemoSeeder', // More warehouses
             'TaxTemplatesDemoSeeder', // VAT templates
-            // 'SuppliersDemoSeeder',  // Suppliers - Table doesn't exist
+            'SuppliersDemoSeeder',  // Suppliers
             'CustomersDemoSeeder',  // Customers
-            // 'HRDemoSeeder',         // Employees (needs Users) - Table doesn't exist
+            'HRDemoSeeder',         // Employees (needs Users)
             
             // Product Data
-            // 'ProductVariantsDemoSeeder', // Variants - Table doesn't exist
-            // 'PriceListDemoSeeder',       // Price Lists - Table doesn't exist
-            // 'ManufacturingDemoSeeder',   // BOM (needs Products) - Table doesn't exist
+            'ProductVariantsDemoSeeder', // Variants
+            'PriceListDemoSeeder',       // Price Lists
+            'ManufacturingDemoSeeder',   // BOM (needs Products)
 
             // Transaction Data
             'OrdersDemoSeeder',            // Orders (needs Customers, Products)
             'DeliveryNotesDemoSeeder',     // Delivery Notes (needs Orders)
             'InvoicesDemoSeeder',          // Invoices (needs Orders)
             'ReturnsDemoSeeder',           // Returns (needs Orders)
+            'StockMovementsDemoSeeder',    // Stock movements (needs products/warehouses)
             'StockLedgersDemoSeeder',      // Stock ledgers (needs orders/deliveries/returns)
-            // 'PurchaseOrdersDemoSeeder',  // POs (needs Suppliers, Products) - Table doesn't exist
+            'PurchaseOrdersDemoSeeder',    // POs (needs Suppliers, Products)
             'CashTransactionsDemoSeeder',  // Cash linked to orders/returns
             
             // Other Modules
-            // 'CRMDemoSeeder',             // CRM (needs Customers, Users) - Table doesn't exist
-            // 'AccountingDemoSeeder',      // Accounting (needs Users) - Table doesn't exist
+            'CRMDemoSeeder',               // CRM (needs Customers, Users)
+            'AccountingDemoSeeder',        // Accounting (needs Users)
         ];
 
         $namespace = 'App\\Database\\Seeds\\Demo\\';

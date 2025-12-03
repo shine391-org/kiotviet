@@ -97,6 +97,14 @@ class DeliveryNotesApiTest extends CIUnitTestCase
         $now = date('Y-m-d H:i:s');
         $this->db->table('branches')->insert(['id' => 1, 'name' => 'HN', 'created_at' => $now, 'updated_at' => $now]);
         $this->db->table('customers')->insert(['id' => 1, 'name' => 'Cust', 'created_at' => $now, 'updated_at' => $now]);
+        $this->db->table('payment_methods')->insert([
+            'id' => 1,
+            'code' => 'CASH',
+            'name' => 'Tiền mặt',
+            'is_active' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
         $this->db->table('products')->insert([
             'id' => 1,
             'code' => 'P1',

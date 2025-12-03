@@ -229,97 +229,18 @@ class InventoryServiceTest extends CIUnitTestCase
 
     private function resetSchema(): void
     {
-        // Create tables if they don't exist
-        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
-        
         $tables = ['inventory_alerts', 'inventory_valuation', 'inventory_movements', 'inventory_stock', 'warehouses'];
+        $existing = array_flip($this->db->listTables());
         foreach ($tables as $table) {
-            $this->db->query("DROP TABLE IF EXISTS $table");
+            if (! isset($existing[$table])) {
+                throw new RuntimeException("Missing required table {$table} in test DB; restore schema before running InventoryServiceTest.");
+            }
         }
 
-        // Create warehouses table
-        $this->db->query("
-            CREATE TABLE warehouses (
-                id INT PRIMARY KEY,
-                code VARCHAR(50) NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                status VARCHAR(20) DEFAULT 'active',
-                is_default TINYINT DEFAULT 0,
-                created_at DATETIME,
-                updated_at DATETIME,
-                deleted_at DATETIME NULL
-            )
-        ");
-        
-        // Create inventory_stock table
-        $this->db->query("
-            CREATE TABLE inventory_stock (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                branch_id INT NULL,
-                product_id INT NOT NULL,
-                variant_id INT NULL,
-                warehouse_id INT NOT NULL,
-                quantity_on_hand DECIMAL(15,4) DEFAULT 0,
-                quantity_reserved DECIMAL(15,4) DEFAULT 0,
-                minimum_stock DECIMAL(15,4) DEFAULT 0,
-                last_movement_at DATETIME NULL,
-                created_at DATETIME,
-                updated_at DATETIME,
-                deleted_at DATETIME NULL
-            )
-        ");
-        
-        // Create inventory_movements table
-        $this->db->query("
-            CREATE TABLE inventory_movements (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                movement_type VARCHAR(20) NOT NULL,
-                product_id INT NOT NULL,
-                variant_id INT NULL,
-                from_warehouse_id INT NULL,
-                to_warehouse_id INT NULL,
-                quantity DECIMAL(15,4) NOT NULL,
-                unit_cost DECIMAL(15,4) NULL,
-                reference_code VARCHAR(100) NULL,
-                valuation_method VARCHAR(20) NULL,
-                created_by INT NULL,
-                created_at DATETIME
-            )
-        ");
-        
-        // Create inventory_alerts table
-        $this->db->query("
-            CREATE TABLE inventory_alerts (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                alert_type VARCHAR(50) NOT NULL,
-                product_id INT NOT NULL,
-                variant_id INT NULL,
-                warehouse_id INT NOT NULL,
-                current_quantity DECIMAL(15,4),
-                threshold_quantity DECIMAL(15,4),
-                status VARCHAR(20) DEFAULT 'active',
-                resolved_by INT NULL,
-                resolved_at DATETIME NULL,
-                created_at DATETIME
-            )
-        ");
-        
-        // Create inventory_valuation table
-        $this->db->query("
-            CREATE TABLE inventory_valuation (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                warehouse_id INT NOT NULL,
-                product_id INT NOT NULL,
-                variant_id INT NULL,
-                valuation_method VARCHAR(20) NOT NULL,
-                quantity DECIMAL(15,4) NOT NULL,
-                unit_cost DECIMAL(15,4) NOT NULL,
-                total_value DECIMAL(15,4) NOT NULL,
-                movement_id INT NULL,
-                created_at DATETIME
-            )
-        ");
-        
+        $this->db->query('SET FOREIGN_KEY_CHECKS=0');
+        foreach ($tables as $table) {
+            $this->db->table($table)->truncate();
+        }
         $this->db->query('SET FOREIGN_KEY_CHECKS=1');
     }
 

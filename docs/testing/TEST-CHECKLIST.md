@@ -78,6 +78,7 @@ protected function tearDown(): void {
 - [ ] No SQLite patterns (check for extension_loaded, SQLite3 strings)
 
 ## Safety Checks ✓
+- [ ] TUYỆT ĐỐI không dùng `DROP DATABASE`/`DROP TABLE`/`DROP INDEX` trong tests, schema traits hay scripts cleanup; chỉ dùng transaction rollback + `TRUNCATE`/`DELETE` trong `resetYourSchema()`.
 - [ ] Run: `bash .ai/pre-commit-checks.sh` - PASS
 - [ ] Auth endpoints still work (test login with MySQL)
 - [ ] Existing features not broken by MySQL migration

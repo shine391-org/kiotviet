@@ -17,6 +17,15 @@ class ManufacturingDemoSeeder extends Seeder
     public function run(): void
     {
         echo "   → Demo Manufacturing data (BOM)...\n";
+
+        // Skip if manufacturing tables are missing
+        $requiredTables = ['bom', 'bom_items'];
+        foreach ($requiredTables as $table) {
+            if (! $this->db->tableExists($table)) {
+                echo "      ⚠ Skipped Manufacturing demo (missing table: {$table})\n";
+                return;
+            }
+        }
         
         $now = Time::now();
 

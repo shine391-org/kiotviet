@@ -278,7 +278,8 @@ class CashTransactionReferenceValidator
             $sql .= " AND deleted_at IS NULL";
         }
 
-        $return = $this->db->query($sql, [$returnId])->getRowArray();
+        $query = $this->db->query($sql, [$returnId]);
+        $return = $query ? $query->getRowArray() : null;
 
         if (! $return) {
             throw new InvalidArgumentException("Return order #{$returnId} not found");
@@ -316,10 +317,12 @@ class CashTransactionReferenceValidator
             return false;
         }
 
-        $existing = $this->db->query("
+        $query = $this->db->query("
             SELECT * FROM cash_transactions
             WHERE reference_type = ? AND reference_id = ? AND deleted_at IS NULL
-        ", [$referenceType, $referenceId])->getRowArray();
+        ", [$referenceType, $referenceId]);
+        
+        $existing = $query ? $query->getRowArray() : null;
 
         return !empty($existing);
     }

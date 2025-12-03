@@ -104,6 +104,33 @@ class ApprovalsApiTest extends CIUnitTestCase
     private function seedBaseData(): void
     {
         $now = date('Y-m-d H:i:s');
+
+        // Minimal references to satisfy FK constraints
+        $this->db->table('branches')->insert([
+            'id' => 1,
+            'name' => 'Main Branch',
+            'code' => 'BR-APP',
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table('customers')->insert([
+            'id' => 1,
+            'name' => 'Approval Customer',
+            'code' => 'CUST-APP',
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+        $this->db->table('payment_methods')->insert([
+            'id' => 1,
+            'code' => 'CASH',
+            'name' => 'Tiền mặt',
+            'is_active' => 1,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ]);
+
         $this->db->table('orders')->insert([
             'id' => 1,
             'order_number' => 'ORD-APP',

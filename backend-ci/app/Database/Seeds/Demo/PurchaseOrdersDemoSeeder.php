@@ -19,6 +19,22 @@ class PurchaseOrdersDemoSeeder extends Seeder
     public function run(): void
     {
         echo "   → Demo purchase orders...\n";
+
+        // Skip if schema không có các cột cần thiết (supplier_id/payment_status/total_amount/warehouse_id)
+        $requiredTables = ['purchase_orders', 'purchase_order_items'];
+        foreach ($requiredTables as $table) {
+            if (! $this->db->tableExists($table)) {
+                echo "      ⚠ Skipped Purchase Orders demo (missing table: {$table})\n";
+                return;
+            }
+        }
+        $requiredColumns = ['supplier_id', 'warehouse_id', 'order_date', 'expected_date', 'total_amount', 'paid_amount', 'payment_status', 'created_by'];
+        foreach ($requiredColumns as $col) {
+            if (! $this->db->fieldExists($col, 'purchase_orders')) {
+                echo "      ⚠ Skipped Purchase Orders demo (missing column: {$col})\n";
+                return;
+            }
+        }
         
         $now = Time::now();
 

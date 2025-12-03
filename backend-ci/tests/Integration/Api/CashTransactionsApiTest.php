@@ -518,6 +518,20 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
     private function createTestUser(): int
     {
+        // Defensive: create minimal users table if migration didn't run
+        if (! $this->db->tableExists('users')) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS users (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) NULL UNIQUE,
+                email VARCHAR(255) NULL UNIQUE,
+                full_name VARCHAR(255) NULL,
+                status VARCHAR(20) DEFAULT 'active',
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                deleted_at DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+
         $payload = [
             'username' => 'tester',
             'email' => 'tester@test.com',
@@ -529,6 +543,10 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         $this->db->table('users')->insert($payload);
         $userId = (int) $this->db->insertID();
+        $error = $this->db->error();
+        if (!empty($error['code'])) {
+            error_log("DEBUG: createTestUser() - Insert error: " . json_encode($error));
+        }
         
         // Debug: Verify user was created
         $userQuery = $this->db->table('users')->where('id', $userId)->get();
@@ -540,6 +558,19 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
     private function createTestBranch(array $data): int
     {
+        // Ensure branches table exists even if migration was skipped by previous failures
+        if (! $this->db->tableExists('branches')) {
+            $this->db->query("CREATE TABLE IF NOT EXISTS branches (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                code VARCHAR(20) NULL,
+                status VARCHAR(20) DEFAULT 'active',
+                created_at DATETIME NULL,
+                updated_at DATETIME NULL,
+                deleted_at DATETIME NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+        }
+
         $payload = array_merge([
             'name' => 'Test Branch',
             'code' => 'BR' . random_int(1000, 9999),
@@ -550,6 +581,10 @@ class CashTransactionsApiTest extends CIUnitTestCase
 
         $this->db->table('branches')->insert($payload);
         $branchId = (int) $this->db->insertID();
+        $error = $this->db->error();
+        if (!empty($error['code'])) {
+            error_log("DEBUG: createTestBranch() - Insert error: " . json_encode($error));
+        }
         
         // Debug: Verify branch was created
         $branchQuery = $this->db->table('branches')->where('id', $branchId)->get();
@@ -653,6 +688,8 @@ class CashTransactionsApiTest extends CIUnitTestCase
     private function getJsonFromResponse($response): array
     {
         $responseBody = $response->getBody();
+        // Log a short excerpt to aid debugging when API responses break tests
+        error_log('DEBUG: CashTransactionsApiTest raw response: ' . substr($responseBody, 0, 500));
         
         // Extract JSON from HTML wrapper if present
         $jsonString = $responseBody;

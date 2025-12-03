@@ -73,12 +73,15 @@ class AddMissingForeignKeysMigrationTest extends CIUnitTestCase
 
     private function foreignKeyExists(string $table, string $constraint): bool
     {
-        $dbName = $this->db->database ?? $this->db->getDatabase();
-        $row = $this->db->query(
-            "SELECT CONSTRAINT_NAME FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ?",
-            [$dbName, $table, $constraint]
-        )->getRowArray();
-
-        return ! empty($row);
+        $result = $this->db->query("SHOW CREATE TABLE `{$table}`");
+        if ($result === false) {
+            error_log("DEBUG: SHOW CREATE failed for {$table} - " . json_encode($this->db->error()));
+            return false;
+        }
+        $row = $result->getRowArray();
+        $ddl = $row['Create Table'] ?? '';
+        $exists = $ddl && strpos($ddl, $constraint) !== false;
+        error_log("DEBUG: FK check {$constraint} on {$table} => " . ($exists ? '1' : '0'));
+        return $exists;
     }
 }

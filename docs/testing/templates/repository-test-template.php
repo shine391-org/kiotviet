@@ -39,7 +39,7 @@ class {RepositoryName}Test extends CIUnitTestCase
     // Helper methods
     private function resetSchema(): void
     {
-        // TODO: Create tables for tests
+        // TODO: Create tables for tests (no DROP DATABASE/TABLE; use create + truncate/delete)
     }
 
     private function seedItem(array $data): int

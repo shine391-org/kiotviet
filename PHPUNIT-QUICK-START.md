@@ -121,7 +121,8 @@ class YourServiceTest extends CIUnitTestCase
 2. ✅ **LUÔN** gọi `setUpDatabase()` và `tearDownDatabase()`
 3. ✅ **LUÔN** dùng Schema Trait cho table creation
 4. ❌ **KHÔNG** query data ngoài transaction
-5. ❌ **KHÔNG** dùng SQLite patterns cũ
+5. ❌ **TUYỆT ĐỐI KHÔNG** chạy `DROP DATABASE`/`DROP TABLE` để cleanup test (kể cả DB test); dùng transaction rollback + `TRUNCATE`/`DELETE` trong schema reset.
+6. ❌ **KHÔNG** dùng SQLite patterns cũ
 
 ## 📊 Commands Reference
 

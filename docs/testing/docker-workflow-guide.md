@@ -234,6 +234,7 @@ docker-compose down
 2. **Cài PHP/MySQL trong WSL** cho project này
 3. **Chạy tests trực tiếp trong WSL** - sẽ lỗi connection
 4. **Edit code trong container** - edit trong VSCode local
+5. **Chạy `DROP DATABASE`/`DROP TABLE`** để dọn data (kể cả DB test) - dùng transaction rollback + `TRUNCATE`/schema reset thay thế
 
 ## ✅ Luôn luôn
 

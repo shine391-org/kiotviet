@@ -48,38 +48,30 @@ trait DevDatabaseTrait
 
     private function ensureSchema(): void
     {
-        $db = Database::connect('tests');
-        $schemaStale = $this->schemaIsStale($db);
-        $migrationsEmpty = $this->migrationsTableEmpty($db);
-        $needsMigrate = $schemaStale || $migrationsEmpty;
-
-        if ($schemaStale) {
-            $this->rebuildSchema($db);
-            $db = Database::connect('tests');
-        }
-
-        if (! $needsMigrate) {
-            self::$schemaReady = true;
+        if (self::$schemaReady) {
             return;
         }
 
-        if ($needsMigrate) {
-            $start = microtime(true);
-            $migrations = \Config\Services::migrations();
-            $migrations->setGroup('tests');
-            $migrations->latest();
-            self::$schemaReady = true;
+        $db = Database::connect('tests');
 
-            if (env('MIGRATION_VERBOSE', false)) {
-                $duration = round(microtime(true) - $start, 3);
-                error_log("DEBUG: DevDatabaseTrait - Migration (tests group) completed in {$duration}s");
+        // Không được drop/rebuild schema – chỉ kiểm tra tối thiểu để đảm bảo DB test đã đồng bộ với dev
+        $tableCount = count($db->listTables());
+        $required = ['orders', 'products', 'product_variants_v2', 'payment_methods', 'users'];
+        foreach ($required as $table) {
+            if (! $db->tableExists($table)) {
+                throw new \RuntimeException("Test DB schema thiếu bảng {$table}, hãy restore từ dump chuẩn rồi migrate trước khi chạy test.");
             }
         }
+        if ($tableCount < 150) {
+            throw new \RuntimeException("Test DB schema không đầy đủ (chỉ {$tableCount} bảng). Khôi phục từ dump chuẩn 170 bảng/300 FK rồi chạy lại.");
+        }
+
+        self::$schemaReady = true;
     }
 
     private function schemaIsStale(BaseConnection $db): bool
     {
-        $requiredTables = ['orders', 'customer_groups', 'organizations', 'payment_methods'];
+        $requiredTables = ['orders', 'payment_methods'];
         foreach ($requiredTables as $table) {
             if (! $db->tableExists($table)) {
                 return true;
@@ -88,7 +80,57 @@ trait DevDatabaseTrait
 
         $requiredOrderColumns = ['order_number', 'order_type', 'payment_method', 'shipping_fee', 'paid_amount', 'debt_amount'];
         foreach ($requiredOrderColumns as $column) {
-            if (! $db->fieldExists($column, 'orders')) {
+            try {
+                if (! $db->fieldExists($column, 'orders')) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                return true;
+            }
+        }
+
+        // Sớm phát hiện schema cũ thiếu cột quan trọng (sản phẩm, biến thể, payment).
+        $requiredProductColumns = ['code', 'name', 'selling_price', 'purchase_price', 'has_variants'];
+        foreach ($requiredProductColumns as $column) {
+            try {
+                if (! $db->fieldExists($column, 'products')) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                return true;
+            }
+        }
+
+        $requiredVariantColumns = ['product_id', 'sku', 'price'];
+        foreach ($requiredVariantColumns as $column) {
+            try {
+                if (! $db->fieldExists($column, 'product_variants_v2')) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                return true;
+            }
+        }
+
+        $requiredPaymentMethodColumns = ['code', 'name', 'is_active'];
+        foreach ($requiredPaymentMethodColumns as $column) {
+            try {
+                if (! $db->fieldExists($column, 'payment_methods')) {
+                    return true;
+                }
+            } catch (\Throwable $e) {
+                return true;
+            }
+        }
+
+        // Ensure critical FK coverage for returns/return_items
+        if ($db->tableExists('return_items')) {
+            $fkCountRow = $db->query(
+                "SELECT COUNT(*) AS cnt FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = 'return_items' AND CONSTRAINT_NAME IN ('fk_return_items_return','fk_return_items_order_item')",
+                [$db->getDatabase()]
+            )->getRowArray();
+            $fkCount = (int) ($fkCountRow['cnt'] ?? 0);
+            if ($fkCount < 2) {
                 return true;
             }
         }
@@ -111,13 +153,7 @@ trait DevDatabaseTrait
 
     private function rebuildSchema(BaseConnection $db): void
     {
-        $db->query('SET FOREIGN_KEY_CHECKS=0');
-        foreach ($db->listTables() as $table) {
-            // Drop everything (including migrations) to force clean rebuild
-            $db->query('DROP TABLE IF EXISTS `' . $table . '`');
-        }
-        $db->query('SET FOREIGN_KEY_CHECKS=1');
-        self::$schemaReady = false;
+        // No-op: giữ nguyên schema test để trùng dev, cấm drop/rebuild trong test.
     }
 
     /**

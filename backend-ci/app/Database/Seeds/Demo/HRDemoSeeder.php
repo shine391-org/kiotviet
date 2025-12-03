@@ -17,6 +17,15 @@ class HRDemoSeeder extends Seeder
     public function run(): void
     {
         echo "   → Demo HR data (Departments, Employees, Attendance)...\n";
+
+        // Skip if HR tables are not present in schema
+        $requiredTables = ['departments', 'positions', 'employees', 'attendance', 'leave_applications'];
+        foreach ($requiredTables as $table) {
+            if (! $this->db->tableExists($table)) {
+                echo "      ⚠ Skipped HR demo (missing table: {$table})\n";
+                return;
+            }
+        }
         
         $now = Time::now();
 

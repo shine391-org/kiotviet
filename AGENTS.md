@@ -392,13 +392,14 @@ public function list() {
 ---
 
 
-## 🧪 Testing (BẮT BUỘC) - MAIN DATABASE WITH TRANSACTIONS ⚠️
+## 🧪 Testing (BẮT BUỘC) - TẠM DÙNG DB TEST RIÊNG ⚠️
 
-### 🚨 BREAKING CHANGE: Main Database Testing (2025-11-25)
+### 🚨 Lưu ý tạm thời (2025-12-02)
 
-**ALL tests now use main database (`lanocrm_shop`) with transaction rollback. Separate test database removed for simplicity.**
-**Schema source of truth:** `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php` (golden migration).  
-**Patterns:** truncate-only schema traits + `DevDatabaseTrait` autoloads golden migration.
+- Mục tiêu dài hạn vẫn là chạy test trên main DB (`lanocrm_shop`) với rollback.  
+- **Tạm thời** tất cả test chạy trên **DB test riêng**: `hostname=db-test`, `database=lanocrm_test` để ổn định dữ liệu dev, sau đó dump/export sang staging (staging đang lỗi).  
+- Schema nguồn chuẩn (golden migration) giữ nguyên: `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php`.  
+- Patterns: truncate-only schema traits + `DevDatabaseTrait` (vẫn dùng) nhưng kết nối tới group `tests` đã trỏ `lanocrm_test`.
 
 ### Test-Driven Development
 You MUST write tests. No exceptions.
@@ -424,6 +425,10 @@ You MUST write tests. No exceptions.
 - Authentication flows
 - Database: `lanocrm_shop` (main) with real data
 - Run: `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+
+### ⛔ Data Safety (No DROP) - Bắt buộc
+- Không chạy `DROP DATABASE`, `DROP TABLE`, `DROP INDEX` hay bất kỳ biến thể nào trong tests/schema traits/scripts dọn dẹp, kể cả khi dùng DB test.
+- Dọn dữ liệu bằng transaction rollback + `TRUNCATE`/`DELETE` trong `resetYourSchema()` (hoặc schema trait tương ứng); tuyệt đối không dùng lệnh wipe DB.
 
 ### DevDatabaseTrait Pattern (MANDATORY)
 

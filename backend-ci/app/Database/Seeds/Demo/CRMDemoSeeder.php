@@ -17,6 +17,22 @@ class CRMDemoSeeder extends Seeder
     public function run(): void
     {
         echo "   → Demo CRM data (Leads, Opportunities, Tasks)...\n";
+
+        // Skip if CRM schema không đủ cột cần thiết
+        $requiredTables = ['leads', 'opportunities', 'tasks'];
+        foreach ($requiredTables as $table) {
+            if (! $this->db->tableExists($table)) {
+                echo "      ⚠ Skipped CRM demo (missing table: {$table})\n";
+                return;
+            }
+        }
+        $leadColumns = ['first_name', 'last_name', 'assigned_to'];
+        foreach ($leadColumns as $col) {
+            if (! $this->db->fieldExists($col, 'leads')) {
+                echo "      ⚠ Skipped CRM demo (missing column in leads: {$col})\n";
+                return;
+            }
+        }
         
         $now = Time::now();
 

@@ -17,19 +17,31 @@ class AccountingDemoSeeder extends Seeder
     public function run(): void
     {
         echo "   → Demo Accounting data (COA, Journal Entries)...\n";
+
+        $requiredTables = ['chart_of_accounts', 'journal_entries', 'journal_entry_lines'];
+        foreach ($requiredTables as $table) {
+            if (! $this->db->tableExists($table)) {
+                echo "      ⚠ Skipped Accounting demo (missing table: {$table})\n";
+                return;
+            }
+        }
+        if (! $this->db->fieldExists('account_type', 'chart_of_accounts')) {
+            echo "      ⚠ Skipped Accounting demo (missing column: account_type in chart_of_accounts)\n";
+            return;
+        }
         
         $now = Time::now();
 
         // 1. Chart of Accounts (Simplified)
         $accounts = [
-            ['code' => '111', 'name' => 'Tiền mặt', 'type' => 'asset', 'is_active' => 1],
-            ['code' => '112', 'name' => 'Tiền gửi ngân hàng', 'type' => 'asset', 'is_active' => 1],
-            ['code' => '131', 'name' => 'Phải thu khách hàng', 'type' => 'asset', 'is_active' => 1],
-            ['code' => '156', 'name' => 'Hàng hóa', 'type' => 'asset', 'is_active' => 1],
-            ['code' => '331', 'name' => 'Phải trả người bán', 'type' => 'liability', 'is_active' => 1],
-            ['code' => '511', 'name' => 'Doanh thu bán hàng', 'type' => 'revenue', 'is_active' => 1],
-            ['code' => '632', 'name' => 'Giá vốn hàng bán', 'type' => 'expense', 'is_active' => 1],
-            ['code' => '642', 'name' => 'Chi phí quản lý', 'type' => 'expense', 'is_active' => 1],
+            ['code' => '111', 'name' => 'Tiền mặt', 'account_type' => 'asset', 'is_active' => 1],
+            ['code' => '112', 'name' => 'Tiền gửi ngân hàng', 'account_type' => 'asset', 'is_active' => 1],
+            ['code' => '131', 'name' => 'Phải thu khách hàng', 'account_type' => 'asset', 'is_active' => 1],
+            ['code' => '156', 'name' => 'Hàng hóa', 'account_type' => 'asset', 'is_active' => 1],
+            ['code' => '331', 'name' => 'Phải trả người bán', 'account_type' => 'liability', 'is_active' => 1],
+            ['code' => '511', 'name' => 'Doanh thu bán hàng', 'account_type' => 'revenue', 'is_active' => 1],
+            ['code' => '632', 'name' => 'Giá vốn hàng bán', 'account_type' => 'expense', 'is_active' => 1],
+            ['code' => '642', 'name' => 'Chi phí quản lý', 'account_type' => 'expense', 'is_active' => 1],
         ];
 
         foreach ($accounts as $acc) {

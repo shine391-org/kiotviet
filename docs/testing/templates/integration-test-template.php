@@ -67,6 +67,6 @@ class {Module}ApiTest extends FeatureTestCase
 
     private function cleanupTestData(): void
     {
-        // TODO: Clean test data
+        // TODO: Clean test data without DROP DATABASE/TABLE (use truncate/delete inside transaction)
     }
 }
