@@ -38,7 +38,7 @@ const initialState = {
     filters: {
       period: 'day', // day | hour | weekday
       range: 'month', // today | week | month | custom
-      chartType: 'column',
+      chartType: 'column', // Default to column chart
       branchId: null,
     },
     data: {

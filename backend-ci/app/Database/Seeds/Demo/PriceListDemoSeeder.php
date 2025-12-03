@@ -85,7 +85,7 @@ class PriceListDemoSeeder extends Seeder
             ['price_list_id' => 2, 'product_id' => 503, 'variant_id' => null, 'price' => 975000, 'discount_percent' => 35, 'discount_amount' => 0, 'created_at' => $now, 'updated_at' => $now],
 
             // Price list 3: flash sale on variant 7002 only
-            ['price_list_id' => 3, 'product_id' => 501, 'variant_id' => 7002, 'price' => 5250000, 'discount_percent' => 30, 'discount_amount' => 0, 'created_at' => $now, 'updated_at' => $now],
+            ['price_list_id' => 3, 'product_id' => 501, 'variant_id' => 50102, 'price' => 5250000, 'discount_percent' => 30, 'discount_amount' => 0, 'created_at' => $now, 'updated_at' => $now],
         ];
 
         $this->db->table('price_list_items')->ignore(true)->insertBatch($items);

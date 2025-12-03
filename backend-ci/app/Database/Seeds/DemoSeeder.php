@@ -54,6 +54,7 @@ class DemoSeeder extends Seeder
             // Product Data
             'ProductVariantsDemoSeeder', // Variants
             'PriceListDemoSeeder',       // Price Lists
+            'ProductWarrantiesDemoSeeder', // Warranties
             'ManufacturingDemoSeeder',   // BOM (needs Products)
 
             // Transaction Data

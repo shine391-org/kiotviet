@@ -39,8 +39,8 @@ class StockLedgersDemoSeeder extends Seeder
     {
         $branches = [1, 2, 3, 4, 5];
         $products = [
-            ['product_id' => 501, 'variant_id' => 7001, 'qty' => 25],
-            ['product_id' => 501, 'variant_id' => 7002, 'qty' => 15],
+            ['product_id' => 501, 'variant_id' => 50101, 'qty' => 25],
+            ['product_id' => 501, 'variant_id' => 50102, 'qty' => 15],
             ['product_id' => 502, 'variant_id' => null, 'qty' => 40],
             ['product_id' => 503, 'variant_id' => null, 'qty' => 35],
         ];

@@ -112,9 +112,20 @@ class SuppliersDemoSeeder extends Seeder
         ];
 
         foreach ($suppliers as $supplier) {
-            $supplier['created_at'] = $now;
-            $supplier['updated_at'] = $now;
-            $this->db->table('suppliers')->ignore(true)->insert($supplier);
+            $partner = [
+                'id' => $supplier['id'],
+                'code' => $supplier['code'],
+                'name' => $supplier['name_vi'], // Use Vietnamese name
+                'type' => 'supplier',
+                'email' => $supplier['email'],
+                'phone' => $supplier['phone'],
+                'address' => $supplier['address'],
+                'tax_code' => $supplier['tax_code'],
+                'status' => $supplier['status'],
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+            $this->db->table('partners')->ignore(true)->insert($partner);
         }
 
         echo "      ✓ Created " . count($suppliers) . " demo suppliers\n";

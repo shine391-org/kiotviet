@@ -120,6 +120,33 @@ class ReturnsDemoSeeder extends Seeder
             ],
         ];
 
+        // Generate random returns for new orders (021-035)
+        $reasons = ['defective', 'not_satisfied', 'wrong_item', 'other'];
+        $conditions = ['new', 'opened', 'damaged', 'used'];
+        $statuses = ['pending', 'approved', 'completed', 'rejected'];
+
+        for ($i = 21; $i <= 35; $i++) {
+            // 30% chance to return
+            if (rand(1, 100) > 30) {
+                continue;
+            }
+
+            $orderNumber = 'DH-DEMO-' . str_pad($i, 3, '0', STR_PAD_LEFT);
+            // Only return if order exists and is completed (checked in loop below)
+            
+            $plans[] = [
+                'return_number' => 'RET-DEMO-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'order_number' => $orderNumber,
+                'status' => $statuses[array_rand($statuses)],
+                'reason' => $reasons[array_rand($reasons)],
+                'refund_method' => 'cash',
+                'created_by' => 1,
+                'item_product_id' => rand(501, 530), // Will be matched to actual item in loop
+                'quantity' => 1,
+                'condition' => $conditions[array_rand($conditions)],
+            ];
+        }
+
         $returns = [];
         $items = [];
         $now = Time::now()->toDateTimeString();

@@ -422,7 +422,7 @@ class OrdersDemoSeeder extends Seeder
 
     private function orderDefinitions(): array
     {
-        return [
+        $orders = [
             [
                 'order_number' => 'DH-DEMO-001',
                 'customer_id' => 2001,
@@ -433,7 +433,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 30000,
                 'paid_ratio' => 0.0,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -460,7 +460,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 35000,
                 'paid_ratio' => 0.4,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'vip20'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -487,7 +487,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 45000,
                 'paid_ratio' => 0.2,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7002, 'quantity' => 1, 'pricing' => 'flash30'],
+                    ['product_id' => 501, 'variant_id' => 50102, 'quantity' => 1, 'pricing' => 'flash30'],
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -501,7 +501,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 25000,
                 'paid_ratio' => 0.6,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -529,7 +529,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 0.7,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'vip20'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -543,7 +543,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -558,7 +558,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'vip20'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                 ],
             ],
             [
@@ -572,7 +572,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 501, 'variant_id' => 7002, 'quantity' => 1, 'pricing' => 'flash30'],
+                    ['product_id' => 501, 'variant_id' => 50102, 'quantity' => 1, 'pricing' => 'flash30'],
                 ],
             ],
             [
@@ -586,7 +586,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -601,7 +601,7 @@ class OrdersDemoSeeder extends Seeder
                 'items' => [
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'vip20'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                 ],
             ],
             [
@@ -627,7 +627,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 25000,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -642,7 +642,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -668,7 +668,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 501, 'variant_id' => 7001, 'quantity' => 1, 'pricing' => 'vip20'],
+                    ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                     ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -701,6 +701,58 @@ class OrdersDemoSeeder extends Seeder
                 ],
             ],
         ];
+
+        // Generate 15 more random orders for this month
+        $statuses = ['completed', 'processing', 'shipping', 'draft', 'cancelled'];
+        $paymentMethods = ['CASH', 'BANK_TRANSFER', 'COD', 'EWALLET'];
+        $orderTypes = ['online', 'offline'];
+
+        for ($i = 21; $i <= 35; $i++) {
+            // Force last 5 orders to be completed and from corporate customers (for invoices)
+            if ($i >= 31) {
+                $status = 'completed';
+                $customerId = rand(2011, 2015); // Corporate customers with tax code
+            } else {
+                $status = $statuses[array_rand($statuses)];
+                $customerId = rand(2001, 2020);
+            }
+
+            $paidRatio = match ($status) {
+                'completed' => 1.0,
+                'cancelled', 'draft' => 0.0,
+                default => 0.5,
+            };
+            
+            // Random items (1-3 items)
+            $items = [];
+            $itemCount = rand(1, 3);
+            for ($j = 0; $j < $itemCount; $j++) {
+                $prodId = rand(501, 530); // Products 501-530
+                $variantId = rand(0, 1) ? $prodId * 100 + rand(1, 2) : null; 
+                
+                $items[] = [
+                    'product_id' => $prodId,
+                    'variant_id' => $variantId,
+                    'quantity' => rand(1, 5),
+                    'pricing' => 'standard'
+                ];
+            }
+
+            $orders[] = [
+                'order_number' => 'DH-DEMO-' . str_pad($i, 3, '0', STR_PAD_LEFT),
+                'customer_id' => $customerId,
+                'branch_id' => rand(1, 5),
+                'status' => $status,
+                'order_type' => $orderTypes[array_rand($orderTypes)],
+                'payment_method' => $paymentMethods[array_rand($paymentMethods)],
+                'shipping_fee' => rand(0, 5) * 10000,
+                'paid_ratio' => $paidRatio,
+                'items' => $items,
+                'notes' => 'Auto-generated demo order #' . $i,
+            ];
+        }
+
+        return $orders;
     }
 
     private function calculatePaidAmount(float $total, float $ratio): float

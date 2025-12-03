@@ -36,7 +36,7 @@ class ManufacturingDemoSeeder extends Seeder
         $boms = [
             [
                 'id' => 1,
-                'product_id' => 1, // The finished good
+                'product_id' => 501, // The finished good
                 'name' => 'BOM for Combo Set',
                 'version' => '1.0',
                 'is_active' => 1,
@@ -54,17 +54,17 @@ class ManufacturingDemoSeeder extends Seeder
         $bomItems = [
             [
                 'bom_id' => 1,
-                'component_product_id' => 2, // Component 1
+                'component_product_id' => 502, // Component 1
                 'quantity' => 1,
-                'unit' => 'pcs',
-                'wastage_percent' => 0,
+                'uom' => 'pcs',
+                'scrap_percent' => 0,
             ],
             [
                 'bom_id' => 1,
-                'component_product_id' => 3, // Component 2
+                'component_product_id' => 503, // Component 2
                 'quantity' => 1,
-                'unit' => 'pcs',
-                'wastage_percent' => 0,
+                'uom' => 'pcs',
+                'scrap_percent' => 0,
             ],
         ];
 

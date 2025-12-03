@@ -386,7 +386,13 @@ const Dashboard = () => {
   };
 
   const handleRangeChange = (value) => {
+    // When range changes, default period to 'day' unless it's 'today' where 'hour' might be better
+    // But user requested "column chart by day", so let's stick to 'day' or keep current period if valid
     const nextFilters = { ...revenue.filters, range: value };
+
+    // Optional: Reset period to 'day' when switching ranges to ensure consistent view
+    // nextFilters.period = 'day';
+
     dispatch(setRevenueFilters(nextFilters));
     dispatch(fetchRevenueChart(nextFilters));
   };
