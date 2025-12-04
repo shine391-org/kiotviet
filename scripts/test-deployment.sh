@@ -232,7 +232,7 @@ test_services() {
     fi
     
     # Determine DB name based on environment
-    DB_NAME="lanocrm_shop"
+    DB_NAME="lanocrm_dev"
     if [ "$ENVIRONMENT" = "dev" ]; then
         DB_NAME="lanocrm_dev"
     elif [ "$ENVIRONMENT" = "staging" ]; then

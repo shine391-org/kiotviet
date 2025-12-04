@@ -14,7 +14,7 @@ mkdir -p "$BACKUP_DIR"
 
 if [ "$DB_TYPE" = "main" ]; then
     CONTAINER="meomeo2-db-1"
-    DATABASE="lanocrm_shop"
+    DATABASE="lanocrm_dev"
     BACKUP_FILE="$BACKUP_DIR/lanocrm_main_$TIMESTAMP.sql"
     
     echo "Backing up main database: $DATABASE"

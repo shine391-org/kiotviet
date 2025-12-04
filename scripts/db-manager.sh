@@ -53,7 +53,7 @@ case "${1:-help}" in
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             if [ "$DB_TYPE" = "main" ]; then
                 CONTAINER="meomeo2-db-1"
-                DATABASE="lanocrm_shop"
+                DATABASE="lanocrm_dev"
             elif [ "$DB_TYPE" = "test" ]; then
                 CONTAINER="meomeo2-db-test-1"
                 DATABASE="lanocrm_test"
@@ -83,7 +83,7 @@ case "${1:-help}" in
         # Check main database
         if docker ps | grep -q "meomeo2-db-1"; then
             echo "Main Database: Running"
-            TABLES=$(docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SHOW TABLES;" | wc -l)
+            TABLES=$(docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_dev -e "SHOW TABLES;" | wc -l)
             echo "  Tables: $TABLES"
         else
             echo "Main Database: Not running"

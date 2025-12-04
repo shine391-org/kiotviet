@@ -63,6 +63,7 @@ const PriceListFormPage = () => {
         base_price_list_id: current.base_price_list_id ?? null,
         auto_update: current.auto_update ?? false,
         formula: current.formula ?? '',
+        rounding_rule: current.rounding_rule ?? 'none',
         date_range: [
           current.start_date ? dayjs(current.start_date) : undefined,
           current.end_date ? dayjs(current.end_date) : undefined,
@@ -120,6 +121,7 @@ const PriceListFormPage = () => {
       base_price_list_id: values.base_price_list_id || null,
       auto_update: values.auto_update ?? false,
       formula: values.formula || null,
+      rounding_rule: values.rounding_rule || 'none',
     };
 
     let priceListId = id;
@@ -270,6 +272,16 @@ const PriceListFormPage = () => {
           </Form.Item>
           <Form.Item label="Công thức giá" name="formula" style={{ minWidth: 260, flex: 1 }}>
             <Input placeholder="Ví dụ: base * 1.05 + 5000 (để trống nếu không dùng)" />
+          </Form.Item>
+          <Form.Item label="Làm tròn" name="rounding_rule" style={{ width: 180 }}>
+            <Select
+              options={[
+                { label: 'Không làm tròn', value: 'none' },
+                { label: 'Trăm đồng', value: 'hundred' },
+                { label: 'Nghìn đồng', value: 'thousand' },
+                { label: 'Chục nghìn đồng', value: 'ten_thousand' },
+              ]}
+            />
           </Form.Item>
         </Space>
 

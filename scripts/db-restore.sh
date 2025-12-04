@@ -33,7 +33,7 @@ fi
 
 if [ "$DB_TYPE" = "main" ]; then
     CONTAINER="meomeo2-db-1"
-    DATABASE="lanocrm_shop"
+    DATABASE="lanocrm_dev"
     
     echo "Restoring main database: $DATABASE"
     echo "WARNING: This will overwrite all data in the main database!"

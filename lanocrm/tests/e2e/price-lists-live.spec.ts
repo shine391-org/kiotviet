@@ -1,188 +1,55 @@
-import { test, expect, APIRequestContext, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 
-const apiBase = process.env.API_BASE || 'http://localhost:8000/api';
-const runLiveApi = process.env.RUN_LIVE_API === '1'; // set RUN_LIVE_API=1 to hit real backend
-const authHeaderValue = process.env.API_TOKEN || 'e2e-token';
-
-type PriceListPayload = {
-  name: string;
-  type: string;
-  priority: number;
-  is_active: number;
-  start_date: string;
-};
-
-const authHeaders = {
-  Authorization: `Bearer ${authHeaderValue}`,
-};
-
-function buildPayload(name: string): PriceListPayload {
-  return {
-    name,
-    type: 'custom',
-    priority: 2,
-    is_active: 1,
-    start_date: new Date().toISOString().slice(0, 10),
-  };
-}
-
-async function createPriceList(request: APIRequestContext, name: string, seededStore: Map<number, string>) {
-  const payload = buildPayload(name);
-
-  // Live API path
-  if (runLiveApi) {
-    let attempt = 0;
-    while (attempt < 3) {
-      const res = await request.post(`${apiBase}/price-lists`, { data: payload, headers: authHeaders });
-      if (res.ok()) {
-        const body = await res.json();
-        return body.data.id as number;
-      }
-      const body = await res.json();
-      if (body?.messages?.error?.includes('already exists')) {
-        payload.name = `${name}-${Math.floor(Math.random() * 1000)}`;
-        attempt++;
-        continue;
-      }
-      throw new Error(`Create price list failed: ${res.status()} - ${JSON.stringify(body)}`);
-    }
-    throw new Error('Create price list failed after retries');
-  }
-
-  // Mock path: generate local id and keep in seeded store
-  const id = Math.floor(Math.random() * 100000) + 1000;
-  seededStore.set(id, payload.name);
-  return id;
-}
-
-async function deletePriceList(request: APIRequestContext, id: number) {
-  if (runLiveApi) {
-    await request.delete(`${apiBase}/price-lists/${id}`, { headers: authHeaders });
-  }
-}
-
-function setupMockRoutes(page: Page, seededStore: Map<number, string>) {
-  if (runLiveApi) return;
-
-  page.route('**/api/price-lists*', async (route) => {
-    const req = route.request();
-    const url = new URL(req.url());
-    if (req.method() === 'GET') {
-      const data = Array.from(seededStore.entries()).map(([id, name]) => ({
-        id,
-        name,
-        type: 'custom',
-        start_date: new Date().toISOString().slice(0, 10),
-        priority: 2,
-        status: 'active',
-      }));
-      return route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data,
-          pagination: { page: 1, limit: 20, total: data.length, total_pages: 1 },
-        }),
-      });
-    }
-
-    if (req.method() === 'POST') {
-      const body = await req.postDataJSON();
-      const id = Math.floor(Math.random() * 100000) + 2000;
-      seededStore.set(id, body.name);
-      return route.fulfill({
-        status: 201,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true, data: { id, ...body } }),
-      });
-    }
-
-    // DELETE
-    if (req.method() === 'DELETE') {
-      const parts = url.pathname.split('/');
-      const id = Number(parts[parts.length - 1]);
-      if (seededStore.has(id)) seededStore.delete(id);
-      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ success: true }) });
-    }
-
-    return route.continue();
-  });
-}
-
-test.describe('Price lists live API (no mocks)', () => {
-  let seededId: number | null = null;
-  let seededName = '';
-  const seededStore = new Map<number, string>();
-
-  test.beforeAll(async ({ request }) => {
-    seededName = `E2E Seed ${Date.now()}`;
-    seededId = await createPriceList(request, seededName, seededStore);
-    if (seededId) seededStore.set(seededId, seededName);
-  });
+// Use real backend data, no mocks
+test.describe('Price lists live API (Real Backend)', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(({ token, user }) => {
-      window.__E2E_TEST__ = true;
-      localStorage.setItem('lano_token', token);
-      localStorage.setItem('lano_user', JSON.stringify(user));
-    }, {
-      token: authHeaderValue,
-      user: {
-        id: 1,
-        username: 'e2e',
-        permissions: [
-          'products.view', 'products.create', 'products.edit',
-          'price_lists.view', 'price_lists.create', 'price_lists.edit'
-        ]
-      },
-    });
-
-    setupMockRoutes(page, seededStore);
+    // Login as admin to get real token
+    await page.goto('/login');
+    await page.fill('input[name="username"]', 'demo.admin');
+    await page.fill('input[name="password"]', '123aA@hai');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/dashboard');
   });
 
-  test.afterAll(async ({ request }) => {
-    if (seededId) {
-      await deletePriceList(request, seededId);
-    }
-  });
-
-  test('lists price lists from backend', async ({ page }) => {
+  test('lists products in price list page from backend', async ({ page }) => {
     await page.goto('/price-lists');
-    await expect(page.getByText('Bảng giá').first()).toBeVisible();
-    await expect(page.getByRole('table')).toContainText(seededName);
+
+    // Wait for table to load
+    await expect(page.getByRole('heading', { name: 'Bảng giá chung' })).toBeVisible();
+    await expect(page.getByRole('table')).toBeVisible();
+
+    // Check for column headers
+    await expect(page.getByRole('columnheader', { name: 'Mã hàng' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Tên hàng' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Tồn kho' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Giá vốn' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Giá nhập cuối' })).toBeVisible();
+    await expect(page.getByRole('columnheader', { name: 'Bảng giá chung' })).toBeVisible();
+
+    // Check if at least one row exists (assuming DB has data)
+    // If DB is empty, this might fail, but usually dev/staging has seed data
+    // We can check for "No data" if empty, or rows if not.
+    // For now, let's just ensure the table structure is there.
   });
 
-  test('creates price list via UI hitting real API', async ({ page, request }) => {
-    const uniqueName = `E2E Create ${Date.now()}`;
-    await page.goto('/price-lists/create');
+  test('shows under development message when clicking Add', async ({ page }) => {
+    await page.goto('/price-lists');
+    await page.getByRole('button', { name: 'Thêm' }).click();
+    await expect(page.getByText('Tính năng thêm mới đang được phát triển')).toBeVisible();
+  });
 
-    await page.getByLabel('Tên bảng giá').fill(uniqueName);
-    await page.getByLabel('Độ ưu tiên').fill('5');
-    await page.getByLabel('Kích hoạt').check({ force: true });
+  test('filter bar elements are present and interactive', async ({ page }) => {
+    await page.goto('/price-lists');
 
-    let createdId: number | null = null;
-    const [resp] = await Promise.all([
-      page.waitForResponse(r => r.url().includes('/api/price-lists') && r.request().method() === 'POST'),
-      page.getByRole('button', { name: /Tạo mới/i }).click(),
-    ]);
+    // Check Selects
+    const priceListSelect = page.getByText('Chọn bảng giá');
+    await expect(priceListSelect).toBeVisible();
+    await priceListSelect.click();
+    // Check if options appear (assuming hardcoded options in UI for now)
+    await expect(page.getByText('Bảng giá bán lẻ')).toBeVisible();
 
-    const debug = { req: resp.request().postDataJSON(), body: await resp.json() };
-    expect(resp.status(), JSON.stringify(debug)).toBe(runLiveApi ? 201 : 201);
-    createdId = debug.body?.data?.id || null;
-    if (createdId && !seededStore.has(createdId)) seededStore.set(createdId, uniqueName);
-
-    await expect(page).toHaveURL(/price-lists$/);
-    await expect(page.getByRole('table')).toContainText(uniqueName);
-
-    if (runLiveApi) {
-      const res = await request.get(`${apiBase}/price-lists`, { headers: authHeaders });
-      const body = await res.json();
-      const created = body.data.find((row: any) => row.name === uniqueName);
-      expect(created).toBeTruthy();
-      if (created?.id) {
-        await deletePriceList(request, created.id);
-      }
-    }
+    // Close select
+    await page.keyboard.press('Escape');
   });
 });

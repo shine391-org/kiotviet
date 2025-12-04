@@ -24,6 +24,7 @@ services:
     volumes:
       # Development: mount source code for live reload
       - ./backend-ci:/var/www/html
+      - ./backend-ci/docker/php/custom.ini:/usr/local/etc/php/conf.d/custom.ini:ro
 
   fe:
     build:

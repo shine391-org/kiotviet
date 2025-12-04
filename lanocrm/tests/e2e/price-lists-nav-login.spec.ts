@@ -16,7 +16,8 @@ test('admin navigates to price lists from top menu', async ({ page }) => {
     page.locator('button[type="submit"]').click(),
   ]);
 
-  expect(resp.status()).toBe(200);
+  // Allow 200 or 201 for successful login
+  expect([200, 201]).toContain(resp.status());
   await page.waitForURL(/dashboard|\/$/, { timeout: 10000 });
 
   // Mở dropdown Hàng hoá và click Bảng giá

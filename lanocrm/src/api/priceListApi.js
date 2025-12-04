@@ -38,8 +38,29 @@ const priceListApi = {
     return response.data;
   },
 
+  applyFormula: async (id, payload) => {
+    const response = await axiosInstance.post(`${BASE}/${id}/apply-formula`, payload);
+    return response.data;
+  },
+
   previewOrder: async (payload) => {
     const response = await axiosInstance.post('/orders/calculate-preview', payload);
+    return response.data;
+  },
+
+  // Get product price with specific price list applied
+  getProductPriceByList: async (priceListId, productId, variantId = null) => {
+    const response = await axiosInstance.get(`/products/${productId}/price`, {
+      params: { price_list_id: priceListId, variant_id: variantId },
+    });
+    return response.data;
+  },
+
+  // Get products with prices from a specific price list
+  getProductsWithPrices: async (priceListId, filters = {}) => {
+    const response = await axiosInstance.get('/products', {
+      params: { ...filters, with_price_list_id: priceListId },
+    });
     return response.data;
   },
 };

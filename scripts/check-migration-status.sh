@@ -20,7 +20,7 @@ echo ""
 echo "Checking database connection..."
 # Get DB_NAME from container environment or default
 DB_NAME=$(docker exec meomeo2-api-1 printenv DB_NAME)
-DB_NAME=${DB_NAME:-lanocrm_shop}
+DB_NAME=${DB_NAME:-lanocrm_dev}
 
 echo "Target Database: $DB_NAME"
 

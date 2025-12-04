@@ -62,6 +62,11 @@ class PriceListService
             throw new InvalidArgumentException('Price list name already exists');
         }
         $this->assertNoCircular(null, $validated['base_price_list_id'] ?? null);
+
+        if (isset($validated['config']) && is_array($validated['config'])) {
+            $validated['config'] = json_encode($validated['config']);
+        }
+
         $row = $this->repo->create($validated);
         $row['status'] = $this->status($row);
         return ['success' => true, 'data' => $row];
@@ -76,6 +81,11 @@ class PriceListService
             throw new InvalidArgumentException('Price list name already exists');
         }
         $this->assertNoCircular($id, $validated['base_price_list_id'] ?? null);
+
+        if (isset($validated['config']) && is_array($validated['config'])) {
+            $validated['config'] = json_encode($validated['config']);
+        }
+
         $this->repo->update($id, $validated);
         return ['success' => true];
     }
@@ -109,6 +119,58 @@ class PriceListService
             'dependents_updated' => count($updated),
             'updated_list_ids' => $updated,
         ];
+    }
+
+    /** Apply formula to all items in a price list. */
+    public function applyFormula(int $priceListId, array $payload): array
+    {
+        $priceList = $this->requirePriceList($priceListId);
+        
+        // Payload: { base: 'cost'|'purchase'|'current'|price_list_id, operator: '+', value: 10, unit: '%'|'VND', rounding: 'thousand' }
+        $base = $payload['base'] ?? 'current';
+        $operator = $payload['operator'] ?? '+';
+        $value = (float) ($payload['value'] ?? 0);
+        $unit = $payload['unit'] ?? 'VND';
+        $rounding = $payload['rounding'] ?? 'none';
+
+        // Construct formula string for internal service if needed, or calculate manually
+        // Formula format: "base + 10%"
+        $formulaStr = "base {$operator} {$value}" . ($unit === '%' ? '%' : '');
+
+        $products = $this->products->findAll(['limit' => 10000]); // Process in chunks ideally, but simple for now
+        $rows = [];
+
+        foreach ($products as $product) {
+            $basePrice = 0;
+            if ($base === 'cost') {
+                $basePrice = (float) ($product['cost_price'] ?? 0);
+            } elseif ($base === 'purchase') {
+                $basePrice = (float) ($product['last_purchase_price'] ?? $product['purchase_price'] ?? 0);
+            } elseif ($base === 'current') {
+                // Get current price from item or product default
+                $currentItem = $this->items->findItem($priceListId, $product['id']);
+                $basePrice = $currentItem ? (float) $currentItem['price'] : (float) ($product['selling_price'] ?? 0);
+            } elseif (is_numeric($base)) {
+                // Base is another price list
+                $baseItem = $this->items->findItem((int) $base, $product['id']);
+                $basePrice = $baseItem ? (float) $baseItem['price'] : 0;
+            }
+
+            $newPrice = $this->formula->calculateFromFormula($formulaStr, $basePrice);
+            if ($rounding !== 'none') {
+                $newPrice = $this->formula->applyRounding($newPrice, $rounding);
+            }
+
+            $rows[] = [
+                'product_id' => $product['id'],
+                'price' => $newPrice,
+            ];
+        }
+
+        $this->items->replaceItems($priceListId, $rows);
+        $this->triggerAutoUpdate($priceListId);
+
+        return ['success' => true, 'updated_count' => count($rows)];
     }
 
     /** Expose applicable lists to other services. */

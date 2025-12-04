@@ -29,7 +29,7 @@ import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
 import ProductEditPage from './pages/products/ProductEditPage';
 import VariantEditPage from './pages/products/VariantEditPage';
-import PriceListListPage from './pages/price-lists/PriceListListPage';
+import PriceListPage from './pages/price-lists/PriceListPage';
 import PriceListFormPage from './pages/price-lists/PriceListFormPage';
 
 // ✅ THÊM: ATTRIBUTE PAGES
@@ -226,7 +226,7 @@ function App() {
                     {/* 🆕 Price Lists */}
                     <Route
                       path="/price-lists"
-                      element={<PriceListListPage />}
+                      element={<PriceListPage />}
                     />
                     <Route
                       path="/price-lists/create"

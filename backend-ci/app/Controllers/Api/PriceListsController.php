@@ -46,6 +46,12 @@ class PriceListsController extends BaseController
         return $this->wrap(fn () => $this->respond($this->service->upsertItems((int) $id, (array) $items)));
     }
 
+    /** Apply formula batch. @agent-use: POST /api/price-lists/{id}/apply-formula */
+    public function applyFormula($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->applyFormula((int) $id, $this->safeInput())));
+    }
+
     private function wrap(callable $action)
     {
         try { return $action(); }
