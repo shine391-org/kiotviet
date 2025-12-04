@@ -33,13 +33,18 @@ class WebhookPayloadValidator
         if (! is_array($product)) {
             throw new InvalidArgumentException('data is required');
         }
+        $product['code'] = trim((string) ($product['code'] ?? ''));
         $productData = $this->run($product, [
             'code' => 'required|string|max_length[100]',
             'name' => 'required|string|max_length[255]',
             'price' => 'permit_empty|numeric',
         ]);
+        if (isset($productData['price'])) {
+            $productData['price'] = (float) $productData['price'];
+        }
 
-        return $data + ['data' => $productData, 'event' => strtolower($data['event'])];
+        $data['event'] = strtolower($data['event']);
+        return array_merge($data, ['data' => $productData]);
     }
 
     /** Validate order sync payload. */
@@ -88,7 +93,8 @@ class WebhookPayloadValidator
         $orderData['payment_method'] = $orderData['payment_method'] ?? 'CASH';
         $orderData['branch_id'] = $orderData['branch_id'] ?? 1;
 
-        return $data + ['data' => $orderData, 'event' => strtolower($data['event'])];
+        $data['event'] = strtolower($data['event']);
+        return array_merge($data, ['data' => $orderData]);
     }
 
     private function run(array $data, array $rules): array

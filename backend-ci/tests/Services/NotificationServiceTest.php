@@ -2,54 +2,49 @@
 
 namespace Tests\Services;
 
-use App\Services\Notifications\NotificationService;
-use App\Repositories\Notifications\NotificationRuleRepository;
-use App\Validators\NotificationValidator;
+use App\Services\Common\NotificationService;
 use CodeIgniter\Test\CIUnitTestCase;
-use Tests\Support\Database\DevDatabaseTrait;
-use Tests\Support\Database\CompleteSchemaTrait;
 
 /**
  * @agent-test: NotificationService
- * @agent-pattern: Service test with DevDatabaseTrait
+ * @agent-pattern: File-based notifier test
  */
 class NotificationServiceTest extends CIUnitTestCase
 {
-    use DevDatabaseTrait;
-    use CompleteSchemaTrait;
-
     private NotificationService $service;
+    private string $logPath;
+    private ?string $originalContent = null;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setUpDatabase();
-        $this->resetCompleteSchema();
-        $repo = new NotificationRuleRepository(null, null, $this->db);
-        $this->service = new NotificationService($repo, new NotificationValidator());
+        $this->service = new NotificationService();
+        $this->logPath = WRITEPATH . 'logs/inventory-alerts.log';
+        if (is_file($this->logPath)) {
+            $this->originalContent = file_get_contents($this->logPath);
+        }
     }
 
     protected function tearDown(): void
     {
-        $this->tearDownDatabase();
+        if ($this->originalContent !== null) {
+            file_put_contents($this->logPath, $this->originalContent);
+        } elseif (is_file($this->logPath)) {
+            @unlink($this->logPath);
+        }
         parent::tearDown();
     }
 
-    /** @test */
-    public function it_triggers_notifications_for_event()
+    public function testSendInventoryAlertWritesLogLine(): void
     {
-        $this->service->createRule([
-            'name' => 'Ticket created',
-            'event_type' => 'ticket.created',
-            'template' => 'Ticket {{id}}',
-        ]);
-        $res = $this->service->trigger([
-            'event_type' => 'ticket.created',
-            'entity_type' => 'ticket',
-            'entity_id' => 10,
-            'payload' => ['id' => 10],
-        ]);
-        $this->assertTrue($res['success']);
-        $this->assertCount(1, $res['data']);
+        $alert = ['sku' => 'TEST-ALERT', 'qty' => 2];
+
+        $result = $this->service->sendInventoryAlert($alert);
+
+        $this->assertTrue($result);
+        $this->assertFileExists($this->logPath);
+        $content = file_get_contents($this->logPath);
+        $this->assertStringContainsString('inventory_alert', $content);
+        $this->assertStringContainsString('TEST-ALERT', $content);
     }
 }

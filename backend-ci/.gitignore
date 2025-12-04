@@ -35,14 +35,6 @@ vendor/
 composer.phar
 
 # ========================================
-# Testing Specific
-# ========================================
-# PHPUnit coverage and cache
-tests/coverage*
-.phpunit/cache/code-coverage/
-phpunit
-
-# ========================================
 # CodeIgniter Development
 # ========================================
 # User Guide Temp Files

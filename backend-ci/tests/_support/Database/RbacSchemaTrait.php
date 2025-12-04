@@ -3,25 +3,25 @@
 namespace Tests\Support\Database;
 
 /**
- * Reset price list related tables for tests.
+ * Reset RBAC/ACL related tables for tests.
  *
- * @agent-test-support: Price lists schema reset
+ * @agent-test-support: RBAC schema reset
  * @agent-pattern: Truncate with FK disable
  * @agent-reusable: MEDIUM
  */
-trait PriceListSchemaTrait
+trait RbacSchemaTrait
 {
-    protected function resetPriceListSchema(): void
+    protected function resetRbacSchema(): void
     {
         $tables = [
-            'price_list_items',
-            'price_lists',
-            'price_history',
-            'project_price_lists',
-            'customer_price_lists',
-            'customer_groups',
-            'product_variants_v2',
-            'products',
+            'document_shares',
+            'company_permissions',
+            'model_has_roles',
+            'role_has_permissions',
+            'permissions',
+            'roles',
+            'companies',
+            'users',
         ];
 
         $this->db->query('SET FOREIGN_KEY_CHECKS=0');
