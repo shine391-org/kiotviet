@@ -24,8 +24,14 @@ class PriceListRepository
         $b = $this->applyFilters($filters);
         $limit = $filters['limit'] ?? 20;
         $offset = (($filters['page'] ?? 1) - 1) * $limit;
-        $rows = $b->orderBy('priority', 'DESC')->orderBy('start_date', 'ASC')->orderBy('id', 'DESC')
-            ->limit($limit, $offset)->get()->getResultArray();
+        $result = $b->orderBy('priority', 'DESC')->orderBy('start_date', 'ASC')->orderBy('id', 'DESC')
+            ->limit($limit, $offset)
+            ->get();
+        if ($result === false) {
+            $err = $this->db->error();
+            throw new \RuntimeException('PriceListRepository findAll failed: ' . json_encode($err));
+        }
+        $rows = $result->getResultArray();
         return array_map(fn ($r) => $this->hydrate($r), $rows);
     }
 
@@ -114,7 +120,7 @@ class PriceListRepository
             // apply_to_groups is JSON array; match null (apply to all) or contains gid
             $b->groupStart()
                 ->where('apply_to_groups', null)
-                ->orWhere('JSON_CONTAINS(apply_to_groups, ?)', [json_encode($gid)])
+                ->orWhere("JSON_CONTAINS(apply_to_groups, '" . json_encode($gid) . "')", null, false)
                 ->groupEnd();
         }
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {

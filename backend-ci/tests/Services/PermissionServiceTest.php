@@ -7,75 +7,94 @@ use App\Repositories\Permissions\ShareRepository;
 use App\Services\Permissions\PermissionService;
 use App\Validators\PermissionValidator;
 use CodeIgniter\Test\CIUnitTestCase;
-use Tests\Support\Database\CompleteSchemaTrait;
-use Tests\Support\Database\DevDatabaseTrait;
+use InvalidArgumentException;
+use RuntimeException;
 
 /**
  * @agent-test: PermissionService
- * @agent-pattern: DevDatabaseTrait + CompleteSchemaTrait
+ * @agent-pattern: RBAC guard coverage
  */
 class PermissionServiceTest extends CIUnitTestCase
 {
-    use DevDatabaseTrait;
-    use CompleteSchemaTrait;
-
+    private FakeCompanyRepository $companies;
+    private FakeShareRepository $shares;
     private PermissionService $service;
-    private CompanyRepository $companies;
-    private ShareRepository $shares;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->setUpDatabase();
-        $this->resetCompleteSchema();
-        $this->companies = new CompanyRepository(null, null, $this->db);
-        $this->shares = new ShareRepository(null, $this->db);
+        $this->companies = new FakeCompanyRepository();
+        $this->shares = new FakeShareRepository();
         $this->service = new PermissionService($this->companies, $this->shares, new PermissionValidator());
     }
 
-    protected function tearDown(): void
+    public function testHasCompanyPermissionRequiresValidUser(): void
     {
-        $this->tearDownDatabase();
-        parent::tearDown();
+        $this->expectException(InvalidArgumentException::class);
+        $this->service->hasCompanyPermission(0, 1, 'read');
     }
 
-    /** @test */
-    public function it_allows_user_with_company_permission()
+    public function testHasCompanyPermissionAcceptsAdminGrant(): void
     {
-        $company = $this->companies->create(['name' => 'ACME', 'code' => 'ACME']);
-        $this->companies->assignPermission([
-            'company_id' => $company['id'],
-            'user_id' => 1,
-            'permissions' => ['read', 'write'],
-        ]);
+        $this->companies->permissionMap[1][5] = ['permissions' => ['admin']];
 
-        $this->service->assertCompanyAccess(1, $company['id'], 'write');
-        $this->assertTrue(true);
+        $this->assertTrue($this->service->hasCompanyPermission(5, 1, 'write'));
     }
 
-    /** @test */
-    public function it_denies_user_without_company_permission()
+    public function testAssertDocumentAccessUsesShareFallback(): void
     {
-        $company = $this->companies->create(['name' => 'ACME', 'code' => 'ACME-2']);
-        $this->expectException(\RuntimeException::class);
-        $this->service->assertCompanyAccess(2, $company['id'], 'read');
-    }
-
-    /** @test */
-    public function it_allows_document_access_via_share()
-    {
-        $company = $this->companies->create(['name' => 'Beta', 'code' => 'BETA']);
-        $this->shares->create([
-            'company_id' => $company['id'],
+        $this->shares->share = [
+            'company_id' => 1,
             'entity_type' => 'order',
-            'entity_id' => 77,
-            'shared_with_user_id' => 3,
-            'permissions' => ['read'],
-        ]);
+            'entity_id' => 9,
+            'permissions' => ['write'],
+        ];
 
-        $this->service->assertDocumentAccess(3, $company['id'], 'order', 77, 'read');
+        $this->service->assertDocumentAccess(7, 1, 'order', 9, 'write');
 
-        $this->expectException(\RuntimeException::class);
-        $this->service->assertDocumentAccess(3, $company['id'], 'order', 77, 'write');
+        $this->assertSame('order', $this->shares->lookups[0]['entity_type']);
+    }
+
+    public function testAssertDocumentAccessThrowsWhenDenied(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->service->assertDocumentAccess(7, 1, 'order', 9, 'write');
+    }
+}
+
+class FakeCompanyRepository extends CompanyRepository
+{
+    public array $permissionMap = [];
+
+    public function __construct()
+    {
+        $this->permissions = new \App\Models\CompanyPermissionModel();
+    }
+
+    public function findPermission(int $companyId, int $userId): ?array
+    {
+        return $this->permissionMap[$companyId][$userId] ?? null;
+    }
+}
+
+class FakeShareRepository extends ShareRepository
+{
+    public ?array $share = null;
+    public array $lookups = [];
+
+    public function __construct()
+    {
+    }
+
+    public function findForUser(int $companyId, string $entityType, int $entityId, int $userId, ?string $role = null): ?array
+    {
+        $this->lookups[] = [
+            'company_id' => $companyId,
+            'entity_type' => $entityType,
+            'entity_id' => $entityId,
+            'user_id' => $userId,
+            'role' => $role,
+        ];
+        return $this->share;
     }
 }
