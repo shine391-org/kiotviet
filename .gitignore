@@ -141,7 +141,6 @@ db-backups/
 backups/
 
 # User requested ignores
-docs/
 *.xlsx
 **/uploads/
 .ai/
