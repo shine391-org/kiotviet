@@ -1,15 +1,16 @@
 // src/components/products/ProductTable.jsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { App, Table, Image, Tag, Space, Button, Divider, Row, Col } from 'antd';
 import { EditOutlined, DeleteOutlined, EyeOutlined, CopyOutlined, StopOutlined } from '@ant-design/icons';
 import { usePermission } from '../../utils/usePermission'; // permission gate for action buttons
+import { getImageUrl } from '../../utils/imageUrl';
 import styles from './ProductTable.module.css';
 
-const ProductTable = ({ 
-  products, 
-  loading, 
+const ProductTable = ({
+  products,
+  loading,
   pagination,
   highlightedProductId,
   // ✅ NEW: Variant selection props từ parent
@@ -39,7 +40,7 @@ const ProductTable = ({
     if (!selectedVariantId || !productVariants) return null;
     return productVariants.find(v => v.id === selectedVariantId);
   };
-  
+
   const { message } = App.useApp();
   // Format currency
   const formatCurrency = (amount) => {
@@ -78,6 +79,51 @@ const ProductTable = ({
       return <Tag color="success">Hoạt động</Tag>;
     }
     return <Tag color="error">Ngừng kinh doanh</Tag>;
+  };
+
+  const ProductThumb = ({ record }) => {
+    const [src, setSrc] = useState(
+      record.image ||
+      (Array.isArray(record.images) && record.images[0]?.image_url) ||
+      (Array.isArray(record.variants) && record.variants[0]?.image) ||
+      ''
+    );
+
+    useEffect(() => {
+      let mounted = true;
+      const hydrate = async () => {
+        if (src || !record.id) return;
+        try {
+          const res = await import('../../api/productApi');
+          const imgs = await res.getProductImages(record.id);
+          if (mounted && imgs.success && Array.isArray(imgs.data) && imgs.data.length > 0) {
+            const first = imgs.data[0];
+            setSrc(first.image_url || first.url || first.path || first.image_path || '');
+          }
+        } catch (e) {
+          // ignore
+        }
+      };
+      hydrate();
+      return () => {
+        mounted = false;
+      };
+    }, [record.id, src]);
+
+    // Use getImageUrl to handle Docker hostnames and relative paths
+    const finalSrc = getImageUrl(src);
+
+    return (
+      <Image
+        src={finalSrc}
+        alt={record.name}
+        width={50}
+        height={50}
+        style={{ objectFit: 'cover', borderRadius: '4px' }}
+        fallback="/placeholder-product.png"
+        preview={{}}
+      />
+    );
   };
 
   // ✅ KIOTVIET STYLE - Expandable row renderer
@@ -257,9 +303,9 @@ const ProductTable = ({
                         fontWeight: 600,
                         color: '#262626'
                       }}>
-                        {record.category_names?.length 
-                        ? record.category_names.join(', ') 
-                        : '-'}
+                        {record.category_names?.length
+                          ? record.category_names.join(', ')
+                          : '-'}
                       </div>
                     </div>
                   </Col>
@@ -315,18 +361,18 @@ const ProductTable = ({
                   >
                     Xóa
                   </Button>
-                   {/* THÊM NÚT NÀY */}
-                   
-                    <Button
-                      danger
-                      ghost
-                      style={{ color: '#ff4d4f', borderColor: '#ff4d4f' }}
-                      onClick={() => onShowDeletedVariants && onShowDeletedVariants(record.id)}
-                      disabled={!deletedVariantsCount?.[record.id]}
-                    >
-                      Xem biến thể đã xoá
-                    </Button>
-                    
+                  {/* THÊM NÚT NÀY */}
+
+                  <Button
+                    danger
+                    ghost
+                    style={{ color: '#ff4d4f', borderColor: '#ff4d4f' }}
+                    onClick={() => onShowDeletedVariants && onShowDeletedVariants(record.id)}
+                    disabled={!deletedVariantsCount?.[record.id]}
+                  >
+                    Xem biến thể đã xoá
+                  </Button>
+
                 </Space>
               </div>
             </Col>
@@ -349,8 +395,8 @@ const ProductTable = ({
             Danh sách biến thể ({record.variants.length})
           </h4>
 
-          <div style={{ 
-            display: 'grid', 
+          <div style={{
+            display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
             gap: '12px'
           }}>
@@ -387,71 +433,71 @@ const ProductTable = ({
                   }
                 }}
               >
-              {/* Thumbnail */}
-              <div style={{
-                width: '80px',
-                height: '80px',
-                flexShrink: 0,
-                borderRadius: '6px',
-                overflow: 'hidden',
-                backgroundColor: '#f5f5f5'
-              }}>
-                <Image
-                  src={variant.image || record.image || '/placeholder-product.png'}
-                  alt={variant.sku}
-                  width="100%"
-                  height="100%"
-                  style={{
-                    objectFit: 'cover',
-                    display: 'block'
-                  }}
-                  fallback="/placeholder-product.png"
-                  preview={{
-                    mask: <EyeOutlined style={{ fontSize: '16px', color: '#fff' }} />
-                  }}
-                />
-              </div>
+                {/* Thumbnail */}
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  flexShrink: 0,
+                  borderRadius: '6px',
+                  overflow: 'hidden',
+                  backgroundColor: '#f5f5f5'
+                }}>
+                  <Image
+                    src={getImageUrl(variant.image_url || variant.image || (Array.isArray(variant.images) && variant.images[0]?.image_url) || record.image)}
+                    alt={variant.sku}
+                    width="100%"
+                    height="100%"
+                    style={{
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                    fallback="/placeholder-product.png"
+                    preview={{
+                      mask: <EyeOutlined style={{ fontSize: '16px', color: '#fff' }} />
+                    }}
+                  />
+                </div>
 
-              {/* Info */}
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    color: '#1890ff',
-                    marginBottom: '4px'
-                  }}>
-                    {variant.sku || variant.code || '-'}
-                  </div>
-                  <div style={{
-                    fontSize: '12px',
-                    color: '#595959',
-                    lineHeight: '1.4'
-                  }}>
-                    {variant.variant_name || variant.name || '-'}
-                  </div>
-                </div>
-                
-                <div>
-                  <div style={{
-                    fontSize: '13px',
-                    fontWeight: 600,
-                    color: '#f5222d',
-                    marginBottom: '4px'
-                  }}>
-                    {formatCurrency(variant.price || variant.selling_price || 0)}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-                    Tồn: <span style={{
-                      fontWeight: 600,
-                      color: (variant.stock || variant.stock_quantity || 0) > 0 ? '#52c41a' : '#f5222d'
+                {/* Info */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: '#1890ff',
+                      marginBottom: '4px'
                     }}>
-                      {variant.stock || variant.stock_quantity || 0}
-                    </span>
+                      {variant.sku || variant.code || '-'}
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: '#595959',
+                      lineHeight: '1.4'
+                    }}>
+                      {variant.variant_name || variant.name || '-'}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{
+                      fontSize: '13px',
+                      fontWeight: 600,
+                      color: '#f5222d',
+                      marginBottom: '4px'
+                    }}>
+                      {formatCurrency(variant.price || variant.selling_price || 0)}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                      Tồn: <span style={{
+                        fontWeight: 600,
+                        color: (variant.stock || variant.stock_quantity || 0) > 0 ? '#52c41a' : '#f5222d'
+                      }}>
+                        {variant.stock || variant.stock_quantity || 0}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
             ))}
           </div>
         </div>
@@ -460,9 +506,9 @@ const ProductTable = ({
         {(() => {
           const selectedVariant = getSelectedVariant(record.variants);
           if (!selectedVariant) return null;
-          
+
           return (
-            <div 
+            <div
               id="variant-detail-panel"  // ✅ ADD: ID for scroll
               style={{
                 padding: '20px',
@@ -473,203 +519,46 @@ const ProductTable = ({
                 marginTop: '16px'  // ✅ ADD: Spacing
               }}
             >
-            <h4 style={{
-              margin: '0 0 20px 0',
-              fontSize: '16px',
-              fontWeight: 600,
-              color: '#262626',
-              paddingBottom: '12px',
-              borderBottom: '2px solid #1890ff'
-            }}>
-              📋 Chi tiết biến thể
-            </h4>
+              <h4 style={{
+                margin: '0 0 20px 0',
+                fontSize: '16px',
+                fontWeight: 600,
+                color: '#262626',
+                paddingBottom: '12px',
+                borderBottom: '2px solid #1890ff'
+              }}>
+                📋 Chi tiết biến thể
+              </h4>
 
-            <Row gutter={[24, 24]}>
-              {/* Variant Image */}
-              <Col xs={24} sm={24} md={6}>
-                <div style={{
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
-                }}>
-                  <Image
-                    src={selectedVariant.image || record.image || '/placeholder-product.png'}
-                    alt={selectedVariant.sku}
-                    style={{
-                      width: '100%',
-                      height: '250px',
-                      objectFit: 'cover',
-                      display: 'block'
-                    }}
-                    fallback="/placeholder-product.png"
-                    preview={{
-                      mask: <EyeOutlined style={{ fontSize: '24px', color: '#fff' }} />
-                    }}
-                  />
-                </div>
-              </Col>
+              <Row gutter={[24, 24]}>
+                {/* Variant Image */}
+                <Col xs={24} sm={24} md={6}>
+                  <div style={{
+                    borderRadius: '8px',
+                    overflow: 'hidden',
+                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)'
+                  }}>
+                    <Image
+                      src={getImageUrl(selectedVariant.image_url || selectedVariant.image || (Array.isArray(selectedVariant.images) && selectedVariant.images[0]?.image_url) || record.image)}
+                      alt={selectedVariant.sku}
+                      style={{
+                        width: '100%',
+                        height: '250px',
+                        objectFit: 'cover',
+                        display: 'block'
+                      }}
+                      fallback="/placeholder-product.png"
+                      preview={{
+                        mask: <EyeOutlined style={{ fontSize: '24px', color: '#fff' }} />
+                      }}
+                    />
+                  </div>
+                </Col>
 
-              {/* Variant Info */}
-              <Col xs={24} sm={24} md={18}>
-                <Row gutter={[12, 12]}>
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        SKU/Mã
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#1890ff'
-                      }}>
-                        {selectedVariant.sku || selectedVariant.code || '-'}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        Tồn kho
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: (selectedVariant.stock || selectedVariant.stock_quantity || 0) > 0 ? '#52c41a' : '#f5222d'
-                      }}>
-                        {selectedVariant.stock || selectedVariant.stock_quantity || 0}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        Giá vốn
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#262626'
-                      }}>
-                        {formatCurrency(selectedVariant.cost_price || 0)}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        Giá bán
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#f5222d'
-                      }}>
-                        {formatCurrency(selectedVariant.price || selectedVariant.selling_price || 0)}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        Min Stock
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#262626'
-                      }}>
-                        {selectedVariant.min_stock || 0}
-                      </div>
-                    </div>
-                  </Col>
-
-                  <Col xs={12} sm={8} md={6}>
-                    <div style={{
-                      padding: '12px',
-                      backgroundColor: '#f5f5f5',
-                      borderRadius: '6px',
-                      border: '1px solid #f0f0f0'
-                    }}>
-                      <div style={{
-                        fontSize: '11px',
-                        fontWeight: 600,
-                        color: '#8c8c8c',
-                        textTransform: 'uppercase',
-                        marginBottom: '6px'
-                      }}>
-                        Max Stock
-                      </div>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 600,
-                        color: '#262626'
-                      }}>
-                        {selectedVariant.max_stock || 'Không giới hạn'}
-                      </div>
-                    </div>
-                  </Col>
-
-                  {selectedVariant.barcode && (
-                    <Col xs={24}>
+                {/* Variant Info */}
+                <Col xs={24} sm={24} md={18}>
+                  <Row gutter={[12, 12]}>
+                    <Col xs={12} sm={8} md={6}>
                       <div style={{
                         padding: '12px',
                         backgroundColor: '#f5f5f5',
@@ -683,92 +572,249 @@ const ProductTable = ({
                           textTransform: 'uppercase',
                           marginBottom: '6px'
                         }}>
-                          Barcode
+                          SKU/Mã
                         </div>
                         <div style={{
                           fontSize: '14px',
                           fontWeight: 600,
-                          color: '#262626',
-                          fontFamily: 'monospace'
+                          color: '#1890ff'
                         }}>
-                          {selectedVariant.barcode}
+                          {selectedVariant.sku || selectedVariant.code || '-'}
                         </div>
                       </div>
                     </Col>
-                  )}
-                </Row>
 
-                <Divider style={{ margin: '16px 0' }} />
+                    <Col xs={12} sm={8} md={6}>
+                      <div style={{
+                        padding: '12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#8c8c8c',
+                          textTransform: 'uppercase',
+                          marginBottom: '6px'
+                        }}>
+                          Tồn kho
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: (selectedVariant.stock || selectedVariant.stock_quantity || 0) > 0 ? '#52c41a' : '#f5222d'
+                        }}>
+                          {selectedVariant.stock || selectedVariant.stock_quantity || 0}
+                        </div>
+                      </div>
+                    </Col>
 
-                {/* ✅ FIXED: Action Buttons for Variant - Now call props correctly */}
-                <Space wrap>
-                  <Button 
-                    type="primary" 
-                    icon={<EditOutlined />}
-                    onClick={() => {
-                      // ✅ FIX: Call onEditVariant from props
-                      if (onEditVariant) {
-                        onEditVariant(selectedVariant);
-                      } else {
-                        message.info(`Chỉnh sửa biến thể: ${selectedVariant.sku}`);
-                        navigate(`/products/variants/edit/${selectedVariant.id}`);
-                      }
-                    }}
-                  >
-                    Chỉnh sửa
-                  </Button>
-                  <Button 
-                    icon={<CopyOutlined />}
-                    onClick={() => {
-                      if (onCloneVariant) {
-                        onCloneVariant(selectedVariant);
-                      } else {
-                        message.info(`Sao chép biến thể: ${selectedVariant.sku}`);
-                        console.log('Clone variant:', selectedVariant);
-                      }
-                    }}
-                  >
-                    Sao chép
-                  </Button>
-                  <Button
-                    danger
-                    ghost
-                    style={{ color: '#ff4d4f', borderColor: '#ff4d4f' }}
-                    onClick={() => onShowDeletedVariants && onShowDeletedVariants(record.id)}
-                    disabled={!deletedVariantsCount[record.id]}
-                  >
-                    Xem biến thể đã xoá
-                  </Button>
-                  <Button 
-                    icon={<StopOutlined />}
-                    onClick={() => {
-                      message.warning(`Ngừng biến thể: ${selectedVariant.sku}`);
-                      console.log('Stop variant:', selectedVariant);
-                    }}
-                  >
-                    Ngừng
-                  </Button>
-                  <Button 
-                    danger
-                    icon={<DeleteOutlined />}
-                    onClick={() => {
-                      if (onDeleteVariant) {
-                        // ✅ FIX: Pass both variant AND productId
-                        onDeleteVariant(selectedVariant, record.id);
-                      } else {
-                        message.error(`Xóa biến thể: ${selectedVariant.sku}`);
-                      }
-                    }}
-                  >
-                    Xóa
-                  </Button>
+                    <Col xs={12} sm={8} md={6}>
+                      <div style={{
+                        padding: '12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#8c8c8c',
+                          textTransform: 'uppercase',
+                          marginBottom: '6px'
+                        }}>
+                          Giá vốn
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#262626'
+                        }}>
+                          {formatCurrency(selectedVariant.cost_price || 0)}
+                        </div>
+                      </div>
+                    </Col>
 
-                </Space>
-              </Col>
-            </Row>
-          </div>
-        );
-       })()}
+                    <Col xs={12} sm={8} md={6}>
+                      <div style={{
+                        padding: '12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#8c8c8c',
+                          textTransform: 'uppercase',
+                          marginBottom: '6px'
+                        }}>
+                          Giá bán
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#f5222d'
+                        }}>
+                          {formatCurrency(selectedVariant.price || selectedVariant.selling_price || 0)}
+                        </div>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} sm={8} md={6}>
+                      <div style={{
+                        padding: '12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#8c8c8c',
+                          textTransform: 'uppercase',
+                          marginBottom: '6px'
+                        }}>
+                          Min Stock
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#262626'
+                        }}>
+                          {selectedVariant.min_stock || 0}
+                        </div>
+                      </div>
+                    </Col>
+
+                    <Col xs={12} sm={8} md={6}>
+                      <div style={{
+                        padding: '12px',
+                        backgroundColor: '#f5f5f5',
+                        borderRadius: '6px',
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <div style={{
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          color: '#8c8c8c',
+                          textTransform: 'uppercase',
+                          marginBottom: '6px'
+                        }}>
+                          Max Stock
+                        </div>
+                        <div style={{
+                          fontSize: '14px',
+                          fontWeight: 600,
+                          color: '#262626'
+                        }}>
+                          {selectedVariant.max_stock || 'Không giới hạn'}
+                        </div>
+                      </div>
+                    </Col>
+
+                    {selectedVariant.barcode && (
+                      <Col xs={24}>
+                        <div style={{
+                          padding: '12px',
+                          backgroundColor: '#f5f5f5',
+                          borderRadius: '6px',
+                          border: '1px solid #f0f0f0'
+                        }}>
+                          <div style={{
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            color: '#8c8c8c',
+                            textTransform: 'uppercase',
+                            marginBottom: '6px'
+                          }}>
+                            Barcode
+                          </div>
+                          <div style={{
+                            fontSize: '14px',
+                            fontWeight: 600,
+                            color: '#262626',
+                            fontFamily: 'monospace'
+                          }}>
+                            {selectedVariant.barcode}
+                          </div>
+                        </div>
+                      </Col>
+                    )}
+                  </Row>
+
+                  <Divider style={{ margin: '16px 0' }} />
+
+                  {/* ✅ FIXED: Action Buttons for Variant - Now call props correctly */}
+                  <Space wrap>
+                    <Button
+                      type="primary"
+                      icon={<EditOutlined />}
+                      onClick={() => {
+                        // ✅ FIX: Call onEditVariant from props
+                        if (onEditVariant) {
+                          onEditVariant(selectedVariant);
+                        } else {
+                          message.info(`Chỉnh sửa biến thể: ${selectedVariant.sku}`);
+                          navigate(`/products/variants/edit/${selectedVariant.id}`);
+                        }
+                      }}
+                    >
+                      Chỉnh sửa
+                    </Button>
+                    <Button
+                      icon={<CopyOutlined />}
+                      onClick={() => {
+                        if (onCloneVariant) {
+                          onCloneVariant(selectedVariant);
+                        } else {
+                          message.info(`Sao chép biến thể: ${selectedVariant.sku}`);
+                          console.log('Clone variant:', selectedVariant);
+                        }
+                      }}
+                    >
+                      Sao chép
+                    </Button>
+                    <Button
+                      danger
+                      ghost
+                      style={{ color: '#ff4d4f', borderColor: '#ff4d4f' }}
+                      onClick={() => onShowDeletedVariants && onShowDeletedVariants(record.id)}
+                      disabled={!deletedVariantsCount[record.id]}
+                    >
+                      Xem biến thể đã xoá
+                    </Button>
+                    <Button
+                      icon={<StopOutlined />}
+                      onClick={() => {
+                        message.warning(`Ngừng biến thể: ${selectedVariant.sku}`);
+                        console.log('Stop variant:', selectedVariant);
+                      }}
+                    >
+                      Ngừng
+                    </Button>
+                    <Button
+                      danger
+                      icon={<DeleteOutlined />}
+                      onClick={() => {
+                        if (onDeleteVariant) {
+                          // ✅ FIX: Pass both variant AND productId
+                          onDeleteVariant(selectedVariant, record.id);
+                        } else {
+                          message.error(`Xóa biến thể: ${selectedVariant.sku}`);
+                        }
+                      }}
+                    >
+                      Xóa
+                    </Button>
+
+                  </Space>
+                </Col>
+              </Row>
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -816,15 +862,15 @@ const ProductTable = ({
     if (newExpandedRowKeys.length > 0) {
       const newExpandedId = newExpandedRowKeys[newExpandedRowKeys.length - 1];
       const oldExpandedId = expandedRowKeys.length > 0 ? expandedRowKeys[0] : null;
-      
+
       // ✅ Find product object
       const expandedProduct = products.find(p => p.id === newExpandedId);
-      
+
       // ✅ Call parent handler
       if (onProductExpand && expandedProduct) {
         onProductExpand(true, expandedProduct);
       }
-      
+
       setExpandedRowKeys([newExpandedId]);
     } else {
       // Collapse - notify parent
@@ -832,7 +878,7 @@ const ProductTable = ({
       if (onProductExpand && collapsedProduct) {
         onProductExpand(false, collapsedProduct);
       }
-      
+
       setExpandedRowKeys([]);
     }
   };
@@ -845,17 +891,7 @@ const ProductTable = ({
       key: 'image',
       width: 80,
       align: 'center',
-      render: (image, record) => (
-        <Image
-          src={image || '/placeholder-product.png'}
-          alt={record.name}
-          width={50}
-          height={50}
-          style={{ objectFit: 'cover', borderRadius: '4px' }}
-          fallback="/placeholder-product.png"
-          preview={{}}
-        />
-      ),
+      render: (_, record) => <ProductThumb record={record} />,
     },
     {
       title: 'Mã hàng',
@@ -879,8 +915,8 @@ const ProductTable = ({
         <div>
           <div style={{ fontWeight: 500 }}>{name}</div>
           {record.description && (
-            <div style={{ 
-              fontSize: '12px', 
+            <div style={{
+              fontSize: '12px',
               color: '#8c8c8c',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -914,11 +950,11 @@ const ProductTable = ({
       width: 150,
       sorter: true,
       sortDirections: ['ascend', 'descend'],
-      render: (names) => 
+      render: (names) =>
         Array.isArray(names) && names.length
           ? names.join(', ')  // ✅ Nối mảng thành chuỗi
           : '-',
-    },    
+    },
     {
       title: 'Giá bán',
       dataIndex: 'selling_price',
@@ -968,7 +1004,7 @@ const ProductTable = ({
         const isSimpleProduct = hv === 0 || hv === '0' || hv === false || hv === null || hv === undefined;
         const canEdit = hasPermission('products.edit') || hasPermission('products.update');
         const showEditButton = (isVariantProduct || isSimpleProduct) && canEdit;
-    
+
         return (
           <Space>
             {showEditButton && (
@@ -1000,7 +1036,7 @@ const ProductTable = ({
         totalBoundaryShowSizeChanger: 20,
         showSizeChanger: true,
         showQuickJumper: true,
-        showTotal: (total, range) => 
+        showTotal: (total, range) =>
           `${range[0]}-${range[1]} của ${total} sản phẩm`,
         pageSizeOptions: ['10', '20', '50', '100'],
         placement: 'bottomRight',
@@ -1012,7 +1048,7 @@ const ProductTable = ({
           classes.push('product-row-highlighted');
         }
         return classes.join(' ');
-      }}      
+      }}
       onRow={(record) => ({
         id: `product-row-${record.id}`, // ✅ NEW: Thêm id cho scroll
       })}

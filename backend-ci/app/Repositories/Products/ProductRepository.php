@@ -73,8 +73,49 @@ class ProductRepository
     /** Map product => category ids. @agent-use: Attach categories @agent-pattern: Batch fetch */
     public function categoryMap(array $productIds): array { if (empty($productIds)) { return []; } $rows = $this->links->select('product_id, category_id')->whereIn('product_id', $productIds)->findAll(); $map = []; foreach ($rows as $row) { $map[$row['product_id']][] = (int) $row['category_id']; } return $map; }
 
-    /** Variants grouped by product. @agent-use: Include variants @agent-pattern: Batch fetch */
-    public function variantMap(array $productIds): array { if (empty($productIds)) { return []; } $rows = $this->variants->where('deleted_at', null)->whereIn('product_id', $productIds)->findAll(); $map = []; foreach ($rows as $row) { $map[$row['product_id']][] = $row; } return $map; }
+    /** Variants grouped by product with images. @agent-use: Include variants @agent-pattern: Batch fetch */
+    public function variantMap(array $productIds): array
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+        $rows = $this->variants->where('deleted_at', null)->whereIn('product_id', $productIds)->findAll();
+        if (empty($rows)) {
+            return [];
+        }
+        
+        // Get variant IDs
+        $variantIds = array_filter(array_column($rows, 'id'));
+        
+        // Fetch primary image for each variant
+        $imageMap = [];
+        if (!empty($variantIds)) {
+            $images = $this->db->table('product_images')
+                ->select('variant_id, image_url')
+                ->whereIn('variant_id', $variantIds)
+                ->where('deleted_at', null)
+                ->orderBy('is_primary', 'DESC')
+                ->orderBy('sort_order', 'ASC')
+                ->get()
+                ->getResultArray();
+                
+            foreach ($images as $img) {
+                $vid = (int) $img['variant_id'];
+                if (!isset($imageMap[$vid])) {
+                    $imageMap[$vid] = $img['image_url'];
+                }
+            }
+        }
+        
+        // Map variants by product, adding image_url
+        $map = [];
+        foreach ($rows as $row) {
+            $vid = (int) $row['id'];
+            $row['image_url'] = $imageMap[$vid] ?? ($row['image_url'] ?? null);
+            $map[$row['product_id']][] = $row;
+        }
+        return $map;
+    }
 
     /** Variants for one product. @agent-use: Variant listing @agent-pattern: Simple find */
     public function variantsByProduct(int $productId): array { return $this->variants->where('deleted_at', null)->where('product_id', $productId)->findAll(); }
@@ -153,8 +194,8 @@ class ProductRepository
     /** Used attribute options for product. @agent-use: Attribute overview @agent-pattern: Join fetch */
     public function usedAttributeOptions(int $productId): array {
         $query = $this->db->table('product_attribute_values pav')
-            ->select('pav.attribute_id, pav.attribute_option_id as option_id, pa.name as attribute_name, pa.type, pa.code as attribute_key, pa.code as slug, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.created_at, pa.updated_at')
-            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->select('pav.attribute_id, pav.option_id, pa.name as attribute_name, pa.type, pa.attribute_key, pa.attribute_key as slug, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.created_at, pa.updated_at')
+            ->join('product_attributes pa', 'pa.id = pav.attribute_id', 'left')
             ->where('pav.product_id', $productId)
             ->where('pav.deleted_at', null);
         
@@ -165,8 +206,8 @@ class ProductRepository
     /** Attribute values for product. @agent-use: Attribute listing @agent-pattern: Join fetch */
     public function productAttributeValues(int $productId): array {
         $query = $this->db->table('product_attribute_values pav')
-            ->select('pav.*, pa.name as attribute_name, pa.type, pa.code as attribute_key, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.code as slug, null as attribute_values, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at')
-            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->select('pav.*, pa.name as attribute_name, pa.type, pa.attribute_key, pa.sort_order, pa.status, pa.is_filterable, pa.is_required, 1 as is_visible, pa.attribute_key as slug, null as attribute_values, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at')
+            ->join('product_attributes pa', 'pa.id = pav.attribute_id', 'left')
             ->where('pav.product_id', $productId)
             ->where('pav.deleted_at', null);
             

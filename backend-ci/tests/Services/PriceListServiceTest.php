@@ -10,15 +10,27 @@ use App\Validators\PriceListValidator;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Database\CompleteSchemaTrait;
 use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Assertions\DatabaseAssertions;
+use Tests\Support\Assertions\BusinessLogicAssertions;
+use Tests\Support\Assertions\EdgeCaseAssertions;
+use Tests\Support\Assertions\ErrorMessageAssertions;
+use Tests\Support\Factories\ProductFactory;
+use Tests\Support\Factories\PriceListFactory;
+use Tests\Support\Factories\PriceListItemFactory;
 
 /**
- * @agent-test: PriceListService unified MySQL testing
- * @agent-pattern: Service test with DevDatabaseTrait + PriceListSchemaTrait (MySQL-only)
+ * @agent-test: PriceListService unified MySQL testing with strong assertions
+ * @agent-pattern: Service test with DevDatabaseTrait + assertion traits + factories
+ * @agent-improvements: Strong assertions, factory pattern, edge cases, error testing
  */
 class PriceListServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
     use CompleteSchemaTrait;
+    use DatabaseAssertions;
+    use BusinessLogicAssertions;
+    use EdgeCaseAssertions;
+    use ErrorMessageAssertions;
 
     private PriceListService $service;
     private int $productId;
@@ -38,16 +50,8 @@ class PriceListServiceTest extends CIUnitTestCase
         $products = new \App\Repositories\Products\ProductRepository(null, null, null, $this->db);
         $this->service = new PriceListService($repo, $items, $validator, $formula, $products);
 
-        // seed product (DB prefix handles actual table name)
-        $this->db->table('products')->insert([
-            'code' => 'P1',
-            'name' => 'Prod 1',
-            'selling_price' => 200,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        $productId = (int) $this->db->insertID();
-
-        $this->productId = $productId;
+        // Create product using factory instead of hardcoded seed
+        $this->productId = ProductFactory::createWithPrice(200.0, 150.0);
     }
     
     protected function tearDown(): void
@@ -59,92 +63,221 @@ class PriceListServiceTest extends CIUnitTestCase
     /** @test */
     public function it_auto_updates_nested_dependents()
     {
-        $idA = $this->seedList('A', null, false, null);
-        $idB = $this->seedList('B', $idA, true, 'base * 0.5');
-        $idC = $this->seedList('C', $idB, true, 'base * 0.5');
+        // Create price lists using factories
+        $idA = PriceListFactory::createActive(['name' => 'Base List A']);
+        $idB = PriceListFactory::createWithFormula('base * 0.5', $idA, true, ['name' => 'List B']);
+        $idC = PriceListFactory::createWithFormula('base * 0.5', $idB, true, ['name' => 'List C']);
 
-        $this->seedItem($idA, $this->productId, null, 200);
-        $this->seedItem($idB, $this->productId, null, 0);
-        $this->seedItem($idC, $this->productId, null, 0);
+        // Create price list items using factories
+        PriceListItemFactory::createForProduct($idA, $this->productId, 200.0);
+        PriceListItemFactory::createForProduct($idB, $this->productId, 0.0);
+        PriceListItemFactory::createForProduct($idC, $this->productId, 0.0);
 
-        $this->assertSame(200.0, (float) $this->priceOf($idA, $this->productId));
+        // Verify initial state with strong assertions
+        $this->assertDatabaseHas('price_list_items', [
+            'price_list_id' => $idA,
+            'product_id' => $this->productId,
+            'price' => 200.0
+        ]);
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idA, $this->productId), 'price', 200.0);
 
         $updated = $this->service->triggerAutoUpdate($idA);
 
-        $this->assertEqualsCanonicalizing([$idB, $idC], $updated);
-        $this->assertSame(100.0, (float) $this->priceOf($idB, $this->productId));
-        $this->assertSame(50.0, (float) $this->priceOf($idC, $this->productId));
+        // Strong assertions for business logic
+        $this->assertIsArray($updated, 'Auto update should return array of updated list IDs');
+        $this->assertEqualsCanonicalizing([$idB, $idC], $updated,
+            'Should update both dependent lists');
+        
+        // Verify price calculations with business logic assertions
+        $this->assertPriceCalculation(200.0, 100.0, 0.5, 0.01,
+            'List B should have 50% discount from base');
+        $this->assertPriceCalculation(100.0, 50.0, 0.5, 0.01,
+            'List C should have 50% discount from List B');
+        
+        // Verify database state with strong assertions
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idB, $this->productId), 'price', 100.0);
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idC, $this->productId), 'price', 50.0);
+        
+        // Verify audit trail
+        $this->assertAuditTrail('price_list_items',
+            $this->getItemId($idB, $this->productId), 'update');
+        $this->assertAuditTrail('price_list_items',
+            $this->getItemId($idC, $this->productId), 'update');
     }
 
     /** @test */
     public function it_recalculates_single_list_from_base()
     {
-        $idA = $this->seedList('A', null, false, null);
-        $idB = $this->seedList('B', $idA, true, 'base * 0.5');
+        // Create price lists using factories
+        $idA = PriceListFactory::createActive(['name' => 'Base List A']);
+        $idB = PriceListFactory::createWithFormula('base * 0.5', $idA, true, ['name' => 'List B']);
 
-        $this->seedItem($idA, $this->productId, null, 200);
-        $this->seedItem($idB, $this->productId, null, 0);
+        // Create price list items using factories
+        PriceListItemFactory::createForProduct($idA, $this->productId, 200.0);
+        PriceListItemFactory::createForProduct($idB, $this->productId, 0.0);
 
-        $this->assertSame(200.0, (float) $this->priceOf($idA, $this->productId));
+        // Verify initial state
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idA, $this->productId), 'price', 200.0);
 
         $count = $this->service->recalculateItems($idB);
 
-        $this->assertEquals(1, $count);
-        $this->assertSame(100.0, (float) $this->priceOf($idB, $this->productId));
+        // Strong assertions for business logic
+        $this->assertEquals(1, $count, 'Should recalculate exactly 1 item');
+        $this->assertPriceCalculation(200.0, 100.0, 0.5, 0.01,
+            'Should apply 50% discount formula');
+        
+        // Verify database state
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idB, $this->productId), 'price', 100.0);
+        
+        // Verify only target list was updated
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idA, $this->productId), 'price', 200.0);
     }
 
     /** @test */
     public function it_skips_lists_with_auto_update_disabled()
     {
-        $idA = $this->seedList('A', null, false, null);
-        $idD = $this->seedList('D', $idA, false, 'base * 0.1');
+        // Create price lists using factories
+        $idA = PriceListFactory::createActive(['name' => 'Base List A']);
+        $idD = PriceListFactory::createWithFormula('base * 0.1', $idA, false, ['name' => 'List D']);
 
-        $this->seedItem($idA, $this->productId, null, 300);
-        $this->seedItem($idD, $this->productId, null, 10);
+        // Create price list items using factories
+        PriceListItemFactory::createForProduct($idA, $this->productId, 300.0);
+        PriceListItemFactory::createForProduct($idD, $this->productId, 10.0);
 
         $updated = $this->service->triggerAutoUpdate($idA);
 
-        $this->assertSame([], $updated);
-        $this->assertSame(10.0, (float) $this->priceOf($idD, $this->productId));
+        // Strong assertions for business logic
+        $this->assertIsArray($updated, 'Auto update should return array');
+        $this->assertEmpty($updated, 'Should not update lists with auto_update disabled');
+        
+        // Verify database state unchanged
+        $this->assertDatabaseDecimalValue('price_list_items',
+            $this->getItemId($idD, $this->productId), 'price', 10.0);
+        
+        // Verify price list dependency
+        $this->assertPriceListDependency($idA, $idD, false, 'base * 0.1');
     }
 
-    private function seedList(string $name, ?int $baseId, bool $autoUpdate, ?string $formula): int
+    /** @test */
+    public function it_handles_edge_cases_for_price_calculations()
     {
-        $this->db->table('price_lists')->insert([
-            'name' => $name,
-            'type' => 'custom',
-            'priority' => 0,
-            'is_active' => 1,
-            'formula' => $formula,
-            'base_price_list_id' => $baseId,
-            'auto_update' => $autoUpdate ? 1 : 0,
-            'rounding_rule' => 'none',
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
-        return (int) $this->db->insertID();
+        // Test boundary values for price calculations
+        $edgeCases = [
+            ['base_price' => 0.01, 'formula' => 'base * 2', 'expected' => 0.02],
+            ['base_price' => 999999.99, 'formula' => 'base * 0.01', 'expected' => 9999.9999],
+            ['base_price' => 100.0, 'formula' => 'base + 50', 'expected' => 150.0],
+            ['base_price' => 100.0, 'formula' => 'base - 25', 'expected' => 75.0],
+        ];
+
+        foreach ($edgeCases as $case) {
+            $baseListId = PriceListFactory::createActive();
+            $dependentListId = PriceListFactory::createWithFormula($case['formula'], $baseListId, true);
+            
+            PriceListItemFactory::createForProduct($baseListId, $this->productId, $case['base_price']);
+            PriceListItemFactory::createForProduct($dependentListId, $this->productId, 0.0);
+            
+            $this->service->recalculateItems($dependentListId);
+            
+            // Verify boundary value handling
+            $this->assertDatabaseDecimalValue('price_list_items',
+                $this->getItemId($dependentListId, $this->productId), 'price', $case['expected'], 0.0001,
+                "Formula '{$case['formula']}' should calculate correctly for base price {$case['base_price']}");
+        }
     }
 
-    private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
+    /** @test */
+    public function it_validates_formula_syntax()
     {
-        $this->db->table('price_list_items')->insert([
-            'price_list_id' => $listId,
-            'product_id' => $productId,
-            'variant_id' => $variantId,
-            'price' => $price,
-            'discount_percent' => 0,
-            'discount_amount' => 0,
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        $invalidFormulas = [
+            'invalid syntax',
+            'base *',
+            '* base',
+            'base / 0',
+            'base +',
+            'base -',
+        ];
+
+        foreach ($invalidFormulas as $formula) {
+            $baseListId = PriceListFactory::createActive();
+            
+            // Test formula validation
+            $this->assertBusinessValidation(function() use ($baseListId, $formula) {
+                PriceListFactory::createWithFormula($formula, $baseListId, true);
+            }, \InvalidArgumentException::class, null,
+                "Invalid formula '{$formula}' should throw exception");
+        }
     }
 
-    private function priceOf(int $listId, int $productId): ?float
+    /** @test */
+    public function it_handles_null_and_empty_values()
     {
-        $row = $this->db->table('price_list_items')
-            ->where('price_list_id', $listId)
+        $this->assertNullValueHandling(function($data) {
+            $baseListId = PriceListFactory::createActive();
+            return PriceListFactory::createWithFormula($data['formula'] ?? 'base * 0.5', $baseListId, true);
+        }, ['formula'], \InvalidArgumentException::class);
+
+        $this->assertEmptyValueHandling(function($data) {
+            $baseListId = PriceListFactory::createActive();
+            return PriceListFactory::createWithFormula($data['formula'] ?? 'base * 0.5', $baseListId, true);
+        }, ['formula'], \InvalidArgumentException::class);
+    }
+
+    /** @test */
+    public function it_provides_meaningful_error_messages()
+    {
+        $baseListId = PriceListFactory::createActive();
+        
+        // Test error message quality
+        try {
+            PriceListFactory::createWithFormula('invalid syntax', $baseListId, true);
+            $this->fail('Should have thrown exception for invalid formula');
+        } catch (\Exception $e) {
+            $this->assertUserFriendlyErrorMessage([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+            
+            $this->assertErrorFieldContext([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], ['formula']);
+            
+            $this->assertErrorFormatting([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Helper method to get price list item ID
+     */
+    private function getItemId(int $priceListId, int $productId): int
+    {
+        $item = $this->db->table('price_list_items')
+            ->where('price_list_id', $priceListId)
             ->where('product_id', $productId)
             ->get()->getRowArray();
-        return $row ? (float) $row['price'] : null;
+        
+        return (int) $item['id'];
+    }
+
+    /**
+     * Helper method to get price for a product in a price list
+     */
+    private function getPrice(int $priceListId, int $productId): float
+    {
+        $item = $this->db->table('price_list_items')
+            ->where('price_list_id', $priceListId)
+            ->where('product_id', $productId)
+            ->get()->getRowArray();
+        
+        return (float) $item['price'];
     }
 }

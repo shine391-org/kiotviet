@@ -26,12 +26,6 @@ class CashTransactionValidatorTest extends CIUnitTestCase
         
         // Truncate tables to ensure clean state
         $this->resetCashTransactionSchema();
-
-        // Defensive: ensure core tables exist (in case migration was skipped)
-        if (! $this->db->tableExists('branches') || ! $this->db->tableExists('users')) {
-            require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
-            (new \App\Database\Migrations\TestSchemaSetup())->up();
-        }
         
         $this->validator = new CashTransactionValidator(null, $this->db);
         $this->referenceValidator = new CashTransactionReferenceValidator($this->db);

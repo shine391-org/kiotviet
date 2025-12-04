@@ -1,4 +1,4 @@
-FROM php:8.4-apache
+FROM php:8.4-apache AS base
 
 # System deps & PHP extensions
 RUN apt-get update \
@@ -16,25 +16,39 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
     && printf '<Directory "%s">\n    AllowOverride All\n    Require all granted\n</Directory>\n' "${APACHE_DOCUMENT_ROOT}" > /etc/apache2/conf-available/allow-override.conf \
     && a2enconf allow-override
 
-WORKDIR /var/www/html
-
 # Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Install PHP dependencies first for better layer cache
-COPY backend-ci/composer.* ./
-RUN composer install --prefer-dist --no-interaction --optimize-autoloader
+WORKDIR /var/www/html
 
-# Copy application source
-COPY backend-ci/ ./
+# ---------- Builder: install vendor without copying the whole source ----------
+FROM base AS vendor
+WORKDIR /var/www/html
+COPY backend-ci/composer.* ./
+RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
+
+# ---------- Runtime image ----------
+FROM base AS runtime
+WORKDIR /var/www/html
+
+# Copy application source (minimal set)
+COPY backend-ci/app ./app
+COPY backend-ci/public ./public
+COPY backend-ci/spark ./spark
+COPY backend-ci/env ./env
+COPY backend-ci/composer.* ./
+
+# Bring in vendor from builder stage
+COPY --from=vendor /var/www/html/vendor ./vendor
 
 # Copy docker-start.sh and make it executable
 COPY backend-ci/docker-start.sh /usr/local/bin/docker-start.sh
 RUN chmod +x /usr/local/bin/docker-start.sh
 
 # Permissions for writable directories
-RUN chown -R www-data:www-data /var/www/html/writable /var/www/html/public \
-    && chmod -R 775 /var/www/html/writable
+RUN mkdir -p /var/www/html/writable /var/www/html/uploads \
+    && chown -R www-data:www-data /var/www/html/writable /var/www/html/public /var/www/html/uploads \
+    && chmod -R 775 /var/www/html/writable /var/www/html/uploads
 
 # Use docker-start.sh as entrypoint (handles DB wait + migration + Apache start)
 CMD ["/usr/local/bin/docker-start.sh"]

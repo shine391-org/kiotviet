@@ -134,11 +134,19 @@ docker-data/
 docker-volumes/
 
 # Database dumps and backups
-*.sql
+# *.sql (Allowed by user request)
 *.sql.gz
 *.dump
 db-backups/
 backups/
+
+# User requested ignores
+docs/
+*.xlsx
+**/uploads/
+.ai/
+.vscode/
+.kilocodemodes
 
 # ========================================
 # Keep these directories but ignore contents

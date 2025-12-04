@@ -8,7 +8,10 @@
     columns="max"
     failOnRisky="true"
     failOnWarning="true"
-    cacheDirectory="writable/.phpunit.cache">
+    cacheDirectory="writable/.phpunit.cache"
+    timeoutForSmallTests="60"
+    timeoutForMediumTests="180"
+    timeoutForLargeTests="600">
     
     <!-- Integration tests with MySQL -->
     <testsuites>
@@ -35,8 +38,28 @@
         <env name="database.tests.DBPrefix" value=""/>
         <env name="ENABLE_API_TESTS" value="1"/>
         
+        <!-- Performance testing configuration for integration tests -->
+        <env name="PERFORMANCE_TESTING_ENABLED" value="1"/>
+        <env name="PERFORMANCE_MAX_EXECUTION_TIME" value="10000"/>
+        <env name="PERFORMANCE_MAX_MEMORY_MB" value="512"/>
+        <env name="PERFORMANCE_MAX_QUERIES" value="100"/>
+        <!-- Memory and time limits for integration performance tests -->
+        <ini name="memory_limit" value="1G"/>
+        <ini name="max_execution_time" value="600"/>
+        
         <const name="HOMEPATH" value="./"/>
         <const name="CONFIGPATH" value="./app/Config/"/>
         <const name="PUBLICPATH" value="./public/"/>
     </php>
+    
+    <!-- Performance testing groups for integration -->
+    <groups>
+        <include>
+            <group>performance</group>
+            <group>integration</group>
+        </include>
+        <exclude>
+            <group>slow</group>
+        </exclude>
+    </groups>
 </phpunit>

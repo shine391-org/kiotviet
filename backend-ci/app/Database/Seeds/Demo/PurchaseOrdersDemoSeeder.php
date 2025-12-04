@@ -50,7 +50,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(30)->toDateTimeString(),
                 'expected_date' => $now->subDays(23)->toDateTimeString(),
                 'status' => 'completed',
-                'total_amount' => 50000000,
+                'total' => 50000000,
                 'paid_amount' => 50000000,
                 'payment_status' => 'paid',
                 'notes' => 'Đơn hàng đầu tiên trong tháng',
@@ -64,7 +64,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(25)->toDateTimeString(),
                 'expected_date' => $now->subDays(18)->toDateTimeString(),
                 'status' => 'completed',
-                'total_amount' => 35000000,
+                'total' => 35000000,
                 'paid_amount' => 35000000,
                 'payment_status' => 'paid',
                 'notes' => 'Nhập hàng túi xách',
@@ -78,7 +78,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(20)->toDateTimeString(),
                 'expected_date' => $now->subDays(13)->toDateTimeString(),
                 'status' => 'received',
-                'total_amount' => 45000000,
+                'total' => 45000000,
                 'paid_amount' => 22500000,
                 'payment_status' => 'partial',
                 'notes' => 'Đã nhận hàng, chờ thanh toán phần còn lại',
@@ -92,7 +92,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(15)->toDateTimeString(),
                 'expected_date' => $now->subDays(8)->toDateTimeString(),
                 'status' => 'in_transit',
-                'total_amount' => 60000000,
+                'total' => 60000000,
                 'paid_amount' => 30000000,
                 'payment_status' => 'partial',
                 'notes' => 'Hàng đang trên đường về kho',
@@ -106,7 +106,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(10)->toDateTimeString(),
                 'expected_date' => $now->subDays(3)->toDateTimeString(),
                 'status' => 'confirmed',
-                'total_amount' => 25000000,
+                'total' => 25000000,
                 'paid_amount' => 0,
                 'payment_status' => 'unpaid',
                 'notes' => 'Nhà cung cấp đã xác nhận đơn',
@@ -120,7 +120,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(7)->toDateTimeString(),
                 'expected_date' => $now->addDays(7)->toDateTimeString(),
                 'status' => 'pending',
-                'total_amount' => 40000000,
+                'total' => 40000000,
                 'paid_amount' => 0,
                 'payment_status' => 'unpaid',
                 'notes' => 'Chờ nhà cung cấp xác nhận',
@@ -134,7 +134,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(5)->toDateTimeString(),
                 'expected_date' => $now->addDays(10)->toDateTimeString(),
                 'status' => 'draft',
-                'total_amount' => 55000000,
+                'total' => 55000000,
                 'paid_amount' => 0,
                 'payment_status' => 'unpaid',
                 'notes' => 'Đơn nháp, chưa gửi cho nhà cung cấp',
@@ -148,7 +148,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
                 'order_date' => $now->subDays(3)->toDateTimeString(),
                 'expected_date' => $now->addDays(12)->toDateTimeString(),
                 'status' => 'cancelled',
-                'total_amount' => 30000000,
+                'total' => 30000000,
                 'paid_amount' => 0,
                 'payment_status' => 'unpaid',
                 'notes' => 'Hủy do nhà cung cấp không đủ hàng',
@@ -178,30 +178,30 @@ class PurchaseOrdersDemoSeeder extends Seeder
         // Purchase order items (sample items for each PO)
         $poItems = [
             // PO-1 items
-            ['purchase_order_id' => $poIds[0]['id'], 'product_id' => 501, 'quantity' => 100, 'unit_price' => 400000, 'total_amount' => 40000000],
-            ['purchase_order_id' => $poIds[0]['id'], 'product_id' => 502, 'quantity' => 20, 'unit_price' => 500000, 'total_amount' => 10000000],
+            ['purchase_order_id' => $poIds[0]['id'], 'product_id' => 501, 'quantity' => 100, 'unit_price' => 400000, 'total_price' => 40000000],
+            ['purchase_order_id' => $poIds[0]['id'], 'product_id' => 502, 'quantity' => 20, 'unit_price' => 500000, 'total_price' => 10000000],
             
             // PO-2 items
-            ['purchase_order_id' => $poIds[1]['id'], 'product_id' => 503, 'quantity' => 50, 'unit_price' => 450000, 'total_amount' => 22500000],
-            ['purchase_order_id' => $poIds[1]['id'], 'product_id' => 501, 'quantity' => 25, 'unit_price' => 500000, 'total_amount' => 12500000],
+            ['purchase_order_id' => $poIds[1]['id'], 'product_id' => 503, 'quantity' => 50, 'unit_price' => 450000, 'total_price' => 22500000],
+            ['purchase_order_id' => $poIds[1]['id'], 'product_id' => 501, 'quantity' => 25, 'unit_price' => 500000, 'total_price' => 12500000],
             
             // PO-3 items
-            ['purchase_order_id' => $poIds[2]['id'], 'product_id' => 502, 'quantity' => 30, 'unit_price' => 1500000, 'total_amount' => 45000000],
+            ['purchase_order_id' => $poIds[2]['id'], 'product_id' => 502, 'quantity' => 30, 'unit_price' => 1500000, 'total_price' => 45000000],
             
             // PO-4 items
-            ['purchase_order_id' => $poIds[3]['id'], 'product_id' => 501, 'quantity' => 150, 'unit_price' => 400000, 'total_amount' => 60000000],
+            ['purchase_order_id' => $poIds[3]['id'], 'product_id' => 501, 'quantity' => 150, 'unit_price' => 400000, 'total_price' => 60000000],
             
             // PO-5 items
-            ['purchase_order_id' => $poIds[4]['id'], 'product_id' => 502, 'quantity' => 50, 'unit_price' => 500000, 'total_amount' => 25000000],
+            ['purchase_order_id' => $poIds[4]['id'], 'product_id' => 502, 'quantity' => 50, 'unit_price' => 500000, 'total_price' => 25000000],
             
             // PO-6 items
-            ['purchase_order_id' => $poIds[5]['id'], 'product_id' => 503, 'quantity' => 80, 'unit_price' => 500000, 'total_amount' => 40000000],
+            ['purchase_order_id' => $poIds[5]['id'], 'product_id' => 503, 'quantity' => 80, 'unit_price' => 500000, 'total_price' => 40000000],
             
             // PO-7 items
-            ['purchase_order_id' => $poIds[6]['id'], 'product_id' => 501, 'quantity' => 110, 'unit_price' => 500000, 'total_amount' => 55000000],
+            ['purchase_order_id' => $poIds[6]['id'], 'product_id' => 501, 'quantity' => 110, 'unit_price' => 500000, 'total_price' => 55000000],
             
             // PO-8 items (cancelled)
-            ['purchase_order_id' => $poIds[7]['id'], 'product_id' => 502, 'quantity' => 20, 'unit_price' => 1500000, 'total_amount' => 30000000],
+            ['purchase_order_id' => $poIds[7]['id'], 'product_id' => 502, 'quantity' => 20, 'unit_price' => 1500000, 'total_price' => 30000000],
         ];
 
         foreach ($poItems as $item) {

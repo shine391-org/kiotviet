@@ -6,8 +6,8 @@ use Config\Database;
 use CodeIgniter\Database\BaseConnection;
 
 /**
- * DevDatabaseTrait - dùng golden migration TestSchemaSetup cho group "tests",
- * chỉ truncate data trước mỗi test để tránh mất bảng.
+ * DevDatabaseTrait - Uses BaselineSchema for group "tests",
+ * only truncates data before each test to avoid losing tables.
  */
 trait DevDatabaseTrait
 {
@@ -33,7 +33,7 @@ trait DevDatabaseTrait
             if ($this->db->transDepth > 0) {
                 $this->db->transRollback();
             }
-            // $this->truncateData(); // Removed for performance
+            $this->truncateData(); // RESTORED for data integrity and test isolation
             $this->db->close();
         }
     }

@@ -9,7 +9,10 @@
     columns="max"
     failOnRisky="true"
     failOnWarning="true"
-    cacheDirectory="writable/.phpunit.cache">
+    cacheDirectory="writable/.phpunit.cache"
+    timeoutForSmallTests="30"
+    timeoutForMediumTests="120"
+    timeoutForLargeTests="300">
     <!-- Code coverage outputs are disabled in local/unit runs to avoid
          warnings when no coverage driver (xdebug/pcov) is installed. -->
     <testsuites>
@@ -50,5 +53,23 @@
         <env name="database.tests.DBDriver" value="MySQLi"/>
         <env name="database.tests.DBPrefix" value=""/>
         <env name="ENABLE_API_TESTS" value="1"/>
+        <!-- Performance testing configuration -->
+        <env name="PERFORMANCE_TESTING_ENABLED" value="1"/>
+        <env name="PERFORMANCE_MAX_EXECUTION_TIME" value="5000"/>
+        <env name="PERFORMANCE_MAX_MEMORY_MB" value="256"/>
+        <env name="PERFORMANCE_MAX_QUERIES" value="50"/>
+        <!-- Memory and time limits for performance tests -->
+        <ini name="memory_limit" value="512M"/>
+        <ini name="max_execution_time" value="300"/>
     </php>
+    
+    <!-- Performance testing groups -->
+    <!-- <groups>
+        <include>
+            <group>performance</group>
+        </include>
+        <exclude>
+            <group>slow</group>
+        </exclude>
+    </groups> -->
 </phpunit>

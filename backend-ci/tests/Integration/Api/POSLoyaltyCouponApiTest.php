@@ -24,8 +24,7 @@ class POSLoyaltyCouponApiTest extends CIUnitTestCase
         parent::setUp();
         $config = config('Database');
 
-        require_once APPPATH . 'Database/Migrations/2025-11-21-000000_TestSchemaSetup.php';
-        (new \App\Database\Migrations\TestSchemaSetup())->up();
+        $this->setUpDatabase();
 
         $this->setUpDatabase();
         $this->resetPOSSchema();

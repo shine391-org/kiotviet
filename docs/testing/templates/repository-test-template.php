@@ -9,7 +9,7 @@ use App\Repositories\{RepositoryName};
  * {RepositoryName} unit tests
  * 
  * @agent-test: {RepositoryName}
- * @agent-copied-from: TESTING-PATTERNS.md
+ * @agent-copied-from: TESTING-PATTERNS-01
  */
 class {RepositoryName}Test extends CIUnitTestCase
 {

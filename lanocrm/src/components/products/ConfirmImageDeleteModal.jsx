@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Modal, Button, Checkbox, Alert, Spin, Space } from 'antd';
 import { ExclamationCircleOutlined, LoadingOutlined } from '@ant-design/icons';
 import { message } from 'antd';
+import { getImageUrl } from '../../utils/imageUrl';
+
 
 const ConfirmImageDeleteModal = ({ visible, image, isHardDelete, entityType = 'product', onConfirm, onCancel }) => {
   const [confirmed, setConfirmed] = useState(false);
@@ -107,7 +109,7 @@ const ConfirmImageDeleteModal = ({ visible, image, isHardDelete, entityType = 'p
           {image.image_url && (
             <div style={{ textAlign: 'center' }}>
               <img
-                src={image.image_url}
+                src={getImageUrl(image.image_url)}
                 alt={image.name}
                 style={{
                   maxWidth: '140px',
@@ -118,6 +120,7 @@ const ConfirmImageDeleteModal = ({ visible, image, isHardDelete, entityType = 'p
               />
             </div>
           )}
+
 
           <Alert
             message={isHardDelete ? '⚠️ Cảnh báo' : '⚠️ Thông báo'}

@@ -1,0 +1,180 @@
+{
+    "$schema": "https://raw.githubusercontent.com/infection/infection/0.27.0/resources/schema.json",
+    "source": {
+        "directories": [
+            "app/Services",
+            "app/Repositories",
+            "app/Validators",
+            "app/Transformers"
+        ]
+    },
+    "logs": {
+        "text": "infection.log",
+        "html": "infection.html",
+        "summary": "summary.log",
+        "debug": "debug.log",
+        "perMutator": "per-mutator.md"
+    },
+    "tmpDir": ".infection",
+    "phpUnit": {
+        "configDir": ".",
+        "customPath": "vendor/bin/phpunit"
+    },
+    "mutators": {
+        "@default": true,
+        "global-ignore": [
+            "DocBlock",
+            "PublicVisibility"
+        ],
+        "Arithmetic": {
+            "assignments": false,
+            "post_decrement": false,
+            "post_increment": false
+        },
+        "Boolean": {
+            "array_key_exists": false,
+            "empty_": false,
+            "isset_": false,
+            "logical_and": true,
+            "logical_not": true,
+            "logical_or": true,
+            "not_identical": true,
+            "not_equal": true,
+            "equal": true,
+            "greater_than": true,
+            "greater_than_or_equal": true,
+            "identical": true,
+            "less_than": true,
+            "less_than_or_equal": true,
+            "true_value": true,
+            "false_value": true
+        },
+        "ConditionalBoundary": {
+            "greater_than": true,
+            "greater_than_or_equal": true,
+            "less_than": true,
+            "less_than_or_equal": true
+        },
+        "ConditionalNegotiation": {
+            "if": true,
+            "elseif": true,
+            "ternary": true
+        },
+        "FunctionCall": {
+            "array_filter": false,
+            "array_map": false,
+            "array_merge": false,
+            "array_push": false,
+            "array_slice": false,
+            "array_unique": false,
+            "count": false,
+            "current": false,
+            "date": false,
+            "explode": false,
+            "implode": false,
+            "in_array": false,
+            "is_array": false,
+            "is_null": false,
+            "is_string": false,
+            "json_decode": false,
+            "json_encode": false,
+            "max": false,
+            "min": false,
+            "round": false,
+            "str_replace": false,
+            "strlen": false,
+            "strpos": false,
+            "strtolower": false,
+            "strtoupper": false,
+            "substr": false,
+            "trim": false
+        },
+        "Number": {
+            "decrement": true,
+            "increment": true,
+            "integer_division": true,
+            "one_zero": true,
+            "zero_one": true
+        },
+        "Operator": {
+            "assign_coalesce": true,
+            "break": true,
+            "continue": true,
+            "coalesce": true,
+            "concat": true,
+            "minus": true,
+            "modulus": true,
+            "plus": true,
+            "pow": true,
+            "shift_left": true,
+            "shift_right": true,
+            "spaceship": true
+        },
+        "Regex": {
+            "preg_match": false,
+            "preg_quote": false,
+            "preg_replace": false,
+            "preg_replace_callback": false
+        },
+        "Return_": {
+            "early_return": true,
+            "function_call": true,
+            "new": true,
+            "null": true,
+            "value": true
+        },
+        "Scalar": {
+            "dec_octal": true,
+            "false": true,
+            "heredoc": true,
+            "nowdoc": true,
+            "null": true,
+            "numeric": true,
+            "true": true
+        },
+        "Sort": {
+            "asort": false,
+            "krsort": false,
+            "ksort": false,
+            "natcasesort": false,
+            "natsort": false,
+            "rsort": false,
+            "sort": false,
+            "uasort": false,
+            "uksort": false,
+            "usort": false
+        },
+        "Throw_": {
+            "exception": true,
+            "value": true
+        },
+        "Visibility": {
+            "private": false,
+            "protected": false,
+            "public": false
+        }
+    },
+    "testFramework": "phpunit",
+    "bootstrap": "",
+    "initialTestsPhpOptions": "-d memory_limit=-1",
+    "timeout": 10,
+    "threads": 4,
+    "skipCoverage": false,
+    "onlyCovered": true,
+    "ignoreMsiWithNoMutations": true,
+    "minMsi": 80.0,
+    "minCoveredMsi": 80.0,
+    "progress": {
+        "showMutations": true,
+        "showProgressBar": true,
+        "showSummary": true
+    },
+    "filter": {
+        "whitelist": [
+            "app/Services/*",
+            "app/Repositories/*",
+            "app/Validators/*",
+            "app/Transformers/*"
+        ]
+    }
+}

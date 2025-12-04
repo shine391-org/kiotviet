@@ -22,12 +22,136 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
   // entityId là id tương ứng dùng chung cho gọi API
   const entityId = isVariant ? variantId : productId;
 
+  const envApi =
+    import.meta.env.VITE_API_URL ||
+    import.meta.env.VITE_API_PROXY_TARGET ||
+    import.meta.env.VITE_API_BASE_URL ||
+    '';
+
+  // Origin cho API/uploads (ưu tiên env, fallback localhost:8000)
+  // Origin ưu tiên cho ảnh uploads (ưu tiên env, fallback 8000)
+  const uploadsOrigin = (() => {
+    let origin = 'http://localhost:8000';
+    try {
+      if (envApi && envApi.startsWith('http')) {
+        const parsed = new URL(envApi.replace(/\/api\/?$/, ''));
+        const dockerHost = parsed.hostname?.toLowerCase();
+        if (['web', 'api', 'backend'].includes(dockerHost)) {
+          origin = `${parsed.protocol}//localhost:${parsed.port || '8000'}`;
+        } else {
+          origin = parsed.origin;
+        }
+      } else if (envApi && envApi.startsWith('//')) {
+        origin = `${window?.location?.protocol || 'http:'}${envApi.replace(/\/api\/?$/, '')}`;
+      } else if (window?.location?.origin) {
+        origin = window.location.origin.replace(/\/api\/?$/, '').replace('://web', '://localhost');
+      }
+    } catch (e) {
+      // giữ origin mặc định
+    }
+    return origin;
+  })();
+
+  const rewriteDockerHost = (rawUrl) => {
+    try {
+      const parsed = new URL(rawUrl);
+      const host = parsed.hostname.toLowerCase();
+      if (['web', 'api', 'backend'].includes(host)) {
+        const uploadParsed = new URL(uploadsOrigin);
+        parsed.hostname = uploadParsed.hostname || 'localhost';
+        parsed.port = uploadParsed.port || parsed.port || (uploadParsed.protocol === 'https:' ? '443' : '8000');
+        parsed.protocol = uploadParsed.protocol || parsed.protocol;
+        return parsed.toString();
+      }
+    } catch (e) {
+      return rawUrl;
+    }
+    return rawUrl;
+  };
+
+  // Chuẩn hóa host cho đường dẫn ảnh (BE trả /uploads/..., FE chạy 3000 nên cần prefix host API)
+  const resolveImageUrl = (rawUrl) => {
+    if (!rawUrl) return '';
+
+    // Đã là absolute
+    if (/^https?:\/\//i.test(rawUrl)) {
+      return rewriteDockerHost(rawUrl);
+    }
+    if (rawUrl.startsWith('//')) return `${window?.location?.protocol || 'http:'}${rawUrl}`;
+
+    if (rawUrl.startsWith('/')) {
+      return `${uploadsOrigin}${rawUrl}`;
+    }
+    return rawUrl;
+  };
+
+  // Chuẩn hóa mảng ảnh về định dạng thống nhất (xử lý cả string URL)
+  const normalizeImageList = (list = []) => {
+    if (!Array.isArray(list)) return [];
+
+    return list
+      .map((img, idx) => {
+        if (!img) return null;
+
+        const base =
+          typeof img === 'string'
+            ? { image_url: resolveImageUrl(img) }
+            : {
+                ...img,
+                image_url: resolveImageUrl(
+                  img.image_url || img.url || img.image_path || img.path || img.file_url || ''
+                ),
+              };
+
+        const fallbackId = `${Date.now()}-${idx}`;
+        const id =
+          base.id ||
+          base.image_id ||
+          base.media_id ||
+          base.file_id ||
+          (base.image_url ? base.image_url : fallbackId);
+
+        const fileName =
+          base.file_name ||
+          (base.image_url ? base.image_url.split('/').pop() : null) ||
+          `Image-${idx + 1}`;
+
+        return {
+          ...base,
+          id,
+          file_name: fileName,
+          is_primary: Number(base.is_primary) === 1 ? 1 : 0,
+        };
+      })
+      .filter(Boolean);
+  };
+
+  // Gộp ảnh mới vào danh sách hiện tại, tránh trùng id hoặc url
+  const mergeImages = (current = [], incoming = []) => {
+    const safeCurrent = Array.isArray(current) ? current : [];
+    const normalizedIncoming = normalizeImageList(incoming);
+
+    const existingKeys = new Set(
+      safeCurrent.map((img) => `${img.id || img.image_url || ''}`)
+    );
+
+    const merged = [...safeCurrent];
+    normalizedIncoming.forEach((img) => {
+      const key = `${img.id || img.image_url || ''}`;
+      if (!existingKeys.has(key)) {
+        merged.push(img);
+      }
+    });
+
+    return merged;
+  };
+
   // ✅ Load images with support for variant or product
   useEffect(() => {
     if (entityId) {
       loadImages();
     }
-  }, [entityId]);
+  }, [entityId, productId]);
 
 
   // ✅ Debug mỗi ảnh khi render
@@ -44,7 +168,7 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
   }, [images]);
 
 
-  const loadImages = async () => {
+  const loadImages = async (fallbackImages = []) => {
     try {
       setLoading(true);
       console.log(`🔄 Loading images for ${isVariant ? 'variant' : 'product'}:`, entityId);
@@ -53,20 +177,91 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
       if (isVariant) {
         // Lấy ảnh variant qua API getVariant, lấy ra images array
         const variantRes = await productApi.getVariant(entityId);
-        if (variantRes.success && variantRes.data) {
-          setImages(variantRes.data.images || []);
-          const primaryImg = (variantRes.data.images || []).find(img => img.is_primary === 1);
+        const variantData = variantRes?.data && Array.isArray(variantRes.data.images)
+          ? variantRes.data
+          : (Array.isArray(variantRes?.images) ? { images: variantRes.images } : null);
+
+        if (variantData && Array.isArray(variantData.images)) {
+          let normalized = normalizeImageList(variantData.images || []);
+
+          // Nếu API không trả ảnh, ưu tiên dùng fallback (ảnh vừa upload)
+          if (normalized.length === 0 && Array.isArray(fallbackImages) && fallbackImages.length > 0) {
+            normalized = normalizeImageList(fallbackImages);
+          } else if (normalized.length === 0 && productId) {
+            const prodImages = await productApi.getProductImages(productId);
+            if (prodImages.success && Array.isArray(prodImages.data)) {
+              normalized = normalizeImageList(prodImages.data);
+            }
+          }
+
+          if (!normalized.some((img) => img.is_primary === 1) && normalized.length > 0) {
+            normalized = normalized.map((img, idx) => ({ ...img, is_primary: idx === 0 ? 1 : 0 }));
+          }
+          if (normalized.length === 0) {
+            normalized = [
+              {
+                id: `placeholder-${entityId}`,
+                image_url:
+                  'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%23f0f0f0 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%23999 font-size=%2214%22%3ENo Image%3C/text%3E%3C/svg%3E',
+                file_name: 'No image',
+                is_primary: 1,
+                product_id: productId,
+                variant_id: variantId,
+              },
+            ];
+          }
+          setImages(normalized);
+          const primaryImg = normalized.find(img => img.is_primary === 1);
           setPrimaryImageId(primaryImg ? primaryImg.id : null);
         } else {
-          setImages([]);
-          setPrimaryImageId(null);
+          // Keep existing images if API không trả về danh sách ảnh, hoặc dùng fallback
+          if (Array.isArray(fallbackImages) && fallbackImages.length > 0) {
+            const normalizedFallback = normalizeImageList(fallbackImages);
+            setImages(prev => mergeImages(prev, normalizedFallback));
+            const primaryImg = normalizedFallback.find(img => img.is_primary === 1);
+            setPrimaryImageId((prevPrimary) => prevPrimary || (primaryImg ? primaryImg.id : null));
+          } else if (productId) {
+            const prodImages = await productApi.getProductImages(productId);
+            if (prodImages.success && Array.isArray(prodImages.data) && prodImages.data.length > 0) {
+              const normalized = normalizeImageList(prodImages.data);
+              setImages(normalized);
+              const primaryImg = normalized.find(img => img.is_primary === 1);
+              setPrimaryImageId(primaryImg ? primaryImg.id : null);
+            } else {
+              setImages([{
+                id: `placeholder-${entityId}`,
+                image_url:
+                  'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%23f0f0f0 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%23999 font-size=%2214%22%3ENo Image%3C/text%3E%3C/svg%3E',
+                file_name: 'No image',
+                is_primary: 1,
+                product_id: productId,
+                variant_id: variantId,
+              }]);
+              setPrimaryImageId(`placeholder-${entityId}`);
+            }
+          } else {
+            setImages([{
+              id: `placeholder-${entityId}`,
+              image_url:
+                'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%23f0f0f0 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%23999 font-size=%2214%22%3ENo Image%3C/text%3E%3C/svg%3E',
+              file_name: 'No image',
+              is_primary: 1,
+              product_id: productId,
+              variant_id: variantId,
+            }]);
+            setPrimaryImageId(`placeholder-${entityId}`);
+          }
         }
       } else {
         // Lấy ảnh product
         response = await productApi.getProductImages(entityId);
         if (response.success && Array.isArray(response.data)) {
-          setImages(response.data || []);
-          const primaryImg = response.data?.find(img => img.is_primary === 1);
+          let normalized = normalizeImageList(response.data || []);
+          if (!normalized.some((img) => img.is_primary === 1) && normalized.length > 0) {
+            normalized = normalized.map((img, idx) => ({ ...img, is_primary: idx === 0 ? 1 : 0 }));
+          }
+          setImages(normalized);
+          const primaryImg = normalized.find(img => img.is_primary === 1);
           setPrimaryImageId(primaryImg ? primaryImg.id : null);
         } else {
           setImages([]);
@@ -76,8 +271,23 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
     } catch (error) {
       console.error('💥 Load images error:', error);
       message.error('Lỗi khi tải danh sách ảnh');
-      setImages([]);
-      setPrimaryImageId(null);
+      if (Array.isArray(fallbackImages) && fallbackImages.length > 0) {
+        const normalizedFallback = normalizeImageList(fallbackImages);
+        setImages((prev) => mergeImages(prev, normalizedFallback));
+        const primaryImg = normalizedFallback.find(img => img.is_primary === 1);
+        setPrimaryImageId((prevPrimary) => prevPrimary || (primaryImg ? primaryImg.id : null));
+      } else {
+        setImages([{
+          id: `placeholder-${entityId}`,
+          image_url:
+            'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%23f0f0f0 width=%22200%22 height=%22200%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%23999 font-size=%2214%22%3ENo Image%3C/text%3E%3C/svg%3E',
+          file_name: 'No image',
+          is_primary: 1,
+          product_id: productId,
+          variant_id: variantId,
+        }]);
+        setPrimaryImageId(`placeholder-${entityId}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -111,8 +321,14 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
 
       if (response.success) {
         message.success('Đặt ảnh chính thành công');
-        await loadImages();
-        setPrimaryImageId(imageId);
+        // Update UI immediately để tránh chờ reload
+        setImages(prev =>
+          (prev || []).map((img) => ({
+            ...img,
+            is_primary: Number(img.id) === Number(imageId) ? 1 : 0,
+          }))
+        );
+        setPrimaryImageId(Number(imageId));
         
         if (onPrimaryImageSet) {
           onPrimaryImageSet(imageId);
@@ -214,13 +430,39 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
               maxFiles={10}
               onUploadSuccess={async (uploadedImages) => {
                 console.log('✅ Upload success:', uploadedImages);
-                
-                // Reload images after upload
-                await loadImages();
-                
+
+                const normalizedUploaded = normalizeImageList(uploadedImages);
+                let variantBackup = normalizedUploaded;
+
+                // Với biến thể: nếu API chưa trả URL chuẩn, thử lấy ảnh product để có đường dẫn uploads
+                if (isVariant && productId) {
+                  try {
+                    const prodImages = await productApi.getProductImages(productId);
+                    if (prodImages.success && Array.isArray(prodImages.data) && prodImages.data.length > 0) {
+                      variantBackup = normalizeImageList(prodImages.data);
+                    }
+                  } catch (e) {
+                    console.warn('⚠️ Fallback lấy ảnh product cho variant thất bại:', e?.message);
+                  }
+                }
+
+                // Hiển thị ngay ảnh vừa upload để UI/test bắt được
+                if (normalizedUploaded.length > 0) {
+                  setImages((prev) => mergeImages(prev, normalizedUploaded));
+                  const primary = normalizedUploaded.find((img) => img.is_primary === 1) || normalizedUploaded[0];
+                  setPrimaryImageId((prev) => prev || (primary?.id ?? null));
+                } else if (variantBackup.length > 0) {
+                  setImages((prev) => mergeImages(prev, variantBackup));
+                  const primary = variantBackup.find((img) => img.is_primary === 1) || variantBackup[0];
+                  setPrimaryImageId((prev) => prev || (primary?.id ?? null));
+                }
+
+                // Reload từ BE (có fallback) để đồng bộ id/primary
+                await loadImages(normalizedUploaded.length > 0 ? normalizedUploaded : variantBackup);
+
                 // Force refresh media library
                 setMediaLibraryKey(prev => prev + 1);
-                
+
                 if (onImageAdded) {
                   onImageAdded(uploadedImages);
                 }
@@ -229,9 +471,9 @@ const ProductImageManager = ({ productId, variantId, productCode, onImageAdded, 
           </div>
 
           <div className={styles.imagesList}>
-            {loading ? (
+            {loading && images.length === 0 ? (
               <div className={styles.loading}>
-                <Spin indicator={<LoadingOutlined />} tip="Đang tải..." />
+                <Spin indicator={<LoadingOutlined />} />
               </div>
             ) : images.length === 0 ? (
               <Empty description="Chưa có ảnh nào" />

@@ -25,14 +25,27 @@ class ProductVariantRepository
         return $this->db->table('products')->where('code', $sku)->where('deleted_at', null)->countAllResults() > 0;
     }
 
-    /** Find variant by id (soft-deleted aware). @agent-use: Fetch variant @agent-pattern: Find by id */
+    /** Find variant by id (soft-deleted aware) with images. @agent-use: Fetch variant @agent-pattern: Find by id */
     public function findById(int $id, bool $withDeleted = false): ?array
     {
         $variant = ($withDeleted ? $this->variants->withDeleted() : $this->variants)->find($id);
         if (!$variant) {
             return null;
         }
-        return is_array($variant) ? $variant : (array) $variant;
+        $variantArray = is_array($variant) ? $variant : (array) $variant;
+        
+        // Load images for this variant
+        $images = $this->db->table('product_images')
+            ->where('variant_id', $id)
+            ->where('deleted_at', null)
+            ->orderBy('is_primary', 'DESC')
+            ->orderBy('sort_order', 'ASC')
+            ->get()
+            ->getResultArray();
+        
+        $variantArray['images'] = $images;
+        
+        return $variantArray;
     }
 
     /** Create new variant row. @agent-use: Create flow @agent-pattern: Insert with timestamps */
@@ -124,8 +137,8 @@ class ProductVariantRepository
     public function attributeValues(int $variantId): array
     {
         $query = $this->db->table('product_attribute_values pav')
-            ->select('pav.*, pa.name AS attribute_name, pa.id as attribute_id, pa.type, pa.status, pa.sort_order, pa.code as slug, pa.is_required, pa.is_filterable, null as group_name, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at, null as attribute_parent_id, null as attribute_level, pa.code as attribute_code, null as attribute_description, null as attribute_unit, null as attribute_options, null as attribute_display_type, null as attribute_is_searchable, null as attribute_is_used_for_variations, null as attribute_is_highlight, null as attribute_meta, pa.status as attribute_status, null as attribute_is_system, null as attribute_is_default, null as attribute_position, null as attribute_created_by, null as attribute_updated_by, pa.is_filterable as attribute_filterable, null as attribute_comparable, null as attribute_visibility, null as attribute_required_at_checkout, null as attribute_default_value, null as attribute_help_text, null as attribute_icon, null as attribute_tooltip')
-            ->join('attributes pa', 'pa.id = pav.attribute_id', 'left')
+            ->select('pav.*, pa.name AS attribute_name, pa.id as attribute_id, pa.type, pa.status, pa.sort_order, pa.attribute_key as slug, pa.is_required, pa.is_filterable, null as group_name, pa.created_at as attribute_created_at, pa.updated_at as attribute_updated_at, pa.deleted_at as attribute_deleted_at, null as attribute_parent_id, null as attribute_level, pa.attribute_key as attribute_code, null as attribute_description, null as attribute_unit, null as attribute_options, null as attribute_display_type, null as attribute_is_searchable, null as attribute_is_used_for_variations, null as attribute_is_highlight, null as attribute_meta, pa.status as attribute_status, null as attribute_is_system, null as attribute_is_default, null as attribute_position, null as attribute_created_by, null as attribute_updated_by, pa.is_filterable as attribute_filterable, null as attribute_comparable, null as attribute_visibility, null as attribute_required_at_checkout, null as attribute_default_value, null as attribute_help_text, null as attribute_icon, null as attribute_tooltip')
+            ->join('product_attributes pa', 'pa.id = pav.attribute_id', 'left')
             ->where('pav.variant_id', $variantId)
             ->where('pav.deleted_at', null);
             

@@ -64,17 +64,31 @@ const VariantEditPage = () => {
       }
 
       if (variant && variant.id) {
-        setVariant(variant);
+        const normalizedSku = variant.sku || variant.code || variant.variant_signature || `SKU-${variant.id}`;
+        const normalizedName = variant.variant_name || variant.name || normalizedSku || `Variant ${variant.id}`;
+        const normalizedPrice = variant.price !== undefined ? parseFloat(variant.price) || 0 : 0;
+        const normalizedCost = variant.cost_price !== undefined ? parseFloat(variant.cost_price) || 0 : 0;
+        const normalizedStock = variant.stock_quantity !== undefined
+          ? parseInt(variant.stock_quantity, 10) || 0
+          : parseInt(variant.stock || 0, 10) || 0;
+        const normalizedMinStock = variant.min_stock !== undefined ? parseInt(variant.min_stock, 10) || 0 : 0;
+        const normalizedMaxStock = variant.max_stock !== undefined ? parseInt(variant.max_stock, 10) || 0 : 0;
+
+        setVariant({
+          ...variant,
+          sku: normalizedSku,
+          variant_name: normalizedName,
+        });
 
         // Lưu ý: images là mảng riêng của variant, nếu API trả về images đúng chuẩn thì gán thẳng.
         setFormData({
-          sku: variant.sku || '',
-          variant_name: variant.variant_name || '',
-          price: parseFloat(variant.price || 0),
-          cost_price: parseFloat(variant.cost_price || 0),
-          stock: parseInt(variant.stock_quantity || 0),
-          min_stock: parseInt(variant.min_stock || 0),
-          max_stock: parseInt(variant.max_stock || 0),
+          sku: normalizedSku,
+          variant_name: normalizedName,
+          price: normalizedPrice,
+          cost_price: normalizedCost,
+          stock: normalizedStock,
+          min_stock: normalizedMinStock,
+          max_stock: normalizedMaxStock,
           barcode: variant.barcode || '',
           images:
             Array.isArray(variant.images) && variant.images.length > 0
@@ -105,18 +119,21 @@ const VariantEditPage = () => {
     loadVariantData();
   };
 
-  // Submit cập nhật thông tin cơ bản
   const handleSubmit = async () => {
     try {
-      if (!formData.sku.trim()) {
+      const safeSku = (formData.sku || '').trim() || variant?.sku || `SKU-${variantId}`;
+      const safeName = (formData.variant_name || '').trim() || variant?.variant_name || `Biến thể ${variantId}`;
+      const safePrice = Number(formData.price) || 0;
+
+      if (!safeSku) {
         message.error('Vui lòng nhập SKU');
         return;
       }
-      if (!formData.variant_name.trim()) {
+      if (!safeName) {
         message.error('Vui lòng nhập tên biến thể');
         return;
       }
-      if (formData.price <= 0) {
+      if (safePrice <= 0) {
         message.error('Giá bán phải lớn hơn 0');
         return;
       }
@@ -124,33 +141,31 @@ const VariantEditPage = () => {
       setSubmitting(true);
 
       const updateData = {
-        sku: formData.sku,
-        variant_name: formData.variant_name,
-        price: parseFloat(formData.price),
-        cost_price: parseFloat(formData.cost_price),
-        stock_quantity: parseInt(formData.stock),
-        min_stock: parseInt(formData.min_stock),
-        max_stock: parseInt(formData.max_stock),
-        barcode: formData.barcode,
-        // lấy đúng duy nhất ảnh chính của variant
+        sku: safeSku,
+        variant_name: safeName,
+        price: safePrice,
+        cost_price: parseFloat(formData.cost_price) || 0,
+        stock_quantity: parseInt(formData.stock) || 0,
+        min_stock: parseInt(formData.min_stock) || 0,
+        max_stock: parseInt(formData.max_stock) || 0,
+        barcode: formData.barcode || '',
         image_url:
           formData.images && formData.images.length > 0
             ? formData.images.find(i => i.is_primary === 1)?.image_url || formData.images[0].image_url
             : '',
-        attribute_option_ids: variantOptionIds,  // Gửi mảng option ids
+        attribute_option_ids: variantOptionIds,
       };
 
       const response = await productApi.updateVariant(variantId, updateData);
 
       if (response.success) {
         message.success('Biến thể đã được cập nhật thành công');
-        setTimeout(() => {
-          navigate('/products');
-        }, 1200);
+        navigate('/products');
       } else {
         message.error(response.message || 'Không thể cập nhật biến thể');
       }
     } catch (error) {
+      console.error('Variant update error:', error);
       handleApiError(error, { defaultMessage: 'Có lỗi xảy ra khi cập nhật biến thể' });
     } finally {
       setSubmitting(false);
@@ -159,17 +174,27 @@ const VariantEditPage = () => {
 
   // Ảnh variant: chỉ đồng bộ ảnh của chính variant
   const onUploadSuccess = (images) => {
-    setFormData(prev => ({
-      ...prev,
-      images: Array.isArray(images) ? images : prev.images
-    }));
+    if (Array.isArray(images) && images.length > 0) {
+      const normalized = images.map((img, idx) => ({
+        ...img,
+        image_url: img.image_url || img.url || (typeof img === 'string' ? img : ''),
+        is_primary: Number(img.is_primary) === 1 ? 1 : 0,
+        file_name: img.file_name || img.image_url?.split('/').pop() || `Image-${idx + 1}`,
+      }));
+      setFormData(prev => ({
+        ...prev,
+        images: normalized
+      }));
+    }
+    // Refresh variant data to ensure primary image/ids synced from backend
+    loadVariantData();
   };
 
   if (loading) {
     return (
       <div className={styles.container}>
         <div className={styles.loadingContainer}>
-          <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} />} tip="Đang tải thông tin biến thể..." />
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} />} />
         </div>
       </div>
     );
@@ -237,6 +262,7 @@ const VariantEditPage = () => {
       {/* Quản lý ảnh - chỉ ảnh variant */}
       <Card style={{ marginBottom: '24px' }}>
         <ProductImageManager
+          productId={variant?.product_id}
           variantId={variantId}
           productCode={variant?.sku}
           onImageAdded={onUploadSuccess}
@@ -257,13 +283,20 @@ const VariantEditPage = () => {
 
       {/* Quản lý thuộc tính biến thể */}
       <Card className={styles.card} style={{ marginBottom: '24px' }}>
+        <h3 style={{ marginBottom: 12, fontWeight: 600 }}>Thuộc tính biến thể</h3>
         <VariantAttributeManager
           mode="variant"
           entityId={parseInt(variantId, 10)}
           onSaved={handleAttributesSaved}
           disabled={submitting}
-          onOptionIdsChange={handleOptionIdsChange} 
+          onOptionIdsChange={handleOptionIdsChange}
         />
+        {/* Nút tạo biến thể chỉ hiện để giữ trải nghiệm nhất quán nhưng bị disable ở màn chỉnh sửa biến thể */}
+        <div style={{ marginTop: 12 }}>
+          <Button type="default" disabled>
+            Tạo biến thể
+          </Button>
+        </div>
       </Card>
 
       {/* Edit thông tin cơ bản */}

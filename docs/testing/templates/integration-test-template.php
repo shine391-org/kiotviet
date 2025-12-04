@@ -8,7 +8,7 @@ use Config\Database;
  * {Module} API integration tests
  * 
  * @agent-test: {Module} API
- * @agent-copied-from: TESTING-PATTERNS.md
+ * @agent-copied-from: TESTING-PATTERNS-01
  */
 class {Module}ApiTest extends FeatureTestCase
 {

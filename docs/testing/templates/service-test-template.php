@@ -9,7 +9,7 @@ use App\Services\{ServiceName};
  * {ServiceName} unit tests
  * 
  * @agent-test: {ServiceName}
- * @agent-copied-from: TESTING-PATTERNS.md
+ * @agent-copied-from: TESTING-PATTERNS-01
  */
 class {ServiceName}Test extends CIUnitTestCase
 {

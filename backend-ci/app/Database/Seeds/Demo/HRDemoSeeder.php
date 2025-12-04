@@ -65,8 +65,10 @@ class HRDemoSeeder extends Seeder
                 'id' => 1,
                 'user_id' => 1, // Linked to admin user
                 'code' => 'EMP001',
+                'employee_code' => 'EMP001',
                 'first_name' => 'Admin',
                 'last_name' => 'User',
+                'full_name' => 'Admin User',
                 'email' => 'admin@lanocrm.local',
                 'phone' => '0900000001',
                 'department_id' => 1,
@@ -78,8 +80,10 @@ class HRDemoSeeder extends Seeder
                 'id' => 2,
                 'user_id' => 2, // Linked to manager user
                 'code' => 'EMP002',
+                'employee_code' => 'EMP002',
                 'first_name' => 'Manager',
                 'last_name' => 'Test',
+                'full_name' => 'Manager Test',
                 'email' => 'manager@lanocrm.local',
                 'phone' => '0900000002',
                 'department_id' => 2,
@@ -91,8 +95,10 @@ class HRDemoSeeder extends Seeder
                 'id' => 3,
                 'user_id' => 3, // Linked to staff user
                 'code' => 'EMP003',
+                'employee_code' => 'EMP003',
                 'first_name' => 'Staff',
                 'last_name' => 'Test',
+                'full_name' => 'Staff Test',
                 'email' => 'staff@lanocrm.local',
                 'phone' => '0900000003',
                 'department_id' => 2,
@@ -124,13 +130,26 @@ class HRDemoSeeder extends Seeder
             }
         }
 
-        // 5. Leave Applications
+        // 5. Leave Types
+        $leaveTypes = [
+            ['id' => 1, 'leave_name' => 'Annual Leave', 'default_allocation' => 12],
+            ['id' => 2, 'leave_name' => 'Sick Leave', 'default_allocation' => 10],
+            ['id' => 3, 'leave_name' => 'Unpaid Leave', 'default_allocation' => 0],
+        ];
+        
+        foreach ($leaveTypes as $type) {
+            $type['created_at'] = $now;
+            $type['updated_at'] = $now;
+            $this->db->table('leave_types')->ignore(true)->insert($type);
+        }
+
+        // 6. Leave Applications
         $leaves = [
             [
                 'employee_id' => 3,
-                'leave_type' => 'annual',
-                'start_date' => $now->addDays(5)->toDateString(),
-                'end_date' => $now->addDays(6)->toDateString(),
+                'leave_type_id' => 1, // Annual Leave
+                'from_date' => $now->addDays(5)->toDateString(),
+                'to_date' => $now->addDays(6)->toDateString(),
                 'reason' => 'Personal matters',
                 'status' => 'pending',
             ]

@@ -34,7 +34,7 @@ class Database extends Config
         'hostname'     => 'db',
         'username'     => 'lanocrm_user',
         'password'     => 'KP7n4RjcDbedSE2W8GgA',
-        'database'     => 'lanocrm_shop',
+        'database'     => 'lanocrm_dev',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -169,10 +169,10 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'         => '',
-        'hostname'    => 'db',
+        'hostname'    => 'db-test',
         'username'    => 'lanocrm_user',
         'password'    => 'KP7n4RjcDbedSE2W8GgA',
-        'database'    => 'lanocrm_shop',
+        'database'    => 'lanocrm_test',
         'DBDriver'    => 'MySQLi',
         'DBPrefix'    => '',
         'pConnect'    => false,
@@ -205,20 +205,22 @@ class Database extends Config
             $this->defaultGroup = 'tests';
         }
 
-        // Dynamic DB Name from Environment Variable
-        $envDbName = getenv('DB_NAME');
-        if ($envDbName) {
-            $this->default['database'] = $envDbName;
-        }
+        // Override default connection from environment
+        $this->default['hostname'] = env('database.default.hostname', $this->default['hostname']);
+        $this->default['username'] = env('database.default.username', $this->default['username']);
+        $this->default['password'] = env('database.default.password', $this->default['password']);
+        $this->default['database'] = env('DB_NAME', env('database.default.database', $this->default['database']));
+        $this->default['DBDriver'] = env('database.default.DBDriver', $this->default['DBDriver']);
+        $this->default['DBPrefix'] = env('database.default.DBPrefix', $this->default['DBPrefix']);
+        $this->default['port']     = (int) env('database.default.port', $this->default['port']);
 
-        // Load test connection from .env if provided
-        // Using main database for testing with transaction rollback
-        $this->tests['hostname'] = env('database.tests.hostname', 'db');
-        $this->tests['database'] = env('database.tests.database', 'lanocrm_shop');
-        $this->tests['username'] = env('database.tests.username', 'lanocrm_user');
-        $this->tests['password'] = env('database.tests.password', 'KP7n4RjcDbedSE2W8GgA');
-        $this->tests['DBDriver'] = env('database.tests.DBDriver', 'MySQLi');
-        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', '');
-        $this->tests['port']     = (int) env('database.tests.port', 3306);
+        // Override test connection from environment
+        $this->tests['hostname'] = env('database.tests.hostname', $this->tests['hostname']);
+        $this->tests['username'] = env('database.tests.username', $this->tests['username']);
+        $this->tests['password'] = env('database.tests.password', $this->tests['password']);
+        $this->tests['database'] = env('database.tests.database', $this->tests['database']);
+        $this->tests['DBDriver'] = env('database.tests.DBDriver', $this->tests['DBDriver']);
+        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', $this->tests['DBPrefix']);
+        $this->tests['port']     = (int) env('database.tests.port', $this->tests['port']);
     }
 }

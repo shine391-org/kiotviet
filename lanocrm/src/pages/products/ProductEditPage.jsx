@@ -83,6 +83,8 @@ const ProductEditPage = () => {
     }
     // Trigger summary refresh
     setRefreshKey(prev => prev + 1);
+    // Điều hướng về danh sách sau khi cập nhật xong
+    navigate('/products');
   };
 
   // ✅ FIX: Handle image manager callbacks - DEFINE HERE
@@ -149,7 +151,6 @@ const ProductEditPage = () => {
         <div className={styles.loadingContainer}>
           <Spin 
             indicator={<LoadingOutlined style={{ fontSize: 48 }} />} 
-            tip="Đang tải thông tin sản phẩm..."
           />
         </div>
       </div>

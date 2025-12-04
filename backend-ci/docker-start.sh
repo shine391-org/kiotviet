@@ -6,14 +6,17 @@ cd /var/www/html
 
 echo "=== Starting Application Setup ==="
 
+DB_HOST="${DB_HOST:-db}"
+DB_USER="${DB_USER:-lanocrm_user}"
+DB_PASSWORD="${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}"
+DB_NAME="${DB_NAME:-lanocrm_dev}"
+
 # Wait for database to be ready
 echo "Waiting for database connection..."
 for i in {1..30}; do
-  # Use DB_NAME from environment or default to lanocrm_shop
-  DB_NAME="${DB_NAME:-lanocrm_shop}"
-  php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); exit(0);}catch(Throwable $e){ exit(1);}' 2>/dev/null
+  php -r 'try{new mysqli("'$DB_HOST'","'$DB_USER'","'$DB_PASSWORD'","'$DB_NAME'"); exit(0);}catch(Throwable $e){ exit(1);} ' 2>/dev/null
   if [ $? -eq 0 ]; then
-    echo "✓ Database connection established to $DB_NAME"
+    echo "✓ Database connection established to $DB_NAME at $DB_HOST"
     break
   fi
   echo "  Attempt $i/30: Waiting for database..."
@@ -21,8 +24,7 @@ for i in {1..30}; do
 done
 
 # Check if we successfully connected
-DB_NAME="${DB_NAME:-lanocrm_shop}"
-php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); exit(0);}catch(Throwable $e){ echo "ERROR: Cannot connect to database\n"; exit(1);}' 2>/dev/null
+php -r 'try{new mysqli("'$DB_HOST'","'$DB_USER'","'$DB_PASSWORD'","'$DB_NAME'"); exit(0);}catch(Throwable $e){ echo "ERROR: Cannot connect to database\n"; exit(1);} ' 2>/dev/null
 if [ $? -ne 0 ]; then
     echo "✗ Failed to connect to database after 60 seconds"
     exit 1
@@ -49,7 +51,7 @@ if [ ! -f "$DB_INITIALIZED_FILE" ]; then
         
         if [ "$CURRENT_ENV" != "production" ]; then
             echo "Environment: $CURRENT_ENV - Running Unified DemoSeeder..."
-            php spark db:seed DemoSeeder 2>&1 || echo "⚠ DemoSeeder skipped or failed"
+            php spark db:seed DemoSeeder 2>&1
         else
             echo "Environment: Production - Skipping auto-seeding (Manual seeding required)"
         fi

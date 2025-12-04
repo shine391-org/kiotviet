@@ -63,7 +63,7 @@ class DemoSeeder extends Seeder
             'InvoicesDemoSeeder',          // Invoices (needs Orders)
             'ReturnsDemoSeeder',           // Returns (needs Orders)
             'StockMovementsDemoSeeder',    // Stock movements (needs products/warehouses)
-            'StockLedgersDemoSeeder',      // Stock ledgers (needs orders/deliveries/returns)
+            // 'StockLedgersDemoSeeder',      // Stock ledgers (needs orders/deliveries/returns)
             'PurchaseOrdersDemoSeeder',    // POs (needs Suppliers, Products)
             'CashTransactionsDemoSeeder',  // Cash linked to orders/returns
             

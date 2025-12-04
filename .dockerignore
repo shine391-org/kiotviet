@@ -1,0 +1,22 @@
+# Global ignores
+.git
+.gitignore
+node_modules
+**/node_modules
+dist
+coverage
+logs
+uploads
+
+# Backend image build: skip host-installed deps and heavy assets
+backend-ci/vendor
+backend-ci/writable
+backend-ci/logs
+backend-ci/tmp
+backend-ci/db-dumps
+backend-ci/coverage
+backend-ci/uploads
+
+# Frontend caches
+lanocrm/node_modules
+lanocrm/.vite

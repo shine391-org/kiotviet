@@ -38,29 +38,80 @@ class StockLedgersDemoSeeder extends Seeder
     private function seedOpeningBalances(StockLedgerService $ledger, array $warehouses): void
     {
         $branches = [1, 2, 3, 4, 5];
-        $products = [
-            ['product_id' => 501, 'variant_id' => 50101, 'qty' => 25],
-            ['product_id' => 501, 'variant_id' => 50102, 'qty' => 15],
-            ['product_id' => 502, 'variant_id' => null, 'qty' => 40],
-            ['product_id' => 503, 'variant_id' => null, 'qty' => 35],
-        ];
+        
+        // Fetch all products
+        $allProducts = $this->db->table('products')->select('id')->get()->getResultArray();
+        $products = [];
+        foreach ($allProducts as $p) {
+            $products[] = ['product_id' => $p['id'], 'variant_id' => null, 'qty' => 1000];
+        }
+
+        // Fetch all variants
+        if ($this->db->tableExists('product_variants')) {
+             $allVariants = $this->db->table('product_variants')->select('id, product_id')->get()->getResultArray();
+             foreach ($allVariants as $v) {
+                 $products[] = ['product_id' => $v['product_id'], 'variant_id' => $v['id'], 'qty' => 1000];
+             }
+        }
+
+        $binData = [];
+        $ledgerData = [];
+        $now = date('Y-m-d H:i:s');
+        $movementDate = date('Y-m-d H:i:s', strtotime('-5 days'));
 
         foreach ($branches as $branchId) {
             foreach ($products as $idx => $row) {
-                $refId = ($branchId * 1000) + ($idx + 1);
-                $ledger->record([
-                    'product_id' => $row['product_id'],
-                    'variant_id' => $row['variant_id'],
-                    'branch_id' => $branchId,
-                    'warehouse_id' => $warehouses[$branchId] ?? null,
+                $refId = ($branchId * 100000) + ($idx + 1);
+                $unitCost = $this->unitCost((int)$row['product_id']);
+                
+                $pId = (int)$row['product_id'];
+                $vId = $row['variant_id'] ? (int)$row['variant_id'] : null;
+                $bId = (int)$branchId;
+
+                // Prepare Bin Data
+                $binData[] = [
+                    'product_id' => $pId,
+                    'variant_id' => $vId,
+                    'branch_id' => $bId,
                     'batch_id' => null,
-                    'movement_date' => date('Y-m-d H:i:s', strtotime('-5 days')),
+                    'on_hand_qty' => $row['qty'],
+                    'reserved_qty' => 0,
+                    'updated_at' => $now,
+                ];
+
+                // Prepare Ledger Data
+                $ledgerData[] = [
+                    'product_id' => $pId,
+                    'variant_id' => $vId,
+                    'branch_id' => $bId,
+                    'warehouse_id' => $warehouses[$bId] ?? null,
+                    'batch_id' => null,
+                    'movement_date' => $movementDate,
                     'reference_type' => 'demo_opening',
                     'reference_id' => $refId,
                     'reference_seq' => 1,
                     'qty_delta' => $row['qty'],
-                    'unit_cost' => $this->unitCost($row['product_id']),
-                ]);
+                    'unit_cost' => $unitCost,
+                    'total_cost' => $unitCost * $row['qty'],
+                    'created_at' => $now,
+                ];
+            }
+        }
+
+        echo "      → Inserting " . count($binData) . " bin records...\n";
+
+        // Chunk insert to avoid query size limits
+        if (!empty($binData)) {
+            $chunks = array_chunk($binData, 1000);
+            foreach ($chunks as $chunk) {
+                $this->db->table('stock_bins')->insertBatch($chunk);
+            }
+        }
+
+        if (!empty($ledgerData)) {
+            $chunks = array_chunk($ledgerData, 1000);
+            foreach ($chunks as $chunk) {
+                $this->db->table('stock_ledgers')->insertBatch($chunk);
             }
         }
     }
@@ -166,7 +217,8 @@ class StockLedgersDemoSeeder extends Seeder
         $this->db->table('stock_ledgers')->whereIn('reference_type', $refTypes)->delete();
 
         if ($this->db->tableExists('stock_bins')) {
-            $this->db->table('stock_bins')->whereIn('product_id', [501, 502, 503])->delete();
+            // Truncate to ensure we start fresh with our opening balances
+            $this->db->table('stock_bins')->truncate();
         }
     }
 }

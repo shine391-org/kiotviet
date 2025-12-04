@@ -1107,7 +1107,41 @@ export const uploadMultipleVariantImages = async (files, variantId) => {
         'Content-Type': 'multipart/form-data',
       },
     });
-    return response.data;
+    const rawData =
+      response.data?.data?.files ||
+      response.data?.files ||
+      response.data?.data?.images ||
+      response.data?.data ||
+      response.data?.images ||
+      [];
+
+    const normalizedData = Array.isArray(rawData)
+      ? rawData.map((file, idx) => {
+          const isObj = file && typeof file === 'object';
+          const url = isObj ? (file.image_url || file.url || file.path || file.file_url || file.image_path) : file;
+          return {
+            ...(isObj ? file : {}),
+            id: (isObj ? file.id : null) || response.data?.data?.ids?.[idx] || response.data?.ids?.[idx] || Date.now() + idx,
+            image_url: url,
+            file_name: (isObj ? file.file_name : null) || (typeof url === 'string' ? url.split('/').pop() : `Image-${idx + 1}`),
+            is_primary: Number(isObj ? file.is_primary : idx === 0 ? 1 : 0),
+          };
+        })
+      : Array.isArray(rawData?.files)
+      ? rawData.files.map((file, idx) => ({
+          id: rawData?.ids?.[idx] || Date.now() + idx,
+          image_url: file,
+          file_name: typeof file === 'string' ? file.split('/').pop() : `Image-${idx + 1}`,
+          is_primary: idx === 0 ? 1 : 0,
+        }))
+      : [];
+    return {
+      success: response.data?.success !== false,
+      data: normalizedData,
+      message: response.data?.message || '',
+      uploaded_count: response.data?.uploaded_count || normalizedData.length || 0,
+      failed_count: response.data?.failed_count || 0,
+    };
   } catch (error) {
     console.error('uploadMultipleVariantImages Error:', error);
     throw error;

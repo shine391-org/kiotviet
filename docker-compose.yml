@@ -11,6 +11,7 @@ services:
       - backend-ci/.env
     environment:
       - CI_ENVIRONMENT=development
+      - DB_NAME=${DB_DATABASE:-lanocrm_dev}
     depends_on:
       db:
         condition: service_healthy
@@ -45,7 +46,7 @@ services:
     image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
-      MYSQL_DATABASE: ${DB_DATABASE:-lanocrm_shop} # Default database name
+      MYSQL_DATABASE: ${DB_DATABASE:-lanocrm_dev} # Default database name
       MYSQL_USER: ${DB_USER:-lanocrm_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}
     healthcheck:
@@ -62,7 +63,7 @@ services:
     image: mysql:8.4
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
-      MYSQL_DATABASE: lanocrm_test
+      MYSQL_DATABASE: ${DB_TEST_DATABASE:-lanocrm_test}
       MYSQL_USER: ${DB_USER:-lanocrm_user}
       MYSQL_PASSWORD: ${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}
     volumes:

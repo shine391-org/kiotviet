@@ -9,6 +9,11 @@ services:
       - ./backend-ci:/var/www/html
       # Add writable logs volume for debugging
       - ./logs/api:/var/log/apache2
+      # Isolate vendor inside container to avoid host pollution
+      - api_vendor:/var/www/html/vendor
+      # Persist writable and uploads with correct permissions inside container
+      - api_writable:/var/www/html/writable
+      - api_uploads:/var/www/html/uploads
     environment:
       # Enable debug mode in development
       - CI_ENVIRONMENT=development
@@ -56,4 +61,10 @@ volumes:
   mysql_logs:
     driver: local
   mysql_test_logs:
+    driver: local
+  api_vendor:
+    driver: local
+  api_writable:
+    driver: local
+  api_uploads:
     driver: local

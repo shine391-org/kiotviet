@@ -34,14 +34,14 @@ class AccountingDemoSeeder extends Seeder
 
         // 1. Chart of Accounts (Simplified)
         $accounts = [
-            ['code' => '111', 'name' => 'Tiền mặt', 'account_type' => 'asset', 'is_active' => 1],
-            ['code' => '112', 'name' => 'Tiền gửi ngân hàng', 'account_type' => 'asset', 'is_active' => 1],
-            ['code' => '131', 'name' => 'Phải thu khách hàng', 'account_type' => 'asset', 'is_active' => 1],
-            ['code' => '156', 'name' => 'Hàng hóa', 'account_type' => 'asset', 'is_active' => 1],
-            ['code' => '331', 'name' => 'Phải trả người bán', 'account_type' => 'liability', 'is_active' => 1],
-            ['code' => '511', 'name' => 'Doanh thu bán hàng', 'account_type' => 'revenue', 'is_active' => 1],
-            ['code' => '632', 'name' => 'Giá vốn hàng bán', 'account_type' => 'expense', 'is_active' => 1],
-            ['code' => '642', 'name' => 'Chi phí quản lý', 'account_type' => 'expense', 'is_active' => 1],
+            ['code' => '111', 'name' => 'Tiền mặt', 'account_type' => 'asset'],
+            ['code' => '112', 'name' => 'Tiền gửi ngân hàng', 'account_type' => 'asset'],
+            ['code' => '131', 'name' => 'Phải thu khách hàng', 'account_type' => 'asset'],
+            ['code' => '156', 'name' => 'Hàng hóa', 'account_type' => 'asset'],
+            ['code' => '331', 'name' => 'Phải trả người bán', 'account_type' => 'liability'],
+            ['code' => '511', 'name' => 'Doanh thu bán hàng', 'account_type' => 'revenue'],
+            ['code' => '632', 'name' => 'Giá vốn hàng bán', 'account_type' => 'expense'],
+            ['code' => '642', 'name' => 'Chi phí quản lý', 'account_type' => 'expense'],
         ];
 
         foreach ($accounts as $acc) {

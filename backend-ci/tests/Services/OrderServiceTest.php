@@ -6,15 +6,27 @@ use App\Services\Orders\OrderService;
 use CodeIgniter\Test\CIUnitTestCase;
 use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
+use Tests\Support\Assertions\DatabaseAssertions;
+use Tests\Support\Assertions\BusinessLogicAssertions;
+use Tests\Support\Assertions\EdgeCaseAssertions;
+use Tests\Support\Assertions\ErrorMessageAssertions;
+use Tests\Support\Factories\ProductFactory;
+use Tests\Support\Factories\PriceListFactory;
+use Tests\Support\Factories\PriceListItemFactory;
 
 /**
- * @agent-test: OrderService unified MySQL testing
- * @agent-pattern: Service orchestrator test with DevDatabaseTrait
+ * @agent-test: OrderService unified MySQL testing with strong assertions
+ * @agent-pattern: Service test with DevDatabaseTrait + assertion traits + factories
+ * @agent-improvements: Strong assertions, factory pattern, edge cases, error testing
  */
 class OrderServiceTest extends CIUnitTestCase
 {
     use DevDatabaseTrait;
     use PriceListSchemaTrait;
+    use DatabaseAssertions;
+    use BusinessLogicAssertions;
+    use EdgeCaseAssertions;
+    use ErrorMessageAssertions;
 
     private OrderService $service;
 
@@ -41,32 +53,51 @@ class OrderServiceTest extends CIUnitTestCase
     /** @test */
     public function it_calculates_preview_with_price_list()
     {
-        $pid = $this->seedProduct(100);
-        $listId = $this->seedPriceList(['name' => 'VIP', 'priority' => 3]);
-        $this->seedItem($listId, $pid, null, 80);
+        // Create test data using factories
+        $productId = ProductFactory::createWithPrice(100.0, 80.0);
+        $priceListId = PriceListFactory::createWithPriority(3, ['name' => 'VIP']);
+        PriceListItemFactory::createForProduct($priceListId, $productId, 80.0);
 
-        $preview = $this->service->preview([
+        $orderData = [
             'customer_id' => null,
             'branch_id' => 1,
             'order_date' => date('Y-m-d'),
-            'items' => [['product_id' => $pid, 'quantity' => 2]],
-        ]);
+            'items' => [['product_id' => $productId, 'quantity' => 2]],
+        ];
 
-        $this->assertTrue($preview['success']);
-        $data = $preview['data'];
-        $this->assertEquals(200.0, $data['subtotal']);
-        $this->assertEquals(160.0, $data['total']);
-        $this->assertEquals($listId, $data['applied_price_list_id']);
+        $preview = $this->service->preview($orderData);
+
+        // Strong assertions for service response
+        $this->assertServiceSuccess($preview);
+        $this->assertServiceDataStructure($preview, ['subtotal', 'total', 'applied_price_list_id', 'items']);
+        
+        // Business logic validation for pricing
+        $this->assertOrderTotalCalculation($preview['data']['items'], 200.0, 160.0, 20.0);
+        $this->assertEquals($priceListId, $preview['data']['applied_price_list_id'],
+            'Should apply highest priority price list');
+        
+        // Verify price list priority logic
+        $this->assertPriceListPriority([
+            ['id' => $priceListId, 'priority' => 3]
+        ], 3);
+        
+        // Verify database state
+        $this->assertDatabaseHas('price_list_items', [
+            'price_list_id' => $priceListId,
+            'product_id' => $productId,
+            'price' => 80.0
+        ]);
     }
 
     /** @test */
     public function it_persists_order_with_pricing()
     {
-        $pid = $this->seedProduct(150);
-        $listId = $this->seedPriceList(['name' => 'Sale', 'priority' => 2]);
-        $this->seedItem($listId, $pid, null, 120);
+        // Create test data using factories
+        $productId = ProductFactory::createWithPrice(150.0, 120.0);
+        $priceListId = PriceListFactory::createWithPriority(2, ['name' => 'Sale']);
+        PriceListItemFactory::createForProduct($priceListId, $productId, 120.0);
 
-        $create = $this->service->create([
+        $orderData = [
             'customer_id' => null,
             'branch_id' => 1,
             'order_date' => date('Y-m-d'),
@@ -80,27 +111,62 @@ class OrderServiceTest extends CIUnitTestCase
                 'district' => 'Test District',
                 'city' => 'Test City'
             ],
-            'items' => [['product_id' => $pid, 'quantity' => 1]],
+            'items' => [['product_id' => $productId, 'quantity' => 1]],
             'notes' => 'Test order'
-        ]);
+        ];
 
-        $this->assertTrue($create['success']);
-        $this->assertArrayHasKey('data', $create);
-        $this->assertEquals(120.0, (float) $create['data']['total']);
+        $create = $this->service->create($orderData);
+
+        // Strong assertions for service response
+        $this->assertServiceSuccess($create);
+        $this->assertServiceDataStructure($create, ['id', 'order_number', 'total', 'items', 'shipping']);
+        
+        // Business logic validation for order creation
+        $this->assertEquals(120.0, (float) $create['data']['total'],
+            'Should use price list price');
+        $this->assertNotEmpty($create['data']['order_number'],
+            'Should generate order number');
+        
+        // Verify order items
         $items = $create['data']['items'] ?? [];
-        $this->assertCount(1, $items);
-        $this->assertEquals($listId, (int) $items[0]['price_list_id']);
+        $this->assertCount(1, $items, 'Should have exactly one item');
+        $this->assertEquals($priceListId, (int) $items[0]['price_list_id'],
+            'Should apply price list to order item');
+        
+        // Verify database state
+        $this->assertDatabaseHas('orders', [
+            'id' => $create['data']['id'],
+            'customer_id' => null,
+            'branch_id' => 1,
+            'payment_method' => 'CASH',
+            'order_type' => 'shipping',
+            'total' => 120.0,
+            'status' => 'pending'
+        ]);
+        
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $create['data']['id'],
+            'product_id' => $productId,
+            'quantity' => 1,
+            'price' => 120.0,
+            'price_list_id' => $priceListId
+        ]);
+        
+        // Verify audit trail
+        $this->assertAuditTrail('orders', $create['data']['id'], 'create');
+        $this->assertAuditTrail('order_items', $items[0]['id'], 'create');
     }
 
     /** @test */
     public function it_creates_order_with_multiple_products_and_mixed_pricing()
     {
-        $p1 = $this->seedProduct(100);
-        $p2 = $this->seedProduct(50);
-        $listId = $this->seedPriceList(['name' => 'OnlyP1', 'priority' => 3]);
-        $this->seedItem($listId, $p1, null, 80);
+        // Create test data using factories
+        $product1Id = ProductFactory::createWithPrice(100.0, 80.0);
+        $product2Id = ProductFactory::createWithPrice(50.0, 40.0);
+        $priceListId = PriceListFactory::createWithPriority(3, ['name' => 'OnlyP1']);
+        PriceListItemFactory::createForProduct($priceListId, $product1Id, 80.0);
 
-        $create = $this->service->create([
+        $orderData = [
             'customer_id' => null,
             'branch_id' => 1,
             'order_date' => date('Y-m-d'),
@@ -115,22 +181,51 @@ class OrderServiceTest extends CIUnitTestCase
                 'city' => 'Test City'
             ],
             'items' => [
-                ['product_id' => $p1, 'quantity' => 2], // priced by list -> 80 *2
-                ['product_id' => $p2, 'quantity' => 1], // base 50
+                ['product_id' => $product1Id, 'quantity' => 2], // priced by list -> 80 *2
+                ['product_id' => $product2Id, 'quantity' => 1], // base 50
             ],
             'notes' => 'Test order'
-        ]);
+        ];
 
-        $this->assertTrue($create['success']);
-        $this->assertEquals(210.0, (float) $create['data']['total']); // 160 + 50
+        $create = $this->service->create($orderData);
+
+        // Strong assertions for service response
+        $this->assertServiceSuccess($create);
+        $this->assertServiceDataStructure($create, ['id', 'total', 'items']);
+        
+        // Business logic validation for mixed pricing
+        $expectedItems = [
+            ['product_id' => $product1Id, 'quantity' => 2, 'price' => 80.0, 'price_list_id' => $priceListId],
+            ['product_id' => $product2Id, 'quantity' => 1, 'price' => 50.0, 'price_list_id' => null]
+        ];
+        
+        $this->assertOrderTotalCalculation($create['data']['items'], 210.0, 210.0, 0.0);
+        $this->assertEquals(210.0, (float) $create['data']['total'],
+            'Should calculate mixed pricing correctly');
+        
+        // Verify order items in database
+        $items = $create['data']['items'] ?? [];
+        $this->assertCount(2, $items, 'Should have exactly two items');
+        
+        foreach ($items as $index => $item) {
+            $expected = $expectedItems[$index];
+            $this->assertEquals($expected['product_id'], $item['product_id'],
+                "Item {$index} should have correct product ID");
+            $this->assertEquals($expected['quantity'], $item['quantity'],
+                "Item {$index} should have correct quantity");
+            $this->assertEquals($expected['price'], $item['price'],
+                "Item {$index} should have correct price");
+            $this->assertEquals($expected['price_list_id'], $item['price_list_id'],
+                "Item {$index} should have correct price list ID");
+        }
     }
 
     /** @test */
     public function it_rejects_zero_quantity()
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $p1 = $this->seedProduct(100);
-        $this->service->create([
+        $productId = ProductFactory::createWithPrice(100.0, 80.0);
+        
+        $orderData = [
             'customer_id' => null,
             'branch_id' => 1,
             'order_date' => date('Y-m-d'),
@@ -145,51 +240,98 @@ class OrderServiceTest extends CIUnitTestCase
                 'city' => 'Test City'
             ],
             'items' => [
-                ['product_id' => $p1, 'quantity' => 0],
+                ['product_id' => $productId, 'quantity' => 0],
             ],
             'notes' => 'Test order'
-        ]);
+        ];
+
+        // Strong assertion for business validation
+        $this->assertBusinessValidation(function() use ($orderData) {
+            $this->service->create($orderData);
+        }, \InvalidArgumentException::class, 'Quantity must be greater than 0');
     }
 
-    private function seedProduct(float $price): int
+    /** @test */
+    public function it_handles_edge_cases_for_order_quantities()
     {
-        $this->db->table('products')->insert([
-            'code' => 'P' . random_int(100, 999),
-            'name' => 'Prod',
-            'selling_price' => $price,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-        return (int) $this->db->insertID();
+        $productId = ProductFactory::createWithPrice(100.0, 80.0);
+        
+        $boundaryTests = [
+            ['field' => 'quantity', 'value' => 0, 'should_pass' => false, 'expected_exception' => \InvalidArgumentException::class],
+            ['field' => 'quantity', 'value' => -1, 'should_pass' => false, 'expected_exception' => \InvalidArgumentException::class],
+            ['field' => 'quantity', 'value' => 0.01, 'should_pass' => true],
+            ['field' => 'quantity', 'value' => 9999, 'should_pass' => true],
+        ];
+
+        $this->assertBoundaryValueHandling(function($data) use ($productId) {
+            $orderData = [
+                'customer_id' => null,
+                'branch_id' => 1,
+                'order_date' => date('Y-m-d'),
+                'payment_method' => 'CASH',
+                'order_type' => 'shipping',
+                'shipping' => [
+                    'name' => 'Test Customer',
+                    'phone' => '123456789',
+                    'address' => 'Test Address',
+                    'ward' => 'Test Ward',
+                    'district' => 'Test District',
+                    'city' => 'Test City'
+                ],
+                'items' => [
+                    ['product_id' => $productId, 'quantity' => $data['quantity']],
+                ],
+                'notes' => 'Test order'
+            ];
+            
+            return $this->service->create($orderData);
+        }, $boundaryTests);
     }
 
-    private function seedPriceList(array $data): int
+    /** @test */
+    public function it_provides_meaningful_error_messages()
     {
-        $payload = array_merge([
-            'name' => 'PL',
-            'type' => 'custom',
-            'priority' => 0,
-            'is_active' => 1,
-            'start_date' => date('Y-m-d', strtotime('-1 day')),
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ], $data);
-        $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode((array) $payload['apply_to_groups']) : null;
-        $this->db->table('price_lists')->insert($payload);
-        return (int) $this->db->insertID();
-    }
+        $productId = ProductFactory::createWithPrice(100.0, 80.0);
+        
+        $orderData = [
+            'customer_id' => null,
+            'branch_id' => 1,
+            'order_date' => date('Y-m-d'),
+            'payment_method' => 'CASH',
+            'order_type' => 'shipping',
+            'shipping' => [
+                'name' => 'Test Customer',
+                'phone' => '123456789',
+                'address' => 'Test Address',
+                'ward' => 'Test Ward',
+                'district' => 'Test District',
+                'city' => 'Test City'
+            ],
+            'items' => [
+                ['product_id' => $productId, 'quantity' => 0],
+            ],
+            'notes' => 'Test order'
+        ];
 
-    private function seedItem(int $listId, int $productId, ?int $variantId, float $price): void
-    {
-        $this->db->table('price_list_items')->insert([
-            'price_list_id' => $listId,
-            'product_id' => $productId,
-            'variant_id' => $variantId,
-            'price' => $price,
-            'discount_percent' => 0,
-            'discount_amount' => 0,
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        try {
+            $this->service->create($orderData);
+            $this->fail('Should have thrown exception for zero quantity');
+        } catch (\Exception $e) {
+            $this->assertUserFriendlyErrorMessage([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+            
+            $this->assertErrorFieldContext([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], ['quantity']);
+            
+            $this->assertErrorFormatting([
+                'success' => false,
+                'message' => $e->getMessage()
+            ]);
+        }
     }
 
     private function seedOrderSequences(): void

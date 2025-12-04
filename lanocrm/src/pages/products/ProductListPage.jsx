@@ -74,12 +74,13 @@
       status: null,
       stock_status: null
     });
-    const [activeTab, setActiveTab] = useState('all');
-    // ✅ NEW: State quản lý biến thể đang được chọn để hiển thị chi tiết
-    const [selectedVariantId, setSelectedVariantId] = useState(null);
-    const [expandedProductId, setExpandedProductId] = useState(null);
-    const [importing, setImporting] = useState(false);
-    const [exporting, setExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  // ✅ NEW: State quản lý biến thể đang được chọn để hiển thị chi tiết
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [expandedProductId, setExpandedProductId] = useState(null);
+  const [hydratedItems, setHydratedItems] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
     
     // Delete modal state
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -94,10 +95,48 @@
       dispatch(fetchCategories());
     }, [dispatch]);
     
-    // Fetch products when filters change
-    useEffect(() => {
-      dispatch(fetchProducts(filters));
-    }, [dispatch, filters]);
+  // Fetch products when filters change
+  useEffect(() => {
+    dispatch(fetchProducts(filters));
+  }, [dispatch, filters]);
+
+  // Hydrate images for items missing image to avoid placeholders
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      if (!Array.isArray(items) || items.length === 0) {
+        setHydratedItems([]);
+        return;
+      }
+      const updated = await Promise.all(
+        items.map(async (item) => {
+          if (item.image) return item;
+          if (!item.id) return item;
+          try {
+            const imgs = await productApi.getProductImages(item.id);
+            if (imgs.success && Array.isArray(imgs.data) && imgs.data.length > 0) {
+              const first = imgs.data[0];
+              return {
+                ...item,
+                image: first.image_url || first.url || first.path || first.image_path || item.image,
+                images: imgs.data,
+              };
+            }
+          } catch (e) {
+            // ignore hydrate failure
+          }
+          return item;
+        })
+      );
+      if (!cancelled) {
+        setHydratedItems(updated);
+      }
+    };
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
     // Category tree
     useEffect(() => {
@@ -964,7 +1003,7 @@
         {/* Table */}
         <div className={styles['page-content']}>
           <ProductTable
-            products={items || []}
+            products={(hydratedItems && hydratedItems.length > 0 ? hydratedItems : items) || []}
             loading={loading}
             pagination={{
               page: pagination?.page || 1,

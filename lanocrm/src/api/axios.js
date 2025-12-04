@@ -46,13 +46,21 @@ axiosInstance.interceptors.response.use(
     return response;
   },
   (error) => {
-    // ✅ DEBUG: Log error
-    console.error('🔴 API Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      message: error.response?.data?.message || error.message,
-      data: error.response?.data
-    });
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+    const isAttribute404 = status === 404 && (url.includes('attribute-values') || url.includes('used-attribute-options'));
+
+    // ✅ DEBUG: Log error (skip noisy 404 for optional attribute endpoints)
+    if (!isAttribute404) {
+      console.error('🔴 API Error:', {
+        status,
+        url,
+        message: error.response?.data?.message || error.message,
+        data: error.response?.data
+      });
+    } else {
+      console.warn('⚠️ Optional endpoint 404 (silenced):', { status, url });
+    }
 
     if (error.response) {
       let errorMessage = 'Có lỗi xảy ra';

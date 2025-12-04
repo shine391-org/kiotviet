@@ -1,0 +1,103 @@
+
+Running 3 tests using 3 workers
+
+[1A[2K[1/3] [chromium] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+[1A[2K[2/3] [firefox] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+[1A[2K[3/3] [webkit] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+[1A[2K[chromium] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+Variant grid count after delete: [33m2[39m
+
+[1A[2K[webkit] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+Variant grid count after delete: [33m2[39m
+
+[1A[2K[firefox] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly
+Variant grid count after delete: [33m2[39m
+
+[1A[2K  1) [chromium] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[class*="imageItem"]')
+    Expected: [32m1[39m
+    Received: [31m2[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('[class*="imageItem"]')[22m
+    [2m    9 × locator resolved to 2 elements[22m
+    [2m      - unexpected value "2"[22m
+
+
+      185 |     const count = await variantGrid.count();
+      186 |     console.log('Variant grid count after delete:', count);
+    > 187 |     await expect(variantGrid).toHaveCount(1);
+          |                               ^
+      188 |
+      189 |     // 5. Save changes
+      190 |     const updateVariantBtn = page.getByRole('button', { name: 'Cập nhật biến thể' });
+        at /home/shine/projects/kiotviet/lanocrm/tests/e2e/reproduce_image_bug.spec.ts:187:31
+
+    Error Context: test-results/reproduce_image_bug-Reprod-284ee-ate-variant-image-correctly-chromium/error-context.md
+
+
+[1A[2K  2) [webkit] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[class*="imageItem"]')
+    Expected: [32m1[39m
+    Received: [31m2[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('[class*="imageItem"]')[22m
+    [2m    9 × locator resolved to 2 elements[22m
+    [2m      - unexpected value "2"[22m
+
+
+      185 |     const count = await variantGrid.count();
+      186 |     console.log('Variant grid count after delete:', count);
+    > 187 |     await expect(variantGrid).toHaveCount(1);
+          |                               ^
+      188 |
+      189 |     // 5. Save changes
+      190 |     const updateVariantBtn = page.getByRole('button', { name: 'Cập nhật biến thể' });
+        at /home/shine/projects/kiotviet/lanocrm/tests/e2e/reproduce_image_bug.spec.ts:187:31
+
+    Error Context: test-results/reproduce_image_bug-Reprod-284ee-ate-variant-image-correctly-webkit/error-context.md
+
+
+[1A[2K  3) [firefox] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('[class*="imageItem"]')
+    Expected: [32m1[39m
+    Received: [31m2[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('[class*="imageItem"]')[22m
+    [2m    9 × locator resolved to 2 elements[22m
+    [2m      - unexpected value "2"[22m
+
+
+      185 |     const count = await variantGrid.count();
+      186 |     console.log('Variant grid count after delete:', count);
+    > 187 |     await expect(variantGrid).toHaveCount(1);
+          |                               ^
+      188 |
+      189 |     // 5. Save changes
+      190 |     const updateVariantBtn = page.getByRole('button', { name: 'Cập nhật biến thể' });
+        at /home/shine/projects/kiotviet/lanocrm/tests/e2e/reproduce_image_bug.spec.ts:187:31
+
+    Error Context: test-results/reproduce_image_bug-Reprod-284ee-ate-variant-image-correctly-firefox/error-context.md
+
+
+[1A[2K  3 failed
+    [chromium] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
+    [firefox] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
+    [webkit] › tests/e2e/reproduce_image_bug.spec.ts:138:7 › Reproduction: Variant Image Update › should update variant image correctly 
