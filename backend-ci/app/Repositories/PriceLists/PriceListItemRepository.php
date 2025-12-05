@@ -113,7 +113,7 @@ class PriceListItemRepository
         return $row ?: null;
     }
 
-    /** Remove a product from a price list. */
+    /** Remove a product from a price list. When variantId is null, only removes the product-level item. */
     public function removeItem(int $priceListId, int $productId, ?int $variantId = null): bool
     {
         $builder = $this->db->table('price_list_items')
@@ -122,6 +122,9 @@ class PriceListItemRepository
         
         if ($variantId !== null) {
             $builder->where('variant_id', $variantId);
+        } else {
+            // Only remove product-level item, not variant items
+            $builder->where('variant_id', null);
         }
         
         $builder->delete();

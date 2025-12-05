@@ -25,54 +25,55 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
     // Options from API (fetched when modal opens)
     const [customerGroupOptions, setCustomerGroupOptions] = useState([]);
 
-    // Fetch branches and employees when modal opens
+    // Fetch branches, employees, and customer groups when modal opens
     useEffect(() => {
-        if (open) {
-            // Fetch branches
-            fetch('/api/branches', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.data) {
-                        setBranchOptions(data.data.map(b => ({ value: b.id, label: b.name })));
-                    }
-                })
-                .catch(err => console.error('Error fetching branches:', err));
+        if (!open) return;
 
-            // Fetch employees
-            fetch('/api/employees', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.data) {
-                        setEmployeeOptions(data.data.map(e => ({ value: e.id, label: e.full_name || e.username })));
-                    }
-                })
-                .catch(err => console.error('Error fetching employees:', err));
+        const controller = new AbortController();
+        const { signal } = controller;
+        const headers = {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+        };
 
-            // Fetch customer groups
-            fetch('/api/customer-groups', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
+        // Fetch branches
+        fetch('/api/branches', { headers, signal })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data) {
+                    setBranchOptions(data.data.map(b => ({ value: b.id, label: b.name })));
                 }
             })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.data) {
-                        setCustomerGroupOptions(data.data.map(g => ({ value: g.id, label: g.name })));
-                    }
-                })
-                .catch(err => console.error('Error fetching customer groups:', err));
-        }
+            .catch(err => {
+                if (err.name !== 'AbortError') console.error('Error fetching branches:', err);
+            });
+
+        // Fetch employees
+        fetch('/api/employees', { headers, signal })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data) {
+                    setEmployeeOptions(data.data.map(e => ({ value: e.id, label: e.full_name || e.username })));
+                }
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') console.error('Error fetching employees:', err);
+            });
+
+        // Fetch customer groups
+        fetch('/api/customer-groups', { headers, signal })
+            .then(res => res.json())
+            .then(data => {
+                if (data.data) {
+                    setCustomerGroupOptions(data.data.map(g => ({ value: g.id, label: g.name })));
+                }
+            })
+            .catch(err => {
+                if (err.name !== 'AbortError') console.error('Error fetching customer groups:', err);
+            });
+
+        // Cleanup: abort all pending requests when modal closes or component unmounts
+        return () => controller.abort();
     }, [open]);
 
     useEffect(() => {
