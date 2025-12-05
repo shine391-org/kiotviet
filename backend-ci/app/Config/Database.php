@@ -15,6 +15,11 @@ class Database extends Config
     public string $filesPath = APPPATH . 'Database' . DIRECTORY_SEPARATOR;
 
     /**
+     * Golden schema version identifier.
+     */
+    public string $schemaVersion = '2025-11-21-000000';
+
+    /**
      * Lets you choose which connection group to use if no other is specified.
      */
     public string $defaultGroup = 'default';
@@ -26,10 +31,10 @@ class Database extends Config
      */
     public array $default = [
         'DSN'          => '',
-        'hostname'     => 'localhost',
-        'username'     => '',
-        'password'     => '',
-        'database'     => '',
+        'hostname'     => 'db',
+        'username'     => 'lanocrm_user',
+        'password'     => 'KP7n4RjcDbedSE2W8GgA',
+        'database'     => 'lanocrm_dev',
         'DBDriver'     => 'MySQLi',
         'DBPrefix'     => '',
         'pConnect'     => false,
@@ -164,16 +169,16 @@ class Database extends Config
      */
     public array $tests = [
         'DSN'         => '',
-        'hostname'    => '127.0.0.1',
-        'username'    => '',
-        'password'    => '',
-        'database'    => ':memory:',
-        'DBDriver'    => 'SQLite3',
-        'DBPrefix'    => 'db_',  // giữ prefix để hạn chế nhầm
+        'hostname'    => 'db-test',
+        'username'    => 'lanocrm_user',
+        'password'    => 'KP7n4RjcDbedSE2W8GgA',
+        'database'    => 'lanocrm_test',
+        'DBDriver'    => 'MySQLi',
+        'DBPrefix'    => '',
         'pConnect'    => false,
         'DBDebug'     => true,
-        'charset'     => 'utf8',
-        'DBCollat'    => '',
+        'charset'     => 'utf8mb4',
+        'DBCollat'    => 'utf8mb4_general_ci',
         'swapPre'     => '',
         'encrypt'     => false,
         'compress'    => false,
@@ -195,9 +200,27 @@ class Database extends Config
 
         // Ensure that we always set the database group to 'tests' if
         // we are currently running an automated test suite, so that
-        // we don't overwrite live data on accident.
+        // we don't accidentally run tests against the production database.
         if (ENVIRONMENT === 'testing') {
             $this->defaultGroup = 'tests';
         }
+
+        // Override default connection from environment
+        $this->default['hostname'] = env('database.default.hostname', $this->default['hostname']);
+        $this->default['username'] = env('database.default.username', $this->default['username']);
+        $this->default['password'] = env('database.default.password', $this->default['password']);
+        $this->default['database'] = env('DB_NAME', env('database.default.database', $this->default['database']));
+        $this->default['DBDriver'] = env('database.default.DBDriver', $this->default['DBDriver']);
+        $this->default['DBPrefix'] = env('database.default.DBPrefix', $this->default['DBPrefix']);
+        $this->default['port']     = (int) env('database.default.port', $this->default['port']);
+
+        // Override test connection from environment
+        $this->tests['hostname'] = env('database.tests.hostname', $this->tests['hostname']);
+        $this->tests['username'] = env('database.tests.username', $this->tests['username']);
+        $this->tests['password'] = env('database.tests.password', $this->tests['password']);
+        $this->tests['database'] = env('database.tests.database', $this->tests['database']);
+        $this->tests['DBDriver'] = env('database.tests.DBDriver', $this->tests['DBDriver']);
+        $this->tests['DBPrefix'] = env('database.tests.DBPrefix', $this->tests['DBPrefix']);
+        $this->tests['port']     = (int) env('database.tests.port', $this->tests['port']);
     }
 }

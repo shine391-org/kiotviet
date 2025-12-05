@@ -9,7 +9,7 @@ use App\Services\{ServiceName};
  * {ServiceName} unit tests
  * 
  * @agent-test: {ServiceName}
- * @agent-copied-from: TESTING-PATTERNS.md
+ * @agent-copied-from: TESTING-PATTERNS-01
  */
 class {ServiceName}Test extends CIUnitTestCase
 {
@@ -46,7 +46,7 @@ class {ServiceName}Test extends CIUnitTestCase
     // Helper methods
     private function resetSchema(): void
     {
-        // TODO: Create tables for tests
+        // TODO: Create tables for tests (no DROP DATABASE/TABLE; use create + truncate/delete)
     }
 
     private function seedItem(array $data): int

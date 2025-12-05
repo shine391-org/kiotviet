@@ -1,6 +1,6 @@
   // src/pages/products/ProductListPage.jsx
 
-  import React, { useEffect, useState, useCallback } from 'react';
+  import React, { useEffect, useState, useCallback, useRef } from 'react';
   import { useDispatch, useSelector } from 'react-redux';
   import { useNavigate } from 'react-router-dom';
   import { 
@@ -46,6 +46,7 @@
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { hasPermission } = usePermission();
+    const fileInputRef = useRef(null);
     
     // Redux state
     const { items, loading, pagination } = useSelector(state => state.product);
@@ -73,10 +74,13 @@
       status: null,
       stock_status: null
     });
-    const [activeTab, setActiveTab] = useState('all');
-    // ✅ NEW: State quản lý biến thể đang được chọn để hiển thị chi tiết
-    const [selectedVariantId, setSelectedVariantId] = useState(null);
-    const [expandedProductId, setExpandedProductId] = useState(null);
+  const [activeTab, setActiveTab] = useState('all');
+  // ✅ NEW: State quản lý biến thể đang được chọn để hiển thị chi tiết
+  const [selectedVariantId, setSelectedVariantId] = useState(null);
+  const [expandedProductId, setExpandedProductId] = useState(null);
+  const [hydratedItems, setHydratedItems] = useState([]);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
     
     // Delete modal state
     const [deleteModalVisible, setDeleteModalVisible] = useState(false);
@@ -91,10 +95,48 @@
       dispatch(fetchCategories());
     }, [dispatch]);
     
-    // Fetch products when filters change
-    useEffect(() => {
-      dispatch(fetchProducts(filters));
-    }, [dispatch, filters]);
+  // Fetch products when filters change
+  useEffect(() => {
+    dispatch(fetchProducts(filters));
+  }, [dispatch, filters]);
+
+  // Hydrate images for items missing image to avoid placeholders
+  useEffect(() => {
+    let cancelled = false;
+    const hydrate = async () => {
+      if (!Array.isArray(items) || items.length === 0) {
+        setHydratedItems([]);
+        return;
+      }
+      const updated = await Promise.all(
+        items.map(async (item) => {
+          if (item.image) return item;
+          if (!item.id) return item;
+          try {
+            const imgs = await productApi.getProductImages(item.id);
+            if (imgs.success && Array.isArray(imgs.data) && imgs.data.length > 0) {
+              const first = imgs.data[0];
+              return {
+                ...item,
+                image: first.image_url || first.url || first.path || first.image_path || item.image,
+                images: imgs.data,
+              };
+            }
+          } catch (e) {
+            // ignore hydrate failure
+          }
+          return item;
+        })
+      );
+      if (!cancelled) {
+        setHydratedItems(updated);
+      }
+    };
+    hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [items]);
 
     // Category tree
     useEffect(() => {
@@ -541,12 +583,68 @@
 
     // Handle import Excel
     const handleImport = () => {
-      message.info('Chức năng nhập Excel đang phát triển');
+      if (!hasPermission('products.import')) {
+        message.error('Bạn không có quyền nhập Excel');
+        return;
+      }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = null;
+        fileInputRef.current.click();
+      }
+    };
+
+    const handleImportFileChange = async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx', 'xls'].includes(ext)) {
+        message.error('Vui lòng chọn file Excel (.xlsx hoặc .xls)');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        message.error('File vượt quá 5MB');
+        return;
+      }
+
+      try {
+        setImporting(true);
+        const res = await productApi.importProducts(file);
+        if (res?.success) {
+          message.success(`Nhập thành công: ${res.imported} mới, ${res.updated} cập nhật`);
+          if (res.failed > 0) {
+            message.warning(`Có ${res.failed} dòng lỗi`);
+            console.warn('Import errors', res.errors);
+          }
+          dispatch(fetchProducts(filters));
+        } else {
+          message.error(res?.message || 'Nhập thất bại');
+        }
+      } catch (err) {
+        message.error(err?.response?.data?.message || err.message || 'Nhập thất bại');
+      } finally {
+        setImporting(false);
+      }
     };
 
     // Handle export Excel
-    const handleExport = () => {
-      message.info('Chức năng xuất Excel đang phát triển');
+    const handleExport = async () => {
+      if (!hasPermission('products.export')) {
+        message.error('Bạn không có quyền xuất Excel');
+        return;
+      }
+      try {
+        setExporting(true);
+        const blob = await productApi.exportProducts({
+          ...filters,
+        });
+        productApi.downloadFile(blob, `products_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.xlsx`);
+        message.success('Đã xuất Excel');
+      } catch (err) {
+        message.error(err?.response?.data?.message || err.message || 'Xuất thất bại');
+      } finally {
+        setExporting(false);
+      }
     };
 
     // Handle add product
@@ -724,6 +822,14 @@
 
     return (
       <div className={styles['product-list-page']}>
+        {/* Hidden file input for Excel import */}
+        <input
+          type="file"
+          accept=".xlsx,.xls"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleImportFileChange}
+        />
         {/* Header */}
         <div className={styles['page-header']}>
           <h1 className={styles['page-title']}>Danh sách hàng hóa</h1>
@@ -731,14 +837,31 @@
             {hasPermission('products.import') && (
               <Button 
                 icon={<UploadOutlined />}
+                loading={importing}
                 onClick={handleImport}
               >
                 Nhập Excel
               </Button>
             )}
+            {hasPermission('products.import') && (
+              <Button 
+                onClick={async () => {
+                  try {
+                    const blob = await productApi.downloadImportTemplate();
+                    productApi.downloadFile(blob, 'products_import_template.xlsx');
+                    message.success('Đã tải file mẫu');
+                  } catch (err) {
+                    message.error(err?.message || 'Tải file mẫu thất bại');
+                  }
+                }}
+              >
+                File mẫu
+              </Button>
+            )}
             {hasPermission('products.export') && (
               <Button 
                 icon={<DownloadOutlined />}
+                loading={exporting}
                 onClick={handleExport}
               >
                 Xuất Excel
@@ -880,7 +1003,7 @@
         {/* Table */}
         <div className={styles['page-content']}>
           <ProductTable
-            products={items || []}
+            products={(hydratedItems && hydratedItems.length > 0 ? hydratedItems : items) || []}
             loading={loading}
             pagination={{
               page: pagination?.page || 1,

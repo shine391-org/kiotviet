@@ -11,6 +11,14 @@ purpose: "Outlines the comprehensive plan to refactor the LANO CRM backend to cl
 location: "docs/plans"
 related_to:
   - id: "AGENT-GUIDE-01"
+  - id: "REFACTOR-001"
+    description: "ProductService refactoring - completed reference implementation"
+  - id: "TASK-001"
+    description: "Inventory module - in progress foundation"
+  - id: "PRICE-LIST-001"
+    description: "Price list formulas - completed feature"
+  - id: "DOC-AUDIT-2025-11-26"
+    description: "Documentation audit report with connectivity analysis"
     description: "All development and refactoring must follow the rules and patterns in this guide."
 ---
 

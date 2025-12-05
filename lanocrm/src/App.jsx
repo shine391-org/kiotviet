@@ -16,19 +16,35 @@ import RoleFormPage from './pages/RoleFormPage';
 import Dashboard from './pages/Dashboard';
 import BranchPage from './pages/BranchPage';
 import RolePermissionsPage from './pages/RolePermissionsPage';
+import PlaceholderPage from './pages/PlaceholderPage';
+import CashBookPage from './pages/cash/CashBookPage';
+import TransferListPage from './pages/inventory/TransferListPage';
+import TransferCreatePage from './pages/inventory/TransferCreatePage';
+import StockAuditListPage from './pages/inventory/StockAuditListPage';
+import StockAuditCreatePage from './pages/inventory/StockAuditCreatePage';
+import DisposalListPage from './pages/inventory/DisposalListPage';
 
 // 🆕 PRODUCT PAGES
 import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
 import ProductEditPage from './pages/products/ProductEditPage';
 import VariantEditPage from './pages/products/VariantEditPage';
-import PriceListListPage from './pages/price-lists/PriceListListPage';
+import PriceListPage from './pages/price-lists/PriceListPage';
 import PriceListFormPage from './pages/price-lists/PriceListFormPage';
 
 // ✅ THÊM: ATTRIBUTE PAGES
 import AttributeListPage from './pages/products/AttributeListPage';
 import AttributeCreatePage from './pages/products/AttributeCreatePage';
 import AttributeEditPage from './pages/products/AttributeEditPage';
+
+// Customers
+import CustomerListPage from './pages/customers/CustomerListPage';
+import OrderListPage from './pages/orders/OrderListPage';
+import InvoiceListPage from './pages/invoices/InvoiceListPage';
+import ReturnListPage from './pages/returns/ReturnListPage';
+import DeliveryPartnerPage from './pages/orders/DeliveryPartnerPage';
+import ShipmentListPage from './pages/orders/ShipmentListPage';
+import SupplierListPage from './pages/suppliers/SupplierListPage';
 
 // Layout
 import MainLayout from './components/Layout/MainLayout';
@@ -70,6 +86,22 @@ function App() {
                     {/* Dashboard - Default Route */}
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/cash" element={<CashBookPage />} />
+                    <Route path="/orders/delivery-partners" element={<DeliveryPartnerPage />} />
+                    <Route path="/orders/shipments" element={<ShipmentListPage />} />
+                    <Route path="/orders/*" element={<OrderListPage />} />
+                    <Route path="/invoices" element={<InvoiceListPage />} />
+                    <Route path="/orders/invoices" element={<InvoiceListPage />} />
+                    <Route path="/orders/returns" element={<ReturnListPage />} />
+                    <Route path="/returns" element={<ReturnListPage />} />
+                    <Route path="/inventory/transfer" element={<TransferListPage />} />
+                    <Route path="/inventory/transfer/create" element={<TransferCreatePage />} />
+                    <Route path="/inventory/audit" element={<StockAuditListPage />} />
+                    <Route path="/inventory/audit/create" element={<StockAuditCreatePage />} />
+                    <Route path="/inventory/dispose" element={<DisposalListPage />} />
+                    <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
+                    <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />
+                    <Route path="/online" element={<PlaceholderPage title="Bán online" />} />
 
                     {/* ========== USER ROUTES ========== */}
                     <Route
@@ -131,6 +163,15 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
+                    {/* Alias cho đường dẫn thiếu 's' để tránh 404 */}
+                    <Route
+                      path="/roles/:id/permission"
+                      element={
+                        <ProtectedRoute requiredPermission="roles.assign-permissions">
+                          <RolePermissionsPage />
+                        </ProtectedRoute>
+                      }
+                    />
 
                     {/* ========== BRANCH ROUTES ========== */}
                     <Route
@@ -185,7 +226,7 @@ function App() {
                     {/* 🆕 Price Lists */}
                     <Route
                       path="/price-lists"
-                      element={<PriceListListPage />}
+                      element={<PriceListPage />}
                     />
                     <Route
                       path="/price-lists/create"
@@ -236,6 +277,18 @@ function App() {
                           <AttributeEditPage />
                         </ProtectedRoute>
                       }
+                    />
+
+                    {/* 🆕 Customers */}
+                    <Route
+                      path="/customers"
+                      element={<CustomerListPage />}
+                    />
+
+                    {/* 🆕 Suppliers (Nhập hàng) */}
+                    <Route
+                      path="/partners/suppliers"
+                      element={<SupplierListPage />}
                     />
 
                     {/* ========== 404 PAGE ========== */}

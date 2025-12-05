@@ -85,7 +85,29 @@ const ImageUploadBatch = ({ productId, variantId = null, onUploadSuccess, maxFil
         }
         setFileList([]);
         setUploadProgress(0);
-        if (onUploadSuccess) onUploadSuccess(result.data);
+        // Normal hóa dữ liệu trả về
+        const fallbackImages = fileList.map((item) => ({
+          id: Date.now() + Math.random(),
+          image_url: item.preview,
+          file_name: item.name,
+          is_primary: 0,
+        }));
+
+        let normalizedFromApi = null;
+        if (Array.isArray(result.data) && result.data.length > 0) {
+          normalizedFromApi = result.data;
+        } else if (Array.isArray(result.data?.files)) {
+          normalizedFromApi = result.data.files.map((file, idx) => ({
+            id: result.data?.ids?.[idx] || Date.now() + idx,
+            image_url: file,
+            file_name: typeof file === 'string' ? file.split('/').pop() : `Image-${idx + 1}`,
+            is_primary: idx === 0 ? 1 : 0,
+          }));
+        }
+
+        const imagesToReturn = normalizedFromApi && normalizedFromApi.length > 0 ? normalizedFromApi : fallbackImages;
+
+        if (onUploadSuccess) onUploadSuccess(imagesToReturn);
       } else {
         message.error(result.message || 'Upload thất bại');
       }

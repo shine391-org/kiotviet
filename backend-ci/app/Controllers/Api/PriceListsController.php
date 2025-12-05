@@ -23,7 +23,9 @@ class PriceListsController extends BaseController
     /** Create price list. @agent-use: POST /api/price-lists @agent-pattern: Thin create */
     public function create()
     {
-        return $this->wrap(fn () => $this->respondCreated($this->service->create($this->safeInput())));
+        $input = $this->safeInput();
+        log_message('info', '[PriceList Controller] Create input: ' . json_encode($input));
+        return $this->wrap(fn () => $this->respondCreated($this->service->create($input)));
     }
 
     /** Update price list. @agent-use: PUT /api/price-lists/{id} @agent-pattern: Thin update */
@@ -38,12 +40,62 @@ class PriceListsController extends BaseController
     /** List items. @agent-use: GET /api/price-lists/{id}/items @agent-pattern: Delegate items fetch */
     public function items($id) { return $this->wrap(fn () => $this->respond($this->service->items((int) $id))); }
 
-    /** Upsert items. @agent-use: POST /api/price-lists/{id}/items @agent-pattern: Bulk upsert */
+    /** Upsert items (Replace All). @agent-use: POST /api/price-lists/{id}/items @agent-pattern: Bulk replace */
     public function saveItems($id)
     {
         $payload = $this->request->getJSON(true) ?? [];
         $items = $payload['items'] ?? $payload;
         return $this->wrap(fn () => $this->respond($this->service->upsertItems((int) $id, (array) $items)));
+    }
+
+    /** Add items (Append). @agent-use: POST /api/price-lists/{id}/add-items */
+    public function addItems($id)
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $items = $payload['items'] ?? $payload;
+        return $this->wrap(fn () => $this->respond($this->service->addItems((int) $id, (array) $items)));
+    }
+
+    /** Remove item from price list. @agent-use: DELETE /api/price-lists/{id}/items/{productId} */
+    public function removeItem($priceListId, $productId)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->removeItem((int) $priceListId, (int) $productId)));
+    }
+
+    /** Apply formula batch. @agent-use: POST /api/price-lists/{id}/apply-formula */
+    public function applyFormula($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->applyFormula((int) $id, $this->safeInput())));
+    }
+
+    /** Export items to CSV. @agent-use: GET /api/price-lists/{id}/export */
+    public function export($id)
+    {
+        return $this->wrap(function () use ($id) {
+            $result = $this->service->exportItems((int) $id);
+            
+            // Return CSV as download
+            return $this->response
+                ->setHeader('Content-Type', 'text/csv; charset=utf-8')
+                ->setHeader('Content-Disposition', 'attachment; filename="price_list_' . $id . '.csv"')
+                ->setBody($result['csv']);
+        });
+    }
+
+    /** Import items from CSV. @agent-use: POST /api/price-lists/{id}/import */
+    public function import($id)
+    {
+        return $this->wrap(function () use ($id) {
+            $file = $this->request->getFile('file');
+            if (!$file || !$file->isValid()) {
+                throw new \InvalidArgumentException('No valid file uploaded');
+            }
+            
+            $csvContent = file_get_contents($file->getTempName());
+            $result = $this->service->importItems((int) $id, $csvContent);
+            
+            return $this->respond($result);
+        });
     }
 
     private function wrap(callable $action)

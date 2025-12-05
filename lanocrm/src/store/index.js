@@ -7,6 +7,18 @@ import productReducer from './slices/productSlice';     // 🆕 NEW
 import categoryReducer from './slices/categorySlice';   // 🆕 NEW
 import variantReducer from './slices/variantSlice';     // 🆕 ADD variantSlice
 import priceListReducer from './slices/priceListSlice';
+import customerReducer from './slices/customerSlice';
+import dashboardReducer from './slices/dashboardSlice';
+import cashReducer from './slices/cashSlice';
+import ordersReducer from './slices/orderSlice';
+import invoiceReducer from './slices/invoiceSlice';
+import returnReducer from './slices/returnSlice';
+import deliveryPartnerReducer from './slices/deliveryPartnerSlice';
+import shipmentReducer from './slices/shipmentSlice';
+import transferReducer from './slices/transferSlice';
+import stockAuditReducer from './slices/stockAuditSlice';
+import disposalReducer from './slices/disposalSlice';
+import supplierReducer from './slices/supplierSlice';
 
 const store = configureStore({
   reducer: {
@@ -18,6 +30,18 @@ const store = configureStore({
     category: categoryReducer,     // 🆕 NEW
     variant: variantReducer,       // 🆕 NEW 
     priceList: priceListReducer,
+    customer: customerReducer,
+    dashboard: dashboardReducer,
+    cash: cashReducer,
+    orders: ordersReducer,
+    invoices: invoiceReducer,
+    returns: returnReducer,
+    deliveryPartners: deliveryPartnerReducer,
+    shipments: shipmentReducer,
+    transfers: transferReducer,
+    stockAudits: stockAuditReducer,
+    disposals: disposalReducer,
+    supplier: supplierReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

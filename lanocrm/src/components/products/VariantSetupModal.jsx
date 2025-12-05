@@ -111,7 +111,7 @@ const VariantSetupModal = ({
         </Button>,
       ]}
       className={styles.modal}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className={styles.container}>
         <Alert

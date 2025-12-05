@@ -1,0 +1,295 @@
+:root {
+  --dp-accent: #1f78ff;
+  --dp-surface: #ffffff;
+  --dp-muted: #6b7280;
+  --dp-border: #e5e7eb;
+  --dp-bg: linear-gradient(135deg, #f4f7ff 0%, #ffffff 60%);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--dp-bg);
+  min-height: calc(100vh - 64px);
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--dp-surface);
+  border: 1px solid var(--dp-border);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.search {
+  flex: 1;
+  max-width: 460px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.filterCard {
+  position: sticky;
+  top: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--dp-border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.06);
+}
+
+.tabs :global(.ant-tabs-nav) {
+  margin-bottom: 8px;
+}
+
+.filterBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.filterLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  color: #111827;
+}
+
+.filterLabel {
+  font-weight: 600;
+  color: #111827;
+}
+
+.divider {
+  margin: 10px 0;
+}
+
+.promoBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.promoIllustration {
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #dbeafe, #e0f2fe);
+  display: grid;
+  place-items: center;
+  font-size: 48px;
+  color: #0ea5e9;
+}
+
+.tableArea {
+  background: var(--dp-surface);
+  border: 1px solid var(--dp-border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+.summaryBar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.summaryItem {
+  background: linear-gradient(135deg, #e8f1ff 0%, #ffffff 100%);
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid var(--dp-border);
+}
+
+.summaryLabel {
+  color: var(--dp-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.summaryValue {
+  font-weight: 700;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.table :global(.ant-table-thead > tr > th) {
+  background: #f8fafc;
+  font-weight: 700;
+}
+
+.table {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.integratedLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.integratedSidebar {
+  position: sticky;
+  top: 12px;
+}
+
+.integratedContent {
+  background: var(--dp-surface);
+  border: 1px solid var(--dp-border);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.04);
+}
+
+.integratedWrapper :global(.ant-tabs-nav) {
+  margin-bottom: 12px;
+}
+
+.integratedFilters {
+  margin-bottom: 8px;
+}
+
+.summaryCell {
+  font-weight: 700;
+  background: #f3f4f6;
+}
+
+.expandWrapper {
+  background: #f8fbff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px 16px;
+}
+
+.infoTitle {
+  grid-column: 1/-1;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.infoRow {
+  display: flex;
+  gap: 8px;
+  color: #111827;
+}
+
+.infoActions {
+  grid-column: 1/-1;
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.expandActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.code {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.name {
+  font-weight: 600;
+}
+
+.negative {
+  color: #ef4444;
+}
+
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.invoiceHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.invoiceTitleRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-weight: 700;
+}
+
+.customerName {
+  font-size: 16px;
+}
+
+.invoiceMeta {
+  color: var(--dp-muted);
+  font-size: 13px;
+}
+
+.invoiceBranch {
+  font-weight: 600;
+}
+
+.invoiceTotals {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  row-gap: 6px;
+  margin-top: 12px;
+  justify-items: end;
+}
+
+.voucherInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px 16px;
+  margin-bottom: 12px;
+}
+
+.voucherDetails {
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filterCard {
+    position: relative;
+    top: 0;
+  }
+}

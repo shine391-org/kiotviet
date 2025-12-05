@@ -121,8 +121,18 @@
     white-space: pre-wrap;
   }
   
-  :global(.category-tree-popup) {
-    max-height: 400px !important;
-    overflow: auto !important;
-  }
+:global(.category-tree-popup) {
+  max-height: 400px !important;
+  overflow: auto !important;
+}
+
+.categorySelect {
+  position: relative;
+  z-index: 2;
+}
+
+.categorySelect :global(.ant-select),
+.categorySelect :global(.ant-select-selector) {
+  width: 100%;
+}
   

@@ -1,0 +1,115 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.searchBar {
+  flex: 1;
+  min-width: 280px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.filterCard {
+  position: sticky;
+  top: 110px;
+}
+
+.filterGroup {
+  margin-bottom: 14px;
+}
+
+.filterLabel {
+  display: block;
+  font-weight: 600;
+  color: #3a3a3a;
+  margin-bottom: 8px;
+}
+
+.tableStack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tableCard {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.detailCard {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatarPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #e6f4ff;
+  color: #1677ff;
+  font-weight: 700;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 56px;
+}
+
+.emptyDetail {
+  padding: 18px 0;
+}
+
+.clickableRow {
+  cursor: pointer;
+}
+
+.selectedRow {
+  background: #e6f4ff !important;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filterCard {
+    position: relative;
+    top: 0;
+  }
+}

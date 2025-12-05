@@ -77,7 +77,31 @@ export const fetchProducts = createAsyncThunk(
     try {
       // ✅ UPDATED: Now includes variants data
       const response = await productApi.getProductsWithVariants(params);
-      return response;
+
+      // Enrich missing images to avoid placeholder in list
+      const data = Array.isArray(response?.data) ? response.data : [];
+      const enriched = await Promise.all(
+        data.map(async (p) => {
+          if (!p.image && p.id) {
+            try {
+              const imgs = await productApi.getProductImages(p.id);
+              if (imgs.success && Array.isArray(imgs.data) && imgs.data.length > 0) {
+                const first = imgs.data[0];
+                return {
+                  ...p,
+                  image: first.image_url || first.url || first.path || first.image_path || p.image,
+                  images: imgs.data,
+                };
+              }
+            } catch (e) {
+              // ignore enrich failure
+            }
+          }
+          return p;
+        })
+      );
+
+      return { ...response, data: enriched };
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || 

@@ -19,6 +19,10 @@ const PriceListFormPage = () => {
   const [items, setItems] = useState([]);
   const [products, setProducts] = useState([]);
   const [baseOptions, setBaseOptions] = useState([]);
+  const makeKeyed = (list) => (list || []).map((item, idx) => ({
+    __key: item.__key || item.id || `tmp-${Date.now()}-${idx}`,
+    ...item,
+  }));
 
   useEffect(() => {
     if (isEdit) {
@@ -59,6 +63,7 @@ const PriceListFormPage = () => {
         base_price_list_id: current.base_price_list_id ?? null,
         auto_update: current.auto_update ?? false,
         formula: current.formula ?? '',
+        rounding_rule: current.rounding_rule ?? 'none',
         date_range: [
           current.start_date ? dayjs(current.start_date) : undefined,
           current.end_date ? dayjs(current.end_date) : undefined,
@@ -69,7 +74,7 @@ const PriceListFormPage = () => {
 
   useEffect(() => {
     if (isEdit && currentItems) {
-      setItems(currentItems);
+      setItems(makeKeyed(currentItems));
     }
   }, [currentItems, isEdit]);
 
@@ -88,7 +93,7 @@ const PriceListFormPage = () => {
     return prod?.variants?.map(v => ({ value: v.id, label: v.variant_name || v.sku || `Variant ${v.id}` })) || [];
   };
 
-  const addRow = () => setItems([...items, { product_id: null, variant_id: null, price: 0, discount_percent: 0, discount_amount: 0 }]);
+  const addRow = () => setItems([...items, { __key: `tmp-${Date.now()}`, product_id: null, variant_id: null, price: 0, discount_percent: 0, discount_amount: 0 }]);
 
   const updateItem = (index, field, value) => {
     const next = [...items];
@@ -116,6 +121,7 @@ const PriceListFormPage = () => {
       base_price_list_id: values.base_price_list_id || null,
       auto_update: values.auto_update ?? false,
       formula: values.formula || null,
+      rounding_rule: values.rounding_rule || 'none',
     };
 
     let priceListId = id;
@@ -229,7 +235,7 @@ const PriceListFormPage = () => {
       title={isEdit ? `Chỉnh sửa bảng giá #${id}` : 'Tạo bảng giá'}
       extra={<Button icon={<ArrowLeftOutlined />} onClick={() => navigate('/price-lists')}>Danh sách</Button>}
     >
-      <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ is_active: true, priority: 0, auto_update: false }}>
+      <Form layout="vertical" form={form} onFinish={handleFinish} initialValues={{ is_active: true, priority: 0, auto_update: false, type: 'custom' }}>
         <Space align="start" size="large" style={{ width: '100%', flexWrap: 'wrap' }}>
           <Form.Item label="Tên bảng giá" name="name" rules={[{ required: true, message: 'Nhập tên bảng giá' }]} style={{ minWidth: 260, flex: 1 }}>
             <Input placeholder="Giá sỉ, Giá VIP..." />
@@ -243,7 +249,6 @@ const PriceListFormPage = () => {
                 { label: 'VIP', value: 'vip' },
                 { label: 'Custom', value: 'custom' },
               ]}
-              defaultValue="custom"
             />
           </Form.Item>
           <Form.Item label="Độ ưu tiên" name="priority" style={{ width: 160 }}>
@@ -267,6 +272,16 @@ const PriceListFormPage = () => {
           </Form.Item>
           <Form.Item label="Công thức giá" name="formula" style={{ minWidth: 260, flex: 1 }}>
             <Input placeholder="Ví dụ: base * 1.05 + 5000 (để trống nếu không dùng)" />
+          </Form.Item>
+          <Form.Item label="Làm tròn" name="rounding_rule" style={{ width: 180 }}>
+            <Select
+              options={[
+                { label: 'Không làm tròn', value: 'none' },
+                { label: 'Trăm đồng', value: 'hundred' },
+                { label: 'Nghìn đồng', value: 'thousand' },
+                { label: 'Chục nghìn đồng', value: 'ten_thousand' },
+              ]}
+            />
           </Form.Item>
         </Space>
 
@@ -298,7 +313,7 @@ const PriceListFormPage = () => {
           style={{ marginTop: 16 }}
         >
           <Table
-            rowKey={(_, idx) => idx}
+            rowKey={(row) => row.__key || row.id || `${row.product_id || 'p'}-${row.variant_id || 'v'}`}
             dataSource={items}
             columns={columns}
             pagination={false}

@@ -20,7 +20,9 @@ import {
 } from 'antd';
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import * as attributeApi from '../../api/attributeApi';
+import { getImageUrl } from '../../utils/imageUrl';
 import styles from './AttributeSelector.module.css';
+
 
 const { Option } = Select;
 
@@ -275,7 +277,7 @@ const AttributeSelector = ({ value = [], onChange, productType = 'goods', disabl
                 <Space>
                   {opt.image_url && (
                     <img
-                      src={opt.image_url}
+                      src={getImageUrl(opt.image_url)}
                       alt={opt.option_name}
                       style={{
                         width: 30,
@@ -291,6 +293,7 @@ const AttributeSelector = ({ value = [], onChange, productType = 'goods', disabl
             ))}
           </Select>
         );
+
 
       default:
         return null;
@@ -339,10 +342,10 @@ const AttributeSelector = ({ value = [], onChange, productType = 'goods', disabl
                         attr.type === 'text'
                           ? 'blue'
                           : attr.type === 'select'
-                          ? 'green'
-                          : attr.type === 'color'
-                          ? 'orange'
-                          : 'purple'
+                            ? 'green'
+                            : attr.type === 'color'
+                              ? 'orange'
+                              : 'purple'
                       }
                     >
                       {attr.type}
@@ -385,10 +388,10 @@ const AttributeSelector = ({ value = [], onChange, productType = 'goods', disabl
                           attr.type === 'text'
                             ? 'blue'
                             : attr.type === 'select'
-                            ? 'green'
-                            : attr.type === 'color'
-                            ? 'orange'
-                            : 'purple'
+                              ? 'green'
+                              : attr.type === 'color'
+                                ? 'orange'
+                                : 'purple'
                         }
                       >
                         {attr.type}

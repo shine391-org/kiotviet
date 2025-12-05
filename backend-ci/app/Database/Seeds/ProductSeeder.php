@@ -8,180 +8,171 @@ class ProductSeeder extends Seeder
 {
     public function run()
     {
+        $this->db->disableForeignKeyChecks();
+        
+        // Clean old product data
+        $this->db->table('product_category_links')->truncate();
+        $this->db->table('product_images')->truncate();
+        $this->db->table('product_prices')->truncate();
+        $this->db->table('product_variants_v2')->truncate();
+        $this->db->table('products')->truncate();
+        
+        $this->db->enableForeignKeyChecks();
+
         $now = date('Y-m-d H:i:s');
+        
+        // Image Pool
+        $imagesList = [
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg', // Bag
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/9b9cf7569bd348fd9c73ab9c167a96b5.jpeg', // Wallet
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/15/lano/677874c0246b4f93ab1843fb4ddab0a8.jpeg', // Vest
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/67b7e3f88926487e873b064379fa451c.jpeg', // Backpack
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/1966289b43444855871891963240e946.jpeg'  // Office Bag
+        ];
 
-        // Sản phẩm mẫu
-        $products = [
-            [
-                'id' => 501,
+        // Categories Map (created in CategorySeeder)
+        $catIds = [11, 12, 13, 21, 31, 32];
+
+        $products = [];
+        $variants = [];
+        $links = [];
+        $productImages = []; 
+        $productPrices = []; 
+
+        for ($i = 1; $i <= 20; $i++) {
+            $id = 500 + $i;
+            $code = 'SP' . str_pad($i, 3, '0', STR_PAD_LEFT);
+            $price = rand(150, 1500) * 1000; // 150k - 1.5M
+            $cost = $price * 0.6;
+            $catId = $catIds[array_rand($catIds)];
+            $imgUrl = $imagesList[$i % count($imagesList)];
+            
+            $namePrefix = 'Sản phẩm';
+            if ($catId == 11) $namePrefix = 'Áo Thun Nam Cao Cấp';
+            if ($catId == 12) $namePrefix = 'Áo Sơ Mi Công Sở';
+            if ($catId == 13) $namePrefix = 'Quần Jeans Slimfit';
+            if ($catId == 21) $namePrefix = 'Đầm Dạ Hội';
+            if ($catId == 31) $namePrefix = 'Túi Xách Da Thật';
+            if ($catId == 32) $namePrefix = 'Giày Tây Nam';
+
+            $name = "$namePrefix Mẫu $i";
+
+            $products[] = [
+                'id' => $id,
                 'product_type' => 'goods',
-                'code' => 'TDH016',
-                'barcode' => null,
-                'name' => 'Túi đeo chéo da bò cao cấp khâu tay thủ công Lano TDH016',
-                'slug' => 'tui-deo-cheo-da-bo-cao-cap-khau-tay-thu-cong-lano-tdh016-tdh016',
-                'brand' => null,
+                'code' => $code,
+                'barcode' => $code,
+                'name' => $name,
+                'slug' => url_title($name, '-', true),
+                'brand' => 'Lano Official',
                 'unit' => 'Cái',
-                'purchase_price' => 1500000,
-                'selling_price' => 7500000,
-                'wholesale_price' => null,
-                'stock_quantity' => 8,
-                'alert_stock' => 10,
-                'has_variants' => 1,
-                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',
-                'images' => '[]',
-                'weight' => 0,
-                'dimensions' => null,
-                'description' => 'Sản phẩm demo có biến thể màu/size',
-                'content' => null,
-                'is_active' => 1,
-                'is_available_online' => 1,
-                'is_featured' => 0,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'id' => 502,
-                'product_type' => 'goods',
-                'code' => 'VDNTK035',
-                'barcode' => null,
-                'name' => 'Ví da handmade khâu tay thủ công Lano VDNTK035',
-                'slug' => 'vi-da-handmade-khau-tay-thu-cong-lano-vdntk035-vdntk035',
-                'brand' => null,
-                'unit' => 'Cái',
-                'purchase_price' => 650000,
-                'selling_price' => 1950000,
-                'wholesale_price' => null,
-                'stock_quantity' => 10,
-                'alert_stock' => 5,
+                'purchase_price' => $cost,
+                'selling_price' => $price,
+                'stock_quantity' => rand(10, 100),
                 'has_variants' => 0,
-                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/9b9cf7569bd348fd9c73ab9c167a96b5.jpeg',
-                'images' => '[]',
-                'weight' => 0,
-                'dimensions' => null,
-                'description' => 'Ví da demo 1',
-                'content' => null,
-                'is_active' => 1,
-                'is_available_online' => 1,
-                'is_featured' => 0,
+                'image' => $imgUrl, // Keeping this as main thumb
+                'images' => json_encode([$imgUrl]),
                 'status' => 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'id' => 503,
-                'product_type' => 'goods',
-                'code' => 'VDNTK034',
-                'barcode' => null,
-                'name' => 'Ví da epsom italia nhỏ gọn Lano VDNTK034',
-                'slug' => 'vi-da-epsom-italia-nho-gon-lano-vdntk034-vdntk034',
-                'brand' => null,
-                'unit' => 'Cái',
-                'purchase_price' => 350000,
-                'selling_price' => 1500000,
-                'wholesale_price' => null,
-                'stock_quantity' => 6,
-                'alert_stock' => 5,
-                'has_variants' => 0,
-                'image' => 'https://cdn2-retail-images.kiotviet.vn/2025/10/15/lano/677874c0246b4f93ab1843fb4ddab0a8.jpeg',
-                'images' => '[]',
-                'weight' => 0,
-                'dimensions' => null,
-                'description' => 'Ví da demo 2',
-                'content' => null,
-                'is_active' => 1,
-                'is_available_online' => 1,
-                'is_featured' => 0,
-                'status' => 'active',
+            ];
+
+            // 1. Product Price (Base Retail)
+            $productPrices[] = [
+                'product_id' => $id,
+                'variant_id' => null,
+                'price_type' => 'retail',
+                'price'      => $price,
+                'status'     => 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-        ];
-        $this->db->table('products')->ignore(true)->insertBatch($products);
+            ];
 
-        // Biến thể
-        $variants = [
-            [
-                'id' => 7001,
-                'product_id' => 501,
-                'variant_name' => 'TDH016 M Đen',
-                'variant_signature' => 'TDH016-M-DEN',
-                'sku' => 'TDH016-M-BLK',
-                'barcode' => null,
-                'price' => 7500000,
-                'cost_price' => 1500000,
-                'stock_quantity' => 5,
-                'min_stock' => 0,
-                'max_stock' => 100,
-                'image_url' => null,
-                'attributes' => null,
-                'status' => 'active',
+            // 2. Images (Gallery)
+            // Fix: ensure table has matching columns. We checked schema earlier. 
+            // product_id, image_url, is_primary, sort_order
+            $productImages[] = [
+                'product_id' => $id,
+                'image_url' => $imgUrl,
+                'is_primary' => 1,
+                'sort_order' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ],
-            [
-                'id' => 7002,
-                'product_id' => 501,
-                'variant_name' => 'TDH016 L Nâu',
-                'variant_signature' => 'TDH016-L-NAU',
-                'sku' => 'TDH016-L-BRN',
-                'barcode' => null,
-                'price' => 7500000,
-                'cost_price' => 1500000,
-                'stock_quantity' => 3,
-                'min_stock' => 0,
-                'max_stock' => 100,
-                'image_url' => null,
-                'attributes' => null,
-                'status' => 'active',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ];
-        $this->db->table('product_variants_v2')->ignore(true)->insertBatch($variants);
+            ];
 
-        // Ảnh sản phẩm/biến thể
-        $images = [
-            [
-                'id'=>9001,
-                'product_id'=>501,
-                'variant_id'=>7001,
-                'image_url'=>'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',
-                'image_path'=>'/uploads/products/tdh016-m-den.jpg',
-                'is_primary'=>1,
-                'sort_order'=>0,
-                'created_at'=>$now,
-                'updated_at'=>$now,
-            ],
-            [
-                'id'=>9002,
-                'product_id'=>501,
-                'variant_id'=>7002,
-                'image_url'=>'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',
-                'image_path'=>'/uploads/products/tdh016-l-nau.jpg',
-                'is_primary'=>1,
-                'sort_order'=>0,
-                'created_at'=>$now,
-                'updated_at'=>$now,
-            ],
-        ];
-        $this->db->table('product_images')->ignore(true)->insertBatch($images);
+            // 3. Category Link
+            $links[] = [
+                'product_id' => $id, 
+                'category_id' => $catId, 
+                'created_at' => $now
+            ];
+            
+            // 4. Create Variants for every 5th product
+            if ($i % 5 === 0) {
+                 // Update parent to has_variants - Note: we can't update array by reference easily in foreach loop without &
+                 // So we modify the LAST element of $products array
+                 $products[count($products) - 1]['has_variants'] = 1;
+                 
+                 // Variation 1: Size M
+                 $v1_id = 7000 + ($i * 10) + 1;
+                 $variants[] = [
+                    'id' => $v1_id,
+                    'product_id' => $id,
+                    'variant_name' => "$name - Size M",
+                    'sku' => $code . '-M',
+                    'price' => $price,
+                    'cost_price' => $cost,
+                    'stock_quantity' => 20,
+                    'status' => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                 ];
+                 // Variant 1 Price
+                 $productPrices[] = [
+                    'product_id' => $id,
+                    'variant_id' => $v1_id,
+                    'price_type' => 'retail',
+                    'price'      => $price,
+                    'status'     => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
 
-        // Link sản phẩm với category
-        $links = [
-            ['product_id'=>501, 'category_id'=>103, 'created_at'=>$now],
-            ['product_id'=>502, 'category_id'=>102, 'created_at'=>$now],
-            ['product_id'=>503, 'category_id'=>102, 'created_at'=>$now],
-        ];
-        $this->db->table('product_category_links')->ignore(true)->insertBatch($links);
+                 // Variation 2: Size L
+                 $v2_id = 7000 + ($i * 10) + 2;
+                 $variants[] = [
+                    'id' => $v2_id,
+                    'product_id' => $id,
+                    'variant_name' => "$name - Size L",
+                    'sku' => $code . '-L',
+                    'price' => $price + 20000,
+                    'cost_price' => $cost,
+                    'stock_quantity' => 20,
+                    'status' => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now
+                 ];
+                 // Variant 2 Price
+                 $productPrices[] = [
+                    'product_id' => $id,
+                    'variant_id' => $v2_id,
+                    'price_type' => 'retail',
+                    'price'      => $price + 20000,
+                    'status'     => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
 
-        // Giá trị thuộc tính cho biến thể
-        $attrValues = [
-            ['id'=>9501,'product_id'=>501,'variant_id'=>7001,'attribute_id'=>201,'option_id'=>301,'created_at'=>$now,'updated_at'=>$now], // Đen
-            ['id'=>9502,'product_id'=>501,'variant_id'=>7001,'attribute_id'=>202,'option_id'=>303,'created_at'=>$now,'updated_at'=>$now], // M
-            ['id'=>9503,'product_id'=>501,'variant_id'=>7002,'attribute_id'=>201,'option_id'=>302,'created_at'=>$now,'updated_at'=>$now], // Nâu
-            ['id'=>9504,'product_id'=>501,'variant_id'=>7002,'attribute_id'=>202,'option_id'=>304,'created_at'=>$now,'updated_at'=>$now], // L
-        ];
-        $this->db->table('product_attribute_values')->ignore(true)->insertBatch($attrValues);
+        $this->db->table('products')->insertBatch($products);
+        if (!empty($variants)) {
+            $this->db->table('product_variants_v2')->insertBatch($variants);
+        }
+        $this->db->table('product_category_links')->insertBatch($links);
+        $this->db->table('product_images')->insertBatch($productImages);
+        $this->db->table('product_prices')->insertBatch($productPrices);
+        
+        echo "✅ Seeded 20 Products with Variants, Images, Prices.\n";
     }
 }

@@ -12,10 +12,12 @@
     "require": {
         "php": "^8.4",
         "codeigniter4/framework": "^4.6",
-        "firebase/php-jwt": "^6.10"
+        "firebase/php-jwt": "^6.10",
+        "phpoffice/phpspreadsheet": "^5.3"
     },
     "require-dev": {
         "fakerphp/faker": "^1.9",
+        "infection/infection": "^0.27.0",
         "mikey179/vfsstream": "^1.6",
         "phpunit/phpunit": "^10.5.16"
     },
@@ -30,6 +32,7 @@
     },
     "autoload-dev": {
         "psr-4": {
+            "Tests\\": "tests/",
             "Tests\\Support\\": "tests/_support"
         }
     },
@@ -39,6 +42,18 @@
         "sort-packages": true
     },
     "scripts": {
-        "test": "phpunit"
+        "test": "phpunit",
+        "test:mutation": [
+            "@php vendor/bin/phpunit --coverage-xml=coverage/coverage-xml --log-junit=coverage/junit.xml",
+            "@php vendor/bin/infection --configuration=infection.json.dist --threads=4"
+        ],
+        "test:mutation:baseline": [
+            "@php vendor/bin/phpunit --coverage-xml=coverage/coverage-xml --log-junit=coverage/junit.xml",
+            "@php vendor/bin/infection --configuration=infection.json.dist --threads=4 --baseline=infection-baseline.json"
+        ],
+        "test:quality": [
+            "@php vendor/bin/phpunit --coverage-clover=coverage/clover.xml --coverage-text",
+            "@php vendor/bin/infection --configuration=infection.json.dist --threads=4 --min-msi=80"
+        ]
     }
 }

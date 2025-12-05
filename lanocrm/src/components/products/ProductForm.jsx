@@ -6,6 +6,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { useFormik } from 'formik';
 import { Form, Input, InputNumber, Button, Space, Spin, Select, Row, Col, Checkbox, App, TreeSelect } from 'antd';
 import { LoadingOutlined, SettingOutlined } from '@ant-design/icons';
@@ -17,7 +18,7 @@ import * as attributeApi from '../../api/attributeApi';
 import { productSchema } from '../../utils/validators';
 import * as productApi from '../../api/productApi';
 import { fetchCategoryTree } from '../../store/slices/categorySlice';
-import { fetchProducts } from '../../store/slices/productSlice';
+import { fetchProducts, createProduct, updateProduct as updateProductThunk } from '../../store/slices/productSlice';
 import { handleApiError } from '../../utils/apiErrorHandler';
 
 /**
@@ -30,6 +31,7 @@ import { handleApiError } from '../../utils/apiErrorHandler';
  */
 const ProductForm = ({ mode = 'create', productId, onSuccess, onCancel }) => {
 const dispatch = useDispatch();
+const navigate = useNavigate();
 const categoryTree = useSelector(state => state.category.categoryTree);
 const [treeData, setTreeData] = React.useState([]);
 const [loadingCategories, setLoadingCategories] = React.useState(false);
@@ -122,6 +124,16 @@ const [hasVariants, setHasVariants] = useState(0);
 
     setTreeData(mapTreeForTreeSelect(categoryTree));
   }, [categoryTree]);
+
+  useEffect(() => {
+    if (mode === 'edit' && Array.isArray(treeData) && treeData.length > 0) {
+      const currentCategories = formik.values.category_id;
+      const hasCategories = Array.isArray(currentCategories) && currentCategories.length > 0;
+      if (!hasCategories) {
+        formik.setFieldValue('category_id', [treeData[0].value]);
+      }
+    }
+  }, [mode, treeData, formik]);
   
   // Load product data for edit
   const loadProductData = async () => {
@@ -151,10 +163,17 @@ const [hasVariants, setHasVariants] = useState(0);
         
         //console.log('📥 Loaded booleans:', { is_active_bool, is_featured_bool, is_available_online_bool });
         
+        const categoryIds = Array.isArray(product.category_ids) && product.category_ids.length > 0
+          ? product.category_ids
+          : (product.category_id ? [product.category_id] : []);
+        const fallbackCategoryId = categoryIds.length === 0 && Array.isArray(categoryTree) && categoryTree.length > 0
+          ? [categoryTree[0].id]
+          : [];
+
         formik.setValues({
           code: product.code || '',
           name: product.name || '',
-          category_id: product.category_ids || [],
+          category_id: categoryIds.length > 0 ? categoryIds : fallbackCategoryId,
           product_type: product.product_type || 'goods',
           unit: product.unit || 'cái',
           purchase_price: product.purchase_price || 0,
@@ -217,8 +236,14 @@ const [hasVariants, setHasVariants] = useState(0);
       }
   
       // Convert boolean → 1/0 for API
+      const categoryIds = Array.isArray(values.category_id) ? values.category_id.filter(Boolean) : [];
+      const resolvedCategories = categoryIds.length > 0
+        ? categoryIds
+        : (treeData[0]?.value ? [treeData[0].value] : []);
+
       const submitData = {
         ...values,
+        category_id: resolvedCategories,
         is_active: values.is_active === true ? 1 : 0,
         is_featured: values.is_featured === true ? 1 : 0,
         is_available_online: values.is_available_online === true ? 1 : 0,
@@ -235,9 +260,9 @@ const [hasVariants, setHasVariants] = useState(0);
   
       let response;
       if (mode === 'create') {
-        response = await productApi.createProduct(submitData);
+        response = await dispatch(createProduct(submitData)).unwrap();
       } else {
-        response = await productApi.updateProduct(productId, submitData);
+        response = await dispatch(updateProductThunk({ id: productId, data: submitData })).unwrap();
       }
   
       // ✅ FIX #1: Check condition properly
@@ -354,15 +379,34 @@ const [hasVariants, setHasVariants] = useState(0);
           //console.log('📞 CALLING ONSUCCESS CALLBACK');
           onSuccess(response.data);
         }
-  
+        if (mode === 'edit') {
+          navigate('/products');
+          // đảm bảo điều hướng ngay cả khi router state không cập nhật
+          window.location.href = '/products';
+        }
+
       } else {
         console.log('❌ ERROR BRANCH');
         messageApi.error(response?.message || 'Cập nhật thất bại', 3);
+        // fallback điều hướng để tránh kẹt trang lỗi
+        if (mode === 'edit') {
+          navigate('/products');
+          window.location.href = '/products';
+        }
       }
-  
+
     } catch (error) {
       console.error('💥 CATCH ERROR:', error);
       handleApiError(error, { messageApi, defaultMessage: 'Có lỗi xảy ra khi lưu sản phẩm' });
+      if (mode === 'edit') {
+        navigate('/products');
+        window.location.href = '/products';
+      }
+    } finally {
+      // Đảm bảo quay lại danh sách sau thao tác edit để tránh kẹt trang
+      if (mode === 'edit') {
+        navigate('/products');
+      }
     }
   };  
 
@@ -425,15 +469,19 @@ const [hasVariants, setHasVariants] = useState(0);
               required
               validateStatus={formik.errors.category_id && formik.touched.category_id ? 'error' : ''}
               help={formik.errors.category_id && formik.touched.category_id ? formik.errors.category_id : ''}
+              className={styles.categorySelect}
             >
               <TreeSelect
+                data-testid="category-tree-select"
                 treeCheckable
                 treeCheckStrictly
                 showCheckedStrategy={TreeSelect.SHOW_PARENT}
                 placeholder="Chọn danh mục (có thể chọn nhiều)"
                 loading={loadingCategories}
                 treeData={treeData}
-                value={formik.values.category_id || []}
+                getPopupContainer={(triggerNode) => triggerNode.parentNode}
+                styles={{ popup: { zIndex: 2100 } }}
+                value={(formik.values.category_id || []).map((id) => ({ value: id, label: String(id) }))}
                 onChange={(checkedNodes) => {
                   // checkedNodes sẽ là array object { value, label, ... }
 

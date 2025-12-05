@@ -52,6 +52,10 @@ vi.mock('antd', async (importOriginal) => {
   const actual = await importOriginal();
   return {
     ...actual,
+    message: {
+      success: vi.fn(),
+      error: vi.fn(),
+    },
     App: {
       useApp: () => ({
         message: {

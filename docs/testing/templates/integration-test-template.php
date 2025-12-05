@@ -8,7 +8,7 @@ use Config\Database;
  * {Module} API integration tests
  * 
  * @agent-test: {Module} API
- * @agent-copied-from: TESTING-PATTERNS.md
+ * @agent-copied-from: TESTING-PATTERNS-01
  */
 class {Module}ApiTest extends FeatureTestCase
 {
@@ -67,6 +67,6 @@ class {Module}ApiTest extends FeatureTestCase
 
     private function cleanupTestData(): void
     {
-        // TODO: Clean test data
+        // TODO: Clean test data without DROP DATABASE/TABLE (use truncate/delete inside transaction)
     }
 }

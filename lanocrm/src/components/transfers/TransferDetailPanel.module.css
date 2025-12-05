@@ -1,0 +1,54 @@
+.panel {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.code {
+  margin: 0;
+}
+
+.meta {
+  display: flex;
+  gap: 32px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+
+.metaTime {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.divider {
+  margin: 10px 0;
+}
+
+.searchRow {
+  margin-bottom: 8px;
+}
+
+.notesRow {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.summaryBox {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 8px;
+}

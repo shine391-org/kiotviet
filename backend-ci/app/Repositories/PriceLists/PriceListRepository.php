@@ -13,8 +13,9 @@ class PriceListRepository
 
     public function __construct(?PriceListModel $lists = null, ?BaseConnection $db = null)
     {
-        $this->lists = $lists ?? new PriceListModel();
-        $this->db = $db ?? \Config\Database::connect();
+        $group = ENVIRONMENT === 'testing' ? 'tests' : null;
+        $this->db = $db ?? \Config\Database::connect($group);
+        $this->lists = $lists ?? new PriceListModel($this->db);
     }
 
     /** List price lists with filters + pagination. */
@@ -23,8 +24,14 @@ class PriceListRepository
         $b = $this->applyFilters($filters);
         $limit = $filters['limit'] ?? 20;
         $offset = (($filters['page'] ?? 1) - 1) * $limit;
-        $rows = $b->orderBy('priority', 'DESC')->orderBy('start_date', 'ASC')->orderBy('id', 'DESC')
-            ->limit($limit, $offset)->get()->getResultArray();
+        $result = $b->orderBy('priority', 'DESC')->orderBy('start_date', 'ASC')->orderBy('id', 'DESC')
+            ->limit($limit, $offset)
+            ->get();
+        if ($result === false) {
+            $err = $this->db->error();
+            throw new \RuntimeException('PriceListRepository findAll failed: ' . json_encode($err));
+        }
+        $rows = $result->getResultArray();
         return array_map(fn ($r) => $this->hydrate($r), $rows);
     }
 
@@ -77,17 +84,22 @@ class PriceListRepository
             ->where('deleted_at', null)
             ->where('is_active', 1)
             ->groupStart()
-                ->where('start_date', null)
+                ->where('start_date IS NULL', null, false)
                 ->orWhere('start_date <=', $date)
             ->groupEnd()
             ->groupStart()
-                ->where('end_date', null)
+                ->where('end_date IS NULL', null, false)
                 ->orWhere('end_date >=', $date)
             ->groupEnd()
             ->orderBy('priority', 'DESC')
             ->orderBy('start_date', 'ASC');
 
-        $rows = $b->get()->getResultArray();
+        $result = $b->get();
+        if ($result === false) {
+            $err = $this->db->error();
+            throw new \RuntimeException('PriceListRepository query failed: ' . json_encode($err));
+        }
+        $rows = $result->getResultArray();
         $rows = array_map(fn ($r) => $this->hydrate($r), $rows);
 
         if ($groupId === null) { return $rows; }
@@ -108,11 +120,17 @@ class PriceListRepository
             // apply_to_groups is JSON array; match null (apply to all) or contains gid
             $b->groupStart()
                 ->where('apply_to_groups', null)
-                ->orWhere('JSON_CONTAINS(apply_to_groups, ?)', [json_encode($gid)])
+                ->orWhere("JSON_CONTAINS(apply_to_groups, '" . json_encode($gid) . "')", null, false)
                 ->groupEnd();
         }
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {
             $b->where('is_active', $filters['is_active'] ? 1 : 0);
+        }
+        if (! empty($filters['start_date'])) {
+            $b->where('start_date >=', $filters['start_date']);
+        }
+        if (! empty($filters['end_date'])) {
+            $b->where('end_date <=', $filters['end_date']);
         }
 
         if (! empty($filters['status'])) {

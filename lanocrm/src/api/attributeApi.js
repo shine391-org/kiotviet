@@ -400,9 +400,7 @@ export const getProductAttributeValues = async (productId) => {
       message: response.data.message || 'Tải thuộc tính sản phẩm thành công',
     };
   } catch (error) {
-    console.error('❌ getProductAttributeValues Error:', error);
-    
-    // Return empty array instead of throwing for 404
+    // Return empty array instead of throwing/logging for 404
     if (error.response?.status === 404) {
       return {
         success: true,
@@ -411,6 +409,7 @@ export const getProductAttributeValues = async (productId) => {
       };
     }
     
+    console.error('❌ getProductAttributeValues Error:', error);
     throw error;
   }
 };
@@ -486,9 +485,7 @@ export const getVariantAttributeValues = async (variantId) => {
       message: response.data.message || 'Tải thuộc tính biến thể thành công',
     };
   } catch (error) {
-    console.error('❌ getVariantAttributeValues Error:', error);
-    
-    // Return empty array for 404
+    // Return empty array for 404 without logging
     if (error.response?.status === 404) {
       return {
         success: true,
@@ -497,6 +494,7 @@ export const getVariantAttributeValues = async (variantId) => {
       };
     }
     
+    console.error('❌ getVariantAttributeValues Error:', error);
     throw error;
   }
 };
@@ -711,6 +709,9 @@ export const getProductsByAttribute = async (attributeId, includeDeleted = false
       message: response.data.message || 'Tải danh sách thành công',
     };
   } catch (error) {
+    if (error.response?.status === 404) {
+      return { success: true, data: [], message: 'Không tìm thấy thuộc tính' };
+    }
     console.error('❌ getProductsByAttribute Error:', error);
     throw new Error(
       error.response?.data?.message || 
@@ -725,6 +726,9 @@ export const getUsedOptionsByProduct = async (productId) => {
     const response = await axiosInstance.get(`/products/${productId}/used-attribute-options`);
     return response.data;
   } catch (error) {
+    if (error.response?.status === 404) {
+      return { success: true, data: [] };
+    }
     console.error('getUsedOptionsByProduct Error:', error);
     throw error;
   }

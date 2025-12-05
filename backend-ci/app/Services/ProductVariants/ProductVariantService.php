@@ -33,9 +33,16 @@ class ProductVariantService
     /** Upload multiple files for a variant. @agent-use: POST /api/variants/{id}/upload-multiple @agent-pattern: Batch upload */
     public function uploadMultiple(int $variantId, array $files): array
     {
-        $this->requireVariant($variantId); $uploads = $this->normalizeFiles($files); if (empty($uploads)) { throw new InvalidArgumentException('No files uploaded'); }
-        $urls = $this->storeFiles($uploads);
-        return ['success' => true, 'data' => ['variant_id' => $variantId, 'files' => $urls]];
+        $variant = $this->requireVariant($variantId); 
+        $productId = (int) $variant['product_id'];
+        
+        $uploads = $this->normalizeFiles($files); 
+        if (empty($uploads)) { throw new InvalidArgumentException('No files uploaded'); }
+        
+        $rows = $this->prepareVariantImages($productId, $variantId, $uploads);
+        $inserted = $this->productRepo->insertImages($rows);
+        
+        return ['success' => true, 'uploaded_count' => count($inserted), 'data' => $inserted];
     }
 
     /** Attach uploaded images to variant. @agent-use: POST /api/variants/{id}/images/attach-multiple @agent-pattern: Bulk attach */
@@ -103,11 +110,28 @@ class ProductVariantService
         return array_values(array_filter($normalized, static fn (UploadedFile $f) => $f->isValid()));
     }
 
-    /** Move uploaded files into storage and return URLs. */
-    private function storeFiles(array $files): array
+    /** Move files and prepare DB rows. */
+    private function prepareVariantImages(int $productId, int $variantId, array $files): array
     {
-        $uploadPath = WRITEPATH . 'uploads/variants'; if (! is_dir($uploadPath)) { mkdir($uploadPath, 0775, true); }
-        $urls = []; foreach ($files as $file) { $newName = $file->getRandomName(); $file->move($uploadPath, $newName); $urls[] = '/uploads/variants/' . $newName; }
-        return $urls;
+        $uploadPath = WRITEPATH . 'uploads/variants'; 
+        if (! is_dir($uploadPath)) { mkdir($uploadPath, 0775, true); }
+        
+        $rows = []; 
+        foreach ($files as $file) { 
+            $newName = $file->getRandomName(); 
+            $file->move($uploadPath, $newName); 
+            $rows[] = [
+                'product_id' => $productId,
+                'variant_id' => $variantId,
+                'image_path' => '/uploads/variants/' . $newName,
+                'image_url' => '/uploads/variants/' . $newName,
+                'is_primary' => 0,
+                'sort_order' => 0,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+                'file_name' => $file->getClientName()
+            ];
+        }
+        return $rows;
     }
 }

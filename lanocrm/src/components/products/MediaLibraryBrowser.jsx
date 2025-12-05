@@ -24,8 +24,10 @@ import {
   EyeOutlined,
 } from '@ant-design/icons';
 import * as productApi from '../../api/productApi';
+import { getImageUrl } from '../../utils/imageUrl';
 import styles from './MediaLibraryBrowser.module.css';
 import ConfirmImageDeleteModal from './ConfirmImageDeleteModal';
+
 import ConfirmAttachResultModal from './ConfirmAttachResultModal';
 
 const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelected, visible }) => {
@@ -466,10 +468,11 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
                       cover={
                         <div className={styles['image-cover']}>
                           <img
-                            src={image.image_url}
+                            src={getImageUrl(image.image_url)}
                             alt="Product"
                             className={`${styles['image-thumbnail']} ${isAttached(image) ? styles['imageAttached'] : ''}`}
                           />
+
                           <div className={styles['image-overlay']}>
                             <Checkbox
                               checked={selectedImages.has(image.id)}
@@ -535,17 +538,17 @@ const MediaLibraryBrowser = ({ productId, variantId, productCode, onImagesSelect
       </Space>
 
       <ConfirmImageDeleteModal visible={deleteConfirmVisible} image={deleteImageData} isHardDelete onConfirm={() => {
-          if (deleteImageId) handleHardDeleteImage(deleteImageId);
-          else setDeleteConfirmVisible(false);
-        }} onCancel={() => {
-          if (isDeleting) return;
-          setDeleteConfirmVisible(false);
-          setDeleteImageId(null);
-          setDeleteImageData(null);
-        }} />
+        if (deleteImageId) handleHardDeleteImage(deleteImageId);
+        else setDeleteConfirmVisible(false);
+      }} onCancel={() => {
+        if (isDeleting) return;
+        setDeleteConfirmVisible(false);
+        setDeleteImageId(null);
+        setDeleteImageData(null);
+      }} />
 
       <ConfirmAttachResultModal key={JSON.stringify(attachResult || {})} visible={attachResultVisible} result={attachResult} onClose={handleCloseModal} />
-      
+
     </div>
   );
 };

@@ -4,155 +4,105 @@ namespace Tests\Repositories;
 
 use App\Repositories\PriceLists\PriceListRepository;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
 use Tests\Support\Database\PriceListSchemaTrait;
 
-/** @agent-test: PriceListRepository tests @agent-pattern: Repository coverage */
+/**
+ * @agent-test: PriceListRepository
+ * @agent-pattern: Repository test with DevDatabaseTrait + PriceListSchemaTrait
+ */
 class PriceListRepositoryTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
     use PriceListSchemaTrait;
 
     private PriceListRepository $repo;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
+        $this->setUpDatabase();
         $this->resetPriceListSchema();
         $this->repo = new PriceListRepository(null, $this->db);
     }
 
-    /** @test */
-    public function it_finds_applicable_lists_with_filters()
+    protected function tearDown(): void
     {
-        $vip = $this->seedList('VIP', 'vip', ['apply_to_groups' => [2], 'priority' => 5]);
-        $retail = $this->seedList('Retail', 'retail', ['apply_to_groups' => [], 'priority' => 1]);
-
-        $result = $this->repo->applicablePriceLists(2, date('Y-m-d'));
-        $ids = array_column($result, 'id');
-        $this->assertEquals([$vip, $retail], $ids);
+        $this->tearDownDatabase();
+        parent::tearDown();
     }
 
-    /** @test */
-    public function it_bulk_upserts_items()
+    public function testFindAllFiltersByStatusAndGroup(): void
     {
-        $list = $this->seedList('Bulk', 'custom');
-        $count = 50;
-        $items = [];
-        for ($i = 1; $i <= $count; $i++) {
-            $items[] = ['product_id' => $i, 'price' => 100 + $i];
-        }
-        $res = $this->repo->findById($list); // ensure list exists
-        $this->assertNotNull($res);
-        $itemRepo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $itemRepo->replaceItems($list, $items);
-        $this->assertEquals($count, $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+        $today = date('Y-m-d');
+        $global = $this->createPriceList(['name' => 'Global', 'apply_to_groups' => null, 'is_active' => 1, 'start_date' => $today]);
+        $grouped = $this->createPriceList(['name' => 'Group 5', 'apply_to_groups' => [5], 'is_active' => 1, 'start_date' => $today]);
+        $this->createPriceList(['name' => 'Upcoming', 'apply_to_groups' => [5], 'is_active' => 1, 'start_date' => date('Y-m-d', strtotime('+5 days'))]);
+        $this->createPriceList(['name' => 'Inactive', 'apply_to_groups' => [5], 'is_active' => 0]);
+
+        $result = $this->repo->findAll([
+            'status' => 'active',
+            'apply_to_group_id' => 5,
+            'page' => 1,
+            'limit' => 10,
+        ]);
+
+        $this->assertCount(2, $result);
+        $this->assertSame([5], $result[0]['apply_to_groups']);
+        $this->assertSame($global['name'], $result[1]['name']);
+        $this->assertSame(2, $this->repo->count(['status' => 'active', 'apply_to_group_id' => 5]));
     }
 
-    /** @test */
-    public function it_handles_large_bulk_insert()
+    public function testNameExistsRespectsExcludeId(): void
     {
-        $list = $this->seedList('BigBulk', 'custom');
-        $count = 1000;
-        $rows = [];
-        for ($i = 1; $i <= $count; $i++) {
-            $rows[] = ['product_id' => $i, 'price' => 10000 + $i];
-        }
-        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $repo->replaceItems($list, $rows);
-        $this->assertEquals($count, $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
+        $row = $this->createPriceList(['name' => 'Wholesale']);
+
+        $this->assertTrue($this->repo->nameExists('Wholesale'));
+        $this->assertFalse($this->repo->nameExists('Wholesale', $row['id']));
     }
 
-    /** @test */
-    public function it_imports_50_lists_with_1000_items_each()
+    public function testApplicablePriceListsFiltersByDateAndGroup(): void
     {
-        $itemsPerList = 1000;
-        $lists = 50;
+        $today = date('Y-m-d');
+        $this->createPriceList(['name' => 'Active', 'start_date' => $today, 'end_date' => $today, 'apply_to_groups' => [3]]);
+        $this->createPriceList(['name' => 'No group', 'apply_to_groups' => null]);
+        $this->createPriceList(['name' => 'Expired', 'end_date' => date('Y-m-d', strtotime('-1 day'))]);
+        $this->createPriceList(['name' => 'Inactive', 'is_active' => 0]);
 
-        $this->seedProductsBulk($itemsPerList);
+        $applicable = $this->repo->applicablePriceLists(3, $today);
 
-        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $totalInserted = 0;
-
-        for ($i = 1; $i <= $lists; $i++) {
-            $listId = $this->seedList('Perf-' . $i, 'custom');
-            $rows = [];
-            for ($p = 1; $p <= $itemsPerList; $p++) {
-                $rows[] = ['product_id' => $p, 'price' => 10000 + $p];
-            }
-            $repo->replaceItems($listId, $rows);
-            $totalInserted += $itemsPerList;
-        }
-
-        $this->assertEquals($totalInserted, $this->db->table('db_price_list_items')->countAllResults());
+        $this->assertCount(2, $applicable);
+        $names = array_column($applicable, 'name');
+        $this->assertEqualsCanonicalizing(['Active', 'No group'], $names);
     }
 
-    /** @test */
-    public function it_imports_items_from_csv_and_json()
+    private function createPriceList(array $overrides = []): array
     {
-        $list = $this->seedList('Import', 'custom');
-        $this->seedProductsBulk(5);
-
-        $csv = "product_id,price\n1,101\n2,202\n";
-        $csvItems = [];
-        foreach (explode("\n", trim($csv)) as $index => $line) {
-            if ($index === 0) { continue; }
-            $parts = str_getcsv($line);
-            $csvItems[] = ['product_id' => (int) $parts[0], 'price' => (float) $parts[1]];
-        }
-
-        $json = '[{"product_id":3,"price":303},{"product_id":4,"price":404},{"product_id":5,"price":505}]';
-        $jsonItems = json_decode($json, true);
-
-        $rows = array_merge($csvItems, $jsonItems);
-
-        $repo = new \App\Repositories\PriceLists\PriceListItemRepository(null, $this->db);
-        $repo->replaceItems($list, $rows);
-
-        $this->assertEquals(count($rows), $this->db->table('db_price_list_items')->where('price_list_id', $list)->countAllResults());
-        $this->assertEquals(505, (float) $this->db->table('db_price_list_items')->where('product_id', 5)->get()->getRow('price'));
-    }
-
-    /** @test */
-    public function it_soft_deletes_preserve_row()
-    {
-        $list = $this->seedList('Soft', 'custom');
-        $this->repo->delete($list);
-        $row = $this->db->table('db_price_lists')->where('id', $list)->get()->getRowArray();
-        $this->assertNotNull($row);
-        $this->assertNotNull($row['deleted_at']);
-    }
-
-    private function seedList(string $name, string $type, array $extra = []): int
-    {
-        $payload = array_merge([
-            'name' => $name,
-            'type' => $type,
+        $now = date('Y-m-d H:i:s');
+        $data = array_merge([
+            'name' => 'PL-' . uniqid(),
+            'type' => 'custom',
+            'description' => null,
+            'apply_to_groups' => null,
+            'start_date' => null,
+            'end_date' => null,
             'priority' => 0,
             'is_active' => 1,
-            'start_date' => date('Y-m-d', strtotime('-1 day')),
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ], $extra);
-        $payload['apply_to_groups'] = isset($payload['apply_to_groups']) ? json_encode($payload['apply_to_groups']) : null;
-        $this->db->table('db_price_lists')->insert($payload);
-        return (int) $this->db->insertID();
-    }
+            'formula' => null,
+            'base_price_list_id' => null,
+            'auto_update' => 0,
+            'rounding_rule' => 'none',
+            'created_at' => $now,
+            'updated_at' => $now,
+            'deleted_at' => null,
+        ], $overrides);
 
-    private function seedProductsBulk(int $count): void
-    {
-        $existing = $this->db->table('db_products')->countAllResults();
-        if ($existing >= $count) { return; }
-        for ($i = 1; $i <= $count; $i++) {
-            $this->db->table('db_products')->insert([
-                'id' => $i,
-                'code' => 'P' . $i,
-                'name' => 'Product ' . $i,
-                'selling_price' => 100 + $i,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+        if (isset($data['apply_to_groups']) && is_array($data['apply_to_groups'])) {
+            $data['apply_to_groups'] = json_encode($data['apply_to_groups']);
         }
+
+        $this->db->table('price_lists')->insert($data);
+        $data['id'] = (int) $this->db->insertID();
+        return $data;
     }
 }

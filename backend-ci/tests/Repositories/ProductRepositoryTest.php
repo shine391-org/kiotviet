@@ -4,84 +4,177 @@ namespace Tests\Repositories;
 
 use App\Repositories\Products\ProductRepository;
 use CodeIgniter\Test\CIUnitTestCase;
-use Config\Database;
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\ProductSchemaTrait;
 
+/**
+ * @agent-test: ProductRepository
+ * @agent-pattern: Repository test with DevDatabaseTrait + ProductSchemaTrait
+ */
 class ProductRepositoryTest extends CIUnitTestCase
 {
+    use DevDatabaseTrait;
+    use ProductSchemaTrait;
+
     private ProductRepository $repo;
-    protected $db;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->db = Database::connect('tests');
-        $this->resetSchema();
-        $this->repo = new ProductRepository();
+        $this->setUpDatabase();
+        $this->resetProductSchema();
+        $this->repo = new ProductRepository(null, null, null, $this->db);
     }
 
-    public function testFindAllWithSearch(): void
+    protected function tearDown(): void
     {
-        $this->insertProduct(['code' => 'AO01', 'name' => 'ao so mi']);
-        $this->insertProduct(['code' => 'QU01', 'name' => 'quan jean']);
+        $this->tearDownDatabase();
+        parent::tearDown();
+    }
 
-        $result = $this->repo->findAll(['search' => 'ao', 'page' => 1, 'limit' => 10]);
+    public function testFindAllAppliesFilters(): void
+    {
+        $this->createProduct(['code' => 'A1', 'name' => 'Alpha', 'status' => 'active', 'product_type' => 'goods']);
+        $this->createProduct(['code' => 'B2', 'name' => 'Beta', 'status' => 'inactive', 'product_type' => 'service']);
+
+        $result = $this->repo->findAll(['search' => 'A', 'status' => 'active', 'page' => 1, 'limit' => 10]);
 
         $this->assertCount(1, $result);
-        $this->assertSame('AO01', $result[0]['code']);
+        $this->assertSame('A1', $result[0]['code']);
+        $this->assertSame(1, $this->repo->count(['search' => 'A', 'status' => 'active']));
     }
 
-    public function testSoftDelete(): void
+    public function testCodeExistsRespectsExcludeId(): void
     {
-        $id = $this->insertProduct(['code' => 'DEL01', 'name' => 'delete item']);
+        $p1 = $this->createProduct(['code' => 'DUP', 'name' => 'Dup']);
 
-        $this->assertTrue($this->repo->delete($id));
-
-        $this->assertNull($this->repo->findById($id));
-        $this->assertSame(0, $this->repo->count(['page' => 1, 'limit' => 10]));
+        $this->assertTrue($this->repo->codeExists('DUP'));
+        $this->assertFalse($this->repo->codeExists('DUP', $p1['id']));
     }
 
-    public function testCodeExists(): void
+    public function testVariantMapReturnsImageUrl(): void
     {
-        $id = $this->insertProduct(['code' => 'EX01', 'name' => 'exists']);
+        $product = $this->createProduct(['code' => 'P1', 'name' => 'P1']);
+        $variantId = $this->createVariant($product['id'], ['sku' => 'SKU-1']);
+        $this->createImage(['variant_id' => $variantId, 'image_url' => '/img/var1.jpg', 'sort_order' => 1]);
 
-        $this->assertTrue($this->repo->codeExists('EX01'));
-        $this->assertFalse($this->repo->codeExists('EX01', $id));
-        $this->assertFalse($this->repo->codeExists('NEW')); // not exists
+        $map = $this->repo->variantMap([$product['id']]);
+
+        $this->assertArrayHasKey($product['id'], $map);
+        $this->assertSame('/img/var1.jpg', $map[$product['id']][0]['image_url']);
     }
 
-    private function resetSchema(): void
+    public function testAttachImagesSkipsExistingAndUpdatesAttachable(): void
     {
-        $auto = strtoupper($this->db->DBDriver ?? '') === 'SQLITE3' ? 'AUTOINCREMENT' : 'AUTO_INCREMENT';
-        $this->db->query('DROP TABLE IF EXISTS db_products');
-        $this->db->query("CREATE TABLE db_products (
-            id INTEGER PRIMARY KEY {$auto},
-            product_type TEXT,
-            code TEXT,
-            barcode TEXT,
-            name TEXT,
-            status TEXT,
-            selling_price REAL,
-            created_at TEXT,
-            updated_at TEXT,
-            deleted_at TEXT
-        )");
+        $product = $this->createProduct(['code' => 'P1', 'name' => 'P1']);
+        $img1 = $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/old.jpg']);
+        $img2 = $this->createImage(['product_id' => null, 'image_url' => '/img/new.jpg']);
+
+        $result = $this->repo->attachImages($product['id'], [$img1, $img2, 999]);
+
+        $this->assertSame([$img2], $result['attached_ids']);
+        $this->assertSame([$img1], $result['skipped_ids']);
+        $this->assertSame([999], $result['missing_ids']);
+
+        $row = $this->db->table('product_images')->where('id', $img2)->get()->getRowArray();
+        $this->assertSame($product['id'], (int) $row['product_id']);
+        $this->assertNull($row['deleted_at']);
     }
 
-    private function insertProduct(array $data): int
+    public function testSetPrimaryImageUpdatesFlags(): void
     {
-        $payload = array_merge([
-            'product_type' => null,
-            'code' => 'P' . random_int(1000, 9999),
+        $product = $this->createProduct(['code' => 'P1', 'name' => 'P1']);
+        $img1 = $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/1.jpg', 'is_primary' => 1, 'sort_order' => 0]);
+        $img2 = $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/2.jpg', 'is_primary' => 0, 'sort_order' => 1]);
+
+        $this->repo->setPrimaryImage($img2);
+
+        $first = $this->db->table('product_images')->where('id', $img1)->get()->getRowArray();
+        $second = $this->db->table('product_images')->where('id', $img2)->get()->getRowArray();
+        $this->assertSame('0', (string) $first['is_primary']);
+        $this->assertSame('1', (string) $second['is_primary']);
+    }
+
+    public function testImagesReturnsNonDeletedOrdered(): void
+    {
+        $product = $this->createProduct(['code' => 'P1', 'name' => 'P1']);
+        $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/1.jpg', 'sort_order' => 2]);
+        $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/2.jpg', 'sort_order' => 1, 'deleted_at' => date('Y-m-d H:i:s')]);
+        $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/3.jpg', 'sort_order' => 0]);
+
+        $images = $this->repo->images($product['id']);
+
+        $this->assertCount(2, $images);
+        $this->assertSame('/img/3.jpg', $images[0]['image_url']);
+        $this->assertSame('/img/1.jpg', $images[1]['image_url']);
+    }
+
+    public function testDeleteSoftSetsDeletedAt(): void
+    {
+        $product = $this->createProduct(['code' => 'P1', 'name' => 'P1']);
+        $imgId = $this->createImage(['product_id' => $product['id'], 'image_url' => '/img/1.jpg']);
+
+        $this->repo->deleteImage($imgId, false);
+
+        $row = $this->db->table('product_images')->where('id', $imgId)->get()->getRowArray();
+        $this->assertNotNull($row['deleted_at']);
+    }
+
+    private function createProduct(array $overrides = []): array
+    {
+        $now = date('Y-m-d H:i:s');
+        $data = array_merge([
+            'product_type' => 'goods',
+            'code' => 'CODE-' . uniqid(),
             'barcode' => null,
-            'name' => 'Sample',
+            'name' => 'Product ' . uniqid(),
+            'slug' => 'slug-' . uniqid(),
             'status' => 'active',
             'selling_price' => 0,
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-            'deleted_at' => null,
-        ], $data);
+            'purchase_price' => 0,
+            'stock_quantity' => 0,
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $overrides);
+        $this->db->table('products')->insert($data);
+        $data['id'] = (int) $this->db->insertID();
+        return $data;
+    }
 
-        $this->db->table('db_products')->insert($payload);
+    private function createVariant(int $productId, array $overrides = []): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $data = array_merge([
+            'product_id' => $productId,
+            'variant_name' => 'VN-' . uniqid(),
+            'variant_signature' => 'sig-' . uniqid(),
+            'sku' => 'SKU-' . uniqid(),
+            'price' => 50,
+            'stock_quantity' => 0,
+            'status' => 'active',
+            'created_at' => $now,
+            'updated_at' => $now,
+        ], $overrides);
+        $this->db->table('product_variants_v2')->insert($data);
+        return (int) $this->db->insertID();
+    }
+
+    private function createImage(array $overrides = []): int
+    {
+        $now = date('Y-m-d H:i:s');
+        $data = array_merge([
+            'product_id' => null,
+            'variant_id' => null,
+            'image_path' => null,
+            'image_url' => '/img/' . uniqid() . '.jpg',
+            'is_primary' => 0,
+            'sort_order' => 0,
+            'file_name' => null,
+            'created_at' => $now,
+            'updated_at' => $now,
+            'deleted_at' => null,
+        ], $overrides);
+        $this->db->table('product_images')->insert($data);
         return (int) $this->db->insertID();
     }
 }

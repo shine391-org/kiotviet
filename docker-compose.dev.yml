@@ -1,0 +1,70 @@
+# Docker Compose Dev for Development Environment
+# This file extends docker-compose.yml with development-specific configurations
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  web:
+    volumes:
+      # Override with local development volume
+      - ./backend-ci:/var/www/html
+      # Add writable logs volume for debugging
+      - ./logs/api:/var/log/apache2
+      # Isolate vendor inside container to avoid host pollution
+      - api_vendor:/var/www/html/vendor
+      # Persist writable and uploads with correct permissions inside container
+      - api_writable:/var/www/html/writable
+      - api_uploads:/var/www/html/uploads
+    environment:
+      # Enable debug mode in development
+      - CI_ENVIRONMENT=development
+      - LOG_THRESHOLD=4
+      - DB_NAME=lanocrm_dev
+
+  fe:
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 3000"
+    volumes:
+      # Override with local development volume
+      - ./lanocrm:/app
+      # Add node_modules cache
+      - node_modules_cache:/app/node_modules
+    environment:
+      # Enable hot reload in development
+      - VITE_API_URL=http://web
+      - NODE_ENV=development
+      - DB_NAME=lanocrm_dev
+
+  db:
+    # Image inherited from docker-compose.yml
+    volumes:
+      # Override with dev data volume
+      - db_dev_data:/var/lib/mysql
+      # Add logs volume for debugging
+      - ./logs/mysql:/var/log/mysql
+    environment:
+      # Enable slow query log in development
+      - MYSQL_DATABASE=lanocrm_dev
+      - MYSQL_SLOW_QUERY_LOG=1
+      - MYSQL_LONG_QUERY_TIME=2
+
+  db-test:
+    # Image inherited from docker-compose.yml
+    volumes:
+      # Add logs volume for debugging
+      - ./logs/mysql-test:/var/log/mysql
+
+volumes:
+  # Define additional volumes for development
+  db_dev_data:
+    driver: local
+  api_logs:
+    driver: local
+  mysql_logs:
+    driver: local
+  mysql_test_logs:
+    driver: local
+  api_vendor:
+    driver: local
+  api_writable:
+    driver: local
+  api_uploads:
+    driver: local

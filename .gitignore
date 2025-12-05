@@ -1,0 +1,161 @@
+# ========================================
+# LANO CRM - Root .gitignore
+# ========================================
+# This file contains common ignore rules for the entire project
+# Module-specific rules are in their respective .gitignore files
+
+# ========================================
+# OS Generated Files
+# ========================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ========================================
+# Logs & Debug Files
+# ========================================
+*.log
+debug.log
+error.log
+access.log
+
+# ========================================
+# IDE & Editor Files
+# ========================================
+# VSCode
+.vscode/
+*.code-workspace
+
+# JetBrains (PHPStorm, WebStorm, etc.)
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ========================================
+# Backup & Temporary Files
+# ========================================
+*.tmp
+*.temp
+*.old
+*.orig
+*.rej
+~*
+# ========================================
+# Node.js (Common files)
+# ========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# ========================================
+# PHP (Common files)
+# ========================================
+composer.phar
+/vendor/
+phpunit
+phpunit.xml.dist.backup
+
+# ========================================
+# Testing & Coverage
+# ========================================
+coverage/
+tests/coverage/
+.phpunit/cache/
+test-results/
+playwright-report/
+
+# ========================================
+# Cache & Performance
+# ========================================
+.cache/
+.eslintcache
+.stylelintcache
+.phpintel
+
+# ========================================
+# Sensitive Configuration
+# ========================================
+# Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+
+# Configuration with secrets
+config/local.*
+secrets.*
+credentials.*
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# ========================================
+# Project Specific
+# ========================================
+# Screenshots and captures
+screenshots/*.png
+screenshots/*.jpg
+screenshots/*.jpeg
+
+# Docker volumes and data
+docker-data/
+docker-volumes/
+
+# Database dumps and backups
+# *.sql (Allowed by user request)
+*.sql.gz
+*.dump
+db-backups/
+backups/
+
+# User requested ignores
+*.xlsx
+**/uploads/
+.ai/
+.vscode/
+.kilocodemodes
+
+# ========================================
+# Keep these directories but ignore contents
+# ========================================
+# Keep directory structure but ignore files
+logs/*
+!logs/.gitkeep
+temp/*
+!temp/.gitkeep
+tmp/*
+!tmp/.gitkeep
+uploads/*
+!uploads/.gitkeep

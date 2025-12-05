@@ -81,8 +81,8 @@ describe('roleApi', () => {
 
     describe('getRolePermissions', () => {
         it('should fetch role permissions', async () => {
-            const mockPermissions = { data: [{ id: '1', name: 'products.view' }] };
-            axiosInstance.get.mockResolvedValue({ data: mockPermissions });
+            const mockPermissions = [{ id: '1', name: 'products.view' }];
+            axiosInstance.get.mockResolvedValue({ data: { data: mockPermissions } });
 
             const result = await roleApi.getRolePermissions('1');
 

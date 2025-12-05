@@ -15,6 +15,7 @@ import {
 } from 'antd';
 import { PlusOutlined, DeleteOutlined, SaveOutlined } from '@ant-design/icons';
 import * as attributeApi from '../../api/attributeApi';
+import { getImageUrl } from '../../utils/imageUrl';
 import styles from './VariantAttributeManager.module.css';
 
 const { Option } = Select;
@@ -27,10 +28,10 @@ const { Option } = Select;
  * @param {Function} props.onSaved - Callback khi lưu thành công
  * @param {boolean} props.disabled - Disable edit mode
  */
-const VariantAttributeManager = ({ 
+const VariantAttributeManager = ({
   mode = 'variant', // ✅ THÊM: 'product' | 'variant'
   entityId, // ✅ ĐỔI TÊN: variantId → entityId
-  onSaved, 
+  onSaved,
   disabled = false,
   onOptionIdsChange,
 }) => {
@@ -52,13 +53,13 @@ const VariantAttributeManager = ({
         loadUsedOptions();
       }
     }
-  }, [entityId, mode]);  
+  }, [entityId, mode]);
 
   useEffect(() => {
     const validAttrIds = entityAttributes
       .map((va) => va.attribute_id)
       .filter((id, idx, arr) => id && arr.indexOf(id) === idx);
-  
+
     validAttrIds.forEach((attrId) => {
       const attr = attributes.find((a) => a.id === attrId);
       if (attr && ['select', 'color', 'image'].includes(attr.type)) {
@@ -71,12 +72,12 @@ const VariantAttributeManager = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // Load danh sách attributes
       const attrRes = await attributeApi.getAttributes();
       if (attrRes.success) {
         setAttributes(attrRes.data);
-        
+
         // Load options cho từng attribute
         const optionsMap = {};
         for (const attr of attrRes.data) {
@@ -89,7 +90,7 @@ const VariantAttributeManager = ({
         }
         setAttributeOptions(optionsMap);
       }
-  
+
       // Load giá trị hiện tại
       let valuesRes;
       if (mode === 'product') {
@@ -97,12 +98,12 @@ const VariantAttributeManager = ({
       } else {
         valuesRes = await attributeApi.getVariantAttributeValues(entityId);
       }
-      
+
       if (valuesRes.success) {
         // GROUP lại theo attribute_id để tránh duplicate
         const groupedAttrs = [];
         const attrMap = {};
-  
+
         (valuesRes.data || []).forEach(v => {
           const aid = v.attribute_id;
           if (!attrMap[aid]) {
@@ -121,9 +122,9 @@ const VariantAttributeManager = ({
             attrMap[aid].options.push({ option_id: v.option_id });
           }
         });
-  
+
         setEntityAttributes(groupedAttrs);
-        
+
         // Chuẩn bị selectedOptions từ data đã lưu
         const opts = {};
         (valuesRes.data || []).forEach(v => {
@@ -137,7 +138,7 @@ const VariantAttributeManager = ({
     } finally {
       setLoading(false);
     }
-  };  
+  };
 
   const loadAttributeOptions = async (attributeId) => {
     if (attributeOptions[attributeId]) return;
@@ -159,10 +160,10 @@ const VariantAttributeManager = ({
  * Dựa vào product_id lấy từ variant hoặc product, trả về object: { attribute_id: [option_id1, option_id2, ...] }
  * Cập nhật state `usedOptionsMap` để disable option.
  */
-const loadUsedOptions = async () => {
+  const loadUsedOptions = async () => {
     try {
       let targetProductId = productId;
-  
+
       if (mode === 'variant' && !targetProductId) {
         const variantRes = await attributeApi.getVariantById(entityId);
         if (variantRes.success && variantRes.data) {
@@ -173,12 +174,12 @@ const loadUsedOptions = async () => {
         targetProductId = entityId;
         setProductId(entityId);
       }
-  
+
       if (!targetProductId) {
         console.warn('Không có productId để lấy used options');
         return;
       }
-  
+
       const res = await attributeApi.getUsedOptionsByProduct(targetProductId);
       if (res.success && res.data) {
         setUsedOptionsMap(res.data);
@@ -199,11 +200,11 @@ const loadUsedOptions = async () => {
     }
     const attr = attributes.find((a) => a.id === selectedAttributeId);
     if (!attr) return;
-    
+
     if (['select', 'color', 'image'].includes(attr.type)) {
       await loadAttributeOptions(attr.id);
     }
-    
+
     const newAttr = {
       id: null,
       [mode === 'product' ? 'product_id' : 'variant_id']: entityId, // ✅ FIX
@@ -212,7 +213,7 @@ const loadUsedOptions = async () => {
       value_text: attr.type === 'text' ? '' : null,
       option_id: null,
     };
-    
+
     setEntityAttributes(
       [...entityAttributes, newAttr].filter(
         (a, idx, arr) => arr.findIndex(t => t.attribute_id === a.attribute_id) === idx
@@ -231,7 +232,7 @@ const loadUsedOptions = async () => {
       delete copy[attributeId];
       return copy;
     });
-  
+
     try {
       // Xóa attribute này KHỎI DB BACKEND (dùng request đúng mode)
       if (mode === 'variant') {
@@ -256,7 +257,7 @@ const loadUsedOptions = async () => {
       console.error('Error removing attribute:', error);
       message.error(error.message || 'Lỗi khi gỡ thuộc tính');
     }
-  };  
+  };
 
   const handleUpdateValue = (attributeId, field, value) => {
     setEntityAttributes(prevAttrs =>
@@ -289,10 +290,10 @@ const loadUsedOptions = async () => {
       message.error(errors.join(', '));
       return;
     }
-  
+
     try {
       setSaving(true);
-  
+
       // BUILD attributeValues CHUẨN TỪ entityAttributes
       const attributeValues = entityAttributes
         .map(attr => {
@@ -314,17 +315,17 @@ const loadUsedOptions = async () => {
         .flat()
         .filter(av => av.attribute_id);
 
-        // Lọc trùng attribute_id + option_id
-        const uniqueAttributeValues = [];
-        const seen = new Set();
-        for (const val of attributeValues) {
-          const key = `${val.attribute_id}-${val.option_id ?? 'null'}`;
-          if (!seen.has(key)) {
-            seen.add(key);
-            uniqueAttributeValues.push(val);
-          }
+      // Lọc trùng attribute_id + option_id
+      const uniqueAttributeValues = [];
+      const seen = new Set();
+      for (const val of attributeValues) {
+        const key = `${val.attribute_id}-${val.option_id ?? 'null'}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          uniqueAttributeValues.push(val);
         }
-  
+      }
+
       let response;
       if (mode === 'product') {
         response = await attributeApi.updateProductAttributeValues(entityId, { attribute_values: attributeValues });
@@ -332,7 +333,7 @@ const loadUsedOptions = async () => {
         response = await attributeApi.syncVariantAttributeValues(entityId, attributeValues);
 
       }
-  
+
       if (response.success) {
         message.success('Lưu thuộc tính thành công');
         if (onSaved) onSaved(response.data);
@@ -345,17 +346,17 @@ const loadUsedOptions = async () => {
     } finally {
       setSaving(false);
     }
-  };    
+  };
 
   const renderAttributeInput = (entityAttr) => {
     const attr = attributes.find((a) => a.id === entityAttr.attribute_id);
     if (!attr) return null;
     const options = attributeOptions[attr.id] || [];
-  
+
     const optionValue = (entityAttr.option_id !== undefined && entityAttr.option_id !== null)
       ? String(entityAttr.option_id)
       : undefined;
-  
+
     switch (attr.type) {
       case 'text':
         return (
@@ -380,7 +381,7 @@ const loadUsedOptions = async () => {
             }}
             disabled={disabled}
             showSearch
-            filterOption={(input, opt) => 
+            filterOption={(input, opt) =>
               (opt.children || '').toLowerCase().includes(input.toLowerCase())
             }
             style={{ width: '100%' }}
@@ -396,7 +397,7 @@ const loadUsedOptions = async () => {
                 )}
                 {attr.type === 'image' && opt.image_url && (
                   <img
-                    src={opt.image_url}
+                    src={getImageUrl(opt.image_url)}
                     alt={opt.option_name}
                     style={{ width: 30, height: 30, objectFit: 'cover', marginLeft: 8 }}
                   />
@@ -405,6 +406,7 @@ const loadUsedOptions = async () => {
             ))}
           </Select>
         );
+
       default:
         return null;
     }
@@ -427,7 +429,7 @@ const loadUsedOptions = async () => {
       <Divider orientation="left">
         {mode === 'product' ? 'Thuộc tính sản phẩm' : 'Thuộc tính biến thể'}
       </Divider>
-  
+
       {/* Form add attribute */}
       {!disabled && (
         <div className={styles.addAttribute}>
@@ -447,8 +449,8 @@ const loadUsedOptions = async () => {
                     <Tag
                       color={
                         attr.type === 'text' ? 'blue' :
-                        attr.type === 'select' ? 'green' :
-                        attr.type === 'color' ? 'orange' : 'purple'
+                          attr.type === 'select' ? 'green' :
+                            attr.type === 'color' ? 'orange' : 'purple'
                       }
                     >
                       {attr.type}
@@ -457,10 +459,10 @@ const loadUsedOptions = async () => {
                 </Option>
               ))}
             </Select>
-            <Button 
-              type="primary" 
-              icon={<PlusOutlined />} 
-              onClick={handleAddAttribute} 
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={handleAddAttribute}
               disabled={!selectedAttributeId || entityAttributes.some(ea => ea.attribute_id === selectedAttributeId)}
             >
               Thêm
@@ -468,20 +470,20 @@ const loadUsedOptions = async () => {
           </Space.Compact>
         </div>
       )}
-  
+
       {/* Danh sách thuộc tính đã chọn */}
       {entityAttributes.length > 0 ? (
         <div className={styles.attributesList}>
           {entityAttributes.map(entityAttr => {
             const attr = attributes.find(a => a.id === entityAttr.attribute_id);
             if (!attr) return null;
-  
+
             // Chuẩn hóa: options mapping theo entityAttr.attribute_id
             const selectedOptions = (entityAttr.options || []).map(opt => opt.option_id);
             const availableOptions = (attributeOptions[attr.id] || []).filter(
-                opt => !selectedOptions.includes(opt.id)
+              opt => !selectedOptions.includes(opt.id)
             );
-  
+
             return (
               <Card key={attr.id} className={styles.attributeCard} size="small">
                 <div className={styles.attributeRow}>
@@ -491,8 +493,8 @@ const loadUsedOptions = async () => {
                       <Tag
                         color={
                           attr.type === 'text' ? 'blue' :
-                          attr.type === 'select' ? 'green' :
-                          attr.type === 'color' ? 'orange' : 'purple'
+                            attr.type === 'select' ? 'green' :
+                              attr.type === 'color' ? 'orange' : 'purple'
                         }
                       >
                         {attr.type}
@@ -514,60 +516,60 @@ const loadUsedOptions = async () => {
                 <div className={styles.attributeInput}>
                   {['select', 'color', 'image'].includes(attr.type) ? (
                     <>
-                    <Select
-                      placeholder="Chọn giá trị"
-                      style={{ width: '100%' }}
-                      value={null}
-                      onChange={optionId => {
-                        setEntityAttributes(entityAttributes.map(ea =>
-                          ea.attribute_id === attr.id
-                            ? { ...ea, options: [...(ea.options || []), { option_id: optionId }] }
-                            : ea
-                        ));
-                      }}
-                      options={availableOptions.map(opt => ({
-                        label: opt.option_name,
-                        value: opt.id,
-                        disabled:
-                          Array.isArray(usedOptionsMap[String(attr.id)])
-                          && usedOptionsMap[String(attr.id)].map(String).includes(String(opt.id))
-                      }))}
-                      
-                      disabled={disabled || availableOptions.length === 0}
-                      showSearch
-                      filterOption={(input, opt) =>
-                        (opt.label || '').toLowerCase().includes(input.toLowerCase())
-                      }
-                      // Để đảm bảo options đã disabled sẽ hiển thị rõ là disable
-                      dropdownRender={menu => (
-                        <div>{menu}</div>
-                      )}
-                    />
-                    <div style={{ marginTop: 8 }}>
-                      {selectedOptions.map(optionId => {
-                        const opt = attributeOptions[attr.id]?.find(o => o.id === optionId);
-                        const isUsed = Array.isArray(usedOptionsMap[attr.id]) && usedOptionsMap[attr.id].includes(optionId);
-                        return (
-                          <Tag
-                            closable={!disabled}
-                            color={isUsed ? 'warning' : 'success'}
-                            style={{ marginRight: 8, marginTop: 8 }}
-                            key={optionId}
-                            onClose={() => {
-                              setEntityAttributes(entityAttributes.map(ea =>
-                                ea.attribute_id === attr.id
-                                  ? { ...ea, options: ea.options.filter(o => o.option_id !== optionId) }
-                                  : ea
-                              ));
-                            }}
-                          >
-                            {opt?.option_name || 'unknown'}
-                            {isUsed && ' ⚠️'}
-                          </Tag>
-                        );
-                      })}
-                    </div>
-                  </>
+                      <Select
+                        placeholder="Chọn giá trị"
+                        style={{ width: '100%' }}
+                        value={null}
+                        onChange={optionId => {
+                          setEntityAttributes(entityAttributes.map(ea =>
+                            ea.attribute_id === attr.id
+                              ? { ...ea, options: [...(ea.options || []), { option_id: optionId }] }
+                              : ea
+                          ));
+                        }}
+                        options={availableOptions.map(opt => ({
+                          label: opt.option_name,
+                          value: opt.id,
+                          disabled:
+                            Array.isArray(usedOptionsMap[String(attr.id)])
+                            && usedOptionsMap[String(attr.id)].map(String).includes(String(opt.id))
+                        }))}
+
+                        disabled={disabled || availableOptions.length === 0}
+                        showSearch
+                        filterOption={(input, opt) =>
+                          (opt.label || '').toLowerCase().includes(input.toLowerCase())
+                        }
+                        // Để đảm bảo options đã disabled sẽ hiển thị rõ là disable
+                        dropdownRender={menu => (
+                          <div>{menu}</div>
+                        )}
+                      />
+                      <div style={{ marginTop: 8 }}>
+                        {selectedOptions.map(optionId => {
+                          const opt = attributeOptions[attr.id]?.find(o => o.id === optionId);
+                          const isUsed = Array.isArray(usedOptionsMap[attr.id]) && usedOptionsMap[attr.id].includes(optionId);
+                          return (
+                            <Tag
+                              closable={!disabled}
+                              color={isUsed ? 'warning' : 'success'}
+                              style={{ marginRight: 8, marginTop: 8 }}
+                              key={optionId}
+                              onClose={() => {
+                                setEntityAttributes(entityAttributes.map(ea =>
+                                  ea.attribute_id === attr.id
+                                    ? { ...ea, options: ea.options.filter(o => o.option_id !== optionId) }
+                                    : ea
+                                ));
+                              }}
+                            >
+                              {opt?.option_name || 'unknown'}
+                              {isUsed && ' ⚠️'}
+                            </Tag>
+                          );
+                        })}
+                      </div>
+                    </>
                   ) : (
                     renderAttributeInput(entityAttr)
                   )}
@@ -579,7 +581,7 @@ const loadUsedOptions = async () => {
       ) : (
         <Empty description="Chưa có thuộc tính nào" image={Empty.PRESENTED_IMAGE_SIMPLE} />
       )}
-  
+
       {/* Nút lưu & cảnh báo */}
       {!disabled && entityAttributes.length > 0 && (
         <div className={styles.saveButton}>
@@ -594,14 +596,14 @@ const loadUsedOptions = async () => {
           />
         </div>
       )}
-  
+
       {availableAttributes.length === 0 && entityAttributes.length > 0 && (
         <div className={styles.noMoreAttributes}>
           <Tag color="success">Đã thêm tất cả thuộc tính có sẵn</Tag>
         </div>
       )}
     </div>
-  );    
+  );
 };
 
 VariantAttributeManager.propTypes = {

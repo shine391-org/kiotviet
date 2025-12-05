@@ -62,11 +62,17 @@ class ProductVariantsController extends BaseController
     /** Safely fetch body as JSON or form data to avoid parse errors. */
     private function safeInput(): array
     {
+        // Try JSON first
         try {
             $json = $this->request->getJSON(true);
-            if (is_array($json)) { return $json; }
+            if (is_array($json) && !empty($json)) { return $json; }
         } catch (\Throwable $e) {}
 
+        // Try multipart/form-data (getPost works for both form-data and x-www-form-urlencoded)
+        $post = $this->request->getPost();
+        if (is_array($post) && !empty($post)) { return $post; }
+
+        // Fallback to raw input
         $raw = $this->request->getRawInput();
         return is_array($raw) ? $raw : [];
     }

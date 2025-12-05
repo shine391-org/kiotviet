@@ -27,6 +27,10 @@ This file contains:
 
 **Current Status:** [docs/plans/BACKEND-REFACTOR-PLAN.md](docs/plans/BACKEND-REFACTOR-PLAN.md)
 
+**Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment guide
+
+**Testing:** See [TESTING.md](TESTING.md) for testing guide and commands
+
 ---
 
 ## 🏗️ Architecture Quick Reference
@@ -74,7 +78,7 @@ Request → Controller → Service → Repository → Model → Database
 
 ### Testing Backend
 ```bash
-# Unit tests (SQLite - fast)
+# Unit tests (MySQL - group tests, auto-migrate production schema)
 docker exec meomeo2-api-1 vendor/bin/phpunit
 
 # Integration tests (MySQL - real DB)
@@ -86,6 +90,8 @@ docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/ProductServiceTest.p
 # With coverage
 docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
 ```
+
+> Data safety: Không chạy `DROP DATABASE`/`DROP TABLE` để cleanup tests (kể cả DB test). Dùng transaction rollback + truncate/reset schema traits.
 
 ### Testing Frontend
 ```bash

@@ -11,10 +11,22 @@ related_to:
     description: "Contains mandatory test patterns to be copied."
   - id: "TESTING-GUIDE-01"
     description: "Explains the backend testing philosophy and process."
+  - id: "TESTING-MAIN-DB-01"
+    description: "Main database testing approach with transaction rollback."
+  - id: "TEST-CHECKLIST-01"
+    description: "Mandatory checklist for backend changes."
   - id: "FE-TESTING-GUIDE-01"
     description: "Explains the frontend testing philosophy and process."
+  - id: "FE-TESTING-PATTERNS-01"
+    description: "Frontend code patterns to copy."
   - id: "FE-TEST-CHECKLIST-01"
     description: "Mandatory checklist for frontend changes."
+  - id: "BACKEND-REFACTOR-PLAN-01"
+    description: "Overall project roadmap and refactoring plan."
+  - id: "DEV-DEMO-SEEDER-01"
+    description: "Demo data seeding for development environment."
+  - id: "DOC-AUDIT-2025-11-26"
+    description: "Documentation audit report with connectivity analysis."
 ---
 
 # AI Agent Guide - LANO CRM
@@ -380,61 +392,144 @@ public function list() {
 ---
 
 
-## 🧪 Testing (BẮT BUỘC)
+## 🧪 Testing (BẮT BUỘC) - TẠM DÙNG DB TEST RIÊNG ⚠️
+
+### 🚨 Lưu ý tạm thời (2025-12-02)
+
+- Mục tiêu dài hạn vẫn là chạy test trên main DB (`lanocrm_shop`) với rollback.  
+- **Tạm thời** tất cả test chạy trên **DB test riêng**: `hostname=db-test`, `database=lanocrm_test` để ổn định dữ liệu dev, sau đó dump/export sang staging (staging đang lỗi).  
+- Schema nguồn chuẩn (golden migration) giữ nguyên: `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php`.  
+- Patterns: truncate-only schema traits + `DevDatabaseTrait` (vẫn dùng) nhưng kết nối tới group `tests` đã trỏ `lanocrm_test`.
 
 ### Test-Driven Development
 You MUST write tests. No exceptions.
 
 **Order:**
 1. Write test first (RED)
-2. Implement code (GREEN)
+2. Implement code (GREEN)  
 3. Refactor (REFACTOR)
 
-### Test Types
+### Test Types (Main Database + Transactions)
 
-**Unit Tests** (SQLite - Fast)
+**Unit Tests** (Main Database with Transactions - Fast)
 - Service logic
 - Repository queries
 - Validators
-- Run: `vendor/bin/phpunit`
+- Uses: DevDatabaseTrait + Transactions
+- Database: `lanocrm_shop` (main) with auto-rollback
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit`
 
-**Integration Tests** (MySQL - Real)
+**Integration Tests** (Main Database Full Stack)
 - API endpoints
 - Database operations
 - Authentication flows
-- Run: `vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+- Database: `lanocrm_shop` (main) with real data
+- Run: `docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml`
+
+### ⛔ Data Safety (No DROP) - Bắt buộc
+- Không chạy `DROP DATABASE`, `DROP TABLE`, `DROP INDEX` hay bất kỳ biến thể nào trong tests/schema traits/scripts dọn dẹp, kể cả khi dùng DB test.
+- Dọn dữ liệu bằng transaction rollback + `TRUNCATE`/`DELETE` trong `resetYourSchema()` (hoặc schema trait tương ứng); tuyệt đối không dùng lệnh wipe DB.
+
+### DevDatabaseTrait Pattern (MANDATORY)
+
+**👉 ALL tests MUST use DevDatabaseTrait:**
+
+```php
+use Tests\Support\Database\DevDatabaseTrait;
+use Tests\Support\Database\YourSchemaTrait;
+
+class YourServiceTest extends CIUnitTestCase
+{
+    use DevDatabaseTrait;      // Main database connection + transactions
+    use YourSchemaTrait;       // Schema creation
+    
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpDatabase();     // Auto transaction start
+        $this->resetYourSchema();   // Create tables
+        // Your setup
+    }
+    
+    protected function tearDown(): void
+    {
+        $this->tearDownDatabase();  // Auto rollback - data protection!
+        parent::tearDown();
+    }
+}
+```
+
+**🛡️ Data Protection**: Transaction rollback automatically protects your main database data!
 
 ### Test Patterns (Copy từ đây)
 
 **👉 BẮT BUỘC: Copy patterns từ file sau:**
-`docs/testing/TESTING-PATTERNS.md`
+`docs/testing/BACKEND-TESTING.md`
+
+**📖 Quick Reference:**
+See `TESTING.md` at root for quick commands and links to detailed guides.
+**📖 NEW: Golden schema:** `backend-ci/app/Database/Migrations/2025-11-27-000999_TestSchemaSetup.php`
 
 File này chứa mẫu chuẩn cho:
-- **Service Test** (Unit - SQLite)
-- **Integration Test** (API - MySQL)
-- **Repository Test** (Database)
+- **Service Test** (Main Database with DevDatabaseTrait)
+- **Integration Test** (API - Main Database Full Stack)
+- **Repository Test** (Main Database)
 
 **Không tự bịa test pattern!** Hãy copy và sửa đổi.
 
+**📗 Documentation (Consolidated):**
+- `TESTING.md` - **Quick reference** for all testing
+- `DEPLOYMENT.md` - **Quick reference** for deployment
+- `docs/README.md` - **CENTRAL INDEX** for all documentation
+- `docs/testing/BACKEND-TESTING.md` - Backend testing guide (MySQL, DevDatabaseTrait)
+- `docs/testing/FRONTEND-TESTING.md` - Frontend testing guide (Vitest, Playwright)
+- `docs/testing/TEST-CHECKLIST.md` - Mandatory PR checklist
+- `docs/deployment/` - Migration and seeding guides
+
+**📋 Audit Reports (Latest):**
+- `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` - Comprehensive FE/BE test coverage analysis
+- `docs/audits/2025-11-27-DOCUMENTATION-CONSOLIDATION-PLAN.md` - Documentation consolidation strategy
+- `docs/audits/2025-11-27-CASH-FLOW-AUDIT-REPORT.md` - Cash flow module audit
+
+All documents are now YAML-linked for easy navigation and reference.
+
 ### Vấn đề thường gặp
 
-**Q: PHPUnit pass nhưng dev server fail?**
-A: Bạn chỉ chạy unit tests (SQLite). Chạy integration tests với MySQL:
-`docker exec meomeo2-api-1 vendor/bin/phpunit -c backend-ci/phpunit.integration.xml`
+**Q: Test bị lỗi "Connection refused"?**
+A: Main database container chưa chạy:
+```bash
+docker-compose up -d db api
+docker exec meomeo2-api-1 php spark db:info
+```
+
+**Q: Test bị lỗi "Table doesn't exist"?**
+A: Chưa gọi resetSchema trong setUp():
+```php
+$this->setUpDatabase();
+$this->resetYourSchema();  // MUST call this!
+```
 
 **Q: Tests pass riêng lẻ, fail khi chạy cùng?**
-A: Data không được cleanup. Xem pattern trong `docs/testing/TESTING-PATTERNS.md`
+A: Thiếu tearDownDatabase(). Xem pattern trong `docs/testing/BACKEND-TESTING.md`
 
-**Đọc thêm**: `docs/testing/TESTING-GUIDE.md`
+**Q: Data có bị ảnh hưởng sau test không?**
+A: KHÔNG! Transaction rollback tự động khôi phục data.
+
+**Đọc thêm**:
+- `TESTING.md` (Quick reference cho mọi testing)
+- `docs/testing/BACKEND-TESTING.md` (MySQL-only, DevDatabaseTrait)
+- `docs/testing/docker-workflow-guide.md` (Docker workflow)
+- `docs/deployment/SEEDING-STRATEGY.md` (Seeding guide)
+- `docs/audits/2025-11-27-FINAL-TEST-COVERAGE-REPORT.md` (Coverage checkpoint)
 
 ---
 
 ## ⚡ Quy trình testing FE (Frontend)
 
 **Tài liệu chi tiết:**
-- 📘 **Guide**: `docs/testing/FE-TESTING-GUIDE.md`
-- 🧩 **Patterns**: `docs/testing/FE-TESTING-PATTERNS.md`
-- ✅ **Checklist**: `docs/testing/FE-TEST-CHECKLIST.md`
+- 📘 **Guide**: `docs/testing/FRONTEND-TESTING.md`
+- ✅ **Checklist**: `docs/testing/TEST-CHECKLIST.md`
+- 🚀 **Quick Ref**: `TESTING.md` (root)
 
 ### FE Testing: Best Practices
 1. **Unit Test**: Test logic & render. Mock hết API.
@@ -457,7 +552,7 @@ A task is complete when:
 - [x] **Unit tests written and pass (Backend + Frontend)**
 - [x] **Integration tests written and pass**
 - [x] **Test coverage >= 70%** _(Automatically enforced in CI)_
-- [x] **FE Checklist completed (docs/testing/FE-TEST-CHECKLIST.md)** _(Automatically validated in CI)_
+- [x] **Test Checklist completed (docs/testing/TEST-CHECKLIST.md)** _(Automatically validated in CI)_
 - [x] **Inline docs added (@agent- annotations)**
 - [x] API endpoints work
 - [x] Task status updated

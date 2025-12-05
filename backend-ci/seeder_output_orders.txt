@@ -1,0 +1,32 @@
+
+CodeIgniter v4.6.3 Command Line Tool - Server Time: 2025-12-03 06:33:21 UTC+00:00
+
+[ParseError]
+syntax error, unexpected token "->", expecting "]"
+at APPPATH/Database/Seeds/Demo/OrdersDemoSeeder.php:436
+
+Backtrace:
+  1    VENDORPATH/composer/ClassLoader.php:427
+       {closure:Composer\Autoload\ClassLoader::initializeIncludeClosure():575}('/var/www/html/vendor/composer/../../app/Database/Seeds/Demo/OrdersDemoSeeder.php')
+
+  2    SYSTEMPATH/Database/Seeder.php:148
+       Composer\Autoload\ClassLoader()->loadClass('App\\Database\\Seeds\\Demo\\OrdersDemoSeeder')
+
+  3    SYSTEMPATH/Commands/Database/Seed.php:79
+       CodeIgniter\Database\Seeder()->call('App\\Database\\Seeds\\Demo\\OrdersDemoSeeder')
+
+  4    SYSTEMPATH/CLI/Commands.php:74
+       CodeIgniter\Commands\Database\Seed()->run([])
+
+  5    SYSTEMPATH/CLI/Console.php:47
+       CodeIgniter\CLI\Commands()->run('db:seed', [...])
+
+  6    SYSTEMPATH/Boot.php:388
+       CodeIgniter\CLI\Console()->run()
+
+  7    SYSTEMPATH/Boot.php:133
+       CodeIgniter\Boot::runCommand(Object(CodeIgniter\CLI\Console))
+
+  8    ROOTPATH/spark:87
+       CodeIgniter\Boot::bootSpark(Object(Config\Paths))
+

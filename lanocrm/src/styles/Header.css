@@ -17,39 +17,41 @@
 }
 
 .header-top {
-  height: 64px;
+  height: 64px;                /* Fixed height */
   display: flex;
-  align-items: center;
+  align-items: center;         /* Center logo + icons vertically */
   justify-content: space-between;
   padding: 0 24px;
   border-bottom: 1px solid #f0f0f0;
+  gap: 12px;
 }
 
 .header-bottom {
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 24px;
-  background: white;
-  position: sticky; /* ← Sticky */
-  top: 64px; /* ← Below header-top (64px) */
-  z-index: 99; /* ← Below header (z-index: 100) */
-  border-bottom: 1px solid #f0f0f0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02); /* ← Add shadow for depth */
+  padding: 0;
+  background: transparent;       /* trước là white */
+  position: sticky;
+  top: 64px;
+  z-index: 99;
+  border-bottom: none;           /* bỏ border, đã có trong .topMenu nếu muốn */
+  box-shadow: none;              /* bỏ shadow để giống ảnh */
+  gap: 0;                        /* không cần gap */
 }
-
 
 /* ===== LOGO SECTION ===== */
 .logo-section {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   text-decoration: none;
   transition: all 0.3s ease;
   min-width: 120px;
   flex-shrink: 0;
+  height: 40px;               /* lock logo block height */
 }
 
 .logo-section:hover {
@@ -57,16 +59,18 @@
 }
 
 .logo-icon {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 800;
   color: #d4af37;
 }
 
 .logo-text {
-  font-size: 18px;
-  font-weight: 700;
-  color: #262626;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
   white-space: nowrap;
+  line-height: 1;
 }
 
 /* ===== HEADER RIGHT (Icons + User) ===== */
@@ -75,6 +79,7 @@
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+  height: 64px;
 }
 
 /* ===== HEADER ICON BUTTONS ===== */
@@ -93,6 +98,7 @@
   cursor: pointer;
   transition: all 0.2s ease;
   padding: 0;
+  vertical-align: middle;
 }
 
 .header-icon-btn:hover {
@@ -274,10 +280,6 @@
 /* ===== RESPONSIVE ===== */
 @media (max-width: 1024px) {
   .header-top {
-    padding: 0 16px;
-  }
-
-  .header-bottom {
     padding: 0 16px;
   }
 

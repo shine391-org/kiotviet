@@ -1,0 +1,24 @@
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+  path_filters:
+    # Exclude docs
+    - "!**/*.md"
+    - "!**/docs/**"
+    
+    # Exclude tests  
+    - "!**/test/**"
+    - "!**/tests/**"
+    - "!**/*.test.ts"
+    - "!**/*.spec.js"
+    
+    # Exclude config files
+    - "!.gitignore"
+    - "!.prettierrc"
+    - "!.eslintrc*"
+    
+    # Exclude generated/vendor
+    - "!**/node_modules/**"
+    - "!**/vendor/**"
+    - "!**/*.lock"
