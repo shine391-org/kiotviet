@@ -69,10 +69,12 @@ const PriceListPage = () => {
     dispatch(fetchCategories({ limit: 100 })); // [NEW] Fetch Categories
   }, [dispatch]);
 
-  // Fetch products based on filters
+  // Fetch products based on filters - only when a price list is selected
   useEffect(() => {
-    dispatch(fetchProducts(filters));
-  }, [dispatch, filters]);
+    if (selectedPriceListId) {
+      dispatch(fetchProducts(filters));
+    }
+  }, [dispatch, filters, selectedPriceListId]);
 
   // Handle create success
   useEffect(() => {
