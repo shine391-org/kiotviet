@@ -1,7 +1,14 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Table, Button, Space, Tag } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Card, Table, Button, Space, Tag, Tooltip, Input, Popover, Checkbox } from 'antd';
+import {
+  PlusOutlined,
+  ImportOutlined,
+  ExportOutlined,
+  UnorderedListOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined
+} from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { fetchPriceLists } from '../../store/slices/priceListSlice';
 
@@ -25,29 +32,76 @@ const columns = [
 const PriceListListPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items, loading } = useSelector(state => state.priceList);
+  const { items, loading, pagination } = useSelector(state => state.priceList);
+  const [filters, setFilters] = useState({ page: 1, limit: 20 });
+
+  // Column visibility state
+  const defaultCheckedList = columns.map(col => col.key);
+  const [checkedList, setCheckedList] = useState(defaultCheckedList);
 
   useEffect(() => {
-    dispatch(fetchPriceLists({ page: 1, limit: 20 }));
-  }, [dispatch]);
+    dispatch(fetchPriceLists(filters));
+  }, [dispatch, filters]);
+
+  const handleSearch = (value) => {
+    setFilters(prev => ({ ...prev, search: value, page: 1 }));
+  };
+
+  const handleColumnChange = (list) => {
+    setCheckedList(list);
+  };
+
+  const visibleColumns = columns.filter(col => checkedList.includes(col.key));
+
+  const columnOptions = columns.map(col => ({ label: col.title, value: col.key }));
+
+  const columnSelector = (
+    <div style={{ padding: '8px', minWidth: '150px' }}>
+      <Checkbox.Group
+        options={columnOptions}
+        value={checkedList}
+        onChange={handleColumnChange}
+        style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+      />
+    </div>
+  );
 
   return (
     <Card
       title="Bảng giá"
       extra={
         <Space>
+          <Input.Search
+            placeholder="Tìm kiếm bảng giá..."
+            onSearch={handleSearch}
+            allowClear
+            style={{ width: 250 }}
+            enterButton
+          />
           <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate('/price-lists/create')}>
-            Tạo bảng giá
+            Bảng giá
           </Button>
+          <Button icon={<ImportOutlined />}>Import</Button>
+          <Button icon={<ExportOutlined />}>Xuất file</Button>
+          <Popover content={columnSelector} trigger="click" placement="bottomRight" arrow={false}>
+            <Button icon={<UnorderedListOutlined />} />
+          </Popover>
+          <Button icon={<SettingOutlined />} />
+          <Button icon={<QuestionCircleOutlined />} />
         </Space>
       }
     >
       <Table
         rowKey="id"
         dataSource={items}
-        columns={columns}
+        columns={visibleColumns}
         loading={loading}
-        pagination={false}
+        pagination={{
+          current: filters.page,
+          pageSize: filters.limit,
+          total: pagination?.total || 0,
+          onChange: (page, pageSize) => setFilters(prev => ({ ...prev, page, limit: pageSize }))
+        }}
       />
     </Card>
   );

@@ -24,6 +24,8 @@ class PriceListValidator
             'status' => 'permit_empty|in_list[active,expired,upcoming,inactive]',
             'apply_to_group_id' => 'permit_empty|integer|greater_than_equal_to[1]',
             'is_active' => 'permit_empty|in_list[0,1,true,false]',
+            'start_date' => 'permit_empty|valid_date',
+            'end_date' => 'permit_empty|valid_date',
         ];
         $v = $this->run($data, $rules);
         $v['page'] = (int) ($v['page'] ?? 1); $v['limit'] = (int) ($v['limit'] ?? 20);

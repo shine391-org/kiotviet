@@ -38,12 +38,20 @@ class PriceListsController extends BaseController
     /** List items. @agent-use: GET /api/price-lists/{id}/items @agent-pattern: Delegate items fetch */
     public function items($id) { return $this->wrap(fn () => $this->respond($this->service->items((int) $id))); }
 
-    /** Upsert items. @agent-use: POST /api/price-lists/{id}/items @agent-pattern: Bulk upsert */
+    /** Upsert items (Replace All). @agent-use: POST /api/price-lists/{id}/items @agent-pattern: Bulk replace */
     public function saveItems($id)
     {
         $payload = $this->request->getJSON(true) ?? [];
         $items = $payload['items'] ?? $payload;
         return $this->wrap(fn () => $this->respond($this->service->upsertItems((int) $id, (array) $items)));
+    }
+
+    /** Add items (Append). @agent-use: POST /api/price-lists/{id}/add-items */
+    public function addItems($id)
+    {
+        $payload = $this->request->getJSON(true) ?? [];
+        $items = $payload['items'] ?? $payload;
+        return $this->wrap(fn () => $this->respond($this->service->addItems((int) $id, (array) $items)));
     }
 
     /** Apply formula batch. @agent-use: POST /api/price-lists/{id}/apply-formula */

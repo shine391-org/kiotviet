@@ -126,6 +126,12 @@ class PriceListRepository
         if (array_key_exists('is_active', $filters) && $filters['is_active'] !== null) {
             $b->where('is_active', $filters['is_active'] ? 1 : 0);
         }
+        if (! empty($filters['start_date'])) {
+            $b->where('start_date >=', $filters['start_date']);
+        }
+        if (! empty($filters['end_date'])) {
+            $b->where('end_date <=', $filters['end_date']);
+        }
 
         if (! empty($filters['status'])) {
             $today = date('Y-m-d');

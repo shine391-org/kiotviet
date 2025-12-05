@@ -3,6 +3,7 @@
 putenv('ENVIRONMENT=testing');
 $_SERVER['CI_ENVIRONMENT'] = 'testing';
 define('ENVIRONMENT', 'testing');
+define('FCPATH', __DIR__ . '/public/');
 
 require __DIR__ . '/vendor/autoload.php';
 

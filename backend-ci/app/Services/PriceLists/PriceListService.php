@@ -111,13 +111,30 @@ class PriceListService
     {
         $this->requirePriceList($priceListId);
         $validated = $this->validator->validateItems($items);
-        $result = $this->items->replaceItems($priceListId, $validated);
+        $result = $this->items->replaceItems($priceListId, $validated); // Be careful, this replaces ALL
         $updated = $this->triggerAutoUpdate($priceListId);
         return [
             'success' => true,
             'inserted' => $result['inserted'],
             'dependents_updated' => count($updated),
             'updated_list_ids' => $updated,
+        ];
+    }
+
+    /** Add items (Append). */
+    public function addItems(int $priceListId, array $items): array
+    {
+        $this->requirePriceList($priceListId);
+        // Reuse validateItems logic? Or simpler check?
+        // validateItems usually checks structure.
+        $validated = $this->validator->validateItems($items);
+        
+        $result = $this->items->addItems($priceListId, $validated);
+        $updated = $this->triggerAutoUpdate($priceListId);
+        return [
+            'success' => true,
+            'inserted' => $result['inserted'],
+            'dependents_updated' => count($updated),
         ];
     }
 

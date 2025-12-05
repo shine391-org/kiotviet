@@ -25,14 +25,14 @@ DROP TABLE IF EXISTS `activity_logs`;
 CREATE TABLE `activity_logs` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `user_id` bigint unsigned DEFAULT NULL,
-  `action` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
-  `module` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `model_type` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `module` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `model_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `model_id` bigint unsigned DEFAULT NULL,
-  `old_values` text COLLATE utf8mb4_general_ci,
-  `new_values` text COLLATE utf8mb4_general_ci,
-  `ip_address` varchar(45) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `user_agent` text COLLATE utf8mb4_general_ci,
+  `old_values` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `new_values` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `idx_user_date` (`user_id`,`created_at`),
@@ -584,7 +584,7 @@ CREATE TABLE `bom` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -593,7 +593,6 @@ CREATE TABLE `bom` (
 
 LOCK TABLES `bom` WRITE;
 /*!40000 ALTER TABLE `bom` DISABLE KEYS */;
-INSERT INTO `bom` VALUES (1,1,'BOM for Combo Set','1.0',1,1,'2025-12-03 06:28:13','2025-12-03 06:28:13');
 /*!40000 ALTER TABLE `bom` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -646,7 +645,7 @@ CREATE TABLE `branches` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -655,7 +654,6 @@ CREATE TABLE `branches` (
 
 LOCK TABLES `branches` WRITE;
 /*!40000 ALTER TABLE `branches` DISABLE KEYS */;
-INSERT INTO `branches` VALUES (1,'Chi nhánh Hà Nội','HN01','active','2025-12-03 02:28:54',NULL,NULL),(2,'Chi nhánh HCM','HCM01','active','2025-12-03 02:28:54',NULL,NULL),(3,'Chi nhánh Đà Nẵng','DN01','active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(4,'Chi nhánh Cần Thơ','CT01','active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(5,'Chi nhánh Hải Phòng','HP01','active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(6,'Chi nhánh Test (Inactive)','TEST01','inactive','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `branches` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -769,7 +767,7 @@ CREATE TABLE `cash_transactions` (
   CONSTRAINT `fk_cash_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_cash_transactions_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `chk_cash_amount` CHECK ((`amount` > 0))
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -778,7 +776,6 @@ CREATE TABLE `cash_transactions` (
 
 LOCK TABLES `cash_transactions` WRITE;
 /*!40000 ALTER TABLE `cash_transactions` DISABLE KEYS */;
-INSERT INTO `cash_transactions` VALUES (1,'RECEIPT',9480000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-001 (unpaid)','order',1,'DH-DEMO-001',1,1,'Demo Admin','demo-staff','CUST-2001','Nguyễn Minh An','0912000001','12 Trần Hưng Đạo, Hà Nội',NULL,NULL,'2025-11-03','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(2,'RECEIPT',3192000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-002 (partial)','order',2,'DH-DEMO-002',2,1,'Demo Admin','demo-staff','CUST-2002','Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội',NULL,NULL,'2025-11-04','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(3,'RECEIPT',8288500.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-003 (partial)','order',3,'DH-DEMO-003',3,1,'Demo Admin','demo-staff','CUST-2003','Phạm Gia Bảo','0912000003','22 Nguyễn Huệ, HCM',NULL,NULL,'2025-11-05','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(4,'RECEIPT',3900000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-004 (partial)','order',4,'DH-DEMO-004',4,1,'Demo Admin','demo-staff','CUST-2004','Lê Hồng Nhung','0912000004','35 Hai Bà Trưng, HCM',NULL,NULL,'2025-11-06','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(5,'RECEIPT',7607250.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-005 (partial)','order',5,'DH-DEMO-005',5,1,'Demo Admin','demo-staff','CUST-2005','Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng',NULL,NULL,'2025-11-07','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(6,'RECEIPT',9927500.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-006 (partial)','order',6,'DH-DEMO-006',1,1,'Demo Admin','demo-staff','CUST-2006','Đặng Bích Trâm','0912000006','101 Võ Văn Tần, HCM',NULL,NULL,'2025-11-08','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(7,'RECEIPT',3470000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-007 (partial)','order',7,'DH-DEMO-007',2,1,'Demo Admin','demo-staff','CUST-2007','Huỳnh Tuấn Kiệt','0912000007','45 Trần Phú, Nha Trang',NULL,NULL,'2025-11-09','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(8,'RECEIPT',8347500.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-008 (partial)','order',8,'DH-DEMO-008',3,1,'Demo Admin','demo-staff','CUST-2008','Lý Thu Uyên','0912000008','68 Lê Lợi, Huế',NULL,NULL,'2025-11-10','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(9,'RECEIPT',10395000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-009 (paid)','order',9,'DH-DEMO-009',1,1,'Demo Admin','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-11-11','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(10,'RECEIPT',9030000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-010 (paid)','order',10,'DH-DEMO-010',2,1,'Demo Admin','demo-staff','CUST-2012','CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM',NULL,NULL,'2025-11-12','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(11,'RECEIPT',7581000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-011 (paid)','order',11,'DH-DEMO-011',3,1,'Demo Admin','demo-staff','CUST-2013','Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang',NULL,NULL,'2025-11-13','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(12,'RECEIPT',9900000.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-012 (paid)','order',12,'DH-DEMO-012',4,1,'Demo Admin','demo-staff','CUST-2014','Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội',NULL,NULL,'2025-11-14','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(13,'RECEIPT',9465000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-013 (paid)','order',13,'DH-DEMO-013',5,1,'Demo Admin','demo-staff','CUST-2015','CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM',NULL,NULL,'2025-11-15','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(14,'RECEIPT',4095000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-014 (paid)','order',14,'DH-DEMO-014',1,1,'Demo Admin','demo-staff','CUST-2016','Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội',NULL,NULL,'2025-11-16','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(15,'RECEIPT',9927500.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-015 (paid)','order',15,'DH-DEMO-015',2,1,'Demo Admin','demo-staff','CUST-2017','Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long',NULL,NULL,'2025-11-17','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(16,'RECEIPT',9450000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-016 (paid)','order',16,'DH-DEMO-016',3,1,'Demo Admin','demo-staff','CUST-2018','La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng',NULL,NULL,'2025-11-18','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(17,'RECEIPT',3192000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-017 (paid)','order',17,'DH-DEMO-017',4,1,'Demo Admin','demo-staff','CUST-2019','Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh',NULL,NULL,'2025-11-19','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(18,'RECEIPT',8745000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-018 (paid)','order',18,'DH-DEMO-018',5,1,'Demo Admin','demo-staff','CUST-2020','Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế',NULL,NULL,'2025-11-20','Thanh toán đủ','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(19,'PAYMENT',1500000.00,'refund','CASH','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-001','return_order',1,'RET-DEMO-001',2,2,'Demo Manager','demo-staff','CUST-2012','CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM',NULL,NULL,'2025-12-03','Hoàn tiền theo phiếu trả hàng','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL),(20,'PAYMENT',5250000.00,'refund','BANK_TRANSFER','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-002','return_order',2,'RET-DEMO-002',3,2,'Demo Manager','demo-staff','CUST-2013','Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang',NULL,NULL,'2025-12-03','Hoàn tiền theo phiếu trả hàng','2025-12-03 02:28:55','2025-12-03 02:28:55',NULL);
 /*!40000 ALTER TABLE `cash_transactions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -834,7 +831,7 @@ CREATE TABLE `companies` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_company_code` (`code`),
   KEY `idx_company_status` (`status`,`is_default`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -843,7 +840,6 @@ CREATE TABLE `companies` (
 
 LOCK TABLES `companies` WRITE;
 /*!40000 ALTER TABLE `companies` DISABLE KEYS */;
-INSERT INTO `companies` VALUES (1,'COMP-DEFAULT','Default Company',1,'active','2025-12-03 02:28:54','2025-12-03 02:28:54');
 /*!40000 ALTER TABLE `companies` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -868,7 +864,7 @@ CREATE TABLE `company_permissions` (
   KEY `fk_company_permissions_user_id` (`user_id`),
   CONSTRAINT `fk_company_permissions_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_company_permissions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -877,7 +873,6 @@ CREATE TABLE `company_permissions` (
 
 LOCK TABLES `company_permissions` WRITE;
 /*!40000 ALTER TABLE `company_permissions` DISABLE KEYS */;
-INSERT INTO `company_permissions` VALUES (2,1,10,'admin','[\"admin\", \"read\", \"write\", \"share\", \"delete\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(3,1,11,'manager','[\"read\", \"write\", \"share\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(4,1,12,'manager','[\"read\", \"write\", \"share\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(5,1,13,'viewer','[\"read\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(6,1,14,'viewer','[\"read\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(7,1,15,'viewer','[\"read\"]','2025-12-03 02:28:54','2025-12-03 02:28:54'),(8,1,1,'admin','[\"admin\", \"read\", \"write\", \"share\"]','2025-12-03 10:25:08','2025-12-03 10:25:08');
 /*!40000 ALTER TABLE `company_permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1093,7 +1088,7 @@ CREATE TABLE `customer_groups` (
   KEY `customer_groups_branch_id_foreign` (`branch_id`),
   CONSTRAINT `customer_groups_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `customer_groups_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `customer_groups` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1102,7 +1097,6 @@ CREATE TABLE `customer_groups` (
 
 LOCK TABLES `customer_groups` WRITE;
 /*!40000 ALTER TABLE `customer_groups` DISABLE KEYS */;
-INSERT INTO `customer_groups` VALUES (1,'DEFAULT-GROUP','Default Customer Group',NULL,NULL,NULL,0,'active','2025-12-03 01:35:52','2025-12-03 01:35:52',NULL),(2,'CG-VIP','Khách VIP',NULL,NULL,NULL,0,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(3,'CG-WHS','Khách sỉ',NULL,NULL,NULL,0,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `customer_groups` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1193,7 +1187,7 @@ CREATE TABLE `customers` (
   KEY `fk_customers_customer_group` (`customer_group_id`),
   CONSTRAINT `fk_customers_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_customers_organization` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2021 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1202,7 +1196,6 @@ CREATE TABLE `customers` (
 
 LOCK TABLES `customers` WRITE;
 /*!40000 ALTER TABLE `customers` DISABLE KEYS */;
-INSERT INTO `customers` VALUES (2001,1,NULL,'Nguyễn Minh An','an.demo@lano.local','0912000001',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-001','12 Trần Hưng Đạo, Hà Nội','Hà Nội','Hoàn Kiếm','Hàng Bài',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2002,1,NULL,'Trần Thu Hà','ha.demo@lano.local','0912000002',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-002','89 Lý Thường Kiệt, Hà Nội','Hà Nội','Hoàn Kiếm','Cửa Nam',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2003,1,NULL,'Phạm Gia Bảo','bao.demo@lano.local','0912000003',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-003','22 Nguyễn Huệ, HCM','Hồ Chí Minh','Quận 1','Bến Nghé',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2004,1,NULL,'Lê Hồng Nhung','nhung.demo@lano.local','0912000004',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-004','35 Hai Bà Trưng, HCM','Hồ Chí Minh','Quận 1','Bến Thành',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2005,1,NULL,'Vũ Hoàng Long','long.demo@lano.local','0912000005',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-005','15 Nguyễn Tri Phương, Đà Nẵng','Đà Nẵng','Hải Châu','Thạch Thang',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2006,1,NULL,'Đặng Bích Trâm','tram.demo@lano.local','0912000006',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-006','101 Võ Văn Tần, HCM','Hồ Chí Minh','Quận 3','6',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2007,1,NULL,'Huỳnh Tuấn Kiệt','kiet.demo@lano.local','0912000007',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-007','45 Trần Phú, Nha Trang','Khánh Hòa','Nha Trang','Lộc Thọ',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2008,1,NULL,'Lý Thu Uyên','uyen.demo@lano.local','0912000008',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-008','68 Lê Lợi, Huế','Thừa Thiên Huế','Huế','Phú Hội',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2009,1,NULL,'Ngô Nhật Anh','nha.demo@lano.local','0912000009',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-009','12 Nguyễn Văn Linh, Đà Nẵng','Đà Nẵng','Hải Châu','Nam Dương',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2010,1,NULL,'Tạ Kim Yến','yen.demo@lano.local','0912000010',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-010','99 Phan Chu Trinh, Đà Nẵng','Đà Nẵng','Hải Châu','Hải Châu 1',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2011,1,NULL,'Công ty Ánh Dương','contact@anhduong.vn','0912000011',NULL,NULL,NULL,'COMPANY','Công ty TNHH Ánh Dương','0101234567',NULL,'Công ty TNHH Ánh Dương','11 Duy Tân, Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-011','11 Duy Tân, Cầu Giấy, Hà Nội','Hà Nội','Cầu Giấy','Dịch Vọng',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2012,1,NULL,'CTCP Gỗ Xanh','ke.toan@goxanh.vn','0912000012',NULL,NULL,NULL,'COMPANY','CTCP Gỗ Xanh','0312345678',NULL,'CTCP Gỗ Xanh','45 Pasteur, Quận 1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-012','45 Pasteur, Quận 1, HCM','Hồ Chí Minh','Quận 1','Bến Nghé',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2013,1,NULL,'Hộ KD Minh Quân','minhquan@hkd.vn','0912000013',NULL,NULL,NULL,'HOUSEHOLD','Hộ KD Minh Quân','4200123456',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-013','22 Trần Phú, Nha Trang','Khánh Hòa','Nha Trang','Vạn Thạnh',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2014,1,NULL,'Công ty Vận Tải Nhanh','sale@vantaNhanh.vn','0912000014',NULL,NULL,NULL,'COMPANY','Công ty Vận Tải Nhanh','0109988776',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-014','88 Kim Mã, Ba Đình, Hà Nội','Hà Nội','Ba Đình','Kim Mã',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2015,1,NULL,'CTY Thiết Kế Mộc','info@thietkemoc.vn','0912000015',NULL,NULL,NULL,'COMPANY','CTY Thiết Kế Mộc','0311122233',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-015','12 Nguyễn Trãi, Quận 5, HCM','Hồ Chí Minh','Quận 5','7',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2016,1,NULL,'Trịnh Quốc Thái','thai.demo@lano.local','0912000016',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-016','14 Lê Duẩn, Hà Nội','Hà Nội','Ba Đình','Điện Biên',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2017,1,NULL,'Đỗ Hồng Ngọc','ngoc.demo@lano.local','0912000017',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-017','7 Nguyễn Văn Cừ, Hạ Long','Quảng Ninh','Hạ Long','Bạch Đằng',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2018,1,NULL,'La Mỹ Duyên','duyen.demo@lano.local','0912000018',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-018','155 Lạch Tray, Hải Phòng','Hải Phòng','Ngô Quyền','Lạch Tray',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2019,1,NULL,'Đinh Mạnh Cường','cuong.demo@lano.local','0912000019',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-019','18 Lê Lợi, Vinh','Nghệ An','Vinh','Hưng Bình',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL),(2020,1,NULL,'Phùng Thanh Mai','mai.demo@lano.local','0912000020',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-020','3 Hùng Vương, Huế','Thừa Thiên Huế','Huế','Phú Nhuận',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-03 10:25:08','2025-12-03 10:25:08',NULL);
 /*!40000 ALTER TABLE `customers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1238,7 +1231,7 @@ CREATE TABLE `delivery_note_items` (
   CONSTRAINT `fk_delivery_note_items_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_delivery_note_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_delivery_note_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1285,7 +1278,7 @@ CREATE TABLE `delivery_notes` (
   CONSTRAINT `fk_delivery_notes_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_delivery_notes_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_delivery_notes_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1294,7 +1287,6 @@ CREATE TABLE `delivery_notes` (
 
 LOCK TABLES `delivery_notes` WRITE;
 /*!40000 ALTER TABLE `delivery_notes` DISABLE KEYS */;
-INSERT INTO `delivery_notes` VALUES (1,'DN-DEMO-001',NULL,NULL,1,'2025-11-04','2025-11-04','draft','12 Trần Hưng Đạo, Hà Nội','TRK-001','Demo Carrier','Demo delivery note from DH-DEMO-001',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(2,'DN-DEMO-002',NULL,NULL,2,'2025-11-05','2025-11-05','draft','89 Lý Thường Kiệt, Hà Nội','TRK-002','Demo Carrier','Demo delivery note from DH-DEMO-002',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(3,'DN-DEMO-003',NULL,NULL,3,'2025-11-06','2025-11-06','confirmed','22 Nguyễn Huệ, HCM','TRK-003','Demo Carrier','Demo delivery note from DH-DEMO-003',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(4,'DN-DEMO-004',NULL,NULL,4,'2025-11-07','2025-11-07','confirmed','35 Hai Bà Trưng, HCM','TRK-004','Demo Carrier','Demo delivery note from DH-DEMO-004',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(5,'DN-DEMO-005',NULL,NULL,5,'2025-11-08','2025-11-08','confirmed','15 Nguyễn Tri Phương, Đà Nẵng','TRK-005','Demo Carrier','Demo delivery note from DH-DEMO-005',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(6,'DN-DEMO-006',NULL,NULL,1,'2025-11-09','2025-11-09','shipped','101 Võ Văn Tần, HCM','TRK-006','Demo Carrier','Demo delivery note from DH-DEMO-006',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(7,'DN-DEMO-007',NULL,NULL,2,'2025-11-10','2025-11-10','delivered','45 Trần Phú, Nha Trang','TRK-007','Demo Carrier','Demo delivery note from DH-DEMO-007',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(8,'DN-DEMO-008',NULL,NULL,3,'2025-11-11','2025-11-11','shipped','68 Lê Lợi, Huế','TRK-008','Demo Carrier','Demo delivery note from DH-DEMO-008',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(9,'DN-DEMO-009',NULL,NULL,1,'2025-11-12','2025-11-12','delivered','11 Duy Tân, Cầu Giấy, Hà Nội','TRK-009','Demo Carrier','Demo delivery note from DH-DEMO-009',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(10,'DN-DEMO-010',NULL,NULL,2,'2025-11-13','2025-11-13','delivered','45 Pasteur, Quận 1, HCM','TRK-010','Demo Carrier','Demo delivery note from DH-DEMO-010',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(11,'DN-DEMO-011',NULL,NULL,3,'2025-11-14','2025-11-14','delivered','22 Trần Phú, Nha Trang','TRK-011','Demo Carrier','Demo delivery note from DH-DEMO-011',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(12,'DN-DEMO-012',NULL,NULL,4,'2025-11-15','2025-11-15','delivered','88 Kim Mã, Ba Đình, Hà Nội','TRK-012','Demo Carrier','Demo delivery note from DH-DEMO-012',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(13,'DN-DEMO-013',NULL,NULL,5,'2025-11-16','2025-11-16','delivered','12 Nguyễn Trãi, Quận 5, HCM','TRK-013','Demo Carrier','Demo delivery note from DH-DEMO-013',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(14,'DN-DEMO-014',NULL,NULL,1,'2025-11-17','2025-11-17','delivered','14 Lê Duẩn, Hà Nội','TRK-014','Demo Carrier','Demo delivery note from DH-DEMO-014',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(15,'DN-DEMO-015',NULL,NULL,2,'2025-11-18','2025-11-18','delivered','7 Nguyễn Văn Cừ, Hạ Long','TRK-015','Demo Carrier','Demo delivery note from DH-DEMO-015',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(16,'DN-DEMO-016',NULL,NULL,3,'2025-11-19','2025-11-19','delivered','155 Lạch Tray, Hải Phòng','TRK-016','Demo Carrier','Demo delivery note from DH-DEMO-016',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(17,'DN-DEMO-017',NULL,NULL,4,'2025-11-20','2025-11-20','delivered','18 Lê Lợi, Vinh','TRK-017','Demo Carrier','Demo delivery note from DH-DEMO-017',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(18,'DN-DEMO-018',NULL,NULL,5,'2025-11-21','2025-11-21','delivered','3 Hùng Vương, Huế','TRK-018','Demo Carrier','Demo delivery note from DH-DEMO-018',NULL,NULL,NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `delivery_notes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1314,7 +1306,7 @@ CREATE TABLE `departments` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1323,7 +1315,6 @@ CREATE TABLE `departments` (
 
 LOCK TABLES `departments` WRITE;
 /*!40000 ALTER TABLE `departments` DISABLE KEYS */;
-INSERT INTO `departments` VALUES (1,'Ban Giám Đốc','BGD','Board of Directors','active','2025-12-03 10:25:08','2025-12-03 10:25:08'),(2,'Phòng Kinh Doanh','KD','Sales Department','active','2025-12-03 10:25:08','2025-12-03 10:25:08'),(3,'Phòng Kế Toán','KT','Accounting Department','active','2025-12-03 10:25:08','2025-12-03 10:25:08'),(4,'Phòng Nhân Sự','NS','HR Department','active','2025-12-03 10:25:08','2025-12-03 10:25:08'),(5,'Kho Vận','KV','Logistics Department','active','2025-12-03 10:25:08','2025-12-03 10:25:08');
 /*!40000 ALTER TABLE `departments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1414,7 +1405,7 @@ CREATE TABLE `devices` (
   UNIQUE KEY `uq_device_code` (`code`),
   KEY `devices_branch_id_foreign` (`branch_id`),
   CONSTRAINT `devices_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1423,7 +1414,6 @@ CREATE TABLE `devices` (
 
 LOCK TABLES `devices` WRITE;
 /*!40000 ALTER TABLE `devices` DISABLE KEYS */;
-INSERT INTO `devices` VALUES (1,'DEFAULT-DEVICE','Default Device','pos',NULL,'active',NULL,'2025-12-03 01:35:52','2025-12-03 01:35:52',NULL),(2,'DEV-POS-02','POS HCM','pos',2,'active',NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `devices` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1935,7 +1925,7 @@ CREATE TABLE `invoice_orders` (
   KEY `fk_invoice_orders_order` (`order_id`),
   CONSTRAINT `fk_invoice_orders_invoice` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_invoice_orders_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1944,7 +1934,6 @@ CREATE TABLE `invoice_orders` (
 
 LOCK TABLES `invoice_orders` WRITE;
 /*!40000 ALTER TABLE `invoice_orders` DISABLE KEYS */;
-INSERT INTO `invoice_orders` VALUES (16,16,64,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(17,17,65,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(18,18,66,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(19,19,67,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(20,20,68,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(21,21,84,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(22,22,86,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(23,23,87,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(24,24,88,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(25,25,89,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(26,26,90,'2025-12-03 11:10:38','2025-12-03 11:10:38');
 /*!40000 ALTER TABLE `invoice_orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1996,7 +1985,7 @@ CREATE TABLE `invoices` (
   KEY `fk_invoices_branch_id` (`branch_id`),
   CONSTRAINT `fk_invoices_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_invoices_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=27 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2005,7 +1994,6 @@ CREATE TABLE `invoices` (
 
 LOCK TABLES `invoices` WRITE;
 /*!40000 ALTER TABLE `invoices` DISABLE KEYS */;
-INSERT INTO `invoices` VALUES (16,'HD-DEMO-1-0001','completed','standard',NULL,2011,1,'2025-11-23','2025-12-05',416000.00,416000.00,0.00,416000.00,0.10,41600.00,41600.00,0.00,0.00,457600.00,457600.00,0.00,0.00,'paid',457600.00,'VND',1.000000,NULL,457600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-009','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(17,'HD-DEMO-2-0001','completed','standard',NULL,2012,2,'2025-11-24','2025-12-06',611600.00,624000.00,42400.00,611600.00,0.05,30580.00,30580.00,0.00,30000.00,611600.00,611600.00,0.00,0.00,'paid',611600.00,'VND',1.000000,NULL,611600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-010','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(18,'HD-DEMO-3-0001','completed','standard',NULL,2013,3,'2025-11-25','2025-12-07',379400.00,426000.00,66600.00,379400.00,0.05,18970.00,18970.00,0.00,20000.00,398370.00,398370.00,0.00,0.00,'paid',398370.00,'VND',1.000000,NULL,398370.00,NULL,'Hóa đơn demo gắn với DH-DEMO-011','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(19,'HD-DEMO-4-0001','completed','standard',NULL,2014,4,'2025-11-26','2025-12-08',418000.00,418000.00,0.00,418000.00,0.10,41800.00,41800.00,0.00,0.00,459800.00,459800.00,0.00,0.00,'paid',459800.00,'VND',1.000000,NULL,459800.00,NULL,'Hóa đơn demo gắn với DH-DEMO-012','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(20,'HD-DEMO-5-0001','completed','standard',NULL,2015,5,'2025-11-27','2025-12-09',594600.00,622000.00,42400.00,594600.00,0.05,29730.00,29730.00,0.00,15000.00,594600.00,594600.00,0.00,0.00,'paid',594600.00,'VND',1.000000,NULL,594600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-013','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(21,'HD-DEMO-5-0002','completed','standard',NULL,2011,5,'2025-11-28','2025-12-10',484000.00,484000.00,0.00,484000.00,0.05,24200.00,24200.00,0.00,0.00,508200.00,508200.00,0.00,0.00,'paid',508200.00,'VND',1.000000,NULL,508200.00,NULL,'Hóa đơn demo gắn với DH-DEMO-029','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(22,'HD-DEMO-4-0002','completed','standard',NULL,2014,4,'2025-11-29','2025-12-11',1932000.00,1912000.00,0.00,1932000.00,0.00,0.00,0.00,0.00,20000.00,1932000.00,1932000.00,0.00,0.00,'paid',1932000.00,'VND',1.000000,NULL,1932000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-031','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(23,'HD-DEMO-2-0002','completed','standard',NULL,2014,2,'2025-11-30','2025-12-12',1376000.00,1326000.00,0.00,1376000.00,0.05,68800.00,68800.00,0.00,50000.00,1444800.00,1444800.00,0.00,0.00,'paid',1444800.00,'VND',1.000000,NULL,1444800.00,NULL,'Hóa đơn demo gắn với DH-DEMO-032','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(24,'HD-DEMO-2-0003','completed','standard',NULL,2013,2,'2025-12-01','2025-12-13',834000.00,824000.00,0.00,834000.00,0.10,83400.00,83400.00,0.00,10000.00,917400.00,917400.00,0.00,0.00,'paid',917400.00,'VND',1.000000,NULL,917400.00,NULL,'Hóa đơn demo gắn với DH-DEMO-033','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(25,'HD-DEMO-5-0003','completed','standard',NULL,2015,5,'2025-12-02','2025-12-14',900000.00,890000.00,0.00,900000.00,0.00,0.00,0.00,0.00,10000.00,900000.00,900000.00,0.00,0.00,'paid',900000.00,'VND',1.000000,NULL,900000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-034','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38'),(26,'HD-DEMO-3-0002','completed','standard',NULL,2014,3,'2025-12-03','2025-12-15',2944000.00,2894000.00,0.00,2944000.00,0.05,147200.00,147200.00,0.00,50000.00,3091200.00,3091200.00,0.00,0.00,'paid',3091200.00,'VND',1.000000,NULL,3091200.00,NULL,'Hóa đơn demo gắn với DH-DEMO-035','{\"source\": \"demo\"}',1,'2025-12-03 11:10:38','2025-12-03 11:10:38');
 /*!40000 ALTER TABLE `invoices` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2553,7 +2541,7 @@ CREATE TABLE `migrations` (
   `time` int NOT NULL,
   `batch` int unsigned NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2562,7 +2550,7 @@ CREATE TABLE `migrations` (
 
 LOCK TABLES `migrations` WRITE;
 /*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
-INSERT INTO `migrations` VALUES (1,'2024-01-01-000001','App\\Database\\Migrations\\CreateAuthTables','default','App',1764725629,1),(2,'2025-11-20-000002','App\\Database\\Migrations\\CreateProductTables','default','App',1764725629,1),(3,'2025-11-22-000003','App\\Database\\Migrations\\AddSkuIndexes','default','App',1764725736,2),(4,'2025-11-23-000004','App\\Database\\Migrations\\CreatePriceListTables','default','App',1764725736,2),(5,'2025-11-23-000005','App\\Database\\Migrations\\CreateOrderTables','default','App',1764725736,2),(6,'2025-11-24-000006','App\\Database\\Migrations\\AddPriceListFormula','default','App',1764725736,2),(7,'2025-11-24-000007','App\\Database\\Migrations\\CreatePaymentMethodTables','default','App',1764725736,2),(8,'2025-11-24-000008','App\\Database\\Migrations\\CreateInvoiceTables','default','App',1764725736,2),(9,'2025-11-24-000009','App\\Database\\Migrations\\CreateReturnTables','default','App',1764725736,2),(10,'2025-11-24-000010','App\\Database\\Migrations\\CreateSupportingTables','default','App',1764725736,2),(11,'2025-11-24-000011','App\\Database\\Migrations\\UpdateOrdersForCreate','default','App',1764725736,2),(12,'2025-11-24-000012','App\\Database\\Migrations\\AddOrderStatusTimestamps','default','App',1764725736,2),(13,'2025-11-24-000013','App\\Database\\Migrations\\CreateInventoryStock','default','App',1764725736,2),(14,'2025-11-24-000014','App\\Database\\Migrations\\CreateWebhookTables','default','App',1764725736,2),(15,'2025-11-25-000015','App\\Database\\Migrations\\CreateOrderSequences','default','App',1764725736,2),(16,'2025-11-26-000016','App\\Database\\Migrations\\CreateCustomersTable','default','App',1764725736,2),(17,'2025-11-26-000017','App\\Database\\Migrations\\AddCustomerExtendedFields','default','App',1764725736,2),(18,'2025-11-26-000017','App\\Database\\Migrations\\CreateCashTransactionsTable','default','App',1764725736,2),(19,'2025-11-26-000080','App\\Database\\Migrations\\AlterCashTransactionsAddPaymentFields','default','App',1764725736,2),(20,'2025-11-26-000081','App\\Database\\Migrations\\AlterCashTransactionsAddPayerFields','default','App',1764725736,2),(21,'2025-11-26-000082','App\\Database\\Migrations\\CreateOrderPaymentsTable','default','App',1764725736,2),(22,'2025-11-27-000021','App\\Database\\Migrations\\UpdateInvoicesSnapshots','default','App',1764725736,2),(23,'2025-11-28-001001','App\\Database\\Migrations\\CreateBatchSerialTracking','default','App',1764725736,2),(24,'2025-11-29-001002','App\\Database\\Migrations\\CreateDeliveryNoteTables','default','App',1764725736,2),(25,'2025-11-29-001003','App\\Database\\Migrations\\CreateApprovalTables','default','App',1764725736,2),(26,'2025-11-29-001004','App\\Database\\Migrations\\CreateStockLedgerTables','default','App',1764725736,2),(27,'2025-11-29-001005','App\\Database\\Migrations\\CreateAdvancedPricingTables','default','App',1764725736,2),(28,'2025-11-29-001006','App\\Database\\Migrations\\CreateReorderPlanningTables','default','App',1764725736,2),(29,'2025-11-29-001007','App\\Database\\Migrations\\CreateQualityTables','default','App',1764725737,2),(30,'2025-11-29-001008','App\\Database\\Migrations\\CreateOrderTemplateTables','default','App',1764725737,2),(31,'2025-11-29-001009','App\\Database\\Migrations\\CreateManufacturingTables','default','App',1764725737,2),(32,'2025-11-29-001010','App\\Database\\Migrations\\CreateEcommerceWebhookLogs','default','App',1764725737,2),(33,'2025-11-29-001011','App\\Database\\Migrations\\CreateSubscriptionTables','default','App',1764725737,2),(34,'2025-11-30-001012','App\\Database\\Migrations\\CreateCompanyPermissionTables','default','App',1764725737,2),(35,'2025-12-02-000001','App\\Database\\Migrations\\AddMissingForeignKeys','default','App',1764725737,2),(36,'2025-12-02-000002','App\\Database\\Migrations\\StrengthenOrderRelations','default','App',1764725737,2),(37,'2025-12-02-000003','App\\Database\\Migrations\\AddComprehensiveForeignKeys','default','App',1764725752,2),(38,'2025-12-02-000004','App\\Database\\Migrations\\AddRemainingForeignKeys','default','App',1764725752,2),(39,'2025-12-02-000005','App\\Database\\Migrations\\AddMasterEntities','default','App',1764725753,2),(40,'2025-12-02-000006','App\\Database\\Migrations\\AddLateForeignKeys','default','App',1764725754,2),(41,'2025-12-02-000007','App\\Database\\Migrations\\SoftDeleteAndSchemaAdjust','default','App',1764725755,2),(42,'2025-12-02-000008','App\\Database\\Migrations\\AddChecksAndUniques','default','App',1764725756,2),(43,'2025-11-20-000003','App\\Database\\Migrations\\CreateProductVariantsTable','default','App',1764758134,3),(44,'2025-11-20-000004','App\\Database\\Migrations\\CreateProductAttributesTable','default','App',1764758134,3),(45,'2025-11-20-000005','App\\Database\\Migrations\\CreateCompanyTables','default','App',1764758134,3),(46,'2025-12-03-000009','App\\Database\\Migrations\\AddSeedSupportColumns','default','App',1764758136,3),(47,'2025-12-03-000010','App\\Database\\Migrations\\RestoreLegacyProductTables','default','App',1764758137,3);
+INSERT INTO `migrations` VALUES (1,'2025-12-05-000000','App\\Database\\Migrations\\BaselineSchema','default','App',1764920854,4),(2,'2025-12-05-074709','App\\Database\\Migrations\\AddIsSystemToPriceLists','default','App',1764920854,4),(3,'2025-12-05-100000','App\\Database\\Migrations\\AddConfigToPriceLists','default','App',1764920854,4);
 /*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2575,7 +2563,7 @@ DROP TABLE IF EXISTS `model_has_permissions`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `model_has_permissions` (
   `permission_id` bigint unsigned NOT NULL,
-  `model_type` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `model_id` bigint unsigned NOT NULL,
   PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
   KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`)
@@ -2612,7 +2600,6 @@ CREATE TABLE `model_has_roles` (
 
 LOCK TABLES `model_has_roles` WRITE;
 /*!40000 ALTER TABLE `model_has_roles` DISABLE KEYS */;
-INSERT INTO `model_has_roles` VALUES (1,'App\\Models\\User',1),(1,'App\\Models\\User',10),(2,'App\\Models\\User',2),(2,'App\\Models\\User',11),(2,'App\\Models\\User',12),(3,'App\\Models\\User',2),(3,'App\\Models\\User',3),(3,'App\\Models\\User',13),(3,'App\\Models\\User',14),(3,'App\\Models\\User',15),(4,'App\\Models\\User',3);
 /*!40000 ALTER TABLE `model_has_roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2820,7 +2807,7 @@ CREATE TABLE `order_items` (
   CONSTRAINT `fk_order_items_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_order_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_order_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=166 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2829,7 +2816,6 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (99,56,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-03 10:00:00','2025-11-03 10:00:00',NULL),(100,56,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-03 10:00:00','2025-11-03 10:00:00',NULL),(101,57,503,NULL,NULL,NULL,2.000,206000.00,206000.00,NULL,NULL,'2025-11-04 10:00:00','2025-11-04 10:00:00',NULL),(102,58,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-05 10:00:00','2025-11-05 10:00:00',NULL),(103,58,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-05 10:00:00','2025-11-05 10:00:00',NULL),(104,59,502,NULL,NULL,NULL,2.000,204000.00,204000.00,NULL,NULL,'2025-11-06 10:00:00','2025-11-06 10:00:00',NULL),(105,60,501,50102,NULL,NULL,1.000,222000.00,155400.00,3,'Flash Sale 30%','2025-11-07 10:00:00','2025-11-07 10:00:00',NULL),(106,60,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-07 10:00:00','2025-11-07 10:00:00',NULL),(107,61,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-08 10:00:00','2025-11-08 10:00:00',NULL),(108,61,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-08 10:00:00','2025-11-08 10:00:00',NULL),(109,62,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-09 10:00:00','2025-11-09 10:00:00',NULL),(110,62,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-09 10:00:00','2025-11-09 10:00:00',NULL),(111,63,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-10 10:00:00','2025-11-10 10:00:00',NULL),(112,63,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-10 10:00:00','2025-11-10 10:00:00',NULL),(113,64,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-11 10:00:00','2025-11-11 10:00:00',NULL),(114,64,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-11 10:00:00','2025-11-11 10:00:00',NULL),(115,65,503,NULL,NULL,NULL,2.000,206000.00,206000.00,NULL,NULL,'2025-11-12 10:00:00','2025-11-12 10:00:00',NULL),(116,65,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-12 10:00:00','2025-11-12 10:00:00',NULL),(117,66,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-13 10:00:00','2025-11-13 10:00:00',NULL),(118,66,501,50102,NULL,NULL,1.000,222000.00,155400.00,3,'Flash Sale 30%','2025-11-13 10:00:00','2025-11-13 10:00:00',NULL),(119,67,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-14 10:00:00','2025-11-14 10:00:00',NULL),(120,67,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-14 10:00:00','2025-11-14 10:00:00',NULL),(121,68,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-15 10:00:00','2025-11-15 10:00:00',NULL),(122,68,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-15 10:00:00','2025-11-15 10:00:00',NULL),(123,68,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-15 10:00:00','2025-11-15 10:00:00',NULL),(124,69,502,NULL,NULL,NULL,2.000,204000.00,204000.00,NULL,NULL,'2025-11-16 10:00:00','2025-11-16 10:00:00',NULL),(125,70,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-17 10:00:00','2025-11-17 10:00:00',NULL),(126,70,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-17 10:00:00','2025-11-17 10:00:00',NULL),(127,71,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-18 10:00:00','2025-11-18 10:00:00',NULL),(128,71,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-18 10:00:00','2025-11-18 10:00:00',NULL),(129,72,503,NULL,NULL,NULL,2.000,206000.00,206000.00,NULL,NULL,'2025-11-19 10:00:00','2025-11-19 10:00:00',NULL),(130,73,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-20 10:00:00','2025-11-20 10:00:00',NULL),(131,73,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-20 10:00:00','2025-11-20 10:00:00',NULL),(132,74,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-11-21 10:00:00','2025-11-21 10:00:00',NULL),(133,75,503,NULL,NULL,NULL,1.000,206000.00,206000.00,NULL,NULL,'2025-11-22 10:00:00','2025-11-22 10:00:00',NULL),(134,76,511,51102,NULL,NULL,1.000,242000.00,242000.00,NULL,NULL,'2025-11-23 10:00:00','2025-11-23 10:00:00',NULL),(135,76,509,NULL,NULL,NULL,3.000,218000.00,218000.00,NULL,NULL,'2025-11-23 10:00:00','2025-11-23 10:00:00',NULL),(136,76,506,50602,NULL,NULL,1.000,232000.00,232000.00,NULL,NULL,'2025-11-23 10:00:00','2025-11-23 10:00:00',NULL),(137,77,517,51702,NULL,NULL,3.000,254000.00,254000.00,NULL,NULL,'2025-11-24 10:00:00','2025-11-24 10:00:00',NULL),(138,77,525,NULL,NULL,NULL,1.000,250000.00,250000.00,NULL,NULL,'2025-11-24 10:00:00','2025-11-24 10:00:00',NULL),(139,78,512,51202,NULL,NULL,2.000,244000.00,244000.00,NULL,NULL,'2025-11-25 10:00:00','2025-11-25 10:00:00',NULL),(140,78,521,52102,NULL,NULL,5.000,262000.00,262000.00,NULL,NULL,'2025-11-25 10:00:00','2025-11-25 10:00:00',NULL),(141,78,526,52601,NULL,NULL,3.000,262000.00,262000.00,NULL,NULL,'2025-11-25 10:00:00','2025-11-25 10:00:00',NULL),(142,79,522,NULL,NULL,NULL,3.000,244000.00,244000.00,NULL,NULL,'2025-11-26 10:00:00','2025-11-26 10:00:00',NULL),(143,80,529,NULL,NULL,NULL,4.000,258000.00,258000.00,NULL,NULL,'2025-11-27 10:00:00','2025-11-27 10:00:00',NULL),(144,80,508,50802,NULL,NULL,1.000,236000.00,236000.00,NULL,NULL,'2025-11-27 10:00:00','2025-11-27 10:00:00',NULL),(145,81,511,51102,NULL,NULL,2.000,242000.00,242000.00,NULL,NULL,'2025-11-28 10:00:00','2025-11-28 10:00:00',NULL),(146,81,512,NULL,NULL,NULL,5.000,224000.00,224000.00,NULL,NULL,'2025-11-28 10:00:00','2025-11-28 10:00:00',NULL),(147,81,521,52101,NULL,NULL,3.000,252000.00,252000.00,NULL,NULL,'2025-11-28 10:00:00','2025-11-28 10:00:00',NULL),(148,82,528,NULL,NULL,NULL,2.000,256000.00,256000.00,NULL,NULL,'2025-11-29 10:00:00','2025-11-29 10:00:00',NULL),(149,82,523,NULL,NULL,NULL,3.000,246000.00,246000.00,NULL,NULL,'2025-11-29 10:00:00','2025-11-29 10:00:00',NULL),(150,83,505,50501,NULL,NULL,3.000,220000.00,220000.00,NULL,NULL,'2025-11-30 10:00:00','2025-11-30 10:00:00',NULL),(151,84,521,NULL,NULL,NULL,2.000,242000.00,242000.00,NULL,NULL,'2025-12-01 10:00:00','2025-12-01 10:00:00',NULL),(152,85,506,NULL,NULL,NULL,2.000,212000.00,212000.00,NULL,NULL,'2025-12-02 10:00:00','2025-12-02 10:00:00',NULL),(153,86,507,50701,NULL,NULL,2.000,224000.00,224000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(154,86,516,NULL,NULL,NULL,3.000,232000.00,232000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(155,86,528,NULL,NULL,NULL,3.000,256000.00,256000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(156,87,512,NULL,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-12-04 10:00:00','2025-12-04 10:00:00',NULL),(157,87,530,53001,NULL,NULL,1.000,270000.00,270000.00,NULL,NULL,'2025-12-04 10:00:00','2025-12-04 10:00:00',NULL),(158,87,504,NULL,NULL,NULL,4.000,208000.00,208000.00,NULL,NULL,'2025-12-04 10:00:00','2025-12-04 10:00:00',NULL),(159,88,503,NULL,NULL,NULL,4.000,206000.00,206000.00,NULL,NULL,'2025-12-05 10:00:00','2025-12-05 10:00:00',NULL),(160,89,509,50901,NULL,NULL,1.000,228000.00,228000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(161,89,509,NULL,NULL,NULL,1.000,218000.00,218000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(162,89,511,NULL,NULL,NULL,2.000,222000.00,222000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(163,90,513,51302,NULL,NULL,4.000,246000.00,246000.00,NULL,NULL,'2025-12-07 10:00:00','2025-12-07 10:00:00',NULL),(164,90,503,NULL,NULL,NULL,5.000,206000.00,206000.00,NULL,NULL,'2025-12-07 10:00:00','2025-12-07 10:00:00',NULL),(165,90,505,50501,NULL,NULL,4.000,220000.00,220000.00,NULL,NULL,'2025-12-07 10:00:00','2025-12-07 10:00:00',NULL);
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2853,7 +2839,7 @@ CREATE TABLE `order_payments` (
   KEY `fk_order_payments_method` (`payment_method`),
   CONSTRAINT `fk_order_payments_method` FOREIGN KEY (`payment_method`) REFERENCES `payment_methods` (`code`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_order_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2862,7 +2848,6 @@ CREATE TABLE `order_payments` (
 
 LOCK TABLES `order_payments` WRITE;
 /*!40000 ALTER TABLE `order_payments` DISABLE KEYS */;
-INSERT INTO `order_payments` VALUES (56,56,'CASH',0.00,NULL,'2025-11-03 12:00:00','2025-11-03 12:00:00'),(57,57,'BANK_TRANSFER',166110.00,'2025-11-04 12:00:00','2025-11-04 12:00:00','2025-11-04 12:00:00'),(58,58,'COD',180664.00,'2025-11-05 12:00:00','2025-11-05 12:00:00','2025-11-05 12:00:00'),(59,59,'CASH',204000.00,'2025-11-06 12:00:00','2025-11-06 12:00:00','2025-11-06 12:00:00'),(60,60,'EWALLET',84924.00,'2025-11-07 12:00:00','2025-11-07 12:00:00','2025-11-07 12:00:00'),(61,61,'COD',292380.00,'2025-11-08 12:00:00','2025-11-08 12:00:00','2025-11-08 12:00:00'),(62,62,'BANK_TRANSFER',215000.00,'2025-11-09 12:00:00','2025-11-09 12:00:00','2025-11-09 12:00:00'),(63,63,'CASH',274596.00,'2025-11-10 12:00:00','2025-11-10 12:00:00','2025-11-10 12:00:00'),(64,64,'BANK_TRANSFER',457600.00,'2025-11-11 12:00:00','2025-11-11 12:00:00','2025-11-11 12:00:00'),(65,65,'BANK_TRANSFER',611600.00,'2025-11-12 12:00:00','2025-11-12 12:00:00','2025-11-12 12:00:00'),(66,66,'CASH',398370.00,'2025-11-13 12:00:00','2025-11-13 12:00:00','2025-11-13 12:00:00'),(67,67,'COD',459800.00,'2025-11-14 12:00:00','2025-11-14 12:00:00','2025-11-14 12:00:00'),(68,68,'BANK_TRANSFER',594600.00,'2025-11-15 12:00:00','2025-11-15 12:00:00','2025-11-15 12:00:00'),(69,69,'CASH',428400.00,'2025-11-16 12:00:00','2025-11-16 12:00:00','2025-11-16 12:00:00'),(70,70,'EWALLET',487300.00,'2025-11-17 12:00:00','2025-11-17 12:00:00','2025-11-17 12:00:00'),(71,71,'CASH',416000.00,'2025-11-18 12:00:00','2025-11-18 12:00:00','2025-11-18 12:00:00'),(72,72,'BANK_TRANSFER',474600.00,'2025-11-19 12:00:00','2025-11-19 12:00:00','2025-11-19 12:00:00'),(73,73,'CASH',410960.00,'2025-11-20 12:00:00','2025-11-20 12:00:00','2025-11-20 12:00:00'),(74,74,'CASH',0.00,NULL,'2025-11-21 12:00:00','2025-11-21 12:00:00'),(75,75,'COD',35595.00,'2025-11-22 12:00:00','2025-11-22 12:00:00','2025-11-22 12:00:00'),(76,76,'CASH',0.00,NULL,'2025-11-23 12:00:00','2025-11-23 12:00:00'),(77,77,'CASH',521000.00,'2025-11-24 12:00:00','2025-11-24 12:00:00','2025-11-24 12:00:00'),(78,78,'CASH',0.00,NULL,'2025-11-25 12:00:00','2025-11-25 12:00:00'),(79,79,'BANK_TRANSFER',0.00,NULL,'2025-11-26 12:00:00','2025-11-26 12:00:00'),(80,80,'COD',659000.00,'2025-11-27 12:00:00','2025-11-27 12:00:00','2025-11-27 12:00:00'),(81,81,'EWALLET',2520000.00,'2025-11-28 12:00:00','2025-11-28 12:00:00','2025-11-28 12:00:00'),(82,82,'CASH',698500.00,'2025-11-29 12:00:00','2025-11-29 12:00:00','2025-11-29 12:00:00'),(83,83,'CASH',340000.00,'2025-11-30 12:00:00','2025-11-30 12:00:00','2025-11-30 12:00:00'),(84,84,'CASH',508200.00,'2025-12-01 12:00:00','2025-12-01 12:00:00','2025-12-01 12:00:00'),(85,85,'CASH',510400.00,'2025-12-02 12:00:00','2025-12-02 12:00:00','2025-12-02 12:00:00'),(86,86,'COD',1932000.00,'2025-12-03 12:00:00','2025-12-03 12:00:00','2025-12-03 12:00:00'),(87,87,'EWALLET',1444800.00,'2025-12-04 12:00:00','2025-12-04 12:00:00','2025-12-04 12:00:00'),(88,88,'CASH',917400.00,'2025-12-05 12:00:00','2025-12-05 12:00:00','2025-12-05 12:00:00'),(89,89,'CASH',900000.00,'2025-12-06 12:00:00','2025-12-06 12:00:00','2025-12-06 12:00:00'),(90,90,'CASH',3091200.00,'2025-12-07 12:00:00','2025-12-07 12:00:00','2025-12-07 12:00:00');
 /*!40000 ALTER TABLE `order_payments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2915,7 +2900,7 @@ CREATE TABLE `order_status_logs` (
   PRIMARY KEY (`id`),
   KEY `fk_order_status_logs_order_id` (`order_id`),
   CONSTRAINT `fk_order_status_logs_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=378 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2924,7 +2909,6 @@ CREATE TABLE `order_status_logs` (
 
 LOCK TABLES `order_status_logs` WRITE;
 /*!40000 ALTER TABLE `order_status_logs` DISABLE KEYS */;
-INSERT INTO `order_status_logs` VALUES (225,56,NULL,'created',1,'Auto demo log','2025-11-03 10:00:00','2025-11-03 10:00:00','2025-11-03 10:00:00'),(226,57,NULL,'created',1,'Auto demo log','2025-11-04 10:00:00','2025-11-04 10:00:00','2025-11-04 10:00:00'),(227,58,NULL,'created',1,'Auto demo log','2025-11-05 10:00:00','2025-11-05 10:00:00','2025-11-05 10:00:00'),(228,58,'created','confirmed',1,'Auto demo log','2025-11-05 11:00:00','2025-11-05 11:00:00','2025-11-05 11:00:00'),(229,58,'confirmed','processing',1,'Auto demo log','2025-11-05 12:00:00','2025-11-05 12:00:00','2025-11-05 12:00:00'),(230,59,NULL,'created',1,'Auto demo log','2025-11-06 10:00:00','2025-11-06 10:00:00','2025-11-06 10:00:00'),(231,59,'created','confirmed',1,'Auto demo log','2025-11-06 11:00:00','2025-11-06 11:00:00','2025-11-06 11:00:00'),(232,59,'confirmed','processing',1,'Auto demo log','2025-11-06 12:00:00','2025-11-06 12:00:00','2025-11-06 12:00:00'),(233,60,NULL,'created',1,'Auto demo log','2025-11-07 10:00:00','2025-11-07 10:00:00','2025-11-07 10:00:00'),(234,60,'created','confirmed',1,'Auto demo log','2025-11-07 11:00:00','2025-11-07 11:00:00','2025-11-07 11:00:00'),(235,60,'confirmed','processing',1,'Auto demo log','2025-11-07 12:00:00','2025-11-07 12:00:00','2025-11-07 12:00:00'),(236,61,NULL,'created',1,'Auto demo log','2025-11-08 10:00:00','2025-11-08 10:00:00','2025-11-08 10:00:00'),(237,61,'created','confirmed',1,'Auto demo log','2025-11-08 11:00:00','2025-11-08 11:00:00','2025-11-08 11:00:00'),(238,61,'confirmed','processing',1,'Auto demo log','2025-11-08 12:00:00','2025-11-08 12:00:00','2025-11-08 12:00:00'),(239,61,'processing','shipping',1,'Auto demo log','2025-11-08 13:00:00','2025-11-08 13:00:00','2025-11-08 13:00:00'),(240,62,NULL,'created',1,'Auto demo log','2025-11-09 10:00:00','2025-11-09 10:00:00','2025-11-09 10:00:00'),(241,62,'created','confirmed',1,'Auto demo log','2025-11-09 11:00:00','2025-11-09 11:00:00','2025-11-09 11:00:00'),(242,62,'confirmed','processing',1,'Auto demo log','2025-11-09 12:00:00','2025-11-09 12:00:00','2025-11-09 12:00:00'),(243,62,'processing','shipping',1,'Auto demo log','2025-11-09 13:00:00','2025-11-09 13:00:00','2025-11-09 13:00:00'),(244,63,NULL,'created',1,'Auto demo log','2025-11-10 10:00:00','2025-11-10 10:00:00','2025-11-10 10:00:00'),(245,63,'created','confirmed',1,'Auto demo log','2025-11-10 11:00:00','2025-11-10 11:00:00','2025-11-10 11:00:00'),(246,63,'confirmed','processing',1,'Auto demo log','2025-11-10 12:00:00','2025-11-10 12:00:00','2025-11-10 12:00:00'),(247,63,'processing','shipping',1,'Auto demo log','2025-11-10 13:00:00','2025-11-10 13:00:00','2025-11-10 13:00:00'),(248,64,NULL,'created',1,'Auto demo log','2025-11-11 10:00:00','2025-11-11 10:00:00','2025-11-11 10:00:00'),(249,64,'created','confirmed',1,'Auto demo log','2025-11-11 11:00:00','2025-11-11 11:00:00','2025-11-11 11:00:00'),(250,64,'confirmed','processing',1,'Auto demo log','2025-11-11 12:00:00','2025-11-11 12:00:00','2025-11-11 12:00:00'),(251,64,'processing','shipping',1,'Auto demo log','2025-11-11 13:00:00','2025-11-11 13:00:00','2025-11-11 13:00:00'),(252,64,'shipping','delivered',1,'Auto demo log','2025-11-11 14:00:00','2025-11-11 14:00:00','2025-11-11 14:00:00'),(253,64,'delivered','completed',1,'Auto demo log','2025-11-11 15:00:00','2025-11-11 15:00:00','2025-11-11 15:00:00'),(254,65,NULL,'created',1,'Auto demo log','2025-11-12 10:00:00','2025-11-12 10:00:00','2025-11-12 10:00:00'),(255,65,'created','confirmed',1,'Auto demo log','2025-11-12 11:00:00','2025-11-12 11:00:00','2025-11-12 11:00:00'),(256,65,'confirmed','processing',1,'Auto demo log','2025-11-12 12:00:00','2025-11-12 12:00:00','2025-11-12 12:00:00'),(257,65,'processing','shipping',1,'Auto demo log','2025-11-12 13:00:00','2025-11-12 13:00:00','2025-11-12 13:00:00'),(258,65,'shipping','delivered',1,'Auto demo log','2025-11-12 14:00:00','2025-11-12 14:00:00','2025-11-12 14:00:00'),(259,65,'delivered','completed',1,'Auto demo log','2025-11-12 15:00:00','2025-11-12 15:00:00','2025-11-12 15:00:00'),(260,66,NULL,'created',1,'Auto demo log','2025-11-13 10:00:00','2025-11-13 10:00:00','2025-11-13 10:00:00'),(261,66,'created','confirmed',1,'Auto demo log','2025-11-13 11:00:00','2025-11-13 11:00:00','2025-11-13 11:00:00'),(262,66,'confirmed','processing',1,'Auto demo log','2025-11-13 12:00:00','2025-11-13 12:00:00','2025-11-13 12:00:00'),(263,66,'processing','shipping',1,'Auto demo log','2025-11-13 13:00:00','2025-11-13 13:00:00','2025-11-13 13:00:00'),(264,66,'shipping','delivered',1,'Auto demo log','2025-11-13 14:00:00','2025-11-13 14:00:00','2025-11-13 14:00:00'),(265,66,'delivered','completed',1,'Auto demo log','2025-11-13 15:00:00','2025-11-13 15:00:00','2025-11-13 15:00:00'),(266,67,NULL,'created',1,'Auto demo log','2025-11-14 10:00:00','2025-11-14 10:00:00','2025-11-14 10:00:00'),(267,67,'created','confirmed',1,'Auto demo log','2025-11-14 11:00:00','2025-11-14 11:00:00','2025-11-14 11:00:00'),(268,67,'confirmed','processing',1,'Auto demo log','2025-11-14 12:00:00','2025-11-14 12:00:00','2025-11-14 12:00:00'),(269,67,'processing','shipping',1,'Auto demo log','2025-11-14 13:00:00','2025-11-14 13:00:00','2025-11-14 13:00:00'),(270,67,'shipping','delivered',1,'Auto demo log','2025-11-14 14:00:00','2025-11-14 14:00:00','2025-11-14 14:00:00'),(271,67,'delivered','completed',1,'Auto demo log','2025-11-14 15:00:00','2025-11-14 15:00:00','2025-11-14 15:00:00'),(272,68,NULL,'created',1,'Auto demo log','2025-11-15 10:00:00','2025-11-15 10:00:00','2025-11-15 10:00:00'),(273,68,'created','confirmed',1,'Auto demo log','2025-11-15 11:00:00','2025-11-15 11:00:00','2025-11-15 11:00:00'),(274,68,'confirmed','processing',1,'Auto demo log','2025-11-15 12:00:00','2025-11-15 12:00:00','2025-11-15 12:00:00'),(275,68,'processing','shipping',1,'Auto demo log','2025-11-15 13:00:00','2025-11-15 13:00:00','2025-11-15 13:00:00'),(276,68,'shipping','delivered',1,'Auto demo log','2025-11-15 14:00:00','2025-11-15 14:00:00','2025-11-15 14:00:00'),(277,68,'delivered','completed',1,'Auto demo log','2025-11-15 15:00:00','2025-11-15 15:00:00','2025-11-15 15:00:00'),(278,69,NULL,'created',1,'Auto demo log','2025-11-16 10:00:00','2025-11-16 10:00:00','2025-11-16 10:00:00'),(279,69,'created','confirmed',1,'Auto demo log','2025-11-16 11:00:00','2025-11-16 11:00:00','2025-11-16 11:00:00'),(280,69,'confirmed','processing',1,'Auto demo log','2025-11-16 12:00:00','2025-11-16 12:00:00','2025-11-16 12:00:00'),(281,69,'processing','shipping',1,'Auto demo log','2025-11-16 13:00:00','2025-11-16 13:00:00','2025-11-16 13:00:00'),(282,69,'shipping','delivered',1,'Auto demo log','2025-11-16 14:00:00','2025-11-16 14:00:00','2025-11-16 14:00:00'),(283,69,'delivered','completed',1,'Auto demo log','2025-11-16 15:00:00','2025-11-16 15:00:00','2025-11-16 15:00:00'),(284,70,NULL,'created',1,'Auto demo log','2025-11-17 10:00:00','2025-11-17 10:00:00','2025-11-17 10:00:00'),(285,70,'created','confirmed',1,'Auto demo log','2025-11-17 11:00:00','2025-11-17 11:00:00','2025-11-17 11:00:00'),(286,70,'confirmed','processing',1,'Auto demo log','2025-11-17 12:00:00','2025-11-17 12:00:00','2025-11-17 12:00:00'),(287,70,'processing','shipping',1,'Auto demo log','2025-11-17 13:00:00','2025-11-17 13:00:00','2025-11-17 13:00:00'),(288,70,'shipping','delivered',1,'Auto demo log','2025-11-17 14:00:00','2025-11-17 14:00:00','2025-11-17 14:00:00'),(289,70,'delivered','completed',1,'Auto demo log','2025-11-17 15:00:00','2025-11-17 15:00:00','2025-11-17 15:00:00'),(290,71,NULL,'created',1,'Auto demo log','2025-11-18 10:00:00','2025-11-18 10:00:00','2025-11-18 10:00:00'),(291,71,'created','confirmed',1,'Auto demo log','2025-11-18 11:00:00','2025-11-18 11:00:00','2025-11-18 11:00:00'),(292,71,'confirmed','processing',1,'Auto demo log','2025-11-18 12:00:00','2025-11-18 12:00:00','2025-11-18 12:00:00'),(293,71,'processing','shipping',1,'Auto demo log','2025-11-18 13:00:00','2025-11-18 13:00:00','2025-11-18 13:00:00'),(294,71,'shipping','delivered',1,'Auto demo log','2025-11-18 14:00:00','2025-11-18 14:00:00','2025-11-18 14:00:00'),(295,71,'delivered','completed',1,'Auto demo log','2025-11-18 15:00:00','2025-11-18 15:00:00','2025-11-18 15:00:00'),(296,72,NULL,'created',1,'Auto demo log','2025-11-19 10:00:00','2025-11-19 10:00:00','2025-11-19 10:00:00'),(297,72,'created','confirmed',1,'Auto demo log','2025-11-19 11:00:00','2025-11-19 11:00:00','2025-11-19 11:00:00'),(298,72,'confirmed','processing',1,'Auto demo log','2025-11-19 12:00:00','2025-11-19 12:00:00','2025-11-19 12:00:00'),(299,72,'processing','shipping',1,'Auto demo log','2025-11-19 13:00:00','2025-11-19 13:00:00','2025-11-19 13:00:00'),(300,72,'shipping','delivered',1,'Auto demo log','2025-11-19 14:00:00','2025-11-19 14:00:00','2025-11-19 14:00:00'),(301,72,'delivered','completed',1,'Auto demo log','2025-11-19 15:00:00','2025-11-19 15:00:00','2025-11-19 15:00:00'),(302,73,NULL,'created',1,'Auto demo log','2025-11-20 10:00:00','2025-11-20 10:00:00','2025-11-20 10:00:00'),(303,73,'created','confirmed',1,'Auto demo log','2025-11-20 11:00:00','2025-11-20 11:00:00','2025-11-20 11:00:00'),(304,73,'confirmed','processing',1,'Auto demo log','2025-11-20 12:00:00','2025-11-20 12:00:00','2025-11-20 12:00:00'),(305,73,'processing','shipping',1,'Auto demo log','2025-11-20 13:00:00','2025-11-20 13:00:00','2025-11-20 13:00:00'),(306,73,'shipping','delivered',1,'Auto demo log','2025-11-20 14:00:00','2025-11-20 14:00:00','2025-11-20 14:00:00'),(307,73,'delivered','completed',1,'Auto demo log','2025-11-20 15:00:00','2025-11-20 15:00:00','2025-11-20 15:00:00'),(308,74,NULL,'created',1,'Auto demo log','2025-11-21 10:00:00','2025-11-21 10:00:00','2025-11-21 10:00:00'),(309,74,'created','cancelled',1,'Auto demo log','2025-11-21 11:00:00','2025-11-21 11:00:00','2025-11-21 11:00:00'),(310,75,NULL,'created',1,'Auto demo log','2025-11-22 10:00:00','2025-11-22 10:00:00','2025-11-22 10:00:00'),(311,75,'created','cancelled',1,'Auto demo log','2025-11-22 11:00:00','2025-11-22 11:00:00','2025-11-22 11:00:00'),(312,76,NULL,'created',1,'Auto demo log','2025-11-23 10:00:00','2025-11-23 10:00:00','2025-11-23 10:00:00'),(313,76,'created','cancelled',1,'Auto demo log','2025-11-23 11:00:00','2025-11-23 11:00:00','2025-11-23 11:00:00'),(314,77,NULL,'created',1,'Auto demo log','2025-11-24 10:00:00','2025-11-24 10:00:00','2025-11-24 10:00:00'),(315,77,'created','confirmed',1,'Auto demo log','2025-11-24 11:00:00','2025-11-24 11:00:00','2025-11-24 11:00:00'),(316,77,'confirmed','processing',1,'Auto demo log','2025-11-24 12:00:00','2025-11-24 12:00:00','2025-11-24 12:00:00'),(317,78,NULL,'created',1,'Auto demo log','2025-11-25 10:00:00','2025-11-25 10:00:00','2025-11-25 10:00:00'),(318,78,'created','cancelled',1,'Auto demo log','2025-11-25 11:00:00','2025-11-25 11:00:00','2025-11-25 11:00:00'),(319,79,NULL,'created',1,'Auto demo log','2025-11-26 10:00:00','2025-11-26 10:00:00','2025-11-26 10:00:00'),(320,79,'created','cancelled',1,'Auto demo log','2025-11-26 11:00:00','2025-11-26 11:00:00','2025-11-26 11:00:00'),(321,80,NULL,'created',1,'Auto demo log','2025-11-27 10:00:00','2025-11-27 10:00:00','2025-11-27 10:00:00'),(322,80,'created','confirmed',1,'Auto demo log','2025-11-27 11:00:00','2025-11-27 11:00:00','2025-11-27 11:00:00'),(323,80,'confirmed','processing',1,'Auto demo log','2025-11-27 12:00:00','2025-11-27 12:00:00','2025-11-27 12:00:00'),(324,81,NULL,'created',1,'Auto demo log','2025-11-28 10:00:00','2025-11-28 10:00:00','2025-11-28 10:00:00'),(325,81,'created','confirmed',1,'Auto demo log','2025-11-28 11:00:00','2025-11-28 11:00:00','2025-11-28 11:00:00'),(326,81,'confirmed','processing',1,'Auto demo log','2025-11-28 12:00:00','2025-11-28 12:00:00','2025-11-28 12:00:00'),(327,81,'processing','shipping',1,'Auto demo log','2025-11-28 13:00:00','2025-11-28 13:00:00','2025-11-28 13:00:00'),(328,81,'shipping','delivered',1,'Auto demo log','2025-11-28 14:00:00','2025-11-28 14:00:00','2025-11-28 14:00:00'),(329,81,'delivered','completed',1,'Auto demo log','2025-11-28 15:00:00','2025-11-28 15:00:00','2025-11-28 15:00:00'),(330,82,NULL,'created',1,'Auto demo log','2025-11-29 10:00:00','2025-11-29 10:00:00','2025-11-29 10:00:00'),(331,82,'created','confirmed',1,'Auto demo log','2025-11-29 11:00:00','2025-11-29 11:00:00','2025-11-29 11:00:00'),(332,82,'confirmed','processing',1,'Auto demo log','2025-11-29 12:00:00','2025-11-29 12:00:00','2025-11-29 12:00:00'),(333,83,NULL,'created',1,'Auto demo log','2025-11-30 10:00:00','2025-11-30 10:00:00','2025-11-30 10:00:00'),(334,83,'created','confirmed',1,'Auto demo log','2025-11-30 11:00:00','2025-11-30 11:00:00','2025-11-30 11:00:00'),(335,83,'confirmed','processing',1,'Auto demo log','2025-11-30 12:00:00','2025-11-30 12:00:00','2025-11-30 12:00:00'),(336,84,NULL,'created',1,'Auto demo log','2025-12-01 10:00:00','2025-12-01 10:00:00','2025-12-01 10:00:00'),(337,84,'created','confirmed',1,'Auto demo log','2025-12-01 11:00:00','2025-12-01 11:00:00','2025-12-01 11:00:00'),(338,84,'confirmed','processing',1,'Auto demo log','2025-12-01 12:00:00','2025-12-01 12:00:00','2025-12-01 12:00:00'),(339,84,'processing','shipping',1,'Auto demo log','2025-12-01 13:00:00','2025-12-01 13:00:00','2025-12-01 13:00:00'),(340,84,'shipping','delivered',1,'Auto demo log','2025-12-01 14:00:00','2025-12-01 14:00:00','2025-12-01 14:00:00'),(341,84,'delivered','completed',1,'Auto demo log','2025-12-01 15:00:00','2025-12-01 15:00:00','2025-12-01 15:00:00'),(342,85,NULL,'created',1,'Auto demo log','2025-12-02 10:00:00','2025-12-02 10:00:00','2025-12-02 10:00:00'),(343,85,'created','confirmed',1,'Auto demo log','2025-12-02 11:00:00','2025-12-02 11:00:00','2025-12-02 11:00:00'),(344,85,'confirmed','processing',1,'Auto demo log','2025-12-02 12:00:00','2025-12-02 12:00:00','2025-12-02 12:00:00'),(345,85,'processing','shipping',1,'Auto demo log','2025-12-02 13:00:00','2025-12-02 13:00:00','2025-12-02 13:00:00'),(346,85,'shipping','delivered',1,'Auto demo log','2025-12-02 14:00:00','2025-12-02 14:00:00','2025-12-02 14:00:00'),(347,85,'delivered','completed',1,'Auto demo log','2025-12-02 15:00:00','2025-12-02 15:00:00','2025-12-02 15:00:00'),(348,86,NULL,'created',1,'Auto demo log','2025-12-03 10:00:00','2025-12-03 10:00:00','2025-12-03 10:00:00'),(349,86,'created','confirmed',1,'Auto demo log','2025-12-03 11:00:00','2025-12-03 11:00:00','2025-12-03 11:00:00'),(350,86,'confirmed','processing',1,'Auto demo log','2025-12-03 12:00:00','2025-12-03 12:00:00','2025-12-03 12:00:00'),(351,86,'processing','shipping',1,'Auto demo log','2025-12-03 13:00:00','2025-12-03 13:00:00','2025-12-03 13:00:00'),(352,86,'shipping','delivered',1,'Auto demo log','2025-12-03 14:00:00','2025-12-03 14:00:00','2025-12-03 14:00:00'),(353,86,'delivered','completed',1,'Auto demo log','2025-12-03 15:00:00','2025-12-03 15:00:00','2025-12-03 15:00:00'),(354,87,NULL,'created',1,'Auto demo log','2025-12-04 10:00:00','2025-12-04 10:00:00','2025-12-04 10:00:00'),(355,87,'created','confirmed',1,'Auto demo log','2025-12-04 11:00:00','2025-12-04 11:00:00','2025-12-04 11:00:00'),(356,87,'confirmed','processing',1,'Auto demo log','2025-12-04 12:00:00','2025-12-04 12:00:00','2025-12-04 12:00:00'),(357,87,'processing','shipping',1,'Auto demo log','2025-12-04 13:00:00','2025-12-04 13:00:00','2025-12-04 13:00:00'),(358,87,'shipping','delivered',1,'Auto demo log','2025-12-04 14:00:00','2025-12-04 14:00:00','2025-12-04 14:00:00'),(359,87,'delivered','completed',1,'Auto demo log','2025-12-04 15:00:00','2025-12-04 15:00:00','2025-12-04 15:00:00'),(360,88,NULL,'created',1,'Auto demo log','2025-12-05 10:00:00','2025-12-05 10:00:00','2025-12-05 10:00:00'),(361,88,'created','confirmed',1,'Auto demo log','2025-12-05 11:00:00','2025-12-05 11:00:00','2025-12-05 11:00:00'),(362,88,'confirmed','processing',1,'Auto demo log','2025-12-05 12:00:00','2025-12-05 12:00:00','2025-12-05 12:00:00'),(363,88,'processing','shipping',1,'Auto demo log','2025-12-05 13:00:00','2025-12-05 13:00:00','2025-12-05 13:00:00'),(364,88,'shipping','delivered',1,'Auto demo log','2025-12-05 14:00:00','2025-12-05 14:00:00','2025-12-05 14:00:00'),(365,88,'delivered','completed',1,'Auto demo log','2025-12-05 15:00:00','2025-12-05 15:00:00','2025-12-05 15:00:00'),(366,89,NULL,'created',1,'Auto demo log','2025-12-06 10:00:00','2025-12-06 10:00:00','2025-12-06 10:00:00'),(367,89,'created','confirmed',1,'Auto demo log','2025-12-06 11:00:00','2025-12-06 11:00:00','2025-12-06 11:00:00'),(368,89,'confirmed','processing',1,'Auto demo log','2025-12-06 12:00:00','2025-12-06 12:00:00','2025-12-06 12:00:00'),(369,89,'processing','shipping',1,'Auto demo log','2025-12-06 13:00:00','2025-12-06 13:00:00','2025-12-06 13:00:00'),(370,89,'shipping','delivered',1,'Auto demo log','2025-12-06 14:00:00','2025-12-06 14:00:00','2025-12-06 14:00:00'),(371,89,'delivered','completed',1,'Auto demo log','2025-12-06 15:00:00','2025-12-06 15:00:00','2025-12-06 15:00:00'),(372,90,NULL,'created',1,'Auto demo log','2025-12-07 10:00:00','2025-12-07 10:00:00','2025-12-07 10:00:00'),(373,90,'created','confirmed',1,'Auto demo log','2025-12-07 11:00:00','2025-12-07 11:00:00','2025-12-07 11:00:00'),(374,90,'confirmed','processing',1,'Auto demo log','2025-12-07 12:00:00','2025-12-07 12:00:00','2025-12-07 12:00:00'),(375,90,'processing','shipping',1,'Auto demo log','2025-12-07 13:00:00','2025-12-07 13:00:00','2025-12-07 13:00:00'),(376,90,'shipping','delivered',1,'Auto demo log','2025-12-07 14:00:00','2025-12-07 14:00:00','2025-12-07 14:00:00'),(377,90,'delivered','completed',1,'Auto demo log','2025-12-07 15:00:00','2025-12-07 15:00:00','2025-12-07 15:00:00');
 /*!40000 ALTER TABLE `order_status_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3111,7 +3095,7 @@ CREATE TABLE `orders` (
   CONSTRAINT `fk_orders_tax_template_id` FOREIGN KEY (`tax_template_id`) REFERENCES `tax_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_orders_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `chk_orders_total` CHECK ((`total` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3120,7 +3104,6 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (56,NULL,'DH-DEMO-001',2001,NULL,1,NULL,'2025-11-03','offline',NULL,NULL,9001,0.00,0.00,'CASH','draft',NULL,0.00,0,0.00,0,416000.00,0.00,30000.00,446000.00,0.00,446000.00,'unpaid',0,NULL,'Nguyễn Minh An','0912000001','12 Trần Hưng Đạo, Hà Nội','Hàng Bài','Hoàn Kiếm','Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-11-03 10:00:00','2025-11-03 10:00:00',NULL),(57,NULL,'DH-DEMO-002',2002,NULL,2,NULL,'2025-11-04','online',NULL,NULL,9002,22600.00,0.00,'BANK_TRANSFER','draft',NULL,0.00,0,0.00,0,412000.00,0.00,40000.00,474600.00,166110.00,308490.00,'partial',0,NULL,'Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội','Cửa Nam','Hoàn Kiếm','Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-11-04 10:00:00','2025-11-04 10:00:00',NULL),(58,NULL,'DH-DEMO-003',2003,NULL,3,NULL,'2025-11-05','online',NULL,NULL,9003,41060.00,0.00,'COD','processing',NULL,0.00,0,0.00,0,418000.00,42400.00,35000.00,451660.00,180664.00,270996.00,'partial',0,NULL,'Phạm Gia Bảo','0912000003','22 Nguyễn Huệ, HCM','Bến Nghé','Quận 1','Hồ Chí Minh',NULL,'2025-11-05 11:00:00','2025-11-05 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-05 10:00:00','2025-11-05 12:00:00',NULL),(59,NULL,'DH-DEMO-004',2004,NULL,4,NULL,'2025-11-06','offline',NULL,NULL,9001,0.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,408000.00,0.00,0.00,408000.00,204000.00,204000.00,'partial',0,NULL,'Lê Hồng Nhung','0912000004','35 Hai Bà Trưng, HCM','Bến Thành','Quận 1','Hồ Chí Minh',NULL,'2025-11-06 11:00:00','2025-11-06 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-06 10:00:00','2025-11-06 12:00:00',NULL),(60,NULL,'DH-DEMO-005',2005,NULL,5,NULL,'2025-11-07','online',NULL,NULL,9002,20220.00,0.00,'EWALLET','processing',NULL,0.00,0,0.00,0,426000.00,66600.00,45000.00,424620.00,84924.00,339696.00,'partial',0,NULL,'Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng','Thạch Thang','Hải Châu','Đà Nẵng',NULL,'2025-11-07 11:00:00','2025-11-07 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-07 10:00:00','2025-11-07 12:00:00',NULL),(61,NULL,'DH-DEMO-006',2006,NULL,1,NULL,'2025-11-08','online',NULL,NULL,9003,44300.00,0.00,'COD','shipping',NULL,0.00,0,0.00,0,418000.00,0.00,25000.00,487300.00,292380.00,194920.00,'partial',0,NULL,'Đặng Bích Trâm','0912000006','101 Võ Văn Tần, HCM','6','Quận 3','Hồ Chí Minh',NULL,'2025-11-08 11:00:00','2025-11-08 12:00:00','2025-11-08 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-08 10:00:00','2025-11-08 13:00:00',NULL),(62,NULL,'DH-DEMO-007',2007,NULL,2,NULL,'2025-11-09','online',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','shipping',NULL,0.00,0,0.00,0,410000.00,0.00,20000.00,430000.00,215000.00,215000.00,'partial',0,NULL,'Huỳnh Tuấn Kiệt','0912000007','45 Trần Phú, Nha Trang','Lộc Thọ','Nha Trang','Khánh Hòa',NULL,'2025-11-09 11:00:00','2025-11-09 12:00:00','2025-11-09 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-09 10:00:00','2025-11-09 13:00:00',NULL),(63,NULL,'DH-DEMO-008',2008,NULL,3,NULL,'2025-11-10','offline',NULL,NULL,9002,18680.00,0.00,'CASH','shipping',NULL,0.00,0,0.00,0,416000.00,42400.00,0.00,392280.00,274596.00,117684.00,'partial',0,NULL,'Lý Thu Uyên','0912000008','68 Lê Lợi, Huế','Phú Hội','Huế','Thừa Thiên Huế',NULL,'2025-11-10 11:00:00','2025-11-10 12:00:00','2025-11-10 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-10 10:00:00','2025-11-10 13:00:00',NULL),(64,NULL,'DH-DEMO-009',2011,NULL,1,NULL,'2025-11-11','offline',NULL,NULL,9003,41600.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,416000.00,0.00,0.00,457600.00,457600.00,0.00,'paid',1,NULL,'Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội','Dịch Vọng','Cầu Giấy','Hà Nội',NULL,'2025-11-11 11:00:00','2025-11-11 12:00:00','2025-11-11 13:00:00','2025-11-11 14:00:00','2025-11-11 15:00:00',NULL,NULL,0,'2025-11-11 10:00:00','2025-11-11 15:00:00',NULL),(65,NULL,'DH-DEMO-010',2012,NULL,2,NULL,'2025-11-12','online',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,624000.00,42400.00,30000.00,611600.00,611600.00,0.00,'paid',1,NULL,'CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM','Bến Nghé','Quận 1','Hồ Chí Minh',NULL,'2025-11-12 11:00:00','2025-11-12 12:00:00','2025-11-12 13:00:00','2025-11-12 14:00:00','2025-11-12 15:00:00',NULL,NULL,0,'2025-11-12 10:00:00','2025-11-12 15:00:00',NULL),(66,NULL,'DH-DEMO-011',2013,NULL,3,NULL,'2025-11-13','offline',NULL,NULL,9002,18970.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,426000.00,66600.00,20000.00,398370.00,398370.00,0.00,'paid',1,NULL,'Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang','Vạn Thạnh','Nha Trang','Khánh Hòa',NULL,'2025-11-13 11:00:00','2025-11-13 12:00:00','2025-11-13 13:00:00','2025-11-13 14:00:00','2025-11-13 15:00:00',NULL,NULL,0,'2025-11-13 10:00:00','2025-11-13 15:00:00',NULL),(67,NULL,'DH-DEMO-012',2014,NULL,4,NULL,'2025-11-14','online',NULL,NULL,9003,41800.00,0.00,'COD','completed',NULL,0.00,0,0.00,0,418000.00,0.00,0.00,459800.00,459800.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội',NULL,'2025-11-14 11:00:00','2025-11-14 12:00:00','2025-11-14 13:00:00','2025-11-14 14:00:00','2025-11-14 15:00:00',NULL,NULL,0,'2025-11-14 10:00:00','2025-11-14 15:00:00',NULL),(68,NULL,'DH-DEMO-013',2015,NULL,5,NULL,'2025-11-15','offline',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,622000.00,42400.00,15000.00,594600.00,594600.00,0.00,'paid',1,NULL,'CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM','7','Quận 5','Hồ Chí Minh',NULL,'2025-11-15 11:00:00','2025-11-15 12:00:00','2025-11-15 13:00:00','2025-11-15 14:00:00','2025-11-15 15:00:00',NULL,NULL,0,'2025-11-15 10:00:00','2025-11-15 15:00:00',NULL),(69,NULL,'DH-DEMO-014',2016,NULL,1,NULL,'2025-11-16','offline',NULL,NULL,9002,20400.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,408000.00,0.00,0.00,428400.00,428400.00,0.00,'paid',1,NULL,'Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội','Điện Biên','Ba Đình','Hà Nội',NULL,'2025-11-16 11:00:00','2025-11-16 12:00:00','2025-11-16 13:00:00','2025-11-16 14:00:00','2025-11-16 15:00:00',NULL,NULL,0,'2025-11-16 10:00:00','2025-11-16 15:00:00',NULL),(70,NULL,'DH-DEMO-015',2017,NULL,2,NULL,'2025-11-17','online',NULL,NULL,9003,44300.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,418000.00,0.00,25000.00,487300.00,487300.00,0.00,'paid',1,NULL,'Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long','Bạch Đằng','Hạ Long','Quảng Ninh',NULL,'2025-11-17 11:00:00','2025-11-17 12:00:00','2025-11-17 13:00:00','2025-11-17 14:00:00','2025-11-17 15:00:00',NULL,NULL,0,'2025-11-17 10:00:00','2025-11-17 15:00:00',NULL),(71,NULL,'DH-DEMO-016',2018,NULL,3,NULL,'2025-11-18','offline',NULL,NULL,9001,0.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,416000.00,0.00,0.00,416000.00,416000.00,0.00,'paid',1,NULL,'La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng','Lạch Tray','Ngô Quyền','Hải Phòng',NULL,'2025-11-18 11:00:00','2025-11-18 12:00:00','2025-11-18 13:00:00','2025-11-18 14:00:00','2025-11-18 15:00:00',NULL,NULL,0,'2025-11-18 10:00:00','2025-11-18 15:00:00',NULL),(72,NULL,'DH-DEMO-017',2019,NULL,4,NULL,'2025-11-19','online',NULL,NULL,9002,22600.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,412000.00,0.00,40000.00,474600.00,474600.00,0.00,'paid',1,NULL,'Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh','Hưng Bình','Vinh','Nghệ An',NULL,'2025-11-19 11:00:00','2025-11-19 12:00:00','2025-11-19 13:00:00','2025-11-19 14:00:00','2025-11-19 15:00:00',NULL,NULL,0,'2025-11-19 10:00:00','2025-11-19 15:00:00',NULL),(73,NULL,'DH-DEMO-018',2020,NULL,5,NULL,'2025-11-20','offline',NULL,NULL,9003,37360.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,416000.00,42400.00,0.00,410960.00,410960.00,0.00,'paid',1,NULL,'Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế','Phú Nhuận','Huế','Thừa Thiên Huế',NULL,'2025-11-20 11:00:00','2025-11-20 12:00:00','2025-11-20 13:00:00','2025-11-20 14:00:00','2025-11-20 15:00:00',NULL,NULL,0,'2025-11-20 10:00:00','2025-11-20 15:00:00',NULL),(74,NULL,'DH-DEMO-019',2009,NULL,6,NULL,'2025-11-21','offline',NULL,NULL,9001,0.00,0.00,'CASH','cancelled',NULL,0.00,0,0.00,0,204000.00,0.00,0.00,204000.00,0.00,204000.00,'unpaid',0,NULL,'Ngô Nhật Anh','0912000009','12 Nguyễn Văn Linh, Đà Nẵng','Nam Dương','Hải Châu','Đà Nẵng',NULL,NULL,NULL,NULL,NULL,NULL,'2025-11-21 11:00:00','Khách đổi ý',0,'2025-11-21 10:00:00','2025-11-21 11:00:00',NULL),(75,NULL,'DH-DEMO-020',2010,NULL,2,NULL,'2025-11-22','online',NULL,NULL,9002,11300.00,0.00,'COD','cancelled',NULL,0.00,0,0.00,0,206000.00,0.00,20000.00,237300.00,35595.00,201705.00,'partial',0,NULL,'Tạ Kim Yến','0912000010','99 Phan Chu Trinh, Đà Nẵng','Hải Châu 1','Hải Châu','Đà Nẵng',NULL,NULL,NULL,NULL,NULL,NULL,'2025-11-22 11:00:00','Hết hàng',0,'2025-11-22 10:00:00','2025-11-22 11:00:00',NULL),(76,NULL,'DH-DEMO-021',2012,NULL,2,NULL,'2025-11-23','offline',NULL,NULL,9003,116800.00,0.00,'CASH','cancelled',NULL,0.00,0,0.00,0,1128000.00,0.00,40000.00,1284800.00,0.00,1284800.00,'unpaid',0,NULL,'CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM','Bến Nghé','Quận 1','Hồ Chí Minh','Auto-generated demo order #21',NULL,NULL,NULL,NULL,NULL,'2025-11-23 11:00:00',NULL,0,'2025-11-23 10:00:00','2025-11-23 11:00:00',NULL),(77,NULL,'DH-DEMO-022',2001,NULL,2,NULL,'2025-11-24','online',NULL,NULL,9001,0.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,1012000.00,0.00,30000.00,1042000.00,521000.00,521000.00,'partial',0,NULL,'Nguyễn Minh An','0912000001','12 Trần Hưng Đạo, Hà Nội','Hàng Bài','Hoàn Kiếm','Hà Nội','Auto-generated demo order #22','2025-11-24 11:00:00','2025-11-24 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-24 10:00:00','2025-11-24 12:00:00',NULL),(78,NULL,'DH-DEMO-023',2017,NULL,3,NULL,'2025-11-25','offline',NULL,NULL,9002,129700.00,0.00,'CASH','cancelled',NULL,0.00,0,0.00,0,2584000.00,0.00,10000.00,2723700.00,0.00,2723700.00,'unpaid',0,NULL,'Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long','Bạch Đằng','Hạ Long','Quảng Ninh','Auto-generated demo order #23',NULL,NULL,NULL,NULL,NULL,'2025-11-25 11:00:00',NULL,0,'2025-11-25 10:00:00','2025-11-25 11:00:00',NULL),(79,NULL,'DH-DEMO-024',2003,NULL,4,NULL,'2025-11-26','online',NULL,NULL,9003,77200.00,0.00,'BANK_TRANSFER','cancelled',NULL,0.00,0,0.00,0,732000.00,0.00,40000.00,849200.00,0.00,849200.00,'unpaid',0,NULL,'Phạm Gia Bảo','0912000003','22 Nguyễn Huệ, HCM','Bến Nghé','Quận 1','Hồ Chí Minh','Auto-generated demo order #24',NULL,NULL,NULL,NULL,NULL,'2025-11-26 11:00:00',NULL,0,'2025-11-26 10:00:00','2025-11-26 11:00:00',NULL),(80,NULL,'DH-DEMO-025',2016,NULL,4,NULL,'2025-11-27','offline',NULL,NULL,9001,0.00,0.00,'COD','processing',NULL,0.00,0,0.00,0,1268000.00,0.00,50000.00,1318000.00,659000.00,659000.00,'partial',0,NULL,'Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội','Điện Biên','Ba Đình','Hà Nội','Auto-generated demo order #25','2025-11-27 11:00:00','2025-11-27 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-27 10:00:00','2025-11-27 12:00:00',NULL),(81,NULL,'DH-DEMO-026',2002,NULL,3,NULL,'2025-11-28','online',NULL,NULL,9002,120000.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,2360000.00,0.00,40000.00,2520000.00,2520000.00,0.00,'paid',1,NULL,'Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội','Cửa Nam','Hoàn Kiếm','Hà Nội','Auto-generated demo order #26','2025-11-28 11:00:00','2025-11-28 12:00:00','2025-11-28 13:00:00','2025-11-28 14:00:00','2025-11-28 15:00:00',NULL,NULL,0,'2025-11-28 10:00:00','2025-11-28 15:00:00',NULL),(82,NULL,'DH-DEMO-027',2018,NULL,3,NULL,'2025-11-29','offline',NULL,NULL,9003,127000.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,1250000.00,0.00,20000.00,1397000.00,698500.00,698500.00,'partial',0,NULL,'La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng','Lạch Tray','Ngô Quyền','Hải Phòng','Auto-generated demo order #27','2025-11-29 11:00:00','2025-11-29 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-29 10:00:00','2025-11-29 12:00:00',NULL),(83,NULL,'DH-DEMO-028',2010,NULL,1,NULL,'2025-11-30','online',NULL,NULL,9001,0.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,660000.00,0.00,20000.00,680000.00,340000.00,340000.00,'partial',0,NULL,'Tạ Kim Yến','0912000010','99 Phan Chu Trinh, Đà Nẵng','Hải Châu 1','Hải Châu','Đà Nẵng','Auto-generated demo order #28','2025-11-30 11:00:00','2025-11-30 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-30 10:00:00','2025-11-30 12:00:00',NULL),(84,NULL,'DH-DEMO-029',2011,NULL,5,NULL,'2025-12-01','online',NULL,NULL,9002,24200.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,484000.00,0.00,0.00,508200.00,508200.00,0.00,'paid',1,NULL,'Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội','Dịch Vọng','Cầu Giấy','Hà Nội','Auto-generated demo order #29','2025-12-01 11:00:00','2025-12-01 12:00:00','2025-12-01 13:00:00','2025-12-01 14:00:00','2025-12-01 15:00:00',NULL,NULL,0,'2025-12-01 10:00:00','2025-12-01 15:00:00',NULL),(85,NULL,'DH-DEMO-030',2019,NULL,4,NULL,'2025-12-02','online',NULL,NULL,9003,46400.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,424000.00,0.00,40000.00,510400.00,510400.00,0.00,'paid',1,NULL,'Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh','Hưng Bình','Vinh','Nghệ An','Auto-generated demo order #30','2025-12-02 11:00:00','2025-12-02 12:00:00','2025-12-02 13:00:00','2025-12-02 14:00:00','2025-12-02 15:00:00',NULL,NULL,0,'2025-12-02 10:00:00','2025-12-02 15:00:00',NULL),(86,NULL,'DH-DEMO-031',2014,NULL,4,NULL,'2025-12-03','offline',NULL,NULL,9001,0.00,0.00,'COD','completed',NULL,0.00,0,0.00,0,1912000.00,0.00,20000.00,1932000.00,1932000.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội','Auto-generated demo order #31','2025-12-03 11:00:00','2025-12-03 12:00:00','2025-12-03 13:00:00','2025-12-03 14:00:00','2025-12-03 15:00:00',NULL,NULL,0,'2025-12-03 10:00:00','2025-12-03 15:00:00',NULL),(87,NULL,'DH-DEMO-032',2014,NULL,2,NULL,'2025-12-04','offline',NULL,NULL,9002,68800.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,1326000.00,0.00,50000.00,1444800.00,1444800.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội','Auto-generated demo order #32','2025-12-04 11:00:00','2025-12-04 12:00:00','2025-12-04 13:00:00','2025-12-04 14:00:00','2025-12-04 15:00:00',NULL,NULL,0,'2025-12-04 10:00:00','2025-12-04 15:00:00',NULL),(88,NULL,'DH-DEMO-033',2013,NULL,2,NULL,'2025-12-05','online',NULL,NULL,9003,83400.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,824000.00,0.00,10000.00,917400.00,917400.00,0.00,'paid',1,NULL,'Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang','Vạn Thạnh','Nha Trang','Khánh Hòa','Auto-generated demo order #33','2025-12-05 11:00:00','2025-12-05 12:00:00','2025-12-05 13:00:00','2025-12-05 14:00:00','2025-12-05 15:00:00',NULL,NULL,0,'2025-12-05 10:00:00','2025-12-05 15:00:00',NULL),(89,NULL,'DH-DEMO-034',2015,NULL,5,NULL,'2025-12-06','offline',NULL,NULL,9001,0.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,890000.00,0.00,10000.00,900000.00,900000.00,0.00,'paid',1,NULL,'CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM','7','Quận 5','Hồ Chí Minh','Auto-generated demo order #34','2025-12-06 11:00:00','2025-12-06 12:00:00','2025-12-06 13:00:00','2025-12-06 14:00:00','2025-12-06 15:00:00',NULL,NULL,0,'2025-12-06 10:00:00','2025-12-06 15:00:00',NULL),(90,NULL,'DH-DEMO-035',2014,NULL,3,NULL,'2025-12-07','offline',NULL,NULL,9002,147200.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,2894000.00,0.00,50000.00,3091200.00,3091200.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội','Auto-generated demo order #35','2025-12-07 11:00:00','2025-12-07 12:00:00','2025-12-07 13:00:00','2025-12-07 14:00:00','2025-12-07 15:00:00',NULL,NULL,0,'2025-12-07 10:00:00','2025-12-07 15:00:00',NULL);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3152,7 +3135,7 @@ CREATE TABLE `organizations` (
   KEY `organizations_branch_id_foreign` (`branch_id`),
   CONSTRAINT `organizations_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `organizations_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3161,7 +3144,6 @@ CREATE TABLE `organizations` (
 
 LOCK TABLES `organizations` WRITE;
 /*!40000 ALTER TABLE `organizations` DISABLE KEYS */;
-INSERT INTO `organizations` VALUES (1,'DEFAULT-ORG','Default Organization',NULL,NULL,NULL,NULL,NULL,'active',NULL,NULL,'2025-12-03 01:35:52','2025-12-03 01:35:52',NULL);
 /*!40000 ALTER TABLE `organizations` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3255,27 +3237,27 @@ DROP TABLE IF EXISTS `partners`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `partners` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
-  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-  `type` enum('supplier','vendor','distributor','manufacturer') COLLATE utf8mb4_general_ci NOT NULL,
-  `contact_person` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `phone` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
-  `address` text COLLATE utf8mb4_general_ci,
-  `city` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `tax_code` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `bank_account` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `bank_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `type` enum('supplier','vendor','distributor','manufacturer') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `contact_person` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `city` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tax_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `credit_limit` decimal(15,2) NOT NULL DEFAULT '0.00',
   `debt_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
   `total_purchased` decimal(15,2) NOT NULL DEFAULT '0.00',
-  `status` enum('active','inactive') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
+  `status` enum('active','inactive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3284,7 +3266,6 @@ CREATE TABLE `partners` (
 
 LOCK TABLES `partners` WRITE;
 /*!40000 ALTER TABLE `partners` DISABLE KEYS */;
-INSERT INTO `partners` VALUES (1,'SUP-001','Công ty TNHH Da Giày Việt Nam','supplier',NULL,'contact@dagiay.vn','024-3888-9999','123 Đường Láng, Hà Nội',NULL,'0123456789',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(2,'SUP-002','Xưởng Sản Xuất Túi Xách Hồng Hà','supplier',NULL,'hongha@tuixach.vn','024-3777-8888','456 Phố Huế, Hà Nội',NULL,'0987654321',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(3,'SUP-003','Công ty CP Phụ Kiện Thời Trang','supplier',NULL,'info@phukien.com.vn','028-3666-7777','789 Nguyễn Huệ, HCM',NULL,'0111222333',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(4,'SUP-004','Nhà Máy Dệt May Tân Tiến','supplier',NULL,'sales@tantien.vn','0236-3555-6666','321 Lê Duẩn, Đà Nẵng',NULL,'0444555666',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(5,'SUP-005','Xưởng Gia Công Đồng Phát','supplier',NULL,'dongphat@workshop.vn','0292-3444-5555','654 Đường 3/2, Cần Thơ',NULL,'0777888999',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(6,'SUP-006','Công ty TNHH Vải Cao Cấp','supplier',NULL,'premium@fabric.vn','024-3333-4444','987 Trần Hưng Đạo, Hà Nội',NULL,'0222333444',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(7,'SUP-007','Nhà Cung Cấp Phụ Liệu Minh Anh','supplier',NULL,'minhanh@materials.vn','028-3222-3333','147 Lê Lợi, HCM',NULL,'0555666777',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL),(8,'SUP-008','Xưởng Thêu Ren Hoa Mai','supplier',NULL,'hoamai@embroidery.vn','0225-3111-2222','258 Lạch Tray, Hải Phòng',NULL,'0888999000',NULL,NULL,0.00,0.00,0.00,'active','2025-12-03 09:44:51','2025-12-03 09:44:51',NULL);
 /*!40000 ALTER TABLE `partners` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3386,7 +3367,7 @@ CREATE TABLE `payment_methods` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `code` (`code`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3395,7 +3376,6 @@ CREATE TABLE `payment_methods` (
 
 LOCK TABLES `payment_methods` WRITE;
 /*!40000 ALTER TABLE `payment_methods` DISABLE KEYS */;
-INSERT INTO `payment_methods` VALUES (1,'CASH','Tiền mặt',NULL,'Thanh toán tiền mặt',1,1,'2025-12-03 01:35:37','2025-12-03 01:35:37',NULL),(2,'BANK_TRANSFER','Chuyển khoản',NULL,'Chuyển khoản ngân hàng',1,2,'2025-12-03 01:35:37','2025-12-03 01:35:37',NULL),(3,'CARD','Thẻ',NULL,'Thẻ tín dụng/ghi nợ',1,3,'2025-12-03 01:35:37','2025-12-03 01:35:37',NULL),(4,'COD','Thu hộ (COD)',NULL,'Thanh toán khi nhận hàng',1,4,'2025-12-03 01:35:37','2025-12-03 01:35:37',NULL),(5,'EWALLET','Ví điện tử',NULL,'MoMo/ZaloPay/VNPay',1,5,'2025-12-03 01:35:37','2025-12-03 01:35:37',NULL);
 /*!40000 ALTER TABLE `payment_methods` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3479,7 +3459,7 @@ CREATE TABLE `permissions` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3488,7 +3468,6 @@ CREATE TABLE `permissions` (
 
 LOCK TABLES `permissions` WRITE;
 /*!40000 ALTER TABLE `permissions` DISABLE KEYS */;
-INSERT INTO `permissions` VALUES (1,'users.view','Xem người dùng',NULL,'users','admin','api','2025-12-03 02:28:54',NULL,NULL),(2,'users.manage','Quản lý người dùng',NULL,'users','admin','api','2025-12-03 02:28:54',NULL,NULL),(3,'products.view','Xem sản phẩm',NULL,'products','catalog','api','2025-12-03 02:28:54',NULL,NULL),(4,'products.manage','Quản lý sản phẩm',NULL,'products','catalog','api','2025-12-03 02:28:54',NULL,NULL);
 /*!40000 ALTER TABLE `permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3880,7 +3859,7 @@ CREATE TABLE `positions` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3889,7 +3868,6 @@ CREATE TABLE `positions` (
 
 LOCK TABLES `positions` WRITE;
 /*!40000 ALTER TABLE `positions` DISABLE KEYS */;
-INSERT INTO `positions` VALUES (1,'Giám Đốc','CEO',1,1,'2025-12-03 10:25:08','2025-12-03 10:25:08'),(2,'Trưởng Phòng','MGR',2,2,'2025-12-03 10:25:08','2025-12-03 10:25:08'),(3,'Nhân Viên','STAFF',2,3,'2025-12-03 10:25:08','2025-12-03 10:25:08'),(4,'Kế Toán Trưởng','ACC_MGR',3,2,'2025-12-03 10:25:08','2025-12-03 10:25:08'),(5,'Thủ Kho','WH_KEEPER',5,3,'2025-12-03 10:25:08','2025-12-03 10:25:08');
 /*!40000 ALTER TABLE `positions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3952,7 +3930,7 @@ CREATE TABLE `price_list_items` (
   CONSTRAINT `fk_price_list_items_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_price_list_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_price_list_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -3961,6 +3939,7 @@ CREATE TABLE `price_list_items` (
 
 LOCK TABLES `price_list_items` WRITE;
 /*!40000 ALTER TABLE `price_list_items` DISABLE KEYS */;
+INSERT INTO `price_list_items` VALUES (1,2,501,NULL,6000000.00,20.00,1500000.00,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(2,2,502,NULL,1560000.00,20.00,390000.00,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(3,2,503,NULL,1200000.00,20.00,300000.00,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(4,2,501,7001,6000000.00,20.00,1500000.00,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(5,2,501,7002,6000000.00,20.00,1500000.00,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL);
 /*!40000 ALTER TABLE `price_list_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -3981,17 +3960,19 @@ CREATE TABLE `price_lists` (
   `end_date` date DEFAULT NULL,
   `priority` int DEFAULT '0',
   `is_active` tinyint(1) DEFAULT '1',
+  `is_system` tinyint(1) DEFAULT '0',
   `formula` text,
   `base_price_list_id` bigint unsigned DEFAULT NULL,
   `auto_update` tinyint(1) DEFAULT '0',
   `rounding_rule` varchar(50) DEFAULT 'none',
+  `config` json DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_price_lists_base_price_list_id` (`base_price_list_id`),
   CONSTRAINT `fk_price_lists_base_price_list_id` FOREIGN KEY (`base_price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4000,7 +3981,7 @@ CREATE TABLE `price_lists` (
 
 LOCK TABLES `price_lists` WRITE;
 /*!40000 ALTER TABLE `price_lists` DISABLE KEYS */;
-INSERT INTO `price_lists` VALUES (1,'Standard','base','Default price list',NULL,NULL,NULL,0,1,NULL,NULL,0,'none','2025-12-03 01:35:37','2025-12-03 01:35:37',NULL),(2,'Group B -35%','custom',NULL,'[3]','2025-11-28','2025-12-18',4,1,NULL,NULL,0,'none','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(3,'Flash Sale 30%','custom','Demo flash sale 30%',NULL,NULL,NULL,10,1,NULL,NULL,0,'none','2025-12-03 01:35:37','2025-12-03 01:35:37',NULL);
+INSERT INTO `price_lists` VALUES (1,'Bảng giá chung','default',NULL,NULL,'2025-12-05',NULL,0,1,1,NULL,NULL,0,'none',NULL,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(2,'Sale 20%','sale',NULL,NULL,'2025-12-05',NULL,0,1,0,'{\"discount\":20,\"type\":\"percent\"}',NULL,0,'none',NULL,'2025-12-05 07:53:50','2025-12-05 07:53:50',NULL),(4,'Test Add List','custom',NULL,NULL,'2025-12-05',NULL,0,1,0,NULL,NULL,0,'none',NULL,'2025-12-05 07:58:54','2025-12-05 07:58:54','2025-12-05 07:58:54');
 /*!40000 ALTER TABLE `price_lists` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4071,7 +4052,7 @@ CREATE TABLE `product_attribute_options` (
   PRIMARY KEY (`id`),
   KEY `fk_product_attribute_op_attribute_id` (`attribute_id`),
   CONSTRAINT `fk_product_attribute_op_attribute_id` FOREIGN KEY (`attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=306 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4080,7 +4061,6 @@ CREATE TABLE `product_attribute_options` (
 
 LOCK TABLES `product_attribute_options` WRITE;
 /*!40000 ALTER TABLE `product_attribute_options` DISABLE KEYS */;
-INSERT INTO `product_attribute_options` VALUES (301,201,'Đen','#000000',1,'active','2025-12-03 02:28:54',NULL,NULL),(302,201,'Nâu','#5b3a29',2,'active','2025-12-03 02:28:54',NULL,NULL),(303,202,'M',NULL,1,'active','2025-12-03 02:28:54',NULL,NULL),(304,202,'L',NULL,2,'active','2025-12-03 02:28:54',NULL,NULL),(305,201,'Xanh rêu','#556b2f',3,'active','2025-12-03 02:28:54',NULL,NULL);
 /*!40000 ALTER TABLE `product_attribute_options` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4110,7 +4090,7 @@ CREATE TABLE `product_attribute_values` (
   CONSTRAINT `fk_product_attribute_va_option_id` FOREIGN KEY (`option_id`) REFERENCES `product_attribute_options` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_product_attribute_va_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_product_attribute_va_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9627 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4144,7 +4124,7 @@ CREATE TABLE `product_attributes` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=203 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4153,7 +4133,6 @@ CREATE TABLE `product_attributes` (
 
 LOCK TABLES `product_attributes` WRITE;
 /*!40000 ALTER TABLE `product_attributes` DISABLE KEYS */;
-INSERT INTO `product_attributes` VALUES (201,'Màu sắc','mau-sac','color','select',0,1,1,'active',1,'2025-12-03 02:28:54',NULL,NULL),(202,'Kích thước','size','size','select',0,1,2,'active',1,'2025-12-03 02:28:54',NULL,NULL);
 /*!40000 ALTER TABLE `product_attributes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4205,6 +4184,37 @@ LOCK TABLES `product_batches` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `product_bundles`
+--
+
+DROP TABLE IF EXISTS `product_bundles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_bundles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_product_id` bigint unsigned NOT NULL,
+  `child_product_id` bigint unsigned NOT NULL,
+  `quantity` decimal(12,3) NOT NULL DEFAULT '1.000',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_bundles_parent_product_id_foreign` (`parent_product_id`),
+  KEY `product_bundles_child_product_id_foreign` (`child_product_id`),
+  CONSTRAINT `product_bundles_child_product_id_foreign` FOREIGN KEY (`child_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `product_bundles_parent_product_id_foreign` FOREIGN KEY (`parent_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_bundles`
+--
+
+LOCK TABLES `product_bundles` WRITE;
+/*!40000 ALTER TABLE `product_bundles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_bundles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `product_categories`
 --
 
@@ -4230,7 +4240,7 @@ CREATE TABLE `product_categories` (
   PRIMARY KEY (`id`),
   KEY `fk_product_categories_parent_id` (`parent_id`),
   CONSTRAINT `fk_product_categories_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=104 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4239,7 +4249,6 @@ CREATE TABLE `product_categories` (
 
 LOCK TABLES `product_categories` WRITE;
 /*!40000 ALTER TABLE `product_categories` DISABLE KEYS */;
-INSERT INTO `product_categories` VALUES (101,NULL,0,1,0,'TUI','Túi xách','tui-xach',NULL,NULL,1,'active','2025-12-03 02:28:54',NULL,NULL),(102,NULL,0,1,0,'VI','Ví','vi',NULL,NULL,2,'active','2025-12-03 02:28:54',NULL,NULL),(103,101,0,2,0,'TUI-DA','Túi da','tui-da',NULL,NULL,1,'active','2025-12-03 02:28:54',NULL,NULL);
 /*!40000 ALTER TABLE `product_categories` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4260,7 +4269,7 @@ CREATE TABLE `product_category_links` (
   KEY `fk_product_category_lin_category_id` (`category_id`),
   CONSTRAINT `fk_product_category_lin_category_id` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_product_category_lin_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=39 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4269,8 +4278,39 @@ CREATE TABLE `product_category_links` (
 
 LOCK TABLES `product_category_links` WRITE;
 /*!40000 ALTER TABLE `product_category_links` DISABLE KEYS */;
-INSERT INTO `product_category_links` VALUES (9,501,101,'2025-12-03 11:08:04'),(10,502,101,'2025-12-03 11:08:04'),(11,503,101,'2025-12-03 11:08:04'),(12,504,101,'2025-12-03 11:08:04'),(13,505,101,'2025-12-03 11:08:04'),(14,506,101,'2025-12-03 11:08:04'),(15,507,101,'2025-12-03 11:08:04'),(16,508,101,'2025-12-03 11:08:04'),(17,509,101,'2025-12-03 11:08:04'),(18,510,101,'2025-12-03 11:08:04'),(19,511,101,'2025-12-03 11:08:04'),(20,512,101,'2025-12-03 11:08:04'),(21,513,101,'2025-12-03 11:08:04'),(22,514,101,'2025-12-03 11:08:04'),(23,515,101,'2025-12-03 11:08:04'),(24,516,101,'2025-12-03 11:08:04'),(25,517,101,'2025-12-03 11:08:04'),(26,518,101,'2025-12-03 11:08:04'),(27,519,101,'2025-12-03 11:08:04'),(28,520,101,'2025-12-03 11:08:04'),(29,521,101,'2025-12-03 11:08:04'),(30,522,101,'2025-12-03 11:08:04'),(31,523,101,'2025-12-03 11:08:04'),(32,524,101,'2025-12-03 11:08:04'),(33,525,101,'2025-12-03 11:08:04'),(34,526,101,'2025-12-03 11:08:04'),(35,527,101,'2025-12-03 11:08:04'),(36,528,101,'2025-12-03 11:08:04'),(37,529,101,'2025-12-03 11:08:04'),(38,530,101,'2025-12-03 11:08:04');
 /*!40000 ALTER TABLE `product_category_links` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_channels`
+--
+
+DROP TABLE IF EXISTS `product_channels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_channels` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `channel` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `channel_product_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'disconnected',
+  `sync_status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'synced',
+  `last_sync_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `product_id_channel` (`product_id`,`channel`),
+  CONSTRAINT `product_channels_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_channels`
+--
+
+LOCK TABLES `product_channels` WRITE;
+/*!40000 ALTER TABLE `product_channels` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_channels` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -4299,7 +4339,7 @@ CREATE TABLE `product_images` (
   CONSTRAINT `fk_product_images_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_product_images_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_product_images_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9167 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4308,7 +4348,7 @@ CREATE TABLE `product_images` (
 
 LOCK TABLES `product_images` WRITE;
 /*!40000 ALTER TABLE `product_images` DISABLE KEYS */;
-INSERT INTO `product_images` VALUES (9107,501,50101,'/uploads/products/PROD-001-V1.jpg','https://picsum.photos/seed/PROD-001-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9108,501,50102,'/uploads/products/PROD-001-V2.jpg','https://picsum.photos/seed/PROD-001-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9109,502,50201,'/uploads/products/PROD-002-V1.jpg','https://picsum.photos/seed/PROD-002-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9110,502,50202,'/uploads/products/PROD-002-V2.jpg','https://picsum.photos/seed/PROD-002-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9111,503,50301,'/uploads/products/PROD-003-V1.jpg','https://picsum.photos/seed/PROD-003-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9112,503,50302,'/uploads/products/PROD-003-V2.jpg','https://picsum.photos/seed/PROD-003-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9113,504,50401,'/uploads/products/PROD-004-V1.jpg','https://picsum.photos/seed/PROD-004-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9114,504,50402,'/uploads/products/PROD-004-V2.jpg','https://picsum.photos/seed/PROD-004-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9115,505,50501,'/uploads/products/PROD-005-V1.jpg','https://picsum.photos/seed/PROD-005-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9116,505,50502,'/uploads/products/PROD-005-V2.jpg','https://picsum.photos/seed/PROD-005-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9117,506,50601,'/uploads/products/PROD-006-V1.jpg','https://picsum.photos/seed/PROD-006-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9118,506,50602,'/uploads/products/PROD-006-V2.jpg','https://picsum.photos/seed/PROD-006-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9119,507,50701,'/uploads/products/PROD-007-V1.jpg','https://picsum.photos/seed/PROD-007-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9120,507,50702,'/uploads/products/PROD-007-V2.jpg','https://picsum.photos/seed/PROD-007-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9121,508,50801,'/uploads/products/PROD-008-V1.jpg','https://picsum.photos/seed/PROD-008-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9122,508,50802,'/uploads/products/PROD-008-V2.jpg','https://picsum.photos/seed/PROD-008-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9123,509,50901,'/uploads/products/PROD-009-V1.jpg','https://picsum.photos/seed/PROD-009-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9124,509,50902,'/uploads/products/PROD-009-V2.jpg','https://picsum.photos/seed/PROD-009-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9125,510,51001,'/uploads/products/PROD-010-V1.jpg','https://picsum.photos/seed/PROD-010-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9126,510,51002,'/uploads/products/PROD-010-V2.jpg','https://picsum.photos/seed/PROD-010-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9127,511,51101,'/uploads/products/PROD-011-V1.jpg','https://picsum.photos/seed/PROD-011-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9128,511,51102,'/uploads/products/PROD-011-V2.jpg','https://picsum.photos/seed/PROD-011-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9129,512,51201,'/uploads/products/PROD-012-V1.jpg','https://picsum.photos/seed/PROD-012-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9130,512,51202,'/uploads/products/PROD-012-V2.jpg','https://picsum.photos/seed/PROD-012-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9131,513,51301,'/uploads/products/PROD-013-V1.jpg','https://picsum.photos/seed/PROD-013-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9132,513,51302,'/uploads/products/PROD-013-V2.jpg','https://picsum.photos/seed/PROD-013-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9133,514,51401,'/uploads/products/PROD-014-V1.jpg','https://picsum.photos/seed/PROD-014-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9134,514,51402,'/uploads/products/PROD-014-V2.jpg','https://picsum.photos/seed/PROD-014-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9135,515,51501,'/uploads/products/PROD-015-V1.jpg','https://picsum.photos/seed/PROD-015-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9136,515,51502,'/uploads/products/PROD-015-V2.jpg','https://picsum.photos/seed/PROD-015-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9137,516,51601,'/uploads/products/PROD-016-V1.jpg','https://picsum.photos/seed/PROD-016-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9138,516,51602,'/uploads/products/PROD-016-V2.jpg','https://picsum.photos/seed/PROD-016-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9139,517,51701,'/uploads/products/PROD-017-V1.jpg','https://picsum.photos/seed/PROD-017-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9140,517,51702,'/uploads/products/PROD-017-V2.jpg','https://picsum.photos/seed/PROD-017-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9141,518,51801,'/uploads/products/PROD-018-V1.jpg','https://picsum.photos/seed/PROD-018-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9142,518,51802,'/uploads/products/PROD-018-V2.jpg','https://picsum.photos/seed/PROD-018-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9143,519,51901,'/uploads/products/PROD-019-V1.jpg','https://picsum.photos/seed/PROD-019-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9144,519,51902,'/uploads/products/PROD-019-V2.jpg','https://picsum.photos/seed/PROD-019-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9145,520,52001,'/uploads/products/PROD-020-V1.jpg','https://picsum.photos/seed/PROD-020-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9146,520,52002,'/uploads/products/PROD-020-V2.jpg','https://picsum.photos/seed/PROD-020-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9147,521,52101,'/uploads/products/PROD-021-V1.jpg','https://picsum.photos/seed/PROD-021-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9148,521,52102,'/uploads/products/PROD-021-V2.jpg','https://picsum.photos/seed/PROD-021-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9149,522,52201,'/uploads/products/PROD-022-V1.jpg','https://picsum.photos/seed/PROD-022-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9150,522,52202,'/uploads/products/PROD-022-V2.jpg','https://picsum.photos/seed/PROD-022-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9151,523,52301,'/uploads/products/PROD-023-V1.jpg','https://picsum.photos/seed/PROD-023-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9152,523,52302,'/uploads/products/PROD-023-V2.jpg','https://picsum.photos/seed/PROD-023-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9153,524,52401,'/uploads/products/PROD-024-V1.jpg','https://picsum.photos/seed/PROD-024-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9154,524,52402,'/uploads/products/PROD-024-V2.jpg','https://picsum.photos/seed/PROD-024-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9155,525,52501,'/uploads/products/PROD-025-V1.jpg','https://picsum.photos/seed/PROD-025-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9156,525,52502,'/uploads/products/PROD-025-V2.jpg','https://picsum.photos/seed/PROD-025-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9157,526,52601,'/uploads/products/PROD-026-V1.jpg','https://picsum.photos/seed/PROD-026-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9158,526,52602,'/uploads/products/PROD-026-V2.jpg','https://picsum.photos/seed/PROD-026-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9159,527,52701,'/uploads/products/PROD-027-V1.jpg','https://picsum.photos/seed/PROD-027-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9160,527,52702,'/uploads/products/PROD-027-V2.jpg','https://picsum.photos/seed/PROD-027-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9161,528,52801,'/uploads/products/PROD-028-V1.jpg','https://picsum.photos/seed/PROD-028-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9162,528,52802,'/uploads/products/PROD-028-V2.jpg','https://picsum.photos/seed/PROD-028-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9163,529,52901,'/uploads/products/PROD-029-V1.jpg','https://picsum.photos/seed/PROD-029-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9164,529,52902,'/uploads/products/PROD-029-V2.jpg','https://picsum.photos/seed/PROD-029-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9165,530,53001,'/uploads/products/PROD-030-V1.jpg','https://picsum.photos/seed/PROD-030-V1/500/500',1,1,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(9166,530,53002,'/uploads/products/PROD-030-V2.jpg','https://picsum.photos/seed/PROD-030-V2/500/500',0,2,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04');
+INSERT INTO `product_images` VALUES (9001,501,7001,'/uploads/products/tdh016-m-den.jpg','https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',1,0,NULL,NULL,'2025-12-05 07:53:49','2025-12-05 07:53:49'),(9002,501,7002,'/uploads/products/tdh016-l-nau.jpg','https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg',1,0,NULL,NULL,'2025-12-05 07:53:49','2025-12-05 07:53:49');
 /*!40000 ALTER TABLE `product_images` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4324,12 +4364,12 @@ CREATE TABLE `product_prices` (
   `product_id` bigint unsigned NOT NULL,
   `variant_id` bigint unsigned DEFAULT NULL,
   `customer_group_id` bigint unsigned DEFAULT NULL COMMENT 'NULL = giá chung',
-  `price_type` enum('retail','wholesale','special') COLLATE utf8mb4_unicode_ci DEFAULT 'retail',
+  `price_type` enum('retail','wholesale','special') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'retail',
   `price` decimal(15,2) NOT NULL,
   `min_quantity` int DEFAULT '1' COMMENT 'SL tối thiểu',
   `valid_from` date DEFAULT NULL,
   `valid_to` date DEFAULT NULL,
-  `status` enum('active','inactive') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `status` enum('active','inactive') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'active',
   `created_by` bigint unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -4341,7 +4381,7 @@ CREATE TABLE `product_prices` (
   KEY `status` (`status`),
   CONSTRAINT `fk_product_prices_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_product_prices_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=991 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4350,7 +4390,6 @@ CREATE TABLE `product_prices` (
 
 LOCK TABLES `product_prices` WRITE;
 /*!40000 ALTER TABLE `product_prices` DISABLE KEYS */;
-INSERT INTO `product_prices` VALUES (901,501,NULL,NULL,'retail',202000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(902,501,50101,NULL,'retail',212000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(903,501,50102,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(904,502,NULL,NULL,'retail',204000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(905,502,50201,NULL,'retail',214000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(906,502,50202,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(907,503,NULL,NULL,'retail',206000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(908,503,50301,NULL,'retail',216000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(909,503,50302,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(910,504,NULL,NULL,'retail',208000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(911,504,50401,NULL,'retail',218000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(912,504,50402,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(913,505,NULL,NULL,'retail',210000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(914,505,50501,NULL,'retail',220000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(915,505,50502,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(916,506,NULL,NULL,'retail',212000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(917,506,50601,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(918,506,50602,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(919,507,NULL,NULL,'retail',214000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(920,507,50701,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(921,507,50702,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(922,508,NULL,NULL,'retail',216000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(923,508,50801,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(924,508,50802,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(925,509,NULL,NULL,'retail',218000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(926,509,50901,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(927,509,50902,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(928,510,NULL,NULL,'retail',220000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(929,510,51001,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(930,510,51002,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(931,511,NULL,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(932,511,51101,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(933,511,51102,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(934,512,NULL,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(935,512,51201,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(936,512,51202,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(937,513,NULL,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(938,513,51301,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(939,513,51302,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(940,514,NULL,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(941,514,51401,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(942,514,51402,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(943,515,NULL,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(944,515,51501,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(945,515,51502,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(946,516,NULL,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(947,516,51601,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(948,516,51602,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(949,517,NULL,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(950,517,51701,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(951,517,51702,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(952,518,NULL,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(953,518,51801,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(954,518,51802,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(955,519,NULL,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(956,519,51901,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(957,519,51902,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(958,520,NULL,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(959,520,52001,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(960,520,52002,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(961,521,NULL,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(962,521,52101,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(963,521,52102,NULL,'retail',262000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(964,522,NULL,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(965,522,52201,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(966,522,52202,NULL,'retail',264000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(967,523,NULL,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(968,523,52301,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(969,523,52302,NULL,'retail',266000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(970,524,NULL,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(971,524,52401,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(972,524,52402,NULL,'retail',268000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(973,525,NULL,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(974,525,52501,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(975,525,52502,NULL,'retail',270000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(976,526,NULL,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(977,526,52601,NULL,'retail',262000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(978,526,52602,NULL,'retail',272000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(979,527,NULL,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(980,527,52701,NULL,'retail',264000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(981,527,52702,NULL,'retail',274000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(982,528,NULL,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(983,528,52801,NULL,'retail',266000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(984,528,52802,NULL,'retail',276000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(985,529,NULL,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(986,529,52901,NULL,'retail',268000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(987,529,52902,NULL,'retail',278000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(988,530,NULL,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(989,530,53001,NULL,'retail',270000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04'),(990,530,53002,NULL,'retail',280000.00,1,NULL,NULL,'active',NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04');
 /*!40000 ALTER TABLE `product_prices` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4418,7 +4457,7 @@ CREATE TABLE `product_stock_by_branch` (
   `available_stock` int DEFAULT '0' COMMENT 'Có thể bán',
   `expiry_days` int DEFAULT NULL COMMENT 'Dự kiến hết hàng (ngày)',
   `last_stock_date` datetime DEFAULT NULL COMMENT 'Lần cập nhật tồn cuối',
-  `status` enum('in_stock','low_stock','out_of_stock') COLLATE utf8mb4_unicode_ci DEFAULT 'in_stock',
+  `status` enum('in_stock','low_stock','out_of_stock') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'in_stock',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -4466,7 +4505,7 @@ CREATE TABLE `product_variants_v2` (
   KEY `idx_variants_sku_deleted_at` (`sku`,`deleted_at`),
   KEY `fk_product_variants_v2_product_id` (`product_id`),
   CONSTRAINT `fk_product_variants_v2_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=53003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4475,7 +4514,7 @@ CREATE TABLE `product_variants_v2` (
 
 LOCK TABLES `product_variants_v2` WRITE;
 /*!40000 ALTER TABLE `product_variants_v2` DISABLE KEYS */;
-INSERT INTO `product_variants_v2` VALUES (50101,501,'Variant 1','PROD-001-V1','PROD-001-V1','PROD-001-V1-BAR',212000.00,101000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50102,501,'Variant 2','PROD-001-V2','PROD-001-V2','PROD-001-V2-BAR',222000.00,101000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50201,502,'Variant 1','PROD-002-V1','PROD-002-V1','PROD-002-V1-BAR',214000.00,102000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50202,502,'Variant 2','PROD-002-V2','PROD-002-V2','PROD-002-V2-BAR',224000.00,102000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50301,503,'Variant 1','PROD-003-V1','PROD-003-V1','PROD-003-V1-BAR',216000.00,103000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50302,503,'Variant 2','PROD-003-V2','PROD-003-V2','PROD-003-V2-BAR',226000.00,103000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50401,504,'Variant 1','PROD-004-V1','PROD-004-V1','PROD-004-V1-BAR',218000.00,104000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50402,504,'Variant 2','PROD-004-V2','PROD-004-V2','PROD-004-V2-BAR',228000.00,104000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50501,505,'Variant 1','PROD-005-V1','PROD-005-V1','PROD-005-V1-BAR',220000.00,105000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50502,505,'Variant 2','PROD-005-V2','PROD-005-V2','PROD-005-V2-BAR',230000.00,105000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50601,506,'Variant 1','PROD-006-V1','PROD-006-V1','PROD-006-V1-BAR',222000.00,106000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50602,506,'Variant 2','PROD-006-V2','PROD-006-V2','PROD-006-V2-BAR',232000.00,106000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50701,507,'Variant 1','PROD-007-V1','PROD-007-V1','PROD-007-V1-BAR',224000.00,107000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50702,507,'Variant 2','PROD-007-V2','PROD-007-V2','PROD-007-V2-BAR',234000.00,107000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50801,508,'Variant 1','PROD-008-V1','PROD-008-V1','PROD-008-V1-BAR',226000.00,108000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50802,508,'Variant 2','PROD-008-V2','PROD-008-V2','PROD-008-V2-BAR',236000.00,108000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50901,509,'Variant 1','PROD-009-V1','PROD-009-V1','PROD-009-V1-BAR',228000.00,109000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(50902,509,'Variant 2','PROD-009-V2','PROD-009-V2','PROD-009-V2-BAR',238000.00,109000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51001,510,'Variant 1','PROD-010-V1','PROD-010-V1','PROD-010-V1-BAR',230000.00,110000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51002,510,'Variant 2','PROD-010-V2','PROD-010-V2','PROD-010-V2-BAR',240000.00,110000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51101,511,'Variant 1','PROD-011-V1','PROD-011-V1','PROD-011-V1-BAR',232000.00,111000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51102,511,'Variant 2','PROD-011-V2','PROD-011-V2','PROD-011-V2-BAR',242000.00,111000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51201,512,'Variant 1','PROD-012-V1','PROD-012-V1','PROD-012-V1-BAR',234000.00,112000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51202,512,'Variant 2','PROD-012-V2','PROD-012-V2','PROD-012-V2-BAR',244000.00,112000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51301,513,'Variant 1','PROD-013-V1','PROD-013-V1','PROD-013-V1-BAR',236000.00,113000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51302,513,'Variant 2','PROD-013-V2','PROD-013-V2','PROD-013-V2-BAR',246000.00,113000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51401,514,'Variant 1','PROD-014-V1','PROD-014-V1','PROD-014-V1-BAR',238000.00,114000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51402,514,'Variant 2','PROD-014-V2','PROD-014-V2','PROD-014-V2-BAR',248000.00,114000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51501,515,'Variant 1','PROD-015-V1','PROD-015-V1','PROD-015-V1-BAR',240000.00,115000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51502,515,'Variant 2','PROD-015-V2','PROD-015-V2','PROD-015-V2-BAR',250000.00,115000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51601,516,'Variant 1','PROD-016-V1','PROD-016-V1','PROD-016-V1-BAR',242000.00,116000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51602,516,'Variant 2','PROD-016-V2','PROD-016-V2','PROD-016-V2-BAR',252000.00,116000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51701,517,'Variant 1','PROD-017-V1','PROD-017-V1','PROD-017-V1-BAR',244000.00,117000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51702,517,'Variant 2','PROD-017-V2','PROD-017-V2','PROD-017-V2-BAR',254000.00,117000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51801,518,'Variant 1','PROD-018-V1','PROD-018-V1','PROD-018-V1-BAR',246000.00,118000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51802,518,'Variant 2','PROD-018-V2','PROD-018-V2','PROD-018-V2-BAR',256000.00,118000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51901,519,'Variant 1','PROD-019-V1','PROD-019-V1','PROD-019-V1-BAR',248000.00,119000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(51902,519,'Variant 2','PROD-019-V2','PROD-019-V2','PROD-019-V2-BAR',258000.00,119000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52001,520,'Variant 1','PROD-020-V1','PROD-020-V1','PROD-020-V1-BAR',250000.00,120000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52002,520,'Variant 2','PROD-020-V2','PROD-020-V2','PROD-020-V2-BAR',260000.00,120000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52101,521,'Variant 1','PROD-021-V1','PROD-021-V1','PROD-021-V1-BAR',252000.00,121000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52102,521,'Variant 2','PROD-021-V2','PROD-021-V2','PROD-021-V2-BAR',262000.00,121000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52201,522,'Variant 1','PROD-022-V1','PROD-022-V1','PROD-022-V1-BAR',254000.00,122000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52202,522,'Variant 2','PROD-022-V2','PROD-022-V2','PROD-022-V2-BAR',264000.00,122000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52301,523,'Variant 1','PROD-023-V1','PROD-023-V1','PROD-023-V1-BAR',256000.00,123000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52302,523,'Variant 2','PROD-023-V2','PROD-023-V2','PROD-023-V2-BAR',266000.00,123000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52401,524,'Variant 1','PROD-024-V1','PROD-024-V1','PROD-024-V1-BAR',258000.00,124000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52402,524,'Variant 2','PROD-024-V2','PROD-024-V2','PROD-024-V2-BAR',268000.00,124000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52501,525,'Variant 1','PROD-025-V1','PROD-025-V1','PROD-025-V1-BAR',260000.00,125000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52502,525,'Variant 2','PROD-025-V2','PROD-025-V2','PROD-025-V2-BAR',270000.00,125000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52601,526,'Variant 1','PROD-026-V1','PROD-026-V1','PROD-026-V1-BAR',262000.00,126000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52602,526,'Variant 2','PROD-026-V2','PROD-026-V2','PROD-026-V2-BAR',272000.00,126000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52701,527,'Variant 1','PROD-027-V1','PROD-027-V1','PROD-027-V1-BAR',264000.00,127000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52702,527,'Variant 2','PROD-027-V2','PROD-027-V2','PROD-027-V2-BAR',274000.00,127000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52801,528,'Variant 1','PROD-028-V1','PROD-028-V1','PROD-028-V1-BAR',266000.00,128000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52802,528,'Variant 2','PROD-028-V2','PROD-028-V2','PROD-028-V2-BAR',276000.00,128000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52901,529,'Variant 1','PROD-029-V1','PROD-029-V1','PROD-029-V1-BAR',268000.00,129000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(52902,529,'Variant 2','PROD-029-V2','PROD-029-V2','PROD-029-V2-BAR',278000.00,129000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(53001,530,'Variant 1','PROD-030-V1','PROD-030-V1','PROD-030-V1-BAR',270000.00,130000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(53002,530,'Variant 2','PROD-030-V2','PROD-030-V2','PROD-030-V2-BAR',280000.00,130000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-03 11:08:04','2025-12-03 11:08:04',NULL);
+INSERT INTO `product_variants_v2` VALUES (7001,501,'TDH016 M Đen','TDH016-M-DEN','TDH016-M-BLK',NULL,7500000.00,1500000.00,5.00,0.00,100.00,NULL,NULL,'active','2025-12-05 07:53:49','2025-12-05 07:53:49',NULL),(7002,501,'TDH016 L Nâu','TDH016-L-NAU','TDH016-L-BRN',NULL,7500000.00,1500000.00,3.00,0.00,100.00,NULL,NULL,'active','2025-12-05 07:53:49','2025-12-05 07:53:49',NULL);
 /*!40000 ALTER TABLE `product_variants_v2` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4491,12 +4530,12 @@ CREATE TABLE `product_warranties` (
   `product_id` bigint unsigned NOT NULL,
   `order_id` bigint unsigned DEFAULT NULL,
   `customer_id` bigint unsigned DEFAULT NULL,
-  `serial_number` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số serial',
-  `warranty_code` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã phiếu BH',
+  `serial_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số serial',
+  `warranty_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã phiếu BH',
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `status` enum('active','expired','claimed','cancelled') COLLATE utf8mb4_unicode_ci DEFAULT 'active',
-  `note` text COLLATE utf8mb4_unicode_ci,
+  `status` enum('active','expired','claimed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
   `created_by` bigint unsigned DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -4509,7 +4548,7 @@ CREATE TABLE `product_warranties` (
   CONSTRAINT `fk_warranty_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_warranty_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_warranty_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=301 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4573,7 +4612,7 @@ CREATE TABLE `products` (
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_products_code_deleted_at` (`code`,`deleted_at`)
-) ENGINE=InnoDB AUTO_INCREMENT=531 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=504 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4582,7 +4621,7 @@ CREATE TABLE `products` (
 
 LOCK TABLES `products` WRITE;
 /*!40000 ALTER TABLE `products` DISABLE KEYS */;
-INSERT INTO `products` VALUES (501,'goods','PROD-001','PROD-001-BAR','Sản phẩm Demo 1','san-pham-demo-1','Lano','A-1','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-001/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 1',NULL,1,1,0,'active',202000.00,5.00,0.00,181800.00,101000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(502,'goods','PROD-002','PROD-002-BAR','Sản phẩm Demo 2','san-pham-demo-2','Lano','A-2','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-002/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 2',NULL,1,1,0,'active',204000.00,5.00,0.00,183600.00,102000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(503,'goods','PROD-003','PROD-003-BAR','Sản phẩm Demo 3','san-pham-demo-3','Lano','A-3','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-003/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 3',NULL,1,1,0,'active',206000.00,5.00,0.00,185400.00,103000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(504,'goods','PROD-004','PROD-004-BAR','Sản phẩm Demo 4','san-pham-demo-4','Lano','A-4','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-004/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 4',NULL,1,1,0,'active',208000.00,5.00,0.00,187200.00,104000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(505,'goods','PROD-005','PROD-005-BAR','Sản phẩm Demo 5','san-pham-demo-5','Lano','A-5','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-005/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 5',NULL,1,1,1,'active',210000.00,5.00,0.00,189000.00,105000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(506,'goods','PROD-006','PROD-006-BAR','Sản phẩm Demo 6','san-pham-demo-6','Lano','A-6','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-006/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 6',NULL,1,1,0,'active',212000.00,5.00,0.00,190800.00,106000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(507,'goods','PROD-007','PROD-007-BAR','Sản phẩm Demo 7','san-pham-demo-7','Lano','A-7','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-007/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 7',NULL,1,1,0,'active',214000.00,5.00,0.00,192600.00,107000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(508,'goods','PROD-008','PROD-008-BAR','Sản phẩm Demo 8','san-pham-demo-8','Lano','A-8','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-008/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 8',NULL,1,1,0,'active',216000.00,5.00,0.00,194400.00,108000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(509,'goods','PROD-009','PROD-009-BAR','Sản phẩm Demo 9','san-pham-demo-9','Lano','A-9','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-009/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 9',NULL,1,1,0,'active',218000.00,5.00,0.00,196200.00,109000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(510,'goods','PROD-010','PROD-010-BAR','Sản phẩm Demo 10','san-pham-demo-10','Lano','A-10','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-010/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 10',NULL,1,1,1,'active',220000.00,5.00,0.00,198000.00,110000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(511,'goods','PROD-011','PROD-011-BAR','Sản phẩm Demo 11','san-pham-demo-11','Lano','A-11','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-011/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 11',NULL,1,1,0,'active',222000.00,5.00,0.00,199800.00,111000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(512,'goods','PROD-012','PROD-012-BAR','Sản phẩm Demo 12','san-pham-demo-12','Lano','A-12','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-012/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 12',NULL,1,1,0,'active',224000.00,5.00,0.00,201600.00,112000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(513,'goods','PROD-013','PROD-013-BAR','Sản phẩm Demo 13','san-pham-demo-13','Lano','A-13','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-013/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 13',NULL,1,1,0,'active',226000.00,5.00,0.00,203400.00,113000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(514,'goods','PROD-014','PROD-014-BAR','Sản phẩm Demo 14','san-pham-demo-14','Lano','A-14','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-014/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 14',NULL,1,1,0,'active',228000.00,5.00,0.00,205200.00,114000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(515,'goods','PROD-015','PROD-015-BAR','Sản phẩm Demo 15','san-pham-demo-15','Lano','A-15','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-015/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 15',NULL,1,1,1,'active',230000.00,5.00,0.00,207000.00,115000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(516,'goods','PROD-016','PROD-016-BAR','Sản phẩm Demo 16','san-pham-demo-16','Lano','A-16','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-016/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 16',NULL,1,1,0,'active',232000.00,5.00,0.00,208800.00,116000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(517,'goods','PROD-017','PROD-017-BAR','Sản phẩm Demo 17','san-pham-demo-17','Lano','A-17','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-017/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 17',NULL,1,1,0,'active',234000.00,5.00,0.00,210600.00,117000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(518,'goods','PROD-018','PROD-018-BAR','Sản phẩm Demo 18','san-pham-demo-18','Lano','A-18','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-018/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 18',NULL,1,1,0,'active',236000.00,5.00,0.00,212400.00,118000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(519,'goods','PROD-019','PROD-019-BAR','Sản phẩm Demo 19','san-pham-demo-19','Lano','A-19','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-019/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 19',NULL,1,1,0,'active',238000.00,5.00,0.00,214200.00,119000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(520,'goods','PROD-020','PROD-020-BAR','Sản phẩm Demo 20','san-pham-demo-20','Lano','A-20','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-020/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 20',NULL,1,1,1,'active',240000.00,5.00,0.00,216000.00,120000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(521,'goods','PROD-021','PROD-021-BAR','Sản phẩm Demo 21','san-pham-demo-21','Lano','A-21','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-021/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 21',NULL,1,1,0,'active',242000.00,5.00,0.00,217800.00,121000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(522,'goods','PROD-022','PROD-022-BAR','Sản phẩm Demo 22','san-pham-demo-22','Lano','A-22','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-022/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 22',NULL,1,1,0,'active',244000.00,5.00,0.00,219600.00,122000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(523,'goods','PROD-023','PROD-023-BAR','Sản phẩm Demo 23','san-pham-demo-23','Lano','A-23','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-023/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 23',NULL,1,1,0,'active',246000.00,5.00,0.00,221400.00,123000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(524,'goods','PROD-024','PROD-024-BAR','Sản phẩm Demo 24','san-pham-demo-24','Lano','A-24','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-024/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 24',NULL,1,1,0,'active',248000.00,5.00,0.00,223200.00,124000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(525,'goods','PROD-025','PROD-025-BAR','Sản phẩm Demo 25','san-pham-demo-25','Lano','A-25','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-025/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 25',NULL,1,1,1,'active',250000.00,5.00,0.00,225000.00,125000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(526,'goods','PROD-026','PROD-026-BAR','Sản phẩm Demo 26','san-pham-demo-26','Lano','A-26','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-026/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 26',NULL,1,1,0,'active',252000.00,5.00,0.00,226800.00,126000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(527,'goods','PROD-027','PROD-027-BAR','Sản phẩm Demo 27','san-pham-demo-27','Lano','A-27','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-027/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 27',NULL,1,1,0,'active',254000.00,5.00,0.00,228600.00,127000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(528,'goods','PROD-028','PROD-028-BAR','Sản phẩm Demo 28','san-pham-demo-28','Lano','A-28','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-028/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 28',NULL,1,1,0,'active',256000.00,5.00,0.00,230400.00,128000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(529,'goods','PROD-029','PROD-029-BAR','Sản phẩm Demo 29','san-pham-demo-29','Lano','A-29','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-029/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 29',NULL,1,1,0,'active',258000.00,5.00,0.00,232200.00,129000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL),(530,'goods','PROD-030','PROD-030-BAR','Sản phẩm Demo 30','san-pham-demo-30','Lano','A-30','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-030/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 30',NULL,1,1,1,'active',260000.00,5.00,0.00,234000.00,130000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-03 11:08:04','2025-12-03 11:08:04',NULL);
+INSERT INTO `products` VALUES (501,'goods','TDH016',NULL,'Túi đeo chéo da bò cao cấp khâu tay thủ công Lano TDH016','tui-deo-cheo-da-bo-cao-cap-khau-tay-thu-cong-lano-tdh016-tdh016',NULL,NULL,'Cái',NULL,1.00,1,NULL,'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg','[]',0,0.00,NULL,'Sản phẩm demo có biến thể màu/size',NULL,1,1,0,'active',7500000.00,0.00,0.00,NULL,1500000.00,8,10,NULL,0,NULL,0,0,NULL,NULL,NULL,'2025-12-05 07:53:49','2025-12-05 07:53:49',NULL),(502,'goods','VDNTK035',NULL,'Ví da handmade khâu tay thủ công Lano VDNTK035','vi-da-handmade-khau-tay-thu-cong-lano-vdntk035-vdntk035',NULL,NULL,'Cái',NULL,1.00,0,NULL,'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/9b9cf7569bd348fd9c73ab9c167a96b5.jpeg','[]',0,0.00,NULL,'Ví da demo 1',NULL,1,1,0,'active',1950000.00,0.00,0.00,NULL,650000.00,10,5,NULL,0,NULL,0,0,NULL,NULL,NULL,'2025-12-05 07:53:49','2025-12-05 07:53:49',NULL),(503,'goods','VDNTK034',NULL,'Ví da epsom italia nhỏ gọn Lano VDNTK034','vi-da-epsom-italia-nho-gon-lano-vdntk034-vdntk034',NULL,NULL,'Cái',NULL,1.00,0,NULL,'https://cdn2-retail-images.kiotviet.vn/2025/10/15/lano/677874c0246b4f93ab1843fb4ddab0a8.jpeg','[]',0,0.00,NULL,'Ví da demo 2',NULL,1,1,0,'active',1500000.00,0.00,0.00,NULL,350000.00,6,5,NULL,0,NULL,0,0,NULL,NULL,NULL,'2025-12-05 07:53:49','2025-12-05 07:53:49',NULL);
 /*!40000 ALTER TABLE `products` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -4851,7 +4890,7 @@ CREATE TABLE `purchase_orders` (
   CONSTRAINT `purchase_orders_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `purchase_orders_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `purchase_orders_warehouse_id_foreign` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -4860,7 +4899,6 @@ CREATE TABLE `purchase_orders` (
 
 LOCK TABLES `purchase_orders` WRITE;
 /*!40000 ALTER TABLE `purchase_orders` DISABLE KEYS */;
-INSERT INTO `purchase_orders` VALUES (1,NULL,NULL,NULL,1,1,NULL,1,'PO-2024-001','2025-11-03 10:37:10','2025-11-10 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'completed',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,50000000.00,50000000.00,'paid','Đơn hàng đầu tiên trong tháng',1),(2,NULL,NULL,NULL,1,2,NULL,2,'PO-2024-002','2025-11-08 10:37:10','2025-11-15 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'completed',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,35000000.00,35000000.00,'paid','Nhập hàng túi xách',2),(3,NULL,NULL,NULL,2,3,NULL,1,'PO-2024-003','2025-11-13 10:37:10','2025-11-20 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'received',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,45000000.00,22500000.00,'partial','Đã nhận hàng, chờ thanh toán phần còn lại',1),(4,NULL,NULL,NULL,1,4,NULL,2,'PO-2024-004','2025-11-18 10:37:10','2025-11-25 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'in_transit',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,60000000.00,30000000.00,'partial','Hàng đang trên đường về kho',2),(5,NULL,NULL,NULL,2,5,NULL,1,'PO-2024-005','2025-11-23 10:37:10','2025-11-30 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'confirmed',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,25000000.00,0.00,'unpaid','Nhà cung cấp đã xác nhận đơn',1),(6,NULL,NULL,NULL,1,6,NULL,2,'PO-2024-006','2025-11-26 10:37:10','2025-12-10 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'pending',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,40000000.00,0.00,'unpaid','Chờ nhà cung cấp xác nhận',2),(7,NULL,NULL,NULL,2,7,NULL,1,'PO-2024-007','2025-11-28 10:37:10','2025-12-13 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'draft',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,55000000.00,0.00,'unpaid','Đơn nháp, chưa gửi cho nhà cung cấp',1),(8,NULL,NULL,NULL,1,8,NULL,2,'PO-2024-008','2025-11-30 10:37:10','2025-12-15 10:37:10',NULL,NULL,0.00,0.00,0.00,0.00,'cancelled',NULL,'2025-12-03 10:37:10','2025-12-03 10:37:10',NULL,30000000.00,0.00,'unpaid','Hủy do nhà cung cấp không đủ hàng',2);
 /*!40000 ALTER TABLE `purchase_orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5181,7 +5219,7 @@ CREATE TABLE `return_items` (
   KEY `idx_return_items_order_item` (`order_item_id`),
   CONSTRAINT `fk_return_items_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_return_items_return` FOREIGN KEY (`return_id`) REFERENCES `returns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5190,7 +5228,6 @@ CREATE TABLE `return_items` (
 
 LOCK TABLES `return_items` WRITE;
 /*!40000 ALTER TABLE `return_items` DISABLE KEYS */;
-INSERT INTO `return_items` VALUES (9,9,115,1.000,'damaged','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(10,10,118,1.000,'used','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(11,11,121,1.000,'new','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(12,12,126,1.000,'new','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(13,13,151,1.000,'used','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(14,14,152,1.000,'damaged','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(15,15,153,1.000,'opened','2025-12-03 11:11:01','2025-12-03 11:11:01',NULL);
 /*!40000 ALTER TABLE `return_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5230,7 +5267,7 @@ CREATE TABLE `returns` (
   KEY `idx_returns_customer` (`customer_id`),
   CONSTRAINT `fk_returns_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_returns_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5239,7 +5276,6 @@ CREATE TABLE `returns` (
 
 LOCK TABLES `returns` WRITE;
 /*!40000 ALTER TABLE `returns` DISABLE KEYS */;
-INSERT INTO `returns` VALUES (9,'RET-DEMO-001',65,2012,206000.00,0,206000.00,'cash','defective',NULL,'approved',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(10,'RET-DEMO-002',66,2013,155400.00,0,155400.00,'bank_transfer','not_satisfied',NULL,'completed',NULL,NULL,NULL,NULL,NULL,NULL,0,2,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(11,'RET-DEMO-003',68,2015,204000.00,0,0.00,NULL,'wrong_item',NULL,'pending',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(12,'RET-DEMO-004',70,2017,206000.00,0,0.00,NULL,'other','Không phù hợp với nhu cầu','rejected',NULL,NULL,NULL,NULL,NULL,NULL,0,2,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(13,'RET-DEMO-029',84,2011,242000.00,0,242000.00,'cash','other',NULL,'completed',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(14,'RET-DEMO-030',85,2019,212000.00,0,0.00,'cash','wrong_item',NULL,'pending',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL),(15,'RET-DEMO-031',86,2014,224000.00,0,224000.00,'cash','not_satisfied',NULL,'completed',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-03 11:11:01','2025-12-03 11:11:01',NULL);
 /*!40000 ALTER TABLE `returns` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5263,7 +5299,6 @@ CREATE TABLE `role_has_permissions` (
 
 LOCK TABLES `role_has_permissions` WRITE;
 /*!40000 ALTER TABLE `role_has_permissions` DISABLE KEYS */;
-INSERT INTO `role_has_permissions` VALUES (1,1),(1,2),(1,3),(2,1),(3,1),(3,2),(3,3),(4,1),(4,2);
 /*!40000 ALTER TABLE `role_has_permissions` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5284,7 +5319,7 @@ CREATE TABLE `roles` (
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5293,7 +5328,6 @@ CREATE TABLE `roles` (
 
 LOCK TABLES `roles` WRITE;
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'super-admin','api','Super Admin',1,'2025-12-03 02:28:54',NULL,NULL),(2,'manager','api','Quản lý',0,'2025-12-03 02:28:54',NULL,NULL),(3,'viewer','api','Xem chỉ đọc',0,'2025-12-03 02:28:54',NULL,NULL);
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -5563,7 +5597,7 @@ CREATE TABLE `stock_bins` (
   CONSTRAINT `fk_stock_bins_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_stock_bins_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_stock_bins_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5707,7 +5741,7 @@ CREATE TABLE `stock_ledgers` (
   CONSTRAINT `fk_stock_ledgers_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_stock_ledgers_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_stock_ledgers_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=48 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5941,7 +5975,7 @@ DROP TABLE IF EXISTS `suppliers`;
 CREATE TABLE `suppliers` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `name_vi` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `name_en` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `tax_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -5955,7 +5989,7 @@ CREATE TABLE `suppliers` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
-  `type` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT 'company',
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'company',
   `payment_terms` int DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_supplier_code` (`code`),
@@ -5963,7 +5997,7 @@ CREATE TABLE `suppliers` (
   KEY `suppliers_created_by_foreign` (`created_by`),
   CONSTRAINT `suppliers_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
   CONSTRAINT `suppliers_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `suppliers` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -5972,7 +6006,6 @@ CREATE TABLE `suppliers` (
 
 LOCK TABLES `suppliers` WRITE;
 /*!40000 ALTER TABLE `suppliers` DISABLE KEYS */;
-INSERT INTO `suppliers` VALUES (1,'DEFAULT-SUP',NULL,'Default Supplier',NULL,NULL,NULL,NULL,NULL,NULL,'active',NULL,NULL,'2025-12-03 01:35:52','2025-12-03 01:35:52',NULL,'company',0),(2,'SUP-002',NULL,'Nhà cung cấp B',NULL,'0202020202',NULL,NULL,NULL,NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(3,'SUP-003',NULL,'Công ty CP Phụ Kiện Thời Trang','Fashion Accessories JSC','0111222333','028-3666-7777','info@phukien.com.vn','789 Nguyễn Huệ, HCM',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(4,'SUP-004',NULL,'Nhà Máy Dệt May Tân Tiến','Tan Tien Textile Factory','0444555666','0236-3555-6666','sales@tantien.vn','321 Lê Duẩn, Đà Nẵng',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(5,'SUP-005',NULL,'Xưởng Gia Công Đồng Phát','Dong Phat Workshop','0777888999','0292-3444-5555','dongphat@workshop.vn','654 Đường 3/2, Cần Thơ',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(6,'SUP-006',NULL,'Công ty TNHH Vải Cao Cấp','Premium Fabric Co., Ltd','0222333444','024-3333-4444','premium@fabric.vn','987 Trần Hưng Đạo, Hà Nội',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(7,'SUP-007',NULL,'Nhà Cung Cấp Phụ Liệu Minh Anh','Minh Anh Materials','0555666777','028-3222-3333','minhanh@materials.vn','147 Lê Lợi, HCM',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0),(8,'SUP-008',NULL,'Xưởng Thêu Ren Hoa Mai','Hoa Mai Embroidery','0888999000','0225-3111-2222','hoamai@embroidery.vn','258 Lạch Tray, Hải Phòng',NULL,'active',NULL,NULL,'2025-12-03 02:28:54','2025-12-03 02:28:54',NULL,'company',0);
 /*!40000 ALTER TABLE `suppliers` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6168,7 +6201,7 @@ CREATE TABLE `tax_templates` (
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=9004 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6177,7 +6210,6 @@ CREATE TABLE `tax_templates` (
 
 LOCK TABLES `tax_templates` WRITE;
 /*!40000 ALTER TABLE `tax_templates` DISABLE KEYS */;
-INSERT INTO `tax_templates` VALUES (9001,'VAT 0%',0.000,0,'nearest','active','2025-12-03 02:28:54','2025-12-03 02:28:54'),(9002,'VAT 5%',5.000,0,'nearest','active','2025-12-03 02:28:54','2025-12-03 02:28:54'),(9003,'VAT 10%',10.000,0,'nearest','active','2025-12-03 02:28:54','2025-12-03 02:28:54');
 /*!40000 ALTER TABLE `tax_templates` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6390,7 +6422,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   KEY `fk_users_branch_id` (`branch_id`),
   CONSTRAINT `fk_users_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6399,7 +6431,6 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'admin.staging','admin@staging.lanocrm.local','$2y$12$7SI9yb1rxz2lzuKynLZLBekiXP8uYoeW6hO4TQWsgKWV.3nEW1o9G','Staging Admin',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(2,'manager.staging','manager@staging.lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Staging Manager',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(3,'staff.staging','staff@staging.lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Staging Staff',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(10,'demo.admin','demo.admin@lanocrm.local','$2y$12$7SI9yb1rxz2lzuKynLZLBekiXP8uYoeW6hO4TQWsgKWV.3nEW1o9G','Demo Admin User',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(11,'demo.manager.hn','manager.hn@lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Demo Manager Hanoi',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(12,'demo.manager.hcm','manager.hcm@lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Demo Manager HCM',NULL,NULL,2,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(13,'demo.staff1','staff1@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Staff 1',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(14,'demo.staff2','staff2@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Staff 2',NULL,NULL,2,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(15,'demo.inactive','inactive@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Inactive User',NULL,NULL,1,'inactive',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6422,7 +6453,7 @@ CREATE TABLE `warehouses` (
   PRIMARY KEY (`id`),
   KEY `fk_warehouses_branch_id` (`branch_id`),
   CONSTRAINT `fk_warehouses_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -6431,7 +6462,6 @@ CREATE TABLE `warehouses` (
 
 LOCK TABLES `warehouses` WRITE;
 /*!40000 ALTER TABLE `warehouses` DISABLE KEYS */;
-INSERT INTO `warehouses` VALUES (1,'Kho chính Hà Nội','WH-HN-MAIN',1,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(2,'Kho bán lẻ Hà Nội','WH-HN-RETAIL',1,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(3,'Kho chính HCM','WH-HCM-MAIN',2,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(4,'Kho bán lẻ HCM','WH-HCM-RETAIL',2,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(5,'Kho chính Đà Nẵng','WH-DN-MAIN',3,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(6,'Kho chính Cần Thơ','WH-CT-MAIN',4,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL),(7,'Kho chính Hải Phòng','WH-HP-MAIN',5,'active','2025-12-03 02:28:54','2025-12-03 02:28:54',NULL);
 /*!40000 ALTER TABLE `warehouses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -6569,4 +6599,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-12-03 11:11:25
+-- Dump completed on 2025-12-05  8:10:22

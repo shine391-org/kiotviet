@@ -224,7 +224,90 @@ class ProductRepository
     /** Total stock for analytics. @agent-use: Analytics @agent-pattern: Aggregate */
     public function totalStock(int $productId): float { $row = $this->db->table('product_variants_v2')->selectSum('stock_quantity')->where('product_id', $productId)->get()->getRowArray(); return (float) ($row['stock_quantity'] ?? 0); }
 
-    private function applyFilters(array $filters) { $b = $this->products->builder()->where('deleted_at', null); if (! empty($filters['search'])) { $b->groupStart()->like('code', $filters['search'])->orLike('name', $filters['search'])->orLike('barcode', $filters['search'])->groupEnd(); } if (! empty($filters['status'])) { $b->where('status', $filters['status']); } if (! empty($filters['product_type'])) { $b->where('product_type', $filters['product_type']); } return $b; }
+    private function applyFilters(array $filters)
+    {
+        // 1. Base Builder
+        $b = $this->products->builder()
+            ->select('products.*')
+            ->where('products.deleted_at', null);
+
+        // 2. Price List Logic
+        // Logic V2:
+        // - ID=1 (General) or NULL: Show ALL products (`products` table).
+        // - ID>1 (Custom): Show ONLY added products (`inner join price_list_items`).
+        
+        $priceListId = !empty($filters['price_list_id']) ? (int)$filters['price_list_id'] : 1;
+
+        if ($priceListId > 1) {
+            // Custom Price List: INNER JOIN to show ONLY items in the list
+            $b->join('price_list_items as pli', "pli.product_id = products.id AND pli.price_list_id = {$priceListId} AND pli.variant_id IS NULL", 'inner');
+            $b->select("pli.price as selling_price"); // Override selling_price directly with the custom price
+        } else {
+            // General Price List (ID=1) or None: Show all products, use base selling_price
+            // No join needed for filtering, but if we want to support overlapping logic later we could.
+            // For now, simple select.
+            $b->select("products.selling_price");
+        }
+        
+        // 3. Category Filter
+        if (!empty($filters['category_id'])) {
+            $catId = (int) $filters['category_id'];
+            $b->join('product_category_links as pcl', 'pcl.product_id = products.id', 'inner');
+            $b->where('pcl.category_id', $catId);
+        }
+
+        // 4. Stock Status Filter
+        if (!empty($filters['stock_status'])) {
+            if ($filters['stock_status'] === 'in_stock') {
+                $b->where('products.stock_quantity >', 0);
+            } elseif ($filters['stock_status'] === 'out_of_stock') {
+                $b->where('products.stock_quantity <=', 0);
+            }
+        }
+
+        // 5. Search
+        if (!empty($filters['search'])) {
+            $b->groupStart()
+                ->like('products.code', $filters['search'])
+                ->orLike('products.name', $filters['search'])
+                ->orLike('products.barcode', $filters['search'])
+            ->groupEnd();
+        }
+
+        // 6. Status/Type
+        if (!empty($filters['status'])) {
+            $b->where('products.status', $filters['status']);
+        }
+        if (!empty($filters['product_type'])) {
+            $b->where('products.product_type', $filters['product_type']);
+        }
+
+        // 7. Price Filters (Condition & Compare)
+        if (!empty($filters['price_condition']) && !empty($filters['price_compare'])) {
+            $operatorMap = [
+                'lt' => '<',
+                'lte' => '<=',
+                'eq' => '=',
+                'gt' => '>',
+                'gte' => '>=',
+            ];
+            $op = $operatorMap[$filters['price_condition']] ?? null;
+            
+            // Map compare column
+            $compareCol = ($filters['price_compare'] === 'cost' || $filters['price_compare'] === 'purchase') 
+                ? 'products.purchase_price' 
+                : 'products.purchase_price'; 
+
+            if ($op) {
+                // If priceListID > 1, we selected 'selling_price' from PLI, so alias usage in HAVING is safer
+                // If ID=1, we selected 'products.selling_price', alias 'selling_price' might work or need literal.
+                // Using HAVING is generally safer for aliased columns in CI4/MySQL.
+                $b->having("selling_price {$op} {$compareCol}", null, false);
+            }
+        }
+
+        return $b;
+    }
 
     private function now(): string { return date('Y-m-d H:i:s'); }
 }

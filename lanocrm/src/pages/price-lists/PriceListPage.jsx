@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Button, Input, Table, Space, Select, App, Row, Col, InputNumber, Tooltip, Popover } from 'antd';
+import { Card, Button, Input, Table, Space, Select, App, Row, Col, InputNumber, Tooltip, Popover, Checkbox } from 'antd';
 import {
   PlusOutlined,
   ReloadOutlined,
@@ -10,12 +10,16 @@ import {
   LeftOutlined,
   RightOutlined,
   ImportOutlined,
-  ExportOutlined
+  ExportOutlined,
+  UnorderedListOutlined
 } from '@ant-design/icons';
 import { fetchPriceLists, createPriceList, deletePriceList, resetPriceListState } from '../../store/slices/priceListSlice';
 import { fetchProducts, setFilters } from '../../store/slices/productSlice';
+import { fetchCategories } from '../../store/slices/categorySlice'; // [NEW] Import Category Action
+import usePermission from '../../utils/usePermission'; // [NEW] Import Permission Hook
 import CreatePriceListModal from '../../components/price-lists/CreatePriceListModal';
 import PriceFormulaModal from '../../components/price-lists/PriceFormulaModal';
+import ProductPickerModal from '../../components/price-lists/ProductPickerModal';
 import priceListApi from '../../api/priceListApi';
 
 const PriceListPage = () => {
@@ -34,17 +38,38 @@ const PriceListPage = () => {
   // Product state for table
   const { items: products, loading: productLoading, pagination, filters } = useSelector(state => state.product);
 
+  // [NEW] Category state for filter
+  const { categories } = useSelector(state => state.category);
+
+  // [NEW] Permission Check
+  const { hasPermission, isSuperAdmin } = usePermission();
+  const canEditPrice = hasPermission('products.update') || isSuperAdmin;
+
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [editingKey, setEditingKey] = useState('');
   const [editingPrice, setEditingPrice] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [formulaModalOpen, setFormulaModalOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false); // [NEW] Picker state
+  const [addingItems, setAddingItems] = useState(false); // [NEW] Loading state
   const [formulaProduct, setFormulaProduct] = useState(null);
   const [selectedPriceListId, setSelectedPriceListId] = useState(null);
+
+  // ... (Keep existing effects) ...
+  // Re-declare effects here or assume existing code is preserved if using replace_file_content carefully.
+  // Since I am replacing a huge chunk, I should be careful. 
+  // Actually, I should use multi_replace or targeted replace. 
+  // But wait, the previous tool was replace_file_content for the whole file? No, I viewed it.
+  // I will use replace_file_content to inject imports and state, then render.
+
+  // Oh wait, replace_file_content replaces a BLOCK. I need multiple blocks.
+  // I will use multi_replace_file_content.
+
 
   // Fetch price lists on mount
   useEffect(() => {
     dispatch(fetchPriceLists({ page: 1, limit: 100 }));
+    dispatch(fetchCategories({ limit: 100 })); // [NEW] Fetch Categories
   }, [dispatch]);
 
   // Fetch products based on filters
@@ -205,6 +230,29 @@ const PriceListPage = () => {
     setEditingPrice(null);
   };
 
+  // [NEW] Handle Product Picker Save
+  const handleProductPickerSave = async (selectedItems) => {
+    if (!selectedPriceListId) return;
+    setAddingItems(true);
+    try {
+      // Map selected products to items payload
+      const payload = selectedItems.map(item => ({
+        product_id: item.id,
+        price: item.selling_price || 0, // Default to current selling price
+      }));
+
+      await priceListApi.addItems(selectedPriceListId, payload);
+      message.success(`Đã thêm ${payload.length} sản phẩm vào bảng giá`);
+      setPickerOpen(false);
+      dispatch(fetchProducts(filters)); // Reload list
+    } catch (error) {
+      console.error(error);
+      message.error('Thêm sản phẩm thất bại');
+    } finally {
+      setAddingItems(false);
+    }
+  };
+
   // Price list options from API
   const priceListOptions = useMemo(() => {
     return (priceLists || []).map(pl => ({
@@ -309,9 +357,9 @@ const PriceListPage = () => {
       dataIndex: 'price',
       key: 'price',
       width: 150,
-      editable: true,
+      editable: canEditPrice, // [UPDATED] Use permission
       render: (price, record) => {
-        const editable = isEditing(record);
+        const editable = isEditing(record) && canEditPrice; // Double check in render
         return editable ? (
           <Popover
             content={
@@ -464,131 +512,190 @@ const PriceListPage = () => {
     },
   };
 
+  const [checkedList, setCheckedList] = useState([]);
+
+  // Initialize checkedList when columns are defined (using useEffect or directly)
+  // Since columns is memoized, we should probably set defaultCheckedList based on keys
+  useEffect(() => {
+    // Only set if empty to avoid reset on re-renders
+    if (checkedList.length === 0) {
+      // Define default keys based on 'columns' logic. 
+      // We can extract keys from the columns definition logic or hardcode them based on known columns
+      const keys = ['code', 'name', 'stock', 'cost_price', 'last_purchase_price', 'price', 'price_after_discount', 'actions'];
+      setCheckedList(keys);
+    }
+  }, []);
+
+  const handleColumnChange = (list) => {
+    setCheckedList(list);
+  };
+
+  // Filter keys for display. 
+  const columnOptions = [
+    { label: 'Mã hàng', value: 'code' },
+    { label: 'Tên hàng', value: 'name' },
+    { label: 'Tồn kho', value: 'stock' },
+    { label: 'Giá vốn', value: 'cost_price' },
+    { label: 'Giá nhập cuối', value: 'last_purchase_price' },
+    { label: 'Bảng giá chung', value: 'price' },
+    { label: 'Giá điều chỉnh', value: 'price_after_discount' },
+    { label: 'Thao tác', value: 'actions' },
+  ];
+
+  const columnSelector = (
+    <div style={{ padding: '8px', minWidth: '150px' }}>
+      <Checkbox.Group
+        options={columnOptions}
+        value={checkedList}
+        onChange={handleColumnChange}
+        style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}
+      />
+    </div>
+  );
+
+  const visibleColumns = useMemo(() => {
+    // Logic to filter mergedColumns based on checkedList
+    // We need to re-run this when mergedColumns or checkedList changes
+    if (!mergedColumns) return [];
+    return mergedColumns.filter(col => checkedList.includes(col.key));
+  }, [mergedColumns, checkedList]);
+
+  // ... (existing code)
+
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Header */}
-      <div style={{ padding: '12px 24px', background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
-            {selectedPriceListId ? priceLists.find(p => p.id === selectedPriceListId)?.name : 'Bảng giá chung'}
-          </h2>
-          <Input.Search
-            placeholder="Theo mã, tên hàng"
-            style={{ width: 300 }}
-            onSearch={handleSearch}
+    <div style={{ height: '100vh', display: 'grid', gridTemplateColumns: '25% 75%', overflow: 'hidden' }}>
+      {/* Sidebar - Left Column (25%) */}
+      <div style={{ background: '#fff', borderRight: '1px solid #e8e8e8', padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '24px' }}>Thiết lập giá</h2>
+
+        {/* Section: Bảng giá */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontWeight: 'bold' }}>Bảng giá</span>
+            <a onClick={handleAdd} style={{ color: '#1890ff', cursor: 'pointer' }}>Tạo mới</a>
+          </div>
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Chọn bảng giá"
             allowClear
+            loading={priceListLoading}
+            value={selectedPriceListId}
+            onChange={(value) => {
+              setSelectedPriceListId(value);
+              handleFilterChange('price_list_id', value);
+            }}
+            options={priceListOptions}
           />
         </div>
-        <Space>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleAdd} />
-          <Tooltip title="Nhân bản"><Button icon={<i className="anticon anticon-copy" />} /></Tooltip>
-          <Tooltip title="Đổi giao diện"><Button icon={<i className="anticon anticon-table" />} /></Tooltip>
-          <Tooltip title="Ẩn hiện cột"><Button icon={<SettingOutlined />} /></Tooltip>
-          <Button icon={<SettingOutlined />} href="/man/#/Settings?SettingType=products" />
-          <Button icon={<QuestionCircleOutlined />} href="#" />
-        </Space>
-      </div>
 
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        {/* Sidebar */}
-        <div style={{ width: '280px', background: '#f5f5f5', borderRight: '1px solid #e8e8e8', padding: '16px', overflowY: 'auto' }}>
-          {/* Section: Bảng giá */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-              <span style={{ fontWeight: 'bold' }}>Bảng giá</span>
-              <a onClick={handleAdd} style={{ color: '#1890ff' }}>Tạo mới</a>
-            </div>
-            <Select
-              style={{ width: '100%' }}
-              placeholder="Chọn bảng giá"
-              allowClear
-              loading={priceListLoading}
-              value={selectedPriceListId}
-              onChange={(value) => {
-                setSelectedPriceListId(value);
-                handleFilterChange('price_list_id', value);
-              }}
-              options={priceListOptions}
-            />
-            {!selectedPriceListId && (
-              <div style={{ marginTop: '8px', padding: '4px 8px', background: '#e6f7ff', border: '1px solid #91d5ff', borderRadius: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#1890ff' }}>Bảng giá chung</span>
-                <span style={{ cursor: 'pointer' }}>×</span>
-              </div>
-            )}
-          </div>
-
-          {/* Section: Nhóm hàng */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Nhóm hàng</div>
-            <Select
-              style={{ width: '100%' }}
-              placeholder="Chọn nhóm hàng"
-              allowClear
-              onChange={(value) => handleFilterChange('category_id', value)}
-              options={[
-                { label: 'Thực phẩm', value: 'food' },
-                { label: 'Đồ uống', value: 'beverage' },
-                { label: 'Đồ gia dụng', value: 'household' },
-              ]}
-            />
-          </div>
-
-          {/* Section: Tồn kho */}
-          <div style={{ marginBottom: '24px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Tồn kho</div>
-            <Select
-              style={{ width: '100%' }}
-              placeholder="Tất cả"
-              allowClear
-              onChange={(value) => handleFilterChange('stock_status', value)}
-              options={[
-                { label: 'Tất cả', value: 'all' },
-                { label: 'Có tồn', value: 'in_stock' },
-                { label: 'Hết tồn', value: 'out_of_stock' },
-              ]}
-            />
-          </div>
-
-          {/* Section: Giá bán */}
-          <div>
-            <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Giá bán</div>
-            <Space direction="vertical" style={{ width: '100%' }}>
-              <Select
-                style={{ width: '100%' }}
-                placeholder="Chọn điều kiện"
-                allowClear
-                onChange={(value) => handleFilterChange('price_condition', value)}
-                options={[
-                  { label: 'Nhỏ hơn', value: 'lt' },
-                  { label: 'Nhỏ hơn hoặc bằng', value: 'lte' },
-                  { label: 'Bằng', value: 'eq' },
-                  { label: 'Lớn hơn', value: 'gt' },
-                ]}
-              />
-              <Select
-                style={{ width: '100%' }}
-                placeholder="Chọn giá so sánh"
-                allowClear
-                onChange={(value) => handleFilterChange('price_compare', value)}
-                options={[
-                  { label: 'Giá vốn', value: 'cost' },
-                  { label: 'Giá nhập cuối', value: 'purchase' },
-                ]}
-              />
-            </Space>
-          </div>
+        {/* Section: Nhóm hàng */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Nhóm hàng</div>
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Chọn nhóm hàng"
+            allowClear
+            onChange={(value) => handleFilterChange('category_id', value)}
+            options={categories.map(cat => ({
+              label: cat.name,
+              value: cat.id
+            }))}
+          />
         </div>
 
-        {/* Main Content */}
+        {/* Section: Tồn kho */}
+        <div style={{ marginBottom: '24px' }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Tồn kho</div>
+          <Select
+            style={{ width: '100%' }}
+            placeholder="Tất cả"
+            allowClear
+            onChange={(value) => handleFilterChange('stock_status', value)}
+            options={[
+              { label: 'Tất cả', value: 'all' },
+              { label: 'Có tồn', value: 'in_stock' },
+              { label: 'Hết tồn', value: 'out_of_stock' },
+            ]}
+          />
+        </div>
+
+        {/* Section: Giá bán */}
+        <div>
+          <div style={{ fontWeight: 'bold', marginBottom: '8px' }}>Giá bán</div>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Chọn điều kiện"
+              allowClear
+              onChange={(value) => handleFilterChange('price_condition', value)}
+              options={[
+                { label: 'Nhỏ hơn', value: 'lt' },
+                { label: 'Nhỏ hơn hoặc bằng', value: 'lte' },
+                { label: 'Bằng', value: 'eq' },
+                { label: 'Lớn hơn', value: 'gt' },
+              ]}
+            />
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Chọn giá so sánh"
+              allowClear
+              onChange={(value) => handleFilterChange('price_compare', value)}
+              options={[
+                { label: 'Giá vốn', value: 'cost' },
+                { label: 'Giá nhập cuối', value: 'purchase' },
+              ]}
+            />
+          </Space>
+        </div>
+      </div>
+
+      {/* Main Content - Right Column (75%) */}
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '12px 24px', background: '#fff', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {selectedPriceListId && (
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 'bold' }}>
+                {priceLists.find(p => p.id === selectedPriceListId)?.name}
+              </h2>
+            )}
+            <Input.Search
+              placeholder="Theo mã, tên hàng"
+              style={{ width: 300 }}
+              onSearch={handleSearch}
+              allowClear
+            />
+          </div>
+          <Space>
+            {/* [NEW] Add Product Button - Only for Custom Price Lists */}
+            {selectedPriceListId && selectedPriceListId > 1 && (
+              <Button type="primary" onClick={() => setPickerOpen(true)}>
+                Thêm hàng
+              </Button>
+            )}
+            <Button type="default" icon={<PlusOutlined />} onClick={handleAdd}>
+              Bảng giá
+            </Button>
+            <Button icon={<ImportOutlined />} onClick={handleImport}>Import</Button>
+            <Button icon={<ExportOutlined />} onClick={handleExport}>Xuất file</Button>
+
+            <Popover content={columnSelector} trigger="click" placement="bottomRight" arrow={false}>
+              <Button icon={<UnorderedListOutlined />} />
+            </Popover>
+
+            <Button icon={<SettingOutlined />} href="/man/#/Settings?SettingType=products" />
+            <Button icon={<QuestionCircleOutlined />} href="#" />
+          </Space>
+        </div>
+
         <div style={{ flex: 1, padding: '16px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <Table
             rowSelection={rowSelection}
-            columns={mergedColumns}
+            columns={visibleColumns}
             dataSource={dataSource}
             loading={productLoading}
             pagination={paginationConfig}
-            scroll={{ x: 1000, y: 'calc(100vh - 200px)' }}
+            scroll={{ x: 1000, y: 'calc(100vh - 150px)' }} // Adjusted scroll height
             bordered
             size="small"
           />
@@ -604,7 +711,6 @@ const PriceListPage = () => {
         basePriceLists={priceLists || []}
       />
 
-      {/* Formula Modal */}
       <PriceFormulaModal
         open={formulaModalOpen}
         onClose={() => setFormulaModalOpen(false)}
@@ -612,6 +718,14 @@ const PriceListPage = () => {
         product={formulaProduct}
         priceListId={selectedPriceListId}
         basePriceLists={priceLists || []}
+      />
+
+      {/* [NEW] Product Picker Modal */}
+      <ProductPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSave={handleProductPickerSave}
+        loading={addingItems}
       />
     </div>
   );
