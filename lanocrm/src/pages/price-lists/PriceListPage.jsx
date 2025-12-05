@@ -44,6 +44,7 @@ const PriceListPage = () => {
   // [NEW] Permission Check
   const { hasPermission, isSuperAdmin } = usePermission();
   const canEditPrice = hasPermission('products.update') || isSuperAdmin;
+  const canDeletePriceList = hasPermission('price_lists.delete') || isSuperAdmin;
 
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
   const [editingKey, setEditingKey] = useState('');
@@ -137,6 +138,29 @@ const PriceListPage = () => {
 
   const handleHelp = () => {
     message.info('Tính năng trợ giúp đang được phát triển');
+  };
+
+  // Handle delete price list
+  const handleDeletePriceList = async () => {
+    if (!selectedPriceList) {
+      message.warning('Vui lòng chọn bảng giá cần xóa');
+      return;
+    }
+
+    // Check if it's system/default price list
+    if (selectedPriceList.is_system === 1 || selectedPriceList.is_system === '1' || selectedPriceList.is_system === true) {
+      message.error('Không thể xóa bảng giá mặc định của hệ thống');
+      return;
+    }
+
+    try {
+      await dispatch(deletePriceList(selectedPriceListId)).unwrap();
+      message.success(`Đã xóa bảng giá "${selectedPriceList.name}"`);
+      setSelectedPriceListId(null);
+      dispatch(fetchPriceLists({ page: 1, limit: 100 }));
+    } catch (err) {
+      message.error(err?.message || 'Có lỗi khi xóa bảng giá');
+    }
   };
 
   const handleAdd = () => {
@@ -255,14 +279,23 @@ const PriceListPage = () => {
         return;
       }
 
-      const payload = [{
-        product_id: key,
-        price: editingPrice
-      }];
+      const isSystemPriceList = selectedPriceList && (selectedPriceList.is_system === 1 || selectedPriceList.is_system === '1');
 
-      await priceListApi.saveItems(selectedPriceListId, payload);
+      if (isSystemPriceList) {
+        // For system price list ("Bảng giá chung"), update product's selling_price directly
+        const { updateProduct } = await import('../../api/productApi');
+        await updateProduct(key, { selling_price: editingPrice });
+        message.success('Cập nhật giá bán thành công');
+      } else {
+        // For custom price lists, save to price_list_items table
+        const payload = [{
+          product_id: key,
+          price: editingPrice
+        }];
+        await priceListApi.saveItems(selectedPriceListId, payload);
+        message.success('Cập nhật giá bảng giá thành công');
+      }
 
-      message.success('Cập nhật giá thành công');
       setEditingKey('');
       setEditingPrice(null);
       dispatch(fetchProducts(filters));
@@ -302,7 +335,9 @@ const PriceListPage = () => {
 
   // [NEW] Handle Delete Product from Price List
   const handleDeleteFromPriceList = async (productId) => {
-    if (!selectedPriceList || selectedPriceList.is_system) {
+    // Check is_system - can be 1, '1', true
+    const isSystem = selectedPriceList && (selectedPriceList.is_system === 1 || selectedPriceList.is_system === '1' || selectedPriceList.is_system === true);
+    if (!selectedPriceList || isSystem) {
       message.warning('Không thể xóa sản phẩm khỏi bảng giá hệ thống');
       return;
     }
@@ -406,23 +441,33 @@ const PriceListPage = () => {
       dataIndex: 'cost_price',
       key: 'cost_price',
       width: 120,
-      render: (price) => price ? `${price.toLocaleString('vi-VN')}đ` : '0đ',
+      render: (price) => (
+        <span style={{ color: '#8c8c8c' }}>
+          {price ? `${Math.round(price).toLocaleString('vi-VN')}đ` : '0đ'}
+        </span>
+      ),
     },
     {
       title: 'Giá nhập cuối',
       dataIndex: 'last_purchase_price',
       key: 'last_purchase_price',
       width: 120,
-      render: (price) => price ? `${price.toLocaleString('vi-VN')}đ` : '0đ',
+      render: (price) => (
+        <span style={{ color: '#1890ff' }}>
+          {price ? `${Math.round(price).toLocaleString('vi-VN')}đ` : '0đ'}
+        </span>
+      ),
     },
     {
       title: 'Bảng giá chung',
-      dataIndex: 'price',
-      key: 'price',
+      dataIndex: 'original_price', // Backend returns products.selling_price as original_price
+      key: 'original_price',
       width: 150,
       // Read-only - editing is done on the selected price list column
       render: (price) => (
-        <span>{price ? `${price.toLocaleString('vi-VN')}đ` : '0đ'}</span>
+        <span style={{ color: '#52c41a', fontWeight: 500 }}>
+          {price ? `${Math.round(price).toLocaleString('vi-VN')}đ` : '0đ'}
+        </span>
       ),
     },
     {
@@ -432,7 +477,9 @@ const PriceListPage = () => {
       render: (_, record) => {
         const editable = isEditing(record);
         // Check if it's a custom price list (not a system list)
-        const isCustomPriceList = selectedPriceList && !selectedPriceList.is_system;
+        // Backend returns is_system as 0/1 integer, so we need explicit comparison
+        const isCustomPriceList = selectedPriceList && selectedPriceList.is_system !== 1 && selectedPriceList.is_system !== '1';
+        const isSystemPriceList = selectedPriceList && (selectedPriceList.is_system === 1 || selectedPriceList.is_system === '1');
 
         if (editable) {
           return (
@@ -447,7 +494,7 @@ const PriceListPage = () => {
           );
         }
 
-        // Only show actions for custom price lists
+        // For custom price lists - show both Edit and Delete
         if (isCustomPriceList) {
           return (
             <Space>
@@ -470,11 +517,20 @@ const PriceListPage = () => {
           );
         }
 
-        // No actions for general price list
+        // For system price list (Bảng giá chung) - show only Edit button, no Delete
+        if (isSystemPriceList) {
+          return (
+            <Button size="small" type="link" onClick={() => edit(record)}>
+              Sửa
+            </Button>
+          );
+        }
+
+        // No price list selected
         return <span style={{ color: '#999' }}>—</span>;
       },
     },
-  ], [editingKey, editingPrice, selectedPriceListId]);
+  ], [editingKey, editingPrice, selectedPriceListId, selectedPriceList]);
 
   // Add adjusted price column when a price list is selected - WITH editing support
   const adjustedPriceColumn = useMemo(() => {
@@ -482,32 +538,38 @@ const PriceListPage = () => {
     const selectedList = priceLists.find(pl => pl.id === selectedPriceListId);
     return {
       title: selectedList ? selectedList.name : 'Giá điều chỉnh',
-      dataIndex: 'price_after_discount',
-      key: 'price_after_discount',
-      width: 150,
+      dataIndex: 'adjusted_price', // Backend returns pli.price as adjusted_price
+      key: 'adjusted_price',
+      width: 200,
       render: (adjustedPrice, record) => {
         // Check if this row is being edited
         const editable = isEditing(record) && canEditPrice;
 
         if (editable) {
           return (
-            <Popover
-              content={
-                <span>
-                  Hoặc sử dụng <a onClick={() => openFormulaModal(record)}>Công thức</a>
-                </span>
-              }
-              trigger="focus"
-            >
-              <InputNumber
-                style={{ width: '100%' }}
-                value={editingPrice}
-                onChange={(value) => setEditingPrice(value)}
-                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                addonAfter="đ"
-              />
-            </Popover>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <InputNumber
+                  style={{ flex: 1, minWidth: '80px' }}
+                  value={editingPrice}
+                  onChange={(value) => setEditingPrice(value)}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                  addonAfter="đ"
+                />
+              </div>
+              <Button
+                size="small"
+                type="link"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openFormulaModal(record);
+                }}
+                style={{ padding: 0, fontSize: '11px', height: 'auto' }}
+              >
+                Áp dụng công thức tính giá
+              </Button>
+            </div>
           );
         }
 
@@ -515,13 +577,13 @@ const PriceListPage = () => {
         if (adjustedPrice === undefined || adjustedPrice === null) {
           return <span style={{ color: '#999' }}>—</span>;
         }
-        const basePrice = record.price || 0;
+        const basePrice = record.original_price || 0;
         const diff = adjustedPrice - basePrice;
-        const color = diff < 0 ? '#52c41a' : (diff > 0 ? '#ff4d4f' : '#333');
+        const color = diff < 0 ? '#52c41a' : (diff > 0 ? '#fa8c16' : '#fa8c16');
         return (
-          <Tooltip title={diff !== 0 ? `Chênh lệch: ${diff.toLocaleString('vi-VN')}đ` : 'Không thay đổi'}>
-            <span style={{ color, fontWeight: diff !== 0 ? 'bold' : 'normal' }}>
-              {adjustedPrice.toLocaleString('vi-VN')}đ
+          <Tooltip title={diff !== 0 ? `So với giá gốc: ${diff > 0 ? '+' : ''}${Math.round(diff).toLocaleString('vi-VN')}đ` : 'Bằng giá gốc'}>
+            <span style={{ color, fontWeight: 500 }}>
+              {Math.round(adjustedPrice).toLocaleString('vi-VN')}đ
             </span>
           </Tooltip>
         );
@@ -550,17 +612,22 @@ const PriceListPage = () => {
     });
 
     // Insert adjusted price column before actions column when price list is selected
-    if (adjustedPriceColumn) {
+    if (adjustedPriceColumn && selectedPriceListId) {
       const actionsIndex = cols.findIndex(c => c.key === 'actions');
       if (actionsIndex > 0) {
-        cols.splice(actionsIndex, 0, adjustedPriceColumn);
+        // Create new array with adjusted column inserted
+        cols = [
+          ...cols.slice(0, actionsIndex),
+          adjustedPriceColumn,
+          ...cols.slice(actionsIndex)
+        ];
       } else {
-        cols.push(adjustedPriceColumn);
+        cols = [...cols, adjustedPriceColumn];
       }
     }
 
     return cols;
-  }, [columns, adjustedPriceColumn]);
+  }, [columns, adjustedPriceColumn, selectedPriceListId]);
 
   // Transform product data to table format
   const dataSource = useMemo(() => {
@@ -575,9 +642,12 @@ const PriceListPage = () => {
       cost_price: item.purchase_price || item.cost_price || 0,
       // last_purchase_price có thể không có trong API, dùng purchase_price thay thế
       last_purchase_price: item.last_purchase_price || item.purchase_price || 0,
-      // API trả về selling_price, không phải price
+      // Giá gốc từ products.selling_price (Backend trả về original_price)
+      original_price: item.original_price || item.selling_price || 0,
+      // Giá đã điều chỉnh từ price_list_items (Backend trả về adjusted_price)
+      adjusted_price: item.adjusted_price || 0,
+      // Legacy fields for backward compatibility
       price: item.selling_price || item.price || item.base_price || 0,
-      // Giá sau khi áp dụng bảng giá (từ backend khi có price_list_id)
       price_after_discount: item.price_after_discount,
       applied_price_list_name: item.applied_price_list_name,
     }));
@@ -616,10 +686,17 @@ const PriceListPage = () => {
     if (checkedList.length === 0) {
       // Define default keys based on 'columns' logic. 
       // We can extract keys from the columns definition logic or hardcode them based on known columns
-      const keys = ['code', 'name', 'stock', 'cost_price', 'last_purchase_price', 'price', 'price_after_discount', 'actions'];
+      const keys = ['code', 'name', 'stock', 'cost_price', 'last_purchase_price', 'original_price', 'adjusted_price', 'actions'];
       setCheckedList(keys);
     }
   }, []);
+
+  // Ensure adjusted_price is in checkedList when a price list is selected
+  useEffect(() => {
+    if (selectedPriceListId && !checkedList.includes('adjusted_price')) {
+      setCheckedList(prev => [...prev, 'adjusted_price']);
+    }
+  }, [selectedPriceListId]);
 
   const handleColumnChange = (list) => {
     setCheckedList(list);
@@ -632,7 +709,7 @@ const PriceListPage = () => {
     { label: 'Tồn kho', value: 'stock' },
     { label: 'Giá vốn', value: 'cost_price' },
     { label: 'Giá nhập cuối', value: 'last_purchase_price' },
-    { label: 'Bảng giá chung', value: 'price' },
+    { label: 'Bảng giá chung', value: 'original_price' },
     { label: 'Giá điều chỉnh', value: 'price_after_discount' },
     { label: 'Thao tác', value: 'actions' },
   ];
@@ -681,6 +758,29 @@ const PriceListPage = () => {
             }}
             options={priceListOptions}
           />
+          {/* Delete button - only show for non-system price lists with permission */}
+          {selectedPriceList && canDeletePriceList &&
+            selectedPriceList.is_system !== 1 && selectedPriceList.is_system !== '1' && (
+              <div style={{ marginTop: '8px' }}>
+                <Popconfirm
+                  title="Xóa bảng giá"
+                  description={`Bạn có chắc muốn xóa bảng giá "${selectedPriceList.name}"?`}
+                  onConfirm={handleDeletePriceList}
+                  okText="Xóa"
+                  cancelText="Hủy"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    danger
+                    size="small"
+                    icon={<DeleteOutlined />}
+                    style={{ width: '100%' }}
+                  >
+                    Xóa bảng giá này
+                  </Button>
+                </Popconfirm>
+              </div>
+            )}
         </div>
 
         {/* Section: Nhóm hàng */}

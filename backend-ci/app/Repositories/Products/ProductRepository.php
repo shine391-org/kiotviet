@@ -238,15 +238,19 @@ class ProductRepository
         
         $priceListId = !empty($filters['price_list_id']) ? (int)$filters['price_list_id'] : 1;
 
+        // Always select products.selling_price as 'price' for "Bảng giá chung" column
+        // Use a unique alias to avoid conflict with products.*
+        $b->select("products.selling_price as original_price");
+
         if ($priceListId > 1) {
             // Custom Price List: INNER JOIN to show ONLY items in the list
             $b->join('price_list_items as pli', "pli.product_id = products.id AND pli.price_list_id = {$priceListId} AND pli.variant_id IS NULL", 'inner');
-            $b->select("pli.price as selling_price"); // Override selling_price directly with the custom price
+            // Select adjusted price from price_list_items
+            $b->select("pli.price as adjusted_price");
         } else {
-            // General Price List (ID=1) or None: Show all products, use base selling_price
-            // No join needed for filtering, but if we want to support overlapping logic later we could.
-            // For now, simple select.
-            $b->select("products.selling_price");
+            // General Price List (ID=1) or None: Show all products
+            // No adjusted price for general list - it's same as original
+            $b->select("products.selling_price as adjusted_price");
         }
         
         // 3. Category Filter

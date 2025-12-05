@@ -24,19 +24,23 @@ class CustomerGroupRepository
         $q = $this->model;
         
         if (!empty($filters['search'])) {
-            $q = $q->like('name', $filters['search']);
+            $q = $q->like('name_vi', $filters['search']);
         }
         
-        if (isset($filters['is_active'])) {
-            $q = $q->where('is_active', $filters['is_active'] ? 1 : 0);
+        if (isset($filters['status'])) {
+            $q = $q->where('status', $filters['status']);
         }
         
         $limit = $filters['limit'] ?? 100;
         $offset = (($filters['page'] ?? 1) - 1) * $limit;
         
-        $result = $q->orderBy('name', 'ASC')->findAll($limit, $offset);
-            
-        return $result ?: [];
+        $result = $q->orderBy('name_vi', 'ASC')->findAll($limit, $offset);
+        
+        // Add 'name' alias for frontend compatibility
+        return array_map(function ($row) {
+            $row['name'] = $row['name_vi'] ?? $row['name_en'] ?? '';
+            return $row;
+        }, $result ?: []);
     }
 
     /** Count customer groups. Model's soft delete handles filtering. */
@@ -45,11 +49,11 @@ class CustomerGroupRepository
         $q = $this->model;
         
         if (!empty($filters['search'])) {
-            $q = $q->like('name', $filters['search']);
+            $q = $q->like('name_vi', $filters['search']);
         }
         
-        if (isset($filters['is_active'])) {
-            $q = $q->where('is_active', $filters['is_active'] ? 1 : 0);
+        if (isset($filters['status'])) {
+            $q = $q->where('status', $filters['status']);
         }
         
         return $q->countAllResults();
@@ -58,21 +62,26 @@ class CustomerGroupRepository
     /** Find by ID. Model's soft delete handles filtering. */
     public function findById(int $id): ?array
     {
-        return $this->model->find($id);
+        $row = $this->model->find($id);
+        if ($row) {
+            $row['name'] = $row['name_vi'] ?? $row['name_en'] ?? '';
+        }
+        return $row;
     }
 
     /** Create customer group. Model handles timestamps automatically. */
     public function create(array $data): array
     {
         $payload = [
-            'name' => $data['name'],
-            'description' => $data['description'] ?? null,
-            'discount_percent' => $data['discount_percent'] ?? 0,
-            'is_active' => $data['is_active'] ?? 1,
+            'code' => $data['code'] ?? 'CG-' . strtoupper(substr(md5(time()), 0, 6)),
+            'name_vi' => $data['name'] ?? $data['name_vi'] ?? '',
+            'name_en' => $data['name_en'] ?? null,
+            'status' => $data['status'] ?? 'active',
         ];
         
         $this->model->insert($payload);
         $payload['id'] = $this->model->getInsertID();
+        $payload['name'] = $payload['name_vi'];
         
         return $payload;
     }
@@ -80,7 +89,13 @@ class CustomerGroupRepository
     /** Update customer group. Model handles timestamps automatically. */
     public function update(int $id, array $data): bool
     {
-        return (bool) $this->model->update($id, $data);
+        $payload = [];
+        if (isset($data['name'])) $payload['name_vi'] = $data['name'];
+        if (isset($data['name_vi'])) $payload['name_vi'] = $data['name_vi'];
+        if (isset($data['name_en'])) $payload['name_en'] = $data['name_en'];
+        if (isset($data['status'])) $payload['status'] = $data['status'];
+        
+        return (bool) $this->model->update($id, $payload);
     }
 
     /** Soft delete. */
@@ -89,3 +104,4 @@ class CustomerGroupRepository
         return (bool) $this->model->delete($id);
     }
 }
+

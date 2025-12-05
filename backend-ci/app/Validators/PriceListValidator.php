@@ -56,6 +56,7 @@ class PriceListValidator
             'auto_update' => 'permit_empty|in_list[0,1,true,false]',
             'base_price_list_id' => 'permit_empty', // Can be integer ID or string like 'cost', 'purchase'
             'formula' => 'permit_empty|string',
+            'formula_config' => 'permit_empty', // Formula config object for auto-apply
             'config' => 'permit_empty',
         ];
         $v = $this->run($input, $rules);

@@ -29,51 +29,43 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
     useEffect(() => {
         if (!open) return;
 
-        const controller = new AbortController();
-        const { signal } = controller;
-        const headers = {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
+        // Use dynamic import to avoid circular dependencies
+        const loadData = async () => {
+            try {
+                const { default: axiosInstance } = await import('../../api/axios');
+
+                // Fetch branches - silently fail if not available
+                axiosInstance.get('/branches')
+                    .then(res => {
+                        if (res.data?.data) {
+                            setBranchOptions(res.data.data.map(b => ({ value: b.id, label: b.name })));
+                        }
+                    })
+                    .catch(() => { }); // Silently ignore - optional data
+
+                // Fetch employees - silently fail if not available
+                axiosInstance.get('/employees')
+                    .then(res => {
+                        if (res.data?.data) {
+                            setEmployeeOptions(res.data.data.map(e => ({ value: e.id, label: e.full_name || e.username })));
+                        }
+                    })
+                    .catch(() => { }); // Silently ignore - optional data
+
+                // Fetch customer groups - silently fail if not available
+                axiosInstance.get('/customer-groups')
+                    .then(res => {
+                        if (res.data?.data) {
+                            setCustomerGroupOptions(res.data.data.map(g => ({ value: g.id, label: g.name })));
+                        }
+                    })
+                    .catch(() => { }); // Silently ignore - optional data
+            } catch (err) {
+                console.error('Error loading options:', err);
+            }
         };
 
-        // Fetch branches
-        fetch('/api/branches', { headers, signal })
-            .then(res => res.json())
-            .then(data => {
-                if (data.data) {
-                    setBranchOptions(data.data.map(b => ({ value: b.id, label: b.name })));
-                }
-            })
-            .catch(err => {
-                if (err.name !== 'AbortError') console.error('Error fetching branches:', err);
-            });
-
-        // Fetch employees
-        fetch('/api/employees', { headers, signal })
-            .then(res => res.json())
-            .then(data => {
-                if (data.data) {
-                    setEmployeeOptions(data.data.map(e => ({ value: e.id, label: e.full_name || e.username })));
-                }
-            })
-            .catch(err => {
-                if (err.name !== 'AbortError') console.error('Error fetching employees:', err);
-            });
-
-        // Fetch customer groups
-        fetch('/api/customer-groups', { headers, signal })
-            .then(res => res.json())
-            .then(data => {
-                if (data.data) {
-                    setCustomerGroupOptions(data.data.map(g => ({ value: g.id, label: g.name })));
-                }
-            })
-            .catch(err => {
-                if (err.name !== 'AbortError') console.error('Error fetching customer groups:', err);
-            });
-
-        // Cleanup: abort all pending requests when modal closes or component unmounts
-        return () => controller.abort();
+        loadData();
     }, [open]);
 
     useEffect(() => {
@@ -113,22 +105,33 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
         // Handle basePriceListId - it can be 'cost', 'purchase', or a numeric id
         let basePriceListId = null;
         let formulaBase = null;
+
+        console.log('basePriceListId raw:', values.basePriceListId, 'type:', typeof values.basePriceListId);
+        console.log('formulaValue:', values.formulaValue);
+
         if (values.basePriceListId) {
             if (values.basePriceListId === 'cost') {
-                formulaBase = 'cost_price';
+                formulaBase = 'cost';
             } else if (values.basePriceListId === 'purchase') {
-                formulaBase = 'purchase_price';
-            } else if (typeof values.basePriceListId === 'number') {
-                basePriceListId = values.basePriceListId;
+                formulaBase = 'purchase';
+            } else if (!isNaN(Number(values.basePriceListId))) {
+                // It's a numeric ID (could be string "1" or number 1)
+                basePriceListId = Number(values.basePriceListId);
                 formulaBase = 'base';
             }
         }
 
-        // Build formula string
-        let formula = null;
-        if (formulaBase && values.formulaValue) {
-            formula = `${formulaBase} ${operator} ${values.formulaValue}${unit === '%' ? '%' : ''}`;
-        }
+        // Build formula config object for backend
+        // Only create if base is selected AND value > 0
+        const formulaConfig = formulaBase && values.formulaValue && Number(values.formulaValue) > 0 ? {
+            base: formulaBase === 'base' ? basePriceListId : formulaBase,
+            operator: operator,
+            value: Number(values.formulaValue),
+            unit: unit,
+            rounding: roundingRule,
+        } : null;
+
+        console.log('formulaConfig:', formulaConfig);
 
         const payload = {
             name: values.name,
@@ -136,7 +139,7 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
             end_date: values.endDate?.format('YYYY-MM-DD'),
             is_active: values.status === 'active',
             base_price_list_id: basePriceListId,
-            formula: formula,
+            formula_config: formulaConfig, // Send structured config instead of formula string
             rounding_rule: roundingRule,
             config: {
                 allow_add_items_not_in_list: allowAddItems,

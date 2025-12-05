@@ -23,7 +23,9 @@ class PriceListsController extends BaseController
     /** Create price list. @agent-use: POST /api/price-lists @agent-pattern: Thin create */
     public function create()
     {
-        return $this->wrap(fn () => $this->respondCreated($this->service->create($this->safeInput())));
+        $input = $this->safeInput();
+        log_message('info', '[PriceList Controller] Create input: ' . json_encode($input));
+        return $this->wrap(fn () => $this->respondCreated($this->service->create($input)));
     }
 
     /** Update price list. @agent-use: PUT /api/price-lists/{id} @agent-pattern: Thin update */
