@@ -7,7 +7,7 @@ echo "=== Migration Status Check ==="
 echo ""
 
 # Check if container is running
-if ! docker ps | grep -q meomeo2-api-1; then
+if ! docker ps | grep -q ${DOCKER_CONTAINER:-kiotviet-web-1}; then
     echo "✗ API container is not running"
     echo "  Run: docker-compose up -d"
     exit 1
@@ -19,12 +19,12 @@ echo ""
 # Check database connection
 echo "Checking database connection..."
 # Get DB_NAME from container environment or default
-DB_NAME=$(docker exec meomeo2-api-1 printenv DB_NAME)
+DB_NAME=$(docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} printenv DB_NAME)
 DB_NAME=${DB_NAME:-lanocrm_dev}
 
 echo "Target Database: $DB_NAME"
 
-docker exec meomeo2-api-1 php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); echo "✓ Database connected\n"; exit(0);}catch(Throwable $e){ echo "✗ Database connection failed: " . $e->getMessage() . "\n"; exit(1);}' 2>/dev/null
+docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} php -r 'try{new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","'$DB_NAME'"); echo "✓ Database connected\n"; exit(0);}catch(Throwable $e){ echo "✗ Database connection failed: " . $e->getMessage() . "\n"; exit(1);}' 2>/dev/null
 
 if [ $? -ne 0 ]; then
     echo "  Check if db container is running: docker-compose ps db"
@@ -35,7 +35,7 @@ echo ""
 
 # Check if database is initialized
 echo "Checking database initialization..."
-if docker exec meomeo2-api-1 test -f /var/www/html/backend-ci/writable/.db_initialized; then
+if docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} test -f /var/www/html/backend-ci/writable/.db_initialized; then
     echo "✓ Database initialization marker exists"
 else
     echo "⚠ Database initialization marker NOT found"
@@ -46,7 +46,7 @@ echo ""
 
 # Check migration status
 echo "Checking migration status..."
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:status" 2>&1
+docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} bash -c "cd /var/www/html/backend-ci && php spark migrate:status" 2>&1
 
 echo ""
 
@@ -73,5 +73,5 @@ echo ""
 echo "=== Summary ==="
 echo "If you see issues above, try:"
 echo "  1. Check logs: docker-compose logs api"
-echo "  2. Re-run migrations: docker exec meomeo2-api-1 bash -c 'cd /var/www/html/backend-ci && php spark migrate --all'"
-echo "  3. Check migration log: docker exec meomeo2-api-1 cat /tmp/migration.log"
+echo "  2. Re-run migrations: docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} bash -c 'cd /var/www/html/backend-ci && php spark migrate --all'"
+echo "  3. Check migration log: docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} cat /tmp/migration.log"

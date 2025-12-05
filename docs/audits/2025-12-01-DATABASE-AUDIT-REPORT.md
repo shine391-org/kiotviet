@@ -121,7 +121,7 @@ CREATE TABLE IF NOT EXISTS attributes (
 "
 
 # Or run full migration to sync schemas
-docker exec meomeo2-api-1 php spark migrate --group=tests
+docker exec kiotviet-web-1 php spark migrate --group=tests
 ```
 
 #### 2. Correct Migration Version Reference

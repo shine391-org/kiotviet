@@ -62,7 +62,7 @@ if ($coverage < $threshold) {
     echo "Gap:      " . number_format($threshold - $coverage, 2) . "%\n";
     echo "\n";
     echo "To improve coverage, run:\n";
-    echo "  docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-html coverage/\n";
+    echo "  docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-html coverage/\n";
     echo "  open coverage/index.html\n";
     echo "\n";
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n";

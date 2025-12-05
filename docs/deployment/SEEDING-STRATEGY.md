@@ -241,7 +241,7 @@ docker exec staging-web php spark db:seed DemoSeeder
 ### Quick Reset (Development)
 ```bash
 # Remove marker to trigger re-seed
-docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/writable/.db_initialized
 
 # Restart container
 docker-compose restart api
@@ -292,10 +292,10 @@ docker-compose up -d --build
 **Debug:**
 ```bash
 # List all seeders
-docker exec meomeo2-api-1 php spark db:seed --list
+docker exec kiotviet-web-1 php spark db:seed --list
 
 # Run specific seeder
-docker exec meomeo2-api-1 php spark db:seed YourSeeder
+docker exec kiotviet-web-1 php spark db:seed YourSeeder
 ```
 
 ### Foreign Key Errors

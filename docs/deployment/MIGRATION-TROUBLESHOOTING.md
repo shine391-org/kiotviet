@@ -22,7 +22,7 @@ chmod +x scripts/check-migration-status.sh
 **Diagnosis:**
 ```bash
 # Check if migration ran
-docker exec meomeo2-api-1 test -f /var/www/html/backend-ci/writable/.db_initialized && echo "Initialized" || echo "NOT initialized"
+docker exec kiotviet-web-1 test -f /var/www/html/backend-ci/writable/.db_initialized && echo "Initialized" || echo "NOT initialized"
 
 # Check table count
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lanocrm_shop'"
@@ -31,7 +31,7 @@ docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_sh
 **Solution A - Re-run Migration:**
 ```bash
 # Remove marker file
-docker exec meomeo2-api-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
 
 # Restart container (will auto-run migration)
 docker-compose restart api
@@ -43,10 +43,10 @@ docker-compose logs -f api
 **Solution B - Manual Migration:**
 ```bash
 # Run migration manually
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
 
 # Check status
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:status"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:status"
 ```
 
 ---
@@ -61,7 +61,7 @@ docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migr
 **Diagnosis:**
 ```bash
 # Check migration log
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 
 # Check database locks
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SHOW PROCESSLIST"
@@ -76,7 +76,7 @@ docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_sh
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop < backup.sql
 
 # Option 2: Run migration in background
-docker exec -d meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
+docker exec -d kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
 ```
 
 ---
@@ -91,19 +91,19 @@ docker exec -d meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark m
 **Diagnosis:**
 ```bash
 # Check if writable directory is persistent
-docker exec meomeo2-api-1 ls -la /var/www/html/backend-ci/writable/
+docker exec kiotviet-web-1 ls -la /var/www/html/backend-ci/writable/
 
 # Check volume mounts
-docker inspect meomeo2-api-1 | grep -A 10 Mounts
+docker inspect kiotviet-web-1 | grep -A 10 Mounts
 ```
 
 **Solution:**
 ```bash
 # Ensure writable directory has correct permissions
-docker exec meomeo2-api-1 chmod -R 777 /var/www/html/backend-ci/writable
+docker exec kiotviet-web-1 chmod -R 777 /var/www/html/backend-ci/writable
 
 # Create marker file manually
-docker exec meomeo2-api-1 touch /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 touch /var/www/html/backend-ci/writable/.db_initialized
 ```
 
 ---
@@ -124,7 +124,7 @@ docker-compose ps db
 docker-compose logs db
 
 # Test connection manually
-docker exec meomeo2-api-1 php -r 'new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop");'
+docker exec kiotviet-web-1 php -r 'new mysqli("db","lanocrm_user","KP7n4RjcDbedSE2W8GgA","lanocrm_shop");'
 ```
 
 **Solution:**
@@ -156,17 +156,17 @@ docker-compose restart api
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SHOW TABLES"
 
 # Check migration log for errors
-docker exec meomeo2-api-1 cat /tmp/migration.log | grep -i error
+docker exec kiotviet-web-1 cat /tmp/migration.log | grep -i error
 ```
 
 **Solution:**
 ```bash
 # Run specific migration
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:version 2025-11-21-000000"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:version 2025-11-21-000000"
 
 # Or rollback and re-run
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:rollback"
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate:rollback"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
 ```
 
 ---
@@ -201,7 +201,7 @@ docker-compose stop api
 docker exec -i meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop < backup.sql
 
 # Create marker file
-docker exec meomeo2-api-1 touch /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 touch /var/www/html/backend-ci/writable/.db_initialized
 
 # Start API
 docker-compose start api
@@ -260,7 +260,7 @@ If issues persist:
    ```bash
    docker-compose logs api > api-logs.txt
    docker-compose logs db > db-logs.txt
-   docker exec meomeo2-api-1 cat /tmp/migration.log > migration.log
+   docker exec kiotviet-web-1 cat /tmp/migration.log > migration.log
    ```
 
 2. **Check system resources:**
@@ -272,7 +272,7 @@ If issues persist:
 
 3. **Verify file permissions:**
    ```bash
-   docker exec meomeo2-api-1 ls -la /var/www/html/backend-ci/writable/
+   docker exec kiotviet-web-1 ls -la /var/www/html/backend-ci/writable/
    ```
 
 4. **Contact support with:**

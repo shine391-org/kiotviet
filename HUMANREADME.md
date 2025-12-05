@@ -75,8 +75,8 @@ POST http://localhost:8000/api/auth/login
 docker compose up -d
 
 # Run commands in Docker
-docker exec meomeo2-api-1 php spark migrate
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 php spark migrate
+docker exec kiotviet-web-1 vendor/bin/phpunit
 
 # Or use helper scripts
 ./backend-ci/docker-spark migrate
@@ -109,7 +109,7 @@ docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 **Reset database completely:**
 ```bash
 # Remove marker to trigger re-initialization
-docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/writable/.db_initialized
 
 # Restart container
 docker compose restart api
@@ -135,7 +135,7 @@ docker compose logs -f api
 
 **View migration logs:**
 ```bash
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 ```
 
 **For detailed troubleshooting:**
@@ -147,22 +147,22 @@ See [`docs/MIGRATION-TROUBLESHOOTING.md`](docs/MIGRATION-TROUBLESHOOTING.md)
 
 **Unit Tests (MySQL with transactions):**
 ```bash
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit
 ```
 
 **Integration Tests (MySQL full stack):**
 ```bash
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml
 ```
 
 **Route Coverage Test:**
 ```bash
-docker exec meomeo2-api-1 vendor/bin/phpunit --filter ApiRoutesTest
+docker exec kiotviet-web-1 vendor/bin/phpunit --filter ApiRoutesTest
 ```
 
 **Validate Models (check for db_ prefixes):**
 ```bash
-docker exec meomeo2-api-1 php spark validate:models
+docker exec kiotviet-web-1 php spark validate:models
 ```
 
 ### Frontend Tests
@@ -229,14 +229,14 @@ meomeo2/
 **Solution:** Check migration status and re-run if needed
 ```bash
 ./scripts/check-migration-status.sh
-docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/writable/.db_initialized
 docker compose restart api
 ```
 
 **Problem:** Migration timeout
 **Solution:** Check logs and database performance
 ```bash
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 docker compose logs db
 ```
 
@@ -248,7 +248,7 @@ docker compose logs db
 **Solution:** Always use Docker commands, not local PHP
 ```bash
 # Correct
-docker exec meomeo2-api-1 php spark migrate
+docker exec kiotviet-web-1 php spark migrate
 
 # Wrong
 cd backend-ci && php spark migrate
@@ -332,22 +332,22 @@ docker exec -it meomeo2-db-1 mysql -u lanocrm_user -p lanocrm_shop
 ./scripts/check-migration-status.sh
 
 # View migration log
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 ```
 
 ### Development
 ```bash
 # Run migrations
-docker exec meomeo2-api-1 php spark migrate
+docker exec kiotviet-web-1 php spark migrate
 
 # Seed demo data
 docker exec meomeo2-web-1 php spark db:seed DemoSeeder
 
 # Validate models
-docker exec meomeo2-api-1 php spark validate:models
+docker exec kiotviet-web-1 php spark validate:models
 
 # Run tests
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit
 
 # Reset everything
 docker compose down -v && docker compose up -d --build
@@ -356,7 +356,7 @@ docker compose down -v && docker compose up -d --build
 ### Debugging
 ```bash
 # Check migration marker
-docker exec meomeo2-api-1 test -f /var/www/html/writable/.db_initialized && echo "Initialized" || echo "NOT initialized"
+docker exec kiotviet-web-1 test -f /var/www/html/writable/.db_initialized && echo "Initialized" || echo "NOT initialized"
 
 # Count tables
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'lanocrm_shop'"

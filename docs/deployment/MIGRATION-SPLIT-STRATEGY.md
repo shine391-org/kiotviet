@@ -351,7 +351,7 @@ public function up()
 ### Step 5: Test Migration
 ```bash
 # Test on fresh database
-docker exec meomeo2-api-1 php spark migrate:refresh
+docker exec kiotviet-web-1 php spark migrate:refresh
 
 # Verify table count
 docker exec meomeo2-db-1 mysql -u root -proot_password \

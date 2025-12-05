@@ -138,11 +138,17 @@ credentials.*
 # ========================================
 # AI Tools & Agents
 # ========================================
-.ai/
+# .ai/ - KEEP for pre-commit scripts
 .factory/
 .kilocodemodes
 .cursor/
 .continue/
+
+# ========================================
+# Archive (old docs, completed tasks)
+# ========================================
+docs/archive/
+archive/
 
 # ========================================
 # Project Specific

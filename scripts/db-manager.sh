@@ -67,7 +67,7 @@ case "${1:-help}" in
             
             # Reset database initialization marker
             if [ "$DB_TYPE" = "main" ]; then
-                docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+                docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} rm -f /var/www/html/writable/.db_initialized
                 echo "Database reset completed. Please restart the API container to reinitialize."
             else
                 echo "Test database reset completed."
@@ -99,8 +99,8 @@ case "${1:-help}" in
         fi
         
         # Check API container
-        if docker ps | grep -q "meomeo2-api-1"; then
-            if docker exec meomeo2-api-1 test -f /var/www/html/writable/.db_initialized; then
+        if docker ps | grep -q "${DOCKER_CONTAINER:-kiotviet-web-1}"; then
+            if docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} test -f /var/www/html/writable/.db_initialized; then
                 echo "API Container: Database initialized"
             else
                 echo "API Container: Database not initialized"

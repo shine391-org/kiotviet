@@ -162,10 +162,10 @@ vendor/bin/infection --version
 docker-compose up -d db
 
 # Check connection
-docker exec meomeo2-api-1 php spark db:info
+docker exec kiotviet-web-1 php spark db:info
 
 # Run migrations
-docker exec meomeo2-api-1 php spark migrate --all
+docker exec kiotviet-web-1 php spark migrate --all
 ```
 
 ### 3. Environment Configuration

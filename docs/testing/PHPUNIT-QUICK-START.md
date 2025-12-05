@@ -23,14 +23,14 @@ docker-compose up -d db api
 
 ### 2. Chạy migration (lần đầu tiên)
 ```bash
-docker exec meomeo2-api-1 php spark migrate
-docker exec meomeo2-api-1 php spark migrate --all  # gồm migration bổ sung cột seed-support
+docker exec kiotviet-web-1 php spark migrate
+docker exec kiotviet-web-1 php spark migrate --all  # gồm migration bổ sung cột seed-support
 ```
 
 ### 3. Seed dữ liệu demo (tuỳ chọn nhưng khuyến nghị)
 ```bash
 # Cách 1: Seed trực tiếp
-docker exec meomeo2-api-1 php spark db:seed DemoSeeder
+docker exec kiotviet-web-1 php spark db:seed DemoSeeder
 
 # Cách 2: Import dump đã seed
 docker exec -i meomeo2-db-1 mysql -u root -proot_password lanocrm_shop < backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql
@@ -39,16 +39,16 @@ docker exec -i meomeo2-db-1 mysql -u root -proot_password lanocrm_shop < backend
 ### 4. Chạy tests
 ```bash
 # Unit tests (nhanh nhất)
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit
 
 # Integration tests (API endpoints)
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml
 
 # Test với coverage report
-docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
+docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-text
 
 # Chạy test cụ thể
-docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/OrderServiceTest.php
+docker exec kiotviet-web-1 vendor/bin/phpunit tests/Services/OrderServiceTest.php
 ```
 
 ## 🔍 Kiểm Tra Kết Quả
@@ -79,13 +79,13 @@ docker-compose up -d db api
 ### **"Table doesn't exist"**
 ```bash
 # Fix: Chạy migration
-docker exec meomeo2-api-1 php spark migrate
+docker exec kiotviet-web-1 php spark migrate
 ```
 
 ### **"Database error"**
 ```bash
 # Fix: Kiểm tra database status
-docker exec meomeo2-api-1 php spark db:info
+docker exec kiotviet-web-1 php spark db:info
 ```
 
 ## 📝 Viết Test Mới
@@ -139,21 +139,21 @@ class YourServiceTest extends CIUnitTestCase
 
 ```bash
 # Basic commands
-docker exec meomeo2-api-1 vendor/bin/phpunit
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+docker exec kiotviet-web-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml
 
 # Specific tests
-docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/
-docker exec meomeo2-api-1 vendor/bin/phpunit tests/Integration/
+docker exec kiotviet-web-1 vendor/bin/phpunit tests/Services/
+docker exec kiotviet-web-1 vendor/bin/phpunit tests/Integration/
 
 # Coverage
-docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
-docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-html coverage
+docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-text
+docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-html coverage
 
 # Database
-docker exec meomeo2-api-1 php spark migrate
-docker exec meomeo2-api-1 php spark db:info
-docker exec meomeo2-api-1 php spark migrate:status
+docker exec kiotviet-web-1 php spark migrate
+docker exec kiotviet-web-1 php spark db:info
+docker exec kiotviet-web-1 php spark migrate:status
 ```
 
 ## 🔗 Documentation

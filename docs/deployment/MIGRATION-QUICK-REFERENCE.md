@@ -9,19 +9,19 @@
 
 ### Re-run Migration
 ```bash
-docker exec meomeo2-api-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
 docker-compose restart api
 ```
 
 ### Manual Migration
 ```bash
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
 ```
 
 ### View Logs
 ```bash
 docker-compose logs -f api
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 ```
 
 ---
@@ -97,7 +97,7 @@ Running migrations...
 ### 1. Reset Migration
 ```bash
 # Remove marker
-docker exec meomeo2-api-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 rm -f /var/www/html/backend-ci/writable/.db_initialized
 
 # Restart (auto-runs migration)
 docker-compose restart api
@@ -108,13 +108,13 @@ docker-compose logs -f api
 
 ### 2. Force Manual Migration
 ```bash
-docker exec meomeo2-api-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
+docker exec kiotviet-web-1 bash -c "cd /var/www/html/backend-ci && php spark migrate --all"
 ```
 
 ### 3. Check What Went Wrong
 ```bash
 # View migration log
-docker exec meomeo2-api-1 cat /tmp/migration.log
+docker exec kiotviet-web-1 cat /tmp/migration.log
 
 # Check database
 docker exec meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop -e "SHOW TABLES"
@@ -168,7 +168,7 @@ docker exec meomeo2-db-1 mysqldump -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocr
 
 # On production:
 docker exec -i meomeo2-db-1 mysql -u lanocrm_user -pKP7n4RjcDbedSE2W8GgA lanocrm_shop < prod.sql
-docker exec meomeo2-api-1 touch /var/www/html/backend-ci/writable/.db_initialized
+docker exec kiotviet-web-1 touch /var/www/html/backend-ci/writable/.db_initialized
 ```
 
 ### After Deploy
@@ -191,7 +191,7 @@ docker-compose up -d
 ### Get Help
 1. Collect logs: `docker-compose logs > logs.txt`
 2. Run diagnostics: `./scripts/check-migration-status.sh > status.txt`
-3. Check migration log: `docker exec meomeo2-api-1 cat /tmp/migration.log > migration.txt`
+3. Check migration log: `docker exec kiotviet-web-1 cat /tmp/migration.log > migration.txt`
 
 ---
 

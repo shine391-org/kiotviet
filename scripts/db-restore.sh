@@ -76,6 +76,6 @@ echo "Database restore completed successfully!"
 
 # Reset database initialization marker to ensure proper setup
 if [ "$DB_TYPE" = "main" ]; then
-    docker exec meomeo2-api-1 rm -f /var/www/html/writable/.db_initialized
+    docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} rm -f /var/www/html/writable/.db_initialized
     echo "Database initialization marker reset. Please restart the API container."
 fi

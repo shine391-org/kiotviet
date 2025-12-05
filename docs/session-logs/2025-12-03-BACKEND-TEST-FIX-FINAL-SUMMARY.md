@@ -295,7 +295,7 @@ backend-ci/composer.json
 ## 🚀 Future Maintenance
 
 ### Daily Tasks
-- [ ] Run test suite với `docker exec meomeo2-api-1 vendor/bin/phpunit`
+- [ ] Run test suite với `docker exec kiotviet-web-1 vendor/bin/phpunit`
 - [ ] Check coverage với `--coverage-text`
 - [ ] Monitor test execution times
 - [ ] Review any test failures

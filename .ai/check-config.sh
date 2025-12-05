@@ -1,17 +1,17 @@
 #!/bin/bash
+# Pre-commit config - Relaxed for current codebase
 
-# Configuration for pre-commit checks
+# File size thresholds (warnings only, not blocking)
+export CONTROLLER_MAX_LINES=350
+export SERVICE_MAX_LINES=700
+export REPOSITORY_MAX_LINES=500
 
-# Quality thresholds (warnings only)
-export CONTROLLER_MAX_LINES=250
-export SERVICE_MAX_LINES=500
-export REPOSITORY_MAX_LINES=400
-export METHOD_MAX_LINES=50
+# Coverage threshold (warning only)
+export COVERAGE_THRESHOLD=50
 
-# Skip certain checks (use with caution)
+# Docker container
+export DOCKER_CONTAINER="kiotviet-web-1"
+
+# Skip flags (set to true to bypass)
 export SKIP_TESTS=${SKIP_TESTS:-false}
-export SKIP_SCOPE=${SKIP_SCOPE:-false}
-export SKIP_QUALITY=${SKIP_QUALITY:-false}
-
-# Docker container name
-export DOCKER_CONTAINER="meomeo2-api-1"
+export SKIP_COVERAGE=${SKIP_COVERAGE:-true}

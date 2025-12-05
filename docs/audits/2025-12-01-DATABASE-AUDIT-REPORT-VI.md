@@ -93,7 +93,7 @@ docker exec meomeo2-db-test-1 mysql -u lanocrm_user -p'KP7n4RjcDbedSE2W8GgA' lan
 diff main_tables.txt test_tables.txt
 
 # Chạy migration trên test database để sync schemas
-docker exec meomeo2-api-1 php spark migrate --group=tests
+docker exec kiotviet-web-1 php spark migrate --group=tests
 ```
 
 #### 2. Sửa Migration Version Reference

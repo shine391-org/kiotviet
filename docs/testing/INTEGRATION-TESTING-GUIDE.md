@@ -865,10 +865,10 @@ public function testCreateProduct_WithDatabaseError_ReturnsServerError(): void
 #### 1. Database Connection Issues
 ```bash
 # Check database status
-docker exec meomeo2-api-1 php spark db:info
+docker exec kiotviet-web-1 php spark db:info
 
 # Reset database
-docker exec meomeo2-api-1 php spark migrate:fresh --all
+docker exec kiotviet-web-1 php spark migrate:fresh --all
 ```
 
 #### 2. Test Isolation Problems

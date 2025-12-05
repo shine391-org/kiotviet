@@ -543,10 +543,10 @@ vendor/bin/phpunit --coverage-clover=coverage/clover.xml --coverage-text
 docker-compose up -d db-test
 
 # Run migrations on test database
-docker exec meomeo2-api-1 php spark migrate --all --env=testing
+docker exec kiotviet-web-1 php spark migrate --all --env=testing
 
 # Seed test database with demo data
-docker exec meomeo2-api-1 php spark db:seed DemoSeeder --env=testing
+docker exec kiotviet-web-1 php spark db:seed DemoSeeder --env=testing
 
 # Or import pre-seeded test database
 docker exec -i db-test mysql lanocrm_test < backend-ci/db-dumps/lanocrm_test_seeded_20251203.sql
@@ -556,10 +556,10 @@ docker exec -i db-test mysql lanocrm_test < backend-ci/db-dumps/lanocrm_test_see
 
 ```bash
 # Verify test database connection
-docker exec meomeo2-api-1 php spark db:info tests
+docker exec kiotviet-web-1 php spark db:info tests
 
 # Check test database status
-docker exec meomeo2-api-1 php spark db:status tests
+docker exec kiotviet-web-1 php spark db:status tests
 ```
 
 ## Running Tests
@@ -567,22 +567,22 @@ docker exec meomeo2-api-1 php spark db:status tests
 ### Unit Tests (Fast)
 ```bash
 # Run all unit tests
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit
 
 # Run specific test file
-docker exec meomeo2-api-1 vendor/bin/phpunit tests/Services/ProductServiceTest.php
+docker exec kiotviet-web-1 vendor/bin/phpunit tests/Services/ProductServiceTest.php
 
 # Run with coverage
-docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
+docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-text
 ```
 
 ### Integration Tests (Full Stack)
 ```bash
 # Run all integration tests
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml
 
 # Run specific integration test
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml tests/Integration/Api/ProductsApiTest.php
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml tests/Integration/Api/ProductsApiTest.php
 ```
 
 ## Forbidden Operations (CRITICAL)
@@ -647,10 +647,10 @@ $this->resetTestData(); // Custom method to clean data only
 #### 1. Database Connection Issues
 ```bash
 # Check database connection
-docker exec meomeo2-api-1 php spark db:info
+docker exec kiotviet-web-1 php spark db:info
 
 # Reset database
-docker exec meomeo2-api-1 php spark migrate:fresh --all
+docker exec kiotviet-web-1 php spark migrate:fresh --all
 ```
 
 #### 2. Test Isolation Issues
@@ -722,10 +722,10 @@ sudo usermod -aG docker $USER
 sudo docker-compose up -d db-test
 
 # Run tests with proper environment
-docker exec -e CI=true meomeo2-api-1 vendor/bin/phpunit
+docker exec -e CI=true kiotviet-web-1 vendor/bin/phpunit
 
 # If tests hang, increase timeout
-docker exec meomeo2-api-1 vendor/bin/phpunit --timeout=60
+docker exec kiotviet-web-1 vendor/bin/phpunit --timeout=60
 ```
 
 ## Test Checklist - Copy into every PR
@@ -736,7 +736,7 @@ docker exec meomeo2-api-1 vendor/bin/phpunit --timeout=60
 
 ### Environment Setup ✓
 - [ ] Test database container running: `docker-compose up -d db-test`
-- [ ] Test DB connection works: `docker exec meomeo2-api-1 php spark db:info tests`
+- [ ] Test DB connection works: `docker exec kiotviet-web-1 php spark db:info tests`
 - [ ] DevDatabaseTrait used properly (connects to `lanocrm_test` only)
 - [ ] NEVER connects to dev database (`lanocrm_dev`) in tests
 
@@ -783,7 +783,7 @@ protected function tearDown(): void {
 - [ ] Decimal precision handling works (DECIMAL vs REAL issues)
 
 ## Code Quality ✓
-- [ ] Coverage >= 70% (check: `docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text`)
+- [ ] Coverage >= 70% (check: `docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-text`)
 - [ ] No PHPUnit warnings/errors
 - [ ] Single Responsibility followed (controllers thin, services have logic)
 - [ ] Inline docs complete (@agent-* tags, test-database-specific annotations)
@@ -853,19 +853,19 @@ protected function tearDown(): void {
 docker-compose up -d db-test
 
 # Run unit tests (test database only)
-docker exec meomeo2-api-1 vendor/bin/phpunit
+docker exec kiotviet-web-1 vendor/bin/phpunit
 
 # Run integration tests (test database only)
-docker exec meomeo2-api-1 vendor/bin/phpunit -c phpunit.integration.xml
+docker exec kiotviet-web-1 vendor/bin/phpunit -c phpunit.integration.xml
 
 # Check coverage
-docker exec meomeo2-api-1 vendor/bin/phpunit --coverage-text
+docker exec kiotviet-web-1 vendor/bin/phpunit --coverage-text
 
 # Check test database connection
-docker exec meomeo2-api-1 php spark db:info tests
+docker exec kiotviet-web-1 php spark db:info tests
 
 # Run lint checks
-docker exec meomeo2-api-1 vendor/bin/phpcs tests/
+docker exec kiotviet-web-1 vendor/bin/phpcs tests/
 
 # Verify test database isolation
 docker exec db-test mysql -u root -p -e "SELECT DATABASE();"

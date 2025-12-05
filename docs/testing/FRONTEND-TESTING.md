@@ -525,7 +525,7 @@ echo $VITE_API_BASE_URL
 docker-compose ps db-test
 
 # Verify test database connection
-docker exec meomeo2-api-1 php spark db:info tests
+docker exec kiotviet-web-1 php spark db:info tests
 ```
 
 #### "Test data not found"

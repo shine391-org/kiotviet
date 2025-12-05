@@ -5,7 +5,7 @@
 # Example: ./docker-spark migrate
 
 # Check if Docker container is running
-if ! docker ps | grep -q "meomeo2-api-1"; then
+if ! docker ps | grep -q "${DOCKER_CONTAINER:-kiotviet-web-1}"; then
     echo "❌ API container is not running!"
     echo "Please start Docker containers first:"
     echo "  docker-compose up -d"
@@ -13,4 +13,4 @@ if ! docker ps | grep -q "meomeo2-api-1"; then
 fi
 
 # Execute spark command in Docker container
-docker exec meomeo2-api-1 php spark "$@"
+docker exec ${DOCKER_CONTAINER:-kiotviet-web-1} php spark "$@"
