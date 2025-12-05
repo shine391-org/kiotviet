@@ -2,23 +2,71 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+  
   path_filters:
-    # Exclude docs
+    # === INCLUDE: Core code only ===
+    - "backend-ci/app/Controllers/**"
+    - "backend-ci/app/Services/**"
+    - "backend-ci/app/Repositories/**"
+    - "backend-ci/app/Validators/**"
+    - "backend-ci/app/Models/**"
+    - "lanocrm/src/**"
+    
+    # === EXCLUDE: Documentation ===
     - "!**/*.md"
     - "!**/docs/**"
+    - "!**/archive/**"
     
-    # Exclude tests  
+    # === EXCLUDE: Tests ===
     - "!**/test/**"
     - "!**/tests/**"
     - "!**/*.test.ts"
+    - "!**/*.test.tsx"
     - "!**/*.spec.js"
+    - "!**/*.spec.ts"
     
-    # Exclude config files
+    # === EXCLUDE: Config & Generated ===
     - "!.gitignore"
     - "!.prettierrc"
     - "!.eslintrc*"
-    
-    # Exclude generated/vendor
+    - "!.coderabbit.yaml"
     - "!**/node_modules/**"
     - "!**/vendor/**"
     - "!**/*.lock"
+    - "!**/dist/**"
+    
+    # === INCLUDE: Database & Migrations (important!) ===
+    - "backend-ci/app/Database/Migrations/**"
+    - "backend-ci/app/Database/Seeds/**"
+    
+    # === EXCLUDE: DB dumps & SQL files ===
+    - "!**/db-dumps/**"
+    - "!**/*.sql"
+    
+    # === EXCLUDE: Scripts & DevOps ===
+    - "!**/scripts/**"
+    - "!**/.ai/**"
+    - "!**/docker-compose*.yml"
+    - "!**/Dockerfile*"
+    
+    # === EXCLUDE: Assets & Static ===
+    - "!**/uploads/**"
+    - "!**/screenshots/**"
+    - "!**/logs/**"
+    - "!**/*.png"
+    - "!**/*.jpg"
+    - "!**/*.ico"
+
+  path_instructions:
+    - path: "backend-ci/app/Controllers/**"
+      instructions: "Review for thin controller pattern. Controllers should only route requests to services, max ~350 lines."
+    - path: "backend-ci/app/Services/**"
+      instructions: "Review for business logic correctness. Services should use repositories for DB, max ~700 lines."
+    - path: "backend-ci/app/Repositories/**"
+      instructions: "Review for query efficiency and proper use of query builder. Max ~500 lines."
+    - path: "backend-ci/app/Database/Migrations/**"
+      instructions: "Review for: 1) No DROP DATABASE/TABLE commands 2) Proper foreign keys 3) Correct data types 4) Index usage 5) Rollback safety"
+    - path: "backend-ci/app/Database/Seeds/**"
+      instructions: "Review for data integrity and no sensitive/test data in production seeds."
+    - path: "lanocrm/src/**"
+      instructions: "Review for React best practices, proper state management, and API integration."
