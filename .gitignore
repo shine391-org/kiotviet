@@ -1,13 +1,13 @@
 # ========================================
 # LANO CRM - Root .gitignore
 # ========================================
-# This file contains common ignore rules for the entire project
+# Common ignore rules for the entire project
 # Module-specific rules are in their respective .gitignore files
 
 # ========================================
 # OS Generated Files
 # ========================================
-.DS_Store
+**/.DS_Store
 .DS_Store?
 ._*
 .Spotlight-V100
@@ -21,9 +21,7 @@ $RECYCLE.BIN/
 # Logs & Debug Files
 # ========================================
 *.log
-debug.log
-error.log
-access.log
+*.pid
 
 # ========================================
 # IDE & Editor Files
@@ -43,13 +41,13 @@ access.log
 *.tmPreferences.cache
 *.stTheme.cache
 
-# Vim
+# Vim/Neovim
 *.swp
 *.swo
 *~
+.nvim/
 
 # Emacs
-*~
 \#*\#
 /.emacs.desktop
 /.emacs.desktop.lock
@@ -66,41 +64,51 @@ tramp
 *.old
 *.orig
 *.rej
-~*
+*.bak
+
 # ========================================
-# Node.js (Common files)
+# Node.js
 # ========================================
-node_modules/
+**/node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
 
 # ========================================
-# PHP (Common files)
+# PHP
 # ========================================
 composer.phar
-/vendor/
-phpunit
+**/vendor/
 phpunit.xml.dist.backup
 
 # ========================================
 # Testing & Coverage
 # ========================================
-coverage/
-tests/coverage/
-.phpunit/cache/
-test-results/
-playwright-report/
+**/coverage/
+.nyc_output/
+.phpunit.cache/
+.phpunit.result.cache
+**/test-results/
+**/playwright-report/
+playwright/.cache/
 
 # ========================================
-# Cache & Performance
+# Build & Cache
 # ========================================
 .cache/
 .eslintcache
 .stylelintcache
 .phpintel
+*.tsbuildinfo
+.turbo/
+.parcel-cache/
+.vite/
+.next/
 
 # ========================================
 # Sensitive Configuration
@@ -110,16 +118,31 @@ playwright-report/
 *.key
 *.crt
 *.p12
+*.keystore
+*.jks
 
 # Configuration with secrets
 config/local.*
 secrets.*
 credentials.*
 
+# Auth tokens (DO NOT COMMIT)
+.npmrc
+.yarnrc.yml
+
 # Environment files
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+
+# ========================================
+# AI Tools & Agents
+# ========================================
+.ai/
+.factory/
+.kilocodemodes
+.cursor/
+.continue/
 
 # ========================================
 # Project Specific
@@ -133,24 +156,21 @@ screenshots/*.jpeg
 docker-data/
 docker-volumes/
 
-# Database dumps and backups
-# *.sql (Allowed by user request)
+# Database dumps and backups (*.sql allowed)
 *.sql.gz
 *.dump
 db-backups/
 backups/
 
-# User requested ignores
-*.xlsx
+# User uploads
 **/uploads/
-.ai/
-.vscode/
-.kilocodemodes
+
+# Office files
+*.xlsx
 
 # ========================================
-# Keep these directories but ignore contents
+# Keep directories (ignore contents)
 # ========================================
-# Keep directory structure but ignore files
 logs/*
 !logs/.gitkeep
 temp/*

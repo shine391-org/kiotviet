@@ -1,11 +1,31 @@
 [mysqld]
-# Larger buffer pool to cache data/indexes for tests
-innodb_buffer_pool_size = 1G
-# Faster (less durable) log flush for heavy transactional test load
+# ===========================================
+# MySQL 8.4 Configuration for Development
+# ===========================================
+# Tuned for machines with 4-8GB RAM
+# For low-RAM machines (<4GB), reduce buffer_pool_size to 256M
+
+# Buffer pool - adjust based on available RAM
+# Low RAM (2-4GB): 256M | Medium (4-8GB): 512M | High (8GB+): 1G
+innodb_buffer_pool_size = 512M
+
+# Faster log flush (less durable, OK for dev)
 innodb_flush_log_at_trx_commit = 2
-# Allow more concurrent connections during parallel tests
-max_connections = 300
-# Avoid DNS lookups on connect
+
+# Connection limits - reduced for dev to save RAM
+max_connections = 100
+
+# Performance optimizations
 skip_name_resolve = ON
-# Optional: reduce double buffering overhead
 innodb_flush_method = O_DIRECT
+
+# Logging for debugging
+slow_query_log = 1
+long_query_time = 2
+
+# Character set
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+
+[client]
+default-character-set = utf8mb4

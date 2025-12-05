@@ -1,33 +1,21 @@
-# Docker Compose Override for Staging Environment
-# This file extends docker-compose.yml with staging-specific configurations
+# Docker Compose Staging - Production-like Environment
+# Extends docker-compose.yml with staging configs
 # Usage: docker-compose -f docker-compose.yml -f docker-compose.staging.yml up -d
 
 services:
   web:
     volumes:
-      # Staging volume mapping - mount only necessary directories
       - ./backend-ci/app:/var/www/html/app:ro
       - ./backend-ci/public:/var/www/html/public:ro
-      - ./backend-ci/vendor:/var/www/html/vendor:ro
-      - ./backend-ci/composer.json:/var/www/html/composer.json:ro
-      - ./backend-ci/composer.lock:/var/www/html/composer.lock:ro
       - ./backend-ci/spark:/var/www/html/spark:ro
       - ./backend-ci/env:/var/www/html/env:ro
-      # Writable directories only
-      - api_uploads:/var/www/html/uploads
-      - api_writable:/var/www/html/writable
-      - api_logs:/var/log/apache2
+      - backend_vendor:/var/www/html/vendor
+      - staging_uploads:/var/www/html/uploads
+      - staging_writable:/var/www/html/writable
     environment:
-      # Staging environment (production-like)
       - CI_ENVIRONMENT=staging
-      - LOG_THRESHOLD=2 # Less verbose than dev, more than prod
-      - DB_NAME=lanocrm_staging
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
+      - LOG_THRESHOLD=2
+      - DB_NAME=${DB_DATABASE:-lanocrm_staging}
 
   fe:
     build:
@@ -35,63 +23,30 @@ services:
       dockerfile: Dockerfile.prod
     ports:
       - "${STAGING_FE_PORT:-80}:80"
-    volumes:
-      # Nginx logs
-      - fe_logs:/var/log/nginx
     environment:
-      # Staging environment (production-like)
       - NODE_ENV=staging
       - VITE_API_BASE_URL=/api
-    depends_on:
-      - web
-    # Override command from base compose file
-    command: [ "nginx", "-g", "daemon off;" ]
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
+    command: ["nginx", "-g", "daemon off;"]
 
   db:
     volumes:
-      # Staging database volume with backup
       - db_staging_data:/var/lib/mysql
-      - ./backups/mysql:/backups
+      - ./backups/mysql:/backups:rw
       - ./backend-ci/docker/mysql/custom.cnf:/etc/mysql/conf.d/custom.cnf:ro
     environment:
-      # Staging database settings
-      - MYSQL_DATABASE=lanocrm_staging
-      - MYSQL_INNODB_BUFFER_POOL_SIZE=1G
-      - MYSQL_INNODB_LOG_FILE_SIZE=256M
-      - MYSQL_MAX_CONNECTIONS=200
+      - MYSQL_DATABASE=${DB_DATABASE:-lanocrm_staging}
     ports:
-      - "${STAGING_DB_PORT:-3308}:3306" # Different port to avoid conflicts
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
+      - "${STAGING_DB_PORT:-3308}:3306"
 
   db-test:
-    # Keep test database for staging testing
     ports:
-      - "${STAGING_DB_TEST_PORT:-3309}:3306" # Different port to avoid conflicts
+      - "${STAGING_DB_TEST_PORT:-3309}:3306"
 
   phpmyadmin:
     ports:
-      - "${STAGING_PMA_PORT:-8081}:80" # Different port to avoid conflicts
+      - "${STAGING_PMA_PORT:-8081}:80"
 
 volumes:
-  # Staging-specific volumes
-  api_uploads:
-    driver: local
-  api_writable:
-    driver: local
-  api_logs:
-    driver: local
-  fe_logs:
-    driver: local
+  staging_uploads:
+  staging_writable:
   db_staging_data:
-    driver: local
