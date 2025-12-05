@@ -138,6 +138,28 @@ class PriceListService
         ];
     }
 
+    /** Remove a product from price list. */
+    public function removeItem(int $priceListId, int $productId): array
+    {
+        $priceList = $this->requirePriceList($priceListId);
+        
+        // Prevent removing from system/general price list (id = 1)
+        if ($priceListId <= 1) {
+            throw new InvalidArgumentException('Cannot remove items from the general price list');
+        }
+        
+        $deleted = $this->items->removeItem($priceListId, $productId);
+        
+        if ($deleted) {
+            $this->triggerAutoUpdate($priceListId);
+        }
+        
+        return [
+            'success' => true,
+            'deleted' => $deleted,
+        ];
+    }
+
     /** Apply formula to all items in a price list. */
     public function applyFormula(int $priceListId, array $payload): array
     {
@@ -194,6 +216,117 @@ class PriceListService
     public function applicable(?int $groupId, string $date): array
     {
         return $this->repo->applicablePriceLists($groupId, $date);
+    }
+
+    /** Export items to CSV format. */
+    public function exportItems(int $priceListId): array
+    {
+        $priceList = $this->requirePriceList($priceListId);
+        $items = $this->items->itemsByPriceList($priceListId);
+        
+        // Build CSV content
+        $csv = "product_id,product_code,product_name,variant_id,price,discount_percent,discount_amount\n";
+        
+        foreach ($items as $item) {
+            // Get product info
+            $product = $this->products->findById((int) $item['product_id']);
+            $productCode = $product['code'] ?? '';
+            $productName = $product['name'] ?? '';
+            
+            $csv .= sprintf(
+                "%d,\"%s\",\"%s\",%s,%.2f,%.2f,%.2f\n",
+                $item['product_id'],
+                str_replace('"', '""', $productCode),
+                str_replace('"', '""', $productName),
+                $item['variant_id'] ?? '',
+                $item['price'] ?? 0,
+                $item['discount_percent'] ?? 0,
+                $item['discount_amount'] ?? 0
+            );
+        }
+        
+        return [
+            'success' => true,
+            'csv' => $csv,
+            'count' => count($items),
+            'price_list' => $priceList['name'],
+        ];
+    }
+
+    /** Import items from CSV content. */
+    public function importItems(int $priceListId, string $csvContent): array
+    {
+        $this->requirePriceList($priceListId);
+        
+        $lines = explode("\n", trim($csvContent));
+        $header = str_getcsv(array_shift($lines));
+        
+        // Map header columns
+        $colMap = array_flip($header);
+        $requiredCols = ['product_id', 'price'];
+        foreach ($requiredCols as $col) {
+            if (!isset($colMap[$col])) {
+                throw new InvalidArgumentException("Missing required column: {$col}");
+            }
+        }
+        
+        $items = [];
+        $errors = [];
+        $lineNum = 2; // Start from line 2 (after header)
+        
+        foreach ($lines as $line) {
+            if (empty(trim($line))) {
+                $lineNum++;
+                continue;
+            }
+            
+            $row = str_getcsv($line);
+            
+            $productId = (int) ($row[$colMap['product_id']] ?? 0);
+            $price = (float) ($row[$colMap['price']] ?? 0);
+            
+            if ($productId <= 0) {
+                $errors[] = "Line {$lineNum}: Invalid product_id";
+                $lineNum++;
+                continue;
+            }
+            
+            // Verify product exists
+            $product = $this->products->findById($productId);
+            if (!$product) {
+                $errors[] = "Line {$lineNum}: Product ID {$productId} not found";
+                $lineNum++;
+                continue;
+            }
+            
+            $item = [
+                'product_id' => $productId,
+                'price' => $price,
+            ];
+            
+            if (isset($colMap['variant_id']) && !empty($row[$colMap['variant_id']])) {
+                $item['variant_id'] = (int) $row[$colMap['variant_id']];
+            }
+            if (isset($colMap['discount_percent'])) {
+                $item['discount_percent'] = (float) ($row[$colMap['discount_percent']] ?? 0);
+            }
+            if (isset($colMap['discount_amount'])) {
+                $item['discount_amount'] = (float) ($row[$colMap['discount_amount']] ?? 0);
+            }
+            
+            $items[] = $item;
+            $lineNum++;
+        }
+        
+        if (!empty($items)) {
+            $result = $this->items->addItems($priceListId, $items);
+        }
+        
+        return [
+            'success' => true,
+            'imported' => count($items),
+            'errors' => $errors,
+        ];
     }
 
     /** Trigger auto-update for dependent price lists. */

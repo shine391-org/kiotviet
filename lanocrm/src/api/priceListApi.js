@@ -63,6 +63,36 @@ const priceListApi = {
     });
     return response.data;
   },
+
+  // Add items to price list (append, not replace)
+  addItems: async (id, items) => {
+    const response = await axiosInstance.post(`${BASE}/${id}/add-items`, { items });
+    return response.data;
+  },
+
+  // Export price list items to CSV
+  exportItems: async (id) => {
+    const response = await axiosInstance.get(`${BASE}/${id}/export`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
+  // Import price list items from CSV file
+  importItems: async (id, file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axiosInstance.post(`${BASE}/${id}/import`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // Remove a product from price list
+  removeItem: async (priceListId, productId) => {
+    const response = await axiosInstance.delete(`${BASE}/${priceListId}/items/${productId}`);
+    return response.data;
+  },
 };
 
 export default priceListApi;

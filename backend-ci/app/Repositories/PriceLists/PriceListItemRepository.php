@@ -112,4 +112,19 @@ class PriceListItemRepository
             ->where('variant_id', null)->first();
         return $row ?: null;
     }
+
+    /** Remove a product from a price list. */
+    public function removeItem(int $priceListId, int $productId, ?int $variantId = null): bool
+    {
+        $builder = $this->db->table('price_list_items')
+            ->where('price_list_id', $priceListId)
+            ->where('product_id', $productId);
+        
+        if ($variantId !== null) {
+            $builder->where('variant_id', $variantId);
+        }
+        
+        $builder->delete();
+        return $this->db->affectedRows() > 0;
+    }
 }

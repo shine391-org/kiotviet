@@ -14,6 +14,67 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
     const [roundingRule, setRoundingRule] = useState('thousand');
     const [allowAddItems, setAllowAddItems] = useState(true);
 
+    // Scope selection states
+    const [branchScope, setBranchScope] = useState('all');
+    const [customerGroupScope, setCustomerGroupScope] = useState('all');
+    const [creatorScope, setCreatorScope] = useState('all');
+
+    // Options from API
+    const [branchOptions, setBranchOptions] = useState([]);
+    const [employeeOptions, setEmployeeOptions] = useState([]);
+    // Options from API (fetched when modal opens)
+    const [customerGroupOptions, setCustomerGroupOptions] = useState([]);
+
+    // Fetch branches and employees when modal opens
+    useEffect(() => {
+        if (open) {
+            // Fetch branches
+            fetch('/api/branches', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.data) {
+                        setBranchOptions(data.data.map(b => ({ value: b.id, label: b.name })));
+                    }
+                })
+                .catch(err => console.error('Error fetching branches:', err));
+
+            // Fetch employees
+            fetch('/api/employees', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.data) {
+                        setEmployeeOptions(data.data.map(e => ({ value: e.id, label: e.full_name || e.username })));
+                    }
+                })
+                .catch(err => console.error('Error fetching employees:', err));
+
+            // Fetch customer groups
+            fetch('/api/customer-groups', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.data) {
+                        setCustomerGroupOptions(data.data.map(g => ({ value: g.id, label: g.name })));
+                    }
+                })
+                .catch(err => console.error('Error fetching customer groups:', err));
+        }
+    }, [open]);
+
     useEffect(() => {
         if (open) {
             // Reset form with defaults when modal opens
@@ -28,36 +89,67 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                 allowAddItemsNotInList: true,
                 warnWhenAddItemsNotInList: false,
                 branchScope: 'all',
+                specificBranches: [],
                 customerGroupScope: 'all',
+                specificCustomerGroups: [],
                 transactionCreatorScope: 'all',
+                specificCreators: [],
             });
             setOperator('+');
             setUnit('VND');
             setRoundingRule('thousand');
             setAllowAddItems(true);
+            setBranchScope('all');
+            setCustomerGroupScope('all');
+            setCreatorScope('all');
             setActiveTab('info');
         }
     }, [open, form]);
 
     const handleFinish = (values) => {
+        console.log('Form values:', values);
+
+        // Handle basePriceListId - it can be 'cost', 'purchase', or a numeric id
+        let basePriceListId = null;
+        let formulaBase = null;
+        if (values.basePriceListId) {
+            if (values.basePriceListId === 'cost') {
+                formulaBase = 'cost_price';
+            } else if (values.basePriceListId === 'purchase') {
+                formulaBase = 'purchase_price';
+            } else if (typeof values.basePriceListId === 'number') {
+                basePriceListId = values.basePriceListId;
+                formulaBase = 'base';
+            }
+        }
+
+        // Build formula string
+        let formula = null;
+        if (formulaBase && values.formulaValue) {
+            formula = `${formulaBase} ${operator} ${values.formulaValue}${unit === '%' ? '%' : ''}`;
+        }
+
         const payload = {
             name: values.name,
             start_date: values.startDate?.format('YYYY-MM-DD'),
             end_date: values.endDate?.format('YYYY-MM-DD'),
             is_active: values.status === 'active',
-            base_price_list_id: values.basePriceListId || null,
-            formula: values.basePriceListId && values.formulaValue
-                ? `base ${operator} ${values.formulaValue}${unit === '%' ? '%' : ''}`
-                : null,
+            base_price_list_id: basePriceListId,
+            formula: formula,
             rounding_rule: roundingRule,
             config: {
                 allow_add_items_not_in_list: allowAddItems,
                 warn_when_add_items_not_in_list: values.warnWhenAddItemsNotInList,
                 scope_branch: values.branchScope,
+                specific_branches: values.branchScope === 'specific' ? values.specificBranches : [],
                 scope_customer_group: values.customerGroupScope,
+                specific_customer_groups: values.customerGroupScope === 'specific' ? values.specificCustomerGroups : [],
                 scope_creator: values.transactionCreatorScope,
+                specific_creators: values.transactionCreatorScope === 'specific' ? values.specificCreators : [],
             }
         };
+
+        console.log('Payload to save:', payload);
         onSave(payload);
     };
 
@@ -80,6 +172,9 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                 form={form}
                 layout="vertical"
                 onFinish={handleFinish}
+                onFinishFailed={(errorInfo) => {
+                    console.log('Form validation failed:', errorInfo);
+                }}
                 initialValues={{
                     status: 'active',
                     allowAddItemsNotInList: true,
@@ -269,13 +364,23 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                                 </div>
                                 <div className={styles.sectionContent}>
                                     <Form.Item name="branchScope" noStyle>
-                                        <Radio.Group>
+                                        <Radio.Group onChange={(e) => setBranchScope(e.target.value)}>
                                             <Space direction="vertical">
                                                 <Radio value="all">Toàn hệ thống</Radio>
                                                 <Radio value="specific">Chi nhánh cụ thể</Radio>
                                             </Space>
                                         </Radio.Group>
                                     </Form.Item>
+                                    {branchScope === 'specific' && (
+                                        <Form.Item name="specificBranches" style={{ marginTop: 12, marginLeft: 24 }}>
+                                            <Select
+                                                mode="multiple"
+                                                placeholder="Chọn chi nhánh"
+                                                options={branchOptions}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Form.Item>
+                                    )}
                                 </div>
                             </div>
 
@@ -286,13 +391,23 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                                 </div>
                                 <div className={styles.sectionContent}>
                                     <Form.Item name="customerGroupScope" noStyle>
-                                        <Radio.Group>
+                                        <Radio.Group onChange={(e) => setCustomerGroupScope(e.target.value)}>
                                             <Space direction="vertical">
                                                 <Radio value="all">Tất cả</Radio>
                                                 <Radio value="specific">Nhóm khách hàng cụ thể</Radio>
                                             </Space>
                                         </Radio.Group>
                                     </Form.Item>
+                                    {customerGroupScope === 'specific' && (
+                                        <Form.Item name="specificCustomerGroups" style={{ marginTop: 12, marginLeft: 24 }}>
+                                            <Select
+                                                mode="multiple"
+                                                placeholder="Chọn nhóm khách hàng"
+                                                options={customerGroupOptions}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Form.Item>
+                                    )}
                                 </div>
                             </div>
 
@@ -303,13 +418,23 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                                 </div>
                                 <div className={styles.sectionContent}>
                                     <Form.Item name="transactionCreatorScope" noStyle>
-                                        <Radio.Group>
+                                        <Radio.Group onChange={(e) => setCreatorScope(e.target.value)}>
                                             <Space direction="vertical">
                                                 <Radio value="all">Tất cả</Radio>
                                                 <Radio value="specific">Người tạo giao dịch cụ thể</Radio>
                                             </Space>
                                         </Radio.Group>
                                     </Form.Item>
+                                    {creatorScope === 'specific' && (
+                                        <Form.Item name="specificCreators" style={{ marginTop: 12, marginLeft: 24 }}>
+                                            <Select
+                                                mode="multiple"
+                                                placeholder="Chọn người tạo giao dịch"
+                                                options={employeeOptions}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </Form.Item>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -319,7 +444,14 @@ const CreatePriceListModal = ({ open, onClose, onSave, loading, basePriceLists =
                 {/* Footer */}
                 <div className={styles.footer}>
                     <Button onClick={handleCancel}>Bỏ qua</Button>
-                    <Button type="primary" htmlType="submit" loading={loading}>
+                    <Button
+                        type="primary"
+                        loading={loading}
+                        onClick={() => {
+                            console.log('Lưu button clicked');
+                            form.submit();
+                        }}
+                    >
                         Lưu
                     </Button>
                 </div>

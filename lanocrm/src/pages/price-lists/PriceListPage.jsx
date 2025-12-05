@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Card, Button, Input, Table, Space, Select, App, Row, Col, InputNumber, Tooltip, Popover, Checkbox } from 'antd';
+import { Card, Button, Input, Table, Space, Select, App, Row, Col, InputNumber, Tooltip, Popover, Checkbox, Popconfirm } from 'antd';
 import {
   PlusOutlined,
   ReloadOutlined,
@@ -55,15 +55,11 @@ const PriceListPage = () => {
   const [formulaProduct, setFormulaProduct] = useState(null);
   const [selectedPriceListId, setSelectedPriceListId] = useState(null);
 
-  // ... (Keep existing effects) ...
-  // Re-declare effects here or assume existing code is preserved if using replace_file_content carefully.
-  // Since I am replacing a huge chunk, I should be careful. 
-  // Actually, I should use multi_replace or targeted replace. 
-  // But wait, the previous tool was replace_file_content for the whole file? No, I viewed it.
-  // I will use replace_file_content to inject imports and state, then render.
-
-  // Oh wait, replace_file_content replaces a BLOCK. I need multiple blocks.
-  // I will use multi_replace_file_content.
+  // Get full selected price list object to check is_system
+  const selectedPriceList = useMemo(() => {
+    if (!selectedPriceListId) return null;
+    return priceLists?.find(pl => pl.id === selectedPriceListId) || null;
+  }, [selectedPriceListId, priceLists]);
 
 
   // Fetch price lists on mount
@@ -156,11 +152,61 @@ const PriceListPage = () => {
   }, [dispatch]);
 
   const handleImport = () => {
-    message.info('Tính năng nhập dữ liệu đang được phát triển');
+    if (!selectedPriceListId) {
+      message.warning('Vui lòng chọn bảng giá trước khi import');
+      return;
+    }
+
+    // Create file input and trigger click
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      try {
+        const result = await priceListApi.importItems(selectedPriceListId, file);
+        if (result.success) {
+          message.success(`Đã import ${result.imported} sản phẩm`);
+          if (result.errors?.length > 0) {
+            message.warning(`Có ${result.errors.length} dòng lỗi`);
+            console.log('Import errors:', result.errors);
+          }
+          dispatch(fetchProducts(filters));
+        }
+      } catch (err) {
+        console.error(err);
+        message.error('Import thất bại');
+      }
+    };
+    input.click();
   };
 
-  const handleExport = () => {
-    message.info('Tính năng xuất dữ liệu đang được phát triển');
+  const handleExport = async () => {
+    if (!selectedPriceListId) {
+      message.warning('Vui lòng chọn bảng giá trước khi xuất file');
+      return;
+    }
+
+    try {
+      const blob = await priceListApi.exportItems(selectedPriceListId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `price_list_${selectedPriceListId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      message.success('Xuất file thành công');
+    } catch (err) {
+      console.error(err);
+      message.error('Xuất file thất bại');
+    }
   };
 
   const openFormulaModal = (record) => {
@@ -198,7 +244,8 @@ const PriceListPage = () => {
 
   const edit = (record) => {
     setEditingKey(record.key);
-    setEditingPrice(record.price);
+    // Use price from selected price list, fallback to base price
+    setEditingPrice(record.price_after_discount ?? record.price);
   };
 
   const save = async (key) => {
@@ -250,6 +297,22 @@ const PriceListPage = () => {
       message.error('Thêm sản phẩm thất bại');
     } finally {
       setAddingItems(false);
+    }
+  };
+
+  // [NEW] Handle Delete Product from Price List
+  const handleDeleteFromPriceList = async (productId) => {
+    if (!selectedPriceList || selectedPriceList.is_system) {
+      message.warning('Không thể xóa sản phẩm khỏi bảng giá hệ thống');
+      return;
+    }
+    try {
+      await priceListApi.removeItem(selectedPriceListId, productId);
+      message.success('Đã xóa sản phẩm khỏi bảng giá');
+      dispatch(fetchProducts(filters));
+    } catch (error) {
+      console.error(error);
+      message.error('Xóa sản phẩm thất bại');
     }
   };
 
@@ -357,57 +420,63 @@ const PriceListPage = () => {
       dataIndex: 'price',
       key: 'price',
       width: 150,
-      editable: canEditPrice, // [UPDATED] Use permission
-      render: (price, record) => {
-        const editable = isEditing(record) && canEditPrice; // Double check in render
-        return editable ? (
-          <Popover
-            content={
-              <span>
-                Hoặc sử dụng <a onClick={() => openFormulaModal(record)}>Công thức</a>
-              </span>
-            }
-            trigger="focus"
-          >
-            <InputNumber
-              style={{ width: '100%' }}
-              value={editingPrice}
-              onChange={(value) => setEditingPrice(value)}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-              addonAfter="đ"
-            />
-          </Popover>
-        ) : (
-          <span>{price ? `${price.toLocaleString('vi-VN')}đ` : '0đ'}</span>
-        );
-      },
+      // Read-only - editing is done on the selected price list column
+      render: (price) => (
+        <span>{price ? `${price.toLocaleString('vi-VN')}đ` : '0đ'}</span>
+      ),
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 100,
+      width: 150,
       render: (_, record) => {
         const editable = isEditing(record);
-        return editable ? (
-          <Space>
-            <Button size="small" type="primary" onClick={() => save(record.key)}>
-              Lưu
-            </Button>
-            <Button size="small" onClick={cancel}>
-              Hủy
-            </Button>
-          </Space>
-        ) : (
-          <Button size="small" type="link" onClick={() => edit(record)}>
-            Sửa
-          </Button>
-        );
+        // Check if it's a custom price list (not a system list)
+        const isCustomPriceList = selectedPriceList && !selectedPriceList.is_system;
+
+        if (editable) {
+          return (
+            <Space>
+              <Button size="small" type="primary" onClick={() => save(record.key)}>
+                Lưu
+              </Button>
+              <Button size="small" onClick={cancel}>
+                Hủy
+              </Button>
+            </Space>
+          );
+        }
+
+        // Only show actions for custom price lists
+        if (isCustomPriceList) {
+          return (
+            <Space>
+              <Button size="small" type="link" onClick={() => edit(record)}>
+                Sửa
+              </Button>
+              <Popconfirm
+                title="Xóa sản phẩm khỏi bảng giá?"
+                description="Sản phẩm sẽ bị xóa khỏi bảng giá này, không ảnh hưởng đến sản phẩm gốc."
+                onConfirm={() => handleDeleteFromPriceList(record.id)}
+                okText="Xóa"
+                cancelText="Hủy"
+                okButtonProps={{ danger: true }}
+              >
+                <Button size="small" type="link" danger>
+                  Xóa
+                </Button>
+              </Popconfirm>
+            </Space>
+          );
+        }
+
+        // No actions for general price list
+        return <span style={{ color: '#999' }}>—</span>;
       },
     },
-  ], [editingKey, editingPrice]);
+  ], [editingKey, editingPrice, selectedPriceListId]);
 
-  // Add adjusted price column when a price list is selected
+  // Add adjusted price column when a price list is selected - WITH editing support
   const adjustedPriceColumn = useMemo(() => {
     if (!selectedPriceListId) return null;
     const selectedList = priceLists.find(pl => pl.id === selectedPriceListId);
@@ -417,6 +486,32 @@ const PriceListPage = () => {
       key: 'price_after_discount',
       width: 150,
       render: (adjustedPrice, record) => {
+        // Check if this row is being edited
+        const editable = isEditing(record) && canEditPrice;
+
+        if (editable) {
+          return (
+            <Popover
+              content={
+                <span>
+                  Hoặc sử dụng <a onClick={() => openFormulaModal(record)}>Công thức</a>
+                </span>
+              }
+              trigger="focus"
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                value={editingPrice}
+                onChange={(value) => setEditingPrice(value)}
+                formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
+                addonAfter="đ"
+              />
+            </Popover>
+          );
+        }
+
+        // Display mode
         if (adjustedPrice === undefined || adjustedPrice === null) {
           return <span style={{ color: '#999' }}>—</span>;
         }
@@ -432,7 +527,7 @@ const PriceListPage = () => {
         );
       },
     };
-  }, [selectedPriceListId, priceLists]);
+  }, [selectedPriceListId, priceLists, editingKey, editingPrice, canEditPrice]);
 
   const rowSelection = {
     selectedRowKeys,

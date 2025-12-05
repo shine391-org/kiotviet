@@ -54,8 +54,9 @@ class PriceListValidator
             'is_active' => 'permit_empty|in_list[0,1,true,false]',
             'rounding_rule' => 'permit_empty|in_list[none,thousand,ten_thousand,hundred]',
             'auto_update' => 'permit_empty|in_list[0,1,true,false]',
-            'base_price_list_id' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'base_price_list_id' => 'permit_empty', // Can be integer ID or string like 'cost', 'purchase'
             'formula' => 'permit_empty|string',
+            'config' => 'permit_empty',
         ];
         $v = $this->run($input, $rules);
         return $this->postProcess($v, true);
@@ -81,8 +82,9 @@ class PriceListValidator
             'is_active' => 'permit_empty|in_list[0,1,true,false]',
             'rounding_rule' => 'permit_empty|in_list[none,thousand,ten_thousand,hundred]',
             'auto_update' => 'permit_empty|in_list[0,1,true,false]',
-            'base_price_list_id' => 'permit_empty|integer|greater_than_equal_to[1]',
+            'base_price_list_id' => 'permit_empty', // Can be integer ID or string like 'cost', 'purchase'
             'formula' => 'permit_empty|string',
+            'config' => 'permit_empty',
         ];
         $v = $this->run($input, $rules);
         if (empty($v)) { throw new InvalidArgumentException('No fields to update'); }
@@ -129,7 +131,7 @@ class PriceListValidator
         if (isset($data['apply_to_groups'])) {
             $data['apply_to_groups'] = array_values(array_filter(array_map('intval', (array) $data['apply_to_groups'])));
             // Optional existence check if customer_groups table exists
-            $db = \Config\Database::connect('tests');
+            $db = \Config\Database::connect(); // Use default connection
             if ($db->tableExists('customer_groups') && ! empty($data['apply_to_groups'])) {
                 $count = $db->table('customer_groups')->whereIn('id', $data['apply_to_groups'])->countAllResults();
                 if ($count !== count($data['apply_to_groups'])) {

@@ -243,6 +243,14 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
     $routes->get('customers/export', 'Api\\CustomersController::export');
     $routes->post('customers/import', 'Api\\CustomersController::import');
+    
+    // Customer Groups
+    $routes->get('customer-groups', 'Api\\CustomerGroupsController::index');
+    $routes->get('customer-groups/(:num)', 'Api\\CustomerGroupsController::show/$1');
+    $routes->post('customer-groups', 'Api\\CustomerGroupsController::create');
+    $routes->put('customer-groups/(:num)', 'Api\\CustomerGroupsController::update/$1');
+    $routes->delete('customer-groups/(:num)', 'Api\\CustomerGroupsController::delete/$1');
+    
     $routes->get('variants', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/deleted', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');
@@ -290,6 +298,11 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->delete('price-lists/(:num)', 'Api\\PriceListsController::delete/$1');
     $routes->get('price-lists/(:num)/items', 'Api\\PriceListsController::items/$1');
     $routes->post('price-lists/(:num)/items', 'Api\\PriceListsController::saveItems/$1');
+    $routes->post('price-lists/(:num)/add-items', 'Api\\PriceListsController::addItems/$1');
+    $routes->delete('price-lists/(:num)/items/(:num)', 'Api\\PriceListsController::removeItem/$1/$2');
+    $routes->get('price-lists/(:num)/export', 'Api\\PriceListsController::export/$1');
+    $routes->post('price-lists/(:num)/import', 'Api\\PriceListsController::import/$1');
+    $routes->post('price-lists/(:num)/apply-formula', 'Api\\PriceListsController::applyFormula/$1');
 
     // Orders
     $routes->get('orders', 'Api\\OrdersController::index');

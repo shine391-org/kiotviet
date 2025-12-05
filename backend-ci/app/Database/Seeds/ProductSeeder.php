@@ -13,7 +13,7 @@ class ProductSeeder extends Seeder
         // Clean old product data
         $this->db->table('product_category_links')->truncate();
         $this->db->table('product_images')->truncate();
-        $this->db->table('product_attribute_values')->truncate();
+        $this->db->table('product_prices')->truncate();
         $this->db->table('product_variants_v2')->truncate();
         $this->db->table('products')->truncate();
         
@@ -21,62 +21,78 @@ class ProductSeeder extends Seeder
 
         $now = date('Y-m-d H:i:s');
         
-        // 1. Categories (Ensure they exist)
-        // We assume MasterDataSeeder created 101, 102, 103. If not, this might fail on FK if strict.
-        // Let's safe insert just in case.
-        $cats = [
-             ['id'=> 101, 'parent_id'=>null, 'level'=>1, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
-             ['id'=> 102, 'parent_id'=>null, 'level'=>1, 'code'=>'VI',  'name'=>'Ví',      'slug'=>'vi',        'sort_order'=>2, 'status'=>'active', 'created_at'=>$now],
-             ['id'=> 103, 'parent_id'=>101, 'level'=>2, 'code'=>'TUI-DA','name'=>'Túi da',  'slug'=>'tui-da',   'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
-             ['id'=> 104, 'parent_id'=>null, 'level'=>1, 'code'=>'GIAY', 'name'=>'Giày dép', 'slug'=>'giay-dep', 'sort_order'=>3, 'status'=>'active', 'created_at'=>$now],
-        ];
-        $this->db->table('product_categories')->ignore(true)->insertBatch($cats);
-
-        // 2. Real Images (Rotation)
+        // Image Pool
         $imagesList = [
-            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg', // Túi đeo chéo
-            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/9b9cf7569bd348fd9c73ab9c167a96b5.jpeg', // Ví da
-            'https://cdn2-retail-images.kiotviet.vn/2025/10/15/lano/677874c0246b4f93ab1843fb4ddab0a8.jpeg', // Ví nhỏ
-            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/67b7e3f88926487e873b064379fa451c.jpeg', // Balo
-            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/1966289b43444855871891963240e946.jpeg'  // Cặp da
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/3fcf08b6f8b240fa99a661e56cdc7b3f.jpeg', // Bag
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/9b9cf7569bd348fd9c73ab9c167a96b5.jpeg', // Wallet
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/15/lano/677874c0246b4f93ab1843fb4ddab0a8.jpeg', // Vest
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/67b7e3f88926487e873b064379fa451c.jpeg', // Backpack
+            'https://cdn2-retail-images.kiotviet.vn/2025/10/19/lano/1966289b43444855871891963240e946.jpeg'  // Office Bag
         ];
 
-        // 3. Generate 20 Products
+        // Categories Map (created in CategorySeeder)
+        $catIds = [11, 12, 13, 21, 31, 32];
+
         $products = [];
         $variants = [];
         $links = [];
-        $productImages = []; // New table for detail images
-        
+        $productImages = []; 
+        $productPrices = []; 
+
         for ($i = 1; $i <= 20; $i++) {
+            $id = 500 + $i;
             $code = 'SP' . str_pad($i, 3, '0', STR_PAD_LEFT);
-            $price = rand(100, 5000) * 1000;
+            $price = rand(150, 1500) * 1000; // 150k - 1.5M
             $cost = $price * 0.6;
-            $catId = $cats[array_rand($cats)]['id'];
+            $catId = $catIds[array_rand($catIds)];
             $imgUrl = $imagesList[$i % count($imagesList)];
             
+            $namePrefix = 'Sản phẩm';
+            if ($catId == 11) $namePrefix = 'Áo Thun Nam Cao Cấp';
+            if ($catId == 12) $namePrefix = 'Áo Sơ Mi Công Sở';
+            if ($catId == 13) $namePrefix = 'Quần Jeans Slimfit';
+            if ($catId == 21) $namePrefix = 'Đầm Dạ Hội';
+            if ($catId == 31) $namePrefix = 'Túi Xách Da Thật';
+            if ($catId == 32) $namePrefix = 'Giày Tây Nam';
+
+            $name = "$namePrefix Mẫu $i";
+
             $products[] = [
-                'id' => 500 + $i,
+                'id' => $id,
                 'product_type' => 'goods',
                 'code' => $code,
                 'barcode' => $code,
-                'name' => "Sản phẩm Demo $i - " . ($i % 2 === 0 ? 'Cao cấp' : 'Thường'),
-                'slug' => "san-pham-demo-$i",
-                'brand' => 'Lano',
+                'name' => $name,
+                'slug' => url_title($name, '-', true),
+                'brand' => 'Lano Official',
                 'unit' => 'Cái',
                 'purchase_price' => $cost,
                 'selling_price' => $price,
-                'stock_quantity' => rand(0, 50),
+                'stock_quantity' => rand(10, 100),
                 'has_variants' => 0,
-                'image' => $imgUrl,
-                'images' => json_encode([$imgUrl]), // For simple array field
+                'image' => $imgUrl, // Keeping this as main thumb
+                'images' => json_encode([$imgUrl]),
                 'status' => 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
             ];
 
-            // Product Image (Gallery)
+            // 1. Product Price (Base Retail)
+            $productPrices[] = [
+                'product_id' => $id,
+                'variant_id' => null,
+                'price_type' => 'retail',
+                'price'      => $price,
+                'status'     => 'active',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+
+            // 2. Images (Gallery)
+            // Fix: ensure table has matching columns. We checked schema earlier. 
+            // product_id, image_url, is_primary, sort_order
             $productImages[] = [
-                'product_id' => 500 + $i,
+                'product_id' => $id,
                 'image_url' => $imgUrl,
                 'is_primary' => 1,
                 'sort_order' => 1,
@@ -84,52 +100,79 @@ class ProductSeeder extends Seeder
                 'updated_at' => $now,
             ];
 
-            // Category Link
+            // 3. Category Link
             $links[] = [
-                'product_id' => 500 + $i, 
+                'product_id' => $id, 
                 'category_id' => $catId, 
                 'created_at' => $now
             ];
             
-            // Variants logic
+            // 4. Create Variants for every 5th product
             if ($i % 5 === 0) {
-                 $products[$i-1]['has_variants'] = 1;
+                 // Update parent to has_variants - Note: we can't update array by reference easily in foreach loop without &
+                 // So we modify the LAST element of $products array
+                 $products[count($products) - 1]['has_variants'] = 1;
                  
+                 // Variation 1: Size M
+                 $v1_id = 7000 + ($i * 10) + 1;
                  $variants[] = [
-                    'id' => 7000 + ($i * 10) + 1,
-                    'product_id' => 500 + $i,
-                    'variant_name' => "Sản phẩm Demo $i - Size M",
+                    'id' => $v1_id,
+                    'product_id' => $id,
+                    'variant_name' => "$name - Size M",
                     'sku' => $code . '-M',
                     'price' => $price,
                     'cost_price' => $cost,
-                    'stock_quantity' => 10,
+                    'stock_quantity' => 20,
                     'status' => 'active',
                     'created_at' => $now,
                     'updated_at' => $now
                  ];
+                 // Variant 1 Price
+                 $productPrices[] = [
+                    'product_id' => $id,
+                    'variant_id' => $v1_id,
+                    'price_type' => 'retail',
+                    'price'      => $price,
+                    'status'     => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+
+                 // Variation 2: Size L
+                 $v2_id = 7000 + ($i * 10) + 2;
                  $variants[] = [
-                    'id' => 7000 + ($i * 10) + 2,
-                    'product_id' => 500 + $i,
-                    'variant_name' => "Sản phẩm Demo $i - Size L",
+                    'id' => $v2_id,
+                    'product_id' => $id,
+                    'variant_name' => "$name - Size L",
                     'sku' => $code . '-L',
-                    'price' => $price + 50000,
+                    'price' => $price + 20000,
                     'cost_price' => $cost,
-                    'stock_quantity' => 15,
+                    'stock_quantity' => 20,
                     'status' => 'active',
                     'created_at' => $now,
                     'updated_at' => $now
                  ];
-                 $products[$i-1]['stock_quantity'] = 25;
+                 // Variant 2 Price
+                 $productPrices[] = [
+                    'product_id' => $id,
+                    'variant_id' => $v2_id,
+                    'price_type' => 'retail',
+                    'price'      => $price + 20000,
+                    'status'     => 'active',
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
             }
         }
 
-        $this->db->table('products')->ignore(true)->insertBatch($products);
+        $this->db->table('products')->insertBatch($products);
         if (!empty($variants)) {
-            $this->db->table('product_variants_v2')->ignore(true)->insertBatch($variants);
+            $this->db->table('product_variants_v2')->insertBatch($variants);
         }
-        $this->db->table('product_category_links')->ignore(true)->insertBatch($links);
-        $this->db->table('product_images')->ignore(true)->insertBatch($productImages);
+        $this->db->table('product_category_links')->insertBatch($links);
+        $this->db->table('product_images')->insertBatch($productImages);
+        $this->db->table('product_prices')->insertBatch($productPrices);
         
-        echo "Seeded 20 Products & Variants with REAL Images.\n";
+        echo "✅ Seeded 20 Products with Variants, Images, Prices.\n";
     }
 }
