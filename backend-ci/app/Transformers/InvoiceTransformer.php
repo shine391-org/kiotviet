@@ -16,6 +16,8 @@ class InvoiceTransformer
         $row['id'] = isset($row['id']) ? (int) $row['id'] : null;
         $row['customer_id'] = isset($row['customer_id']) ? (int) $row['customer_id'] : null;
         $row['branch_id'] = isset($row['branch_id']) ? (int) $row['branch_id'] : null;
+        $row['customer_name'] = $row['customer_name'] ?? null;
+        $row['created_by_name'] = $row['created_by_name'] ?? null;
         $row['invoice_status'] = $row['invoice_status'] ?? null;
         $row['invoice_type'] = $row['invoice_type'] ?? null;
         $row['e_invoice_status'] = $row['e_invoice_status'] ?? null;

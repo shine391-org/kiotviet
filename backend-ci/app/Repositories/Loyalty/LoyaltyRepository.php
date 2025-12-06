@@ -2,94 +2,121 @@
 
 namespace App\Repositories\Loyalty;
 
-use App\Models\LoyaltyProgramModel;
-use App\Models\LoyaltyTransactionModel;
 use App\Models\LoyaltyWalletModel;
 use CodeIgniter\Database\BaseConnection;
 
-/**
- * @agent-repository: Loyalty
- * @agent-pattern: Repository pattern
- * @agent-reusable: MEDIUM
- */
 class LoyaltyRepository
 {
+    protected LoyaltyWalletModel $walletModel;
     protected BaseConnection $db;
 
-    public function __construct(
-        ?LoyaltyProgramModel $programs = null,
-        ?LoyaltyWalletModel $wallets = null,
-        ?LoyaltyTransactionModel $transactions = null,
-        ?BaseConnection $db = null
-    ) {
-        $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+    public function __construct()
+    {
+        $this->walletModel = new LoyaltyWalletModel();
+        $this->db = \Config\Database::connect();
     }
 
-    public function defaultProgram(): ?array
+    public function findWalletByCustomer(int $customerId): ?array
     {
-        $row = $this->db->table('loyalty_programs')->where('status', 'active')->orderBy('id', 'ASC')->get()->getRowArray();
-        return $row ? $this->hydrateProgram($row) : null;
+        return $this->walletModel->where('customer_id', $customerId)->first();
     }
 
-    public function walletForCustomer(int $customerId): array
+    public function getOrCreateWallet(int $customerId): array
     {
-        $existing = $this->db->table('loyalty_wallets')->where('customer_id', $customerId)->get()->getRowArray();
-        if ($existing) {
-            return $this->hydrateWallet($existing);
+        $wallet = $this->findWalletByCustomer($customerId);
+        if ($wallet) {
+            return $wallet;
         }
-        $now = $this->now();
-        $this->db->table('loyalty_wallets')->insert([
+
+        $this->walletModel->insert([
             'customer_id' => $customerId,
             'points_balance' => 0,
-            'created_at' => $now,
-            'updated_at' => $now,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
-        $id = (int) $this->db->insertID();
-        $row = $this->db->table('loyalty_wallets')->where('id', $id)->get()->getRowArray();
-        return $this->hydrateWallet($row ?: ['id' => $id, 'customer_id' => $customerId, 'points_balance' => 0]);
+        return $this->walletModel->find((int) $this->walletModel->getInsertID());
     }
 
-    public function updateBalance(int $walletId, float $newBalance): void
+    public function getActiveProgram(?int $customerGroupId = null): ?array
     {
-        $this->db->table('loyalty_wallets')->where('id', $walletId)->update([
-            'points_balance' => $newBalance,
-            'updated_at' => $this->now(),
-            'last_earned_at' => $this->now(),
-        ]);
+        $builder = $this->db->table('loyalty_programs')->where('status', 'active');
+        if ($customerGroupId) {
+            $builder->groupStart()->where('customer_group_id', $customerGroupId)->orWhere('customer_group_id IS NULL')->groupEnd();
+        }
+        return $builder->orderBy('customer_group_id', 'DESC')->get()->getRowArray();
     }
 
-    public function addTransaction(int $walletId, float $pointsDelta, ?int $orderId, string $reason): void
+    public function addPoints(int $walletId, float $points, ?int $orderId, string $reason): void
     {
+        $this->db->transStart();
+
+        // Update wallet balance
+        $this->db->table('loyalty_wallets')
+            ->where('id', $walletId)
+            ->set('points_balance', 'points_balance + ' . $points, false)
+            ->set('last_earned_at', date('Y-m-d H:i:s'))
+            ->set('updated_at', date('Y-m-d H:i:s'))
+            ->update();
+
+        // Record transaction
         $this->db->table('loyalty_transactions')->insert([
             'wallet_id' => $walletId,
             'order_id' => $orderId,
-            'points_delta' => $pointsDelta,
+            'points_delta' => $points,
             'reason' => $reason,
-            'created_at' => $this->now(),
-            'updated_at' => $this->now(),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
+
+        $this->db->transComplete();
     }
 
-    private function hydrateWallet(array $row): array
+    public function redeemPoints(int $walletId, float $points, ?int $orderId, string $reason): bool
     {
-        $row['id'] = isset($row['id']) ? (int) $row['id'] : null;
-        $row['customer_id'] = isset($row['customer_id']) ? (int) $row['customer_id'] : null;
-        $row['points_balance'] = isset($row['points_balance']) ? (float) $row['points_balance'] : 0.0;
-        return $row;
+        $wallet = $this->walletModel->find($walletId);
+        if (!$wallet || $wallet['points_balance'] < $points) {
+            return false;
+        }
+
+        $this->db->transStart();
+
+        // Deduct points
+        $this->db->table('loyalty_wallets')
+            ->where('id', $walletId)
+            ->set('points_balance', 'points_balance - ' . $points, false)
+            ->set('updated_at', date('Y-m-d H:i:s'))
+            ->update();
+
+        // Record transaction (negative)
+        $this->db->table('loyalty_transactions')->insert([
+            'wallet_id' => $walletId,
+            'order_id' => $orderId,
+            'points_delta' => -$points,
+            'reason' => $reason,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        $this->db->transComplete();
+        return $this->db->transStatus();
     }
 
-    private function hydrateProgram(array $row): array
+    public function getTransactions(int $walletId, int $limit = 50): array
     {
-        $row['id'] = isset($row['id']) ? (int) $row['id'] : null;
-        $row['customer_group_id'] = isset($row['customer_group_id']) ? (int) $row['customer_group_id'] : null;
-        $row['earn_rate'] = isset($row['earn_rate']) ? (float) $row['earn_rate'] : 0.0;
-        $row['redeem_rate'] = isset($row['redeem_rate']) ? (float) $row['redeem_rate'] : 0.0;
-        $row['expiry_days'] = isset($row['expiry_days']) ? (int) $row['expiry_days'] : 0;
-        return $row;
+        return $this->db->table('loyalty_transactions')
+            ->where('wallet_id', $walletId)
+            ->orderBy('created_at', 'DESC')
+            ->limit($limit)
+            ->get()
+            ->getResultArray();
     }
 
-    private function now(): string
+    public function getCustomerInfo(int $customerId): ?array
     {
-        return date('Y-m-d H:i:s');
+        return $this->db->table('customers')
+            ->select('id, name, phone, email, customer_group_id')
+            ->where('id', $customerId)
+            ->get()
+            ->getRowArray();
     }
 }

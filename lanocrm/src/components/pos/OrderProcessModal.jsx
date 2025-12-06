@@ -1,26 +1,47 @@
-import React, { useState } from 'react';
-import { Modal, Input, DatePicker, Table, Button } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, Input, DatePicker, Table, Button, Spin } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import styles from './OrderProcessModal.module.css';
-
-// Mock data
-const MOCK_ORDERS = [
-    {
-        id: 1,
-        code: 'DH000044',
-        time: '19/11/2025 08:07',
-        customer: 'Khách lẻ',
-        total: 9000000,
-        status: 'Phiếu tạm',
-        note: '',
-    },
-];
 
 const OrderProcessModal = ({ open, onClose, onSelect }) => {
     const [searchType, setSearchType] = useState('code');
     const [searchValue, setSearchValue] = useState('');
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const fetchOrders = useCallback(async () => {
+        if (!open) return;
+        setLoading(true);
+        try {
+            const response = await posApi.getOrders({
+                search: searchValue || undefined,
+                status: 'draft', // Chỉ lấy đơn chưa hoàn thành
+                limit: 20,
+            });
+            if (response.success) {
+                setOrders(response.data.map(o => ({
+                    id: o.id,
+                    code: o.order_number,
+                    time: o.order_date,
+                    customer: o.shipping_name || 'Khách lẻ',
+                    total: parseFloat(o.total) || 0,
+                    status: o.status === 'draft' ? 'Phiếu tạm' : o.status,
+                    note: o.notes || '',
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch orders:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [open, searchValue]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
 
     const searchOptions = [
         { key: 'code', label: 'Theo mã đặt hàng' },
@@ -116,13 +137,16 @@ const OrderProcessModal = ({ open, onClose, onSelect }) => {
 
                 {/* Main Content - Table */}
                 <div className={styles.mainContent}>
-                    <Table
-                        columns={columns}
-                        dataSource={MOCK_ORDERS}
-                        rowKey="id"
-                        pagination={false}
-                        size="small"
-                    />
+                    <Spin spinning={loading}>
+                        <Table
+                            columns={columns}
+                            dataSource={orders}
+                            rowKey="id"
+                            pagination={false}
+                            size="small"
+                            locale={{ emptyText: 'Không có đơn hàng nào' }}
+                        />
+                    </Spin>
                 </div>
             </div>
         </Modal>

@@ -306,6 +306,12 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('branches', 'Api\\BranchesController::create');
     $routes->get('branches/export', 'Api\\BranchesController::export');
 
+    // Locations (Vietnam administrative divisions)
+    $routes->get('locations/provinces', 'Api\\LocationsController::provinces');
+    $routes->get('locations/provinces/(:num)/districts', 'Api\\LocationsController::districts/$1');
+    $routes->get('locations/districts/(:num)/wards', 'Api\\LocationsController::wards/$1');
+    $routes->get('locations/stats', 'Api\\LocationsController::stats');
+
     // Price lists
     $routes->get('price-lists', 'Api\\PriceListsController::index');
     $routes->get('price-lists/(:num)', 'Api\\PriceListsController::show/$1');
@@ -340,6 +346,53 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('pos/offline/sync', 'Api\\POSOfflineController::sync');
     $routes->post('pos/coupons/apply', 'Api\\POSLoyaltyController::applyCoupon');
     $routes->post('pos/loyalty/redeem-preview', 'Api\\POSLoyaltyController::redeemPreview');
+    // POS Sales - quick return, daily report, sellers
+    $routes->post('pos/quick-return', 'Api\\POSSalesController::quickReturn');
+    $routes->get('pos/daily-report', 'Api\\POSSalesController::dailyReport');
+    $routes->get('pos/sellers', 'Api\\POSSalesController::sellers');
+
+    // Bank Accounts
+    $routes->get('bank-accounts', 'Api\\BankAccountsController::index');
+    $routes->get('bank-accounts/(:num)', 'Api\\BankAccountsController::show/$1');
+    $routes->post('bank-accounts', 'Api\\BankAccountsController::create');
+    $routes->put('bank-accounts/(:num)', 'Api\\BankAccountsController::update/$1');
+    $routes->delete('bank-accounts/(:num)', 'Api\\BankAccountsController::delete/$1');
+    $routes->get('bank-accounts/(:num)/qr', 'Api\\BankAccountsController::qr/$1');
+
+    // Sales Channels
+    $routes->get('sales-channels', 'Api\\SalesChannelsController::index');
+    $routes->get('sales-channels/(:num)', 'Api\\SalesChannelsController::show/$1');
+    $routes->post('sales-channels', 'Api\\SalesChannelsController::create');
+    $routes->put('sales-channels/(:num)', 'Api\\SalesChannelsController::update/$1');
+    $routes->delete('sales-channels/(:num)', 'Api\\SalesChannelsController::delete/$1');
+
+    // Shipping
+    $routes->post('shipping/calculate', 'Api\\ShippingController::calculate');
+    $routes->get('shipping/zones', 'Api\\ShippingController::zones');
+    $routes->post('shipping/zones', 'Api\\ShippingController::createZone');
+    $routes->put('shipping/zones/(:num)', 'Api\\ShippingController::updateZone/$1');
+    $routes->delete('shipping/zones/(:num)', 'Api\\ShippingController::deleteZone/$1');
+    $routes->get('shipping/zones/(:num)/rates', 'Api\\ShippingController::rates/$1');
+    $routes->post('shipping/rates', 'Api\\ShippingController::createRate');
+    $routes->put('shipping/rates/(:num)', 'Api\\ShippingController::updateRate/$1');
+    $routes->delete('shipping/rates/(:num)', 'Api\\ShippingController::deleteRate/$1');
+
+    // Coupons
+    $routes->get('coupons', 'Api\\CouponsController::index');
+    $routes->get('coupons/(:num)', 'Api\\CouponsController::show/$1');
+    $routes->post('coupons', 'Api\\CouponsController::create');
+    $routes->put('coupons/(:num)', 'Api\\CouponsController::update/$1');
+    $routes->delete('coupons/(:num)', 'Api\\CouponsController::delete/$1');
+    $routes->post('coupons/apply', 'Api\\CouponsController::apply');
+
+    // Loyalty
+    $routes->get('loyalty/wallet/(:num)', 'Api\\LoyaltyController::wallet/$1');
+    $routes->post('loyalty/calculate-earn', 'Api\\LoyaltyController::calculateEarn');
+    $routes->post('loyalty/redeem-preview', 'Api\\LoyaltyController::redeemPreview');
+    $routes->post('loyalty/earn', 'Api\\LoyaltyController::earn');
+    $routes->post('loyalty/redeem', 'Api\\LoyaltyController::redeem');
+    $routes->get('loyalty/transactions/(:num)', 'Api\\LoyaltyController::transactions/$1');
+
     $routes->get('tax-templates', 'Api\\TaxTemplatesController::index');
     $routes->post('tax-templates', 'Api\\TaxTemplatesController::create');
     $routes->post('payment-entries', 'Api\\PaymentEntriesController::create');
@@ -448,6 +501,13 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
 
     // Shipping COD settlement
     $routes->post('shipping/settlement', 'Api\\ShippingController::settleCOD');
+
+    // Delivery Partners (self-delivery)
+    $routes->get('delivery-partners', 'Api\\DeliveryPartnersController::index');
+    $routes->get('delivery-partners/(:num)', 'Api\\DeliveryPartnersController::show/$1');
+    $routes->post('delivery-partners', 'Api\\DeliveryPartnersController::create');
+    $routes->put('delivery-partners/(:num)', 'Api\\DeliveryPartnersController::update/$1');
+    $routes->delete('delivery-partners/(:num)', 'Api\\DeliveryPartnersController::delete/$1');
 
     // Purchase order receive -> auto cash payment
     $routes->post('purchase-orders/(:num)/receive', 'Api\\PurchaseOrdersController::receive/$1');

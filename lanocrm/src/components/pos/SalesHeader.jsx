@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Input, Button, Tooltip, Dropdown, Badge, AutoComplete } from 'antd';
 import {
     SearchOutlined,
@@ -29,19 +29,8 @@ import ReturnInvoiceModal from './ReturnInvoiceModal';
 import SyncDataModal from './SyncDataModal';
 import PrintSettingsDropdown from './PrintSettingsDropdown';
 import AddProductModal from './AddProductModal';
+import posApi from '../../api/posApi';
 import styles from './SalesHeader.module.css';
-
-// Mock product data for search
-const MOCK_PRODUCTS = [
-    { id: 1, code: 'KT010-D', name: 'Túi xách da đeo chéo 010', variant: 'D', price: 1450000, stock: 0, ordered: 0, image: null },
-    { id: 2, code: 'KT101-NS', name: 'Túi đeo chéo nam công sở da bò đẳng cấp cho phái mạnh KT101', variant: 'NS', price: 1650000, stock: 0, ordered: 0, image: null },
-    { id: 3, code: 'KT102', name: 'Túi đeo chéo nam da bò thật Lano thời trang cao cấp KT102', variant: null, price: 1650000, stock: 0, ordered: 0, image: null },
-    { id: 4, code: 'KT103', name: 'Túi đeo chéo nam da thật Lano khỏe khoắn tiện lợi KT103', variant: null, price: 1450000, stock: 0, ordered: 0, image: null },
-    { id: 5, code: 'KT104', name: 'Túi da nam đeo chéo Lano sang trọng lịch lãm KT104', variant: null, price: 1450000, stock: 0, ordered: 0, variants: 2, image: null },
-    { id: 6, code: 'KT104-D', name: 'Túi da nam đeo chéo Lano sang trọng lịch lãm KT104', variant: 'D', price: 1450000, stock: 0, ordered: 0, image: null },
-    { id: 7, code: 'SP00001', name: 'Túi xách nữ mini Lano thời trang', variant: null, price: 1250000, stock: 5, ordered: 0, image: null },
-    { id: 8, code: 'SP00002', name: 'Túi đeo chéo nữ da thật Handmade', variant: null, price: 1750000, stock: 3, ordered: 2, image: null },
-];
 
 /**
  * Tab types:
@@ -77,20 +66,30 @@ const SalesHeader = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    // Filter products based on search text
-    const filterProducts = (text) => {
+    // Search products from API
+    const searchProducts = useCallback(async (text) => {
         if (!text || text.length < 1) {
             setSearchOptions([]);
             return;
         }
 
-        const filtered = MOCK_PRODUCTS.filter(p =>
-            p.name.toLowerCase().includes(text.toLowerCase()) ||
-            p.code.toLowerCase().includes(text.toLowerCase())
-        ).slice(0, 5);
+        try {
+            const response = await posApi.searchProducts({ search: text, limit: 5 });
+            if (!response.success) return;
 
-        // Build options for AutoComplete
-        const options = filtered.map(product => ({
+            const filtered = response.data.map(p => ({
+                id: p.id,
+                code: p.code,
+                name: p.name,
+                variant: null,
+                price: parseFloat(p.selling_price) || 0,
+                stock: parseInt(p.stock_quantity) || 0,
+                ordered: parseInt(p.customer_ordered) || 0,
+                image: p.image || null,
+            }));
+
+            // Build options for AutoComplete
+            const options = filtered.map(product => ({
             value: product.code,
             label: (
                 <div className={styles.productOption}>
@@ -133,12 +132,15 @@ const SalesHeader = ({
             ),
         });
 
-        setSearchOptions(options);
-    };
+            setSearchOptions(options);
+        } catch (error) {
+            console.error('Failed to search products:', error);
+        }
+    }, []);
 
     const handleSearchChange = (value) => {
         setSearchText(value);
-        filterProducts(value);
+        searchProducts(value);
         onSearch?.(value);
     };
 

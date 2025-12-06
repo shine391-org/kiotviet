@@ -2729,4 +2729,54 @@ class Services extends BaseService
             static::auditService(false)
         );
     }
+
+    public static function deliveryPartnerService(bool $getShared = true): \App\Services\DeliveryPartners\DeliveryPartnerService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('deliveryPartnerService'); }
+        return new \App\Services\DeliveryPartners\DeliveryPartnerService(
+            new \App\Repositories\DeliveryPartners\DeliveryPartnerRepository(),
+            new \App\Validators\DeliveryPartnerValidator()
+        );
+    }
+
+    public static function locationService(bool $getShared = true): \App\Services\Locations\LocationService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('locationService'); }
+        return new \App\Services\Locations\LocationService(
+            new \App\Repositories\Locations\LocationRepository()
+        );
+    }
+
+    public static function posSalesService(bool $getShared = true): \App\Services\POS\POSSalesService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('posSalesService'); }
+        return new \App\Services\POS\POSSalesService(
+            new \App\Repositories\POS\POSSalesRepository(),
+            static::returnService(false)
+        );
+    }
+
+    public static function bankAccountService(bool $getShared = true): \App\Services\BankAccounts\BankAccountService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('bankAccountService'); }
+        return new \App\Services\BankAccounts\BankAccountService(
+            new \App\Repositories\BankAccounts\BankAccountRepository()
+        );
+    }
+
+    public static function salesChannelService(bool $getShared = true): \App\Services\SalesChannels\SalesChannelService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('salesChannelService'); }
+        return new \App\Services\SalesChannels\SalesChannelService(
+            new \App\Repositories\SalesChannels\SalesChannelRepository()
+        );
+    }
+
+    public static function shippingService(bool $getShared = true): \App\Services\Shipping\ShippingService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('shippingService'); }
+        return new \App\Services\Shipping\ShippingService(
+            new \App\Repositories\Shipping\ShippingRepository()
+        );
+    }
 }

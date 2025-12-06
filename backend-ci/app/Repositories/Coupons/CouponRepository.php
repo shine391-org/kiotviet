@@ -3,54 +3,96 @@
 namespace App\Repositories\Coupons;
 
 use App\Models\CouponModel;
-use App\Models\CouponUsageModel;
 use CodeIgniter\Database\BaseConnection;
 
-/**
- * @agent-repository: Coupons
- * @agent-pattern: Repository pattern
- * @agent-reusable: MEDIUM
- */
 class CouponRepository
 {
+    protected CouponModel $model;
     protected BaseConnection $db;
 
-    public function __construct(?CouponModel $coupons = null, ?CouponUsageModel $usages = null, ?BaseConnection $db = null)
+    public function __construct()
     {
-        $this->db = $db ?? \Config\Database::connect(ENVIRONMENT === 'testing' ? 'tests' : null);
+        $this->model = new CouponModel();
+        $this->db = \Config\Database::connect();
+    }
+
+    public function findAll(array $filters = []): array
+    {
+        $builder = $this->model->builder();
+
+        if (!empty($filters['status'])) {
+            $builder->where('status', $filters['status']);
+        }
+        if (!empty($filters['search'])) {
+            $builder->like('code', $filters['search']);
+        }
+
+        $limit = $filters['limit'] ?? 50;
+        $page = $filters['page'] ?? 1;
+        $offset = ($page - 1) * $limit;
+
+        return $builder->orderBy('created_at', 'DESC')->limit($limit, $offset)->get()->getResultArray();
+    }
+
+    public function count(array $filters = []): int
+    {
+        $builder = $this->model->builder();
+        if (!empty($filters['status'])) {
+            $builder->where('status', $filters['status']);
+        }
+        return $builder->countAllResults();
+    }
+
+    public function findById(int $id): ?array
+    {
+        return $this->model->find($id);
     }
 
     public function findByCode(string $code): ?array
     {
-        $row = $this->db->table('coupons')->where('code', strtoupper($code))->get()->getRowArray();
-        return $row ? $this->hydrate($row) : null;
+        return $this->model->where('code', $code)->first();
     }
 
-    public function incrementUsage(int $couponId): void
+    public function create(array $data): array
     {
-        $this->db->table('coupons')->where('id', $couponId)->set('used_count', 'used_count + 1', false)->update();
+        $this->model->insert($data);
+        return $this->findById((int) $this->model->getInsertID());
+    }
+
+    public function update(int $id, array $data): array
+    {
+        $this->model->update($id, $data);
+        return $this->findById($id);
+    }
+
+    public function delete(int $id): bool
+    {
+        return $this->model->delete($id);
+    }
+
+    public function incrementUsage(int $id): void
+    {
+        $this->db->table('coupons')->where('id', $id)->set('used_count', 'used_count + 1', false)->update();
     }
 
     public function recordUsage(int $couponId, ?int $orderId, ?int $customerId): void
     {
-        $now = date('Y-m-d H:i:s');
         $this->db->table('coupon_usages')->insert([
             'coupon_id' => $couponId,
             'order_id' => $orderId,
             'customer_id' => $customerId,
-            'used_at' => $now,
-            'created_at' => $now,
-            'updated_at' => $now,
+            'used_at' => date('Y-m-d H:i:s'),
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }
 
-    private function hydrate(array $row): array
+    public function getUsageCount(int $couponId, ?int $customerId = null): int
     {
-        $row['id'] = isset($row['id']) ? (int) $row['id'] : null;
-        $row['discount_value'] = isset($row['discount_value']) ? (float) $row['discount_value'] : 0.0;
-        $row['min_amount'] = isset($row['min_amount']) ? (float) $row['min_amount'] : 0.0;
-        $row['usage_limit'] = isset($row['usage_limit']) ? (int) $row['usage_limit'] : 0;
-        $row['used_count'] = isset($row['used_count']) ? (int) $row['used_count'] : 0;
-        return $row;
+        $builder = $this->db->table('coupon_usages')->where('coupon_id', $couponId);
+        if ($customerId) {
+            $builder->where('customer_id', $customerId);
+        }
+        return $builder->countAllResults();
     }
 }

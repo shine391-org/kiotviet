@@ -86,12 +86,18 @@ class InvoiceRepository
     /** List invoices with filters + pagination. */
     public function findAll(array $filters): array
     {
-        $b = $this->applyFilters($filters);
+        $b = $this->invoices->builder();
+        $b->select('invoices.*, customers.name as customer_name, users.full_name as created_by_name')
+            ->join('customers', 'customers.id = invoices.customer_id', 'left')
+            ->join('users', 'users.id = invoices.created_by', 'left');
+
+        $this->applyFiltersToBuilder($b, $filters);
+
         $limit = $filters['limit'] ?? 20;
         $page = $filters['page'] ?? 1;
         $offset = ($page - 1) * $limit;
-        $rows = $b->orderBy('issue_date', 'DESC')
-            ->orderBy('id', 'DESC')
+        $rows = $b->orderBy('invoices.issue_date', 'DESC')
+            ->orderBy('invoices.id', 'DESC')
             ->limit($limit, $offset)
             ->get()
             ->getResultArray();
@@ -192,35 +198,41 @@ class InvoiceRepository
     private function applyFilters(array $filters)
     {
         $b = $this->invoices->builder();
+        $this->applyFiltersToBuilder($b, $filters);
+        return $b;
+    }
+
+    private function applyFiltersToBuilder($b, array $filters): void
+    {
         if (! empty($filters['customer_id'])) {
-            $b->where('customer_id', $filters['customer_id']);
+            $b->where('invoices.customer_id', $filters['customer_id']);
         }
         if (! empty($filters['branch_id'])) {
-            $b->where('branch_id', $filters['branch_id']);
+            $b->where('invoices.branch_id', $filters['branch_id']);
         }
         if (! empty($filters['invoice_status'])) {
-            $b->where('invoice_status', $filters['invoice_status']);
+            $b->where('invoices.invoice_status', $filters['invoice_status']);
         }
         if (! empty($filters['invoice_type'])) {
-            $b->where('invoice_type', $filters['invoice_type']);
+            $b->where('invoices.invoice_type', $filters['invoice_type']);
         }
         if (! empty($filters['e_invoice_status'])) {
-            $b->where('e_invoice_status', $filters['e_invoice_status']);
+            $b->where('invoices.e_invoice_status', $filters['e_invoice_status']);
         }
         if (! empty($filters['search'])) {
             $s = $filters['search'];
             $b->groupStart()
-                ->like('invoice_number', $s)
-                ->orLike('notes', $s)
+                ->like('invoices.invoice_number', $s)
+                ->orLike('invoices.notes', $s)
+                ->orLike('customers.name', $s)
                 ->groupEnd();
         }
         if (! empty($filters['issue_date_from'])) {
-            $b->where('issue_date >=', $filters['issue_date_from']);
+            $b->where('invoices.issue_date >=', $filters['issue_date_from']);
         }
         if (! empty($filters['issue_date_to'])) {
-            $b->where('issue_date <=', $filters['issue_date_to']);
+            $b->where('invoices.issue_date <=', $filters['issue_date_to']);
         }
-        return $b;
     }
 
     private function hydrate(array $row): array

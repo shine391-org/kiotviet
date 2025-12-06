@@ -1,24 +1,35 @@
 import React, { useState } from 'react';
-import { Modal, Tabs, Input, Select, Radio, Button, Upload, DatePicker, Cascader } from 'antd';
+import { Modal, Tabs, Input, Select, Radio, Button, Upload, DatePicker, Cascader, App } from 'antd';
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import styles from './AddCustomerModal.module.css';
 
-// Mock province data
+// Province data - có thể fetch từ API sau
 const PROVINCES = [
     {
-        value: 'hanoi',
+        value: 'Hà Nội',
         label: 'Hà Nội',
         children: [
-            { value: 'badinh', label: 'Quận Ba Đình' },
-            { value: 'caugiay', label: 'Quận Cầu Giấy' },
+            { value: 'Quận Ba Đình', label: 'Quận Ba Đình' },
+            { value: 'Quận Cầu Giấy', label: 'Quận Cầu Giấy' },
+            { value: 'Quận Hoàn Kiếm', label: 'Quận Hoàn Kiếm' },
         ],
     },
     {
-        value: 'hcm',
+        value: 'TP. Hồ Chí Minh',
         label: 'TP. Hồ Chí Minh',
         children: [
-            { value: 'quan1', label: 'Quận 1' },
-            { value: 'quan3', label: 'Quận 3' },
+            { value: 'Quận 1', label: 'Quận 1' },
+            { value: 'Quận 3', label: 'Quận 3' },
+            { value: 'Quận 7', label: 'Quận 7' },
+        ],
+    },
+    {
+        value: 'Đà Nẵng',
+        label: 'Đà Nẵng',
+        children: [
+            { value: 'Hải Châu', label: 'Hải Châu' },
+            { value: 'Thanh Khê', label: 'Thanh Khê' },
         ],
     },
 ];
@@ -36,7 +47,9 @@ const AddCustomerModal = ({
     onSave,
     branchName = 'Lano - HN',
 }) => {
+    const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('general');
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         // General Info
         customerCode: '',
@@ -71,9 +84,47 @@ const AddCustomerModal = ({
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const handleSave = () => {
-        onSave(formData);
-        onClose();
+    const handleSave = async () => {
+        if (!formData.customerName?.trim()) {
+            message.error('Vui lòng nhập tên khách hàng');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const payload = {
+                name: formData.customerName,
+                phone: formData.phone || undefined,
+                email: formData.email || undefined,
+                address: formData.address || undefined,
+                province: formData.region?.[0] || undefined,
+                district: formData.region?.[1] || undefined,
+                ward: formData.ward || undefined,
+                gender: formData.gender?.toUpperCase() || undefined,
+                birthday: formData.birthday?.format('YYYY-MM-DD') || undefined,
+                customer_type: formData.customerType === 'business' ? 'BUSINESS' : 'INDIVIDUAL',
+                tax_code: formData.taxCode || undefined,
+                notes: formData.note || undefined,
+                facebook: formData.facebook || undefined,
+            };
+
+            const response = await posApi.createCustomer(payload);
+            if (response.success) {
+                message.success('Thêm khách hàng thành công');
+                onSave?.({
+                    ...response.data,
+                    customerName: response.data.name,
+                });
+                onClose();
+            } else {
+                message.error(response.message || 'Không thể thêm khách hàng');
+            }
+        } catch (error) {
+            console.error('Create customer error:', error);
+            message.error(error.response?.data?.message || 'Lỗi khi thêm khách hàng');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleSkip = () => {
@@ -372,7 +423,7 @@ const AddCustomerModal = ({
                 <Button onClick={handleSkip} className={styles.skipBtn}>
                     Bỏ qua
                 </Button>
-                <Button type="primary" onClick={handleSave} className={styles.saveBtn}>
+                <Button type="primary" onClick={handleSave} loading={loading} className={styles.saveBtn}>
                     Lưu
                 </Button>
             </div>

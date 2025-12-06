@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Input, Button, Select, Pagination, Empty } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Input, Button, Select, Pagination, Empty, Spin } from 'antd';
 import {
     SearchOutlined,
     AppstoreOutlined,
@@ -7,41 +7,57 @@ import {
     FilterOutlined,
     PictureOutlined,
 } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import styles from './ProductGrid.module.css';
-
-// Mock product data
-const MOCK_PRODUCTS = [
-    { id: 1, sku: 'TJ001', name: 'Túi Jeep vải loại nhỏ', price: 550000, image: null },
-    { id: 2, sku: 'MK001', name: 'Móc khóa da cá sấu', price: 50000, image: null },
-    { id: 3, sku: 'TL001', name: 'Thắt lưng da cá sấu loại đặt', price: 1290000, image: null },
-    { id: 4, sku: 'TX001', name: 'Túi xách nam giá rẻ KT38 nâu', price: 450000, image: null },
-    { id: 5, sku: 'TX002', name: 'Túi xách nam giá rẻ KT38 đen', price: 450000, image: null },
-    { id: 6, sku: 'TD001', name: 'Túi đeo chéo JEEP giá rẻ 001', price: 250000, image: null },
-    { id: 7, sku: 'TX003', name: 'Túi xách da nam Polo cao cấp', price: 250000, image: null },
-    { id: 8, sku: 'TJ002', name: 'Túi Da Nam Jeep 028', price: 1650000, image: null },
-    { id: 9, sku: 'TD002', name: 'Túi xách da đeo chéo kt11', price: 1550000, image: null },
-    { id: 10, sku: 'TD003', name: 'Túi đeo chéo nam da thật JEEP 01', price: 1450000, image: null },
-    { id: 11, sku: 'LX001', name: 'Lọ xịt bảo dưỡng da', price: 120000, image: null },
-    { id: 12, sku: 'TD004', name: 'Túi xách đeo chéo 010', price: 1450000, image: null },
-];
 
 const ProductGrid = ({ onAddProduct }) => {
     const [searchText, setSearchText] = useState('');
     const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
     const [currentPage, setCurrentPage] = useState(1);
+    const [products, setProducts] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
     const pageSize = 12;
 
-    // Filter products by search
-    const filteredProducts = MOCK_PRODUCTS.filter(
-        (p) =>
-            p.name.toLowerCase().includes(searchText.toLowerCase()) ||
-            p.sku.toLowerCase().includes(searchText.toLowerCase())
-    );
+    // Fetch products from API
+    const fetchProducts = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await posApi.searchProducts({
+                search: searchText,
+                page: currentPage,
+                limit: pageSize,
+            });
+            if (response.success) {
+                const productList = response.data.map(p => ({
+                    id: p.id,
+                    sku: p.code,
+                    name: p.name,
+                    price: parseFloat(p.selling_price) || 0,
+                    image: p.image || null,
+                    stock: parseInt(p.stock_quantity) || 0,
+                }));
+                setProducts(productList);
+                setTotal(response.pagination?.total || productList.length);
+            }
+        } catch (error) {
+            console.error('Failed to fetch products:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [searchText, currentPage]);
 
-    const paginatedProducts = filteredProducts.slice(
-        (currentPage - 1) * pageSize,
-        currentPage * pageSize
-    );
+    useEffect(() => {
+        fetchProducts();
+    }, [fetchProducts]);
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setCurrentPage(1);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchText]);
 
     const handleProductClick = (product) => {
         onAddProduct({
@@ -87,10 +103,12 @@ const ProductGrid = ({ onAddProduct }) => {
 
             {/* Product Grid */}
             <div className={`${styles.gridContainer} ${viewMode === 'list' ? styles.listView : ''}`}>
-                {paginatedProducts.length === 0 ? (
+                {loading ? (
+                    <div className={styles.loadingContainer}><Spin /></div>
+                ) : products.length === 0 ? (
                     <Empty description="Không tìm thấy sản phẩm" />
                 ) : (
-                    paginatedProducts.map((product) => (
+                    products.map((product) => (
                         <div
                             key={product.id}
                             className={styles.productCard}
@@ -121,7 +139,7 @@ const ProductGrid = ({ onAddProduct }) => {
                 <Pagination
                     current={currentPage}
                     pageSize={pageSize}
-                    total={filteredProducts.length}
+                    total={total}
                     onChange={setCurrentPage}
                     size="small"
                     showSizeChanger={false}

@@ -1,17 +1,20 @@
-import React, { useState } from 'react';
-import { Modal, Input, Select, Button, Upload } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Modal, Input, Select, Button, Upload, App } from 'antd';
 import { PlusOutlined, PictureOutlined } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import styles from './AddProductModal.module.css';
 
-// Mock product categories
+// Product categories - có thể fetch từ API
 const PRODUCT_CATEGORIES = [
-    { value: 'bags', label: 'Túi xách' },
-    { value: 'wallets', label: 'Ví da' },
-    { value: 'belts', label: 'Thắt lưng' },
-    { value: 'accessories', label: 'Phụ kiện' },
+    { value: 1, label: 'Túi xách' },
+    { value: 2, label: 'Ví da' },
+    { value: 3, label: 'Thắt lưng' },
+    { value: 4, label: 'Phụ kiện' },
 ];
 
 const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
+    const { message } = App.useApp();
+    const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         productCode: '',
         productName: initialName,
@@ -19,12 +22,12 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
         costPrice: '',
         salePrice: '',
         stock: '',
-        unit: '',
+        unit: 'Cái',
         images: [],
     });
 
     // Reset form when modal opens with new initialName
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             setFormData(prev => ({
                 ...prev,
@@ -38,9 +41,42 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSave = () => {
-        onSave?.(formData);
-        onClose?.();
+    const handleSave = async () => {
+        if (!formData.productName?.trim()) {
+            message.error('Vui lòng nhập tên sản phẩm');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const response = await posApi.createProduct({
+                productCode: formData.productCode || undefined,
+                productName: formData.productName,
+                category: formData.category,
+                costPrice: parseFloat(formData.costPrice) || 0,
+                salePrice: parseFloat(formData.salePrice) || 0,
+                stock: parseInt(formData.stock) || 0,
+                unit: formData.unit || 'Cái',
+            });
+
+            if (response.success) {
+                message.success('Thêm sản phẩm thành công');
+                onSave?.({
+                    id: response.data.id,
+                    sku: response.data.code,
+                    name: response.data.name,
+                    unitPrice: parseFloat(response.data.selling_price) || 0,
+                });
+                onClose?.();
+            } else {
+                message.error(response.message || 'Không thể thêm sản phẩm');
+            }
+        } catch (error) {
+            console.error('Create product error:', error);
+            message.error(error.response?.data?.message || 'Lỗi khi thêm sản phẩm');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleImageUpload = (info) => {
@@ -57,7 +93,7 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
             footer={
                 <div className={styles.modalFooter}>
                     <Button onClick={onClose}>Bỏ qua</Button>
-                    <Button type="primary" onClick={handleSave}>Lưu</Button>
+                    <Button type="primary" onClick={handleSave} loading={loading}>Lưu</Button>
                 </div>
             }
             className={styles.modal}

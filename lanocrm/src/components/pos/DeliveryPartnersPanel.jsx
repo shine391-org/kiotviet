@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { Tabs, Button, Select, Input, DatePicker } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Tabs, Button, Select, Input, DatePicker, App } from 'antd';
 import { CarOutlined, SendOutlined, SettingOutlined, EditOutlined, PlusOutlined, CalendarOutlined } from '@ant-design/icons';
+import deliveryPartnerApi from '../../api/deliveryPartnerApi';
 import ShippingSettingsModal from './ShippingSettingsModal';
 import DeliveryPartnerModal from './DeliveryPartnerModal';
 import PaymentButton from './PaymentButton';
@@ -45,17 +46,45 @@ const DeliveryPartnersPanel = ({
     selectedPartner,
     onPayment,
 }) => {
+    const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('kiotviet');
     const [showSettingsModal, setShowSettingsModal] = useState(false);
     const [showPartnerModal, setShowPartnerModal] = useState(false);
     const [partnerModalMode, setPartnerModalMode] = useState('add');
     const [editingPartner, setEditingPartner] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-    // Self-delivery partners list (local state, would come from backend)
-    const [selfPartners, setSelfPartners] = useState([
-        { value: 'haiz', label: 'haiz', partnerCode: 'DT000014', name: 'haiz', partnerType: 'individual' },
-        { value: 'partner1', label: 'Nhân viên giao hàng 1', partnerCode: 'DT000015', name: 'Nhân viên giao hàng 1', partnerType: 'individual' },
-    ]);
+    // Self-delivery partners list from API
+    const [selfPartners, setSelfPartners] = useState([]);
+
+    // Fetch delivery partners from API
+    const fetchPartners = useCallback(async () => {
+        try {
+            const response = await deliveryPartnerApi.list({ limit: 100 });
+            if (response.success && response.data) {
+                setSelfPartners(response.data.map(p => ({
+                    value: p.id?.toString(),
+                    label: p.name,
+                    id: p.id,
+                    partnerCode: p.code,
+                    name: p.name,
+                    phone: p.phone,
+                    email: p.email,
+                    addressDetail: p.address,
+                    partnerType: 'individual',
+                    note: p.notes,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch delivery partners:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (visible) {
+            fetchPartners();
+        }
+    }, [visible, fetchPartners]);
 
     // Self-delivery form state
     const [selfDeliveryData, setSelfDeliveryData] = useState({
@@ -91,23 +120,40 @@ const DeliveryPartnersPanel = ({
         }
     };
 
-    const handlePartnerSave = (data) => {
-        if (partnerModalMode === 'add') {
-            const newPartner = {
-                value: data.partnerCode.toLowerCase(),
-                label: data.name,
-                ...data,
+    const handlePartnerSave = async (data) => {
+        setLoading(true);
+        try {
+            const payload = {
+                name: data.name,
+                phone: data.phone || undefined,
+                email: data.email || undefined,
+                address: data.addressDetail || undefined,
+                notes: data.note || undefined,
             };
-            setSelfPartners(prev => [...prev, newPartner]);
-            setSelfDeliveryData(prev => ({ ...prev, partner: newPartner.value }));
-        } else {
-            setSelfPartners(prev =>
-                prev.map(p =>
-                    p.value === editingPartner.value
-                        ? { ...p, ...data, label: data.name }
-                        : p
-                )
-            );
+
+            if (partnerModalMode === 'add') {
+                const response = await deliveryPartnerApi.create(payload);
+                if (response.success) {
+                    message.success('Thêm đối tác giao hàng thành công');
+                    await fetchPartners();
+                    setSelfDeliveryData(prev => ({ ...prev, partner: response.data?.id?.toString() }));
+                } else {
+                    message.error(response.message || 'Không thể thêm đối tác');
+                }
+            } else {
+                const response = await deliveryPartnerApi.update(editingPartner.id, payload);
+                if (response.success) {
+                    message.success('Cập nhật đối tác thành công');
+                    await fetchPartners();
+                } else {
+                    message.error(response.message || 'Không thể cập nhật đối tác');
+                }
+            }
+        } catch (error) {
+            console.error('Save partner error:', error);
+            message.error(error.response?.data?.message || 'Lỗi khi lưu đối tác');
+        } finally {
+            setLoading(false);
         }
     };
 

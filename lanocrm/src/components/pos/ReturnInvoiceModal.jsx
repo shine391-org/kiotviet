@@ -1,23 +1,49 @@
-import React, { useState } from 'react';
-import { Modal, Input, DatePicker, Table, Button, Pagination } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, Input, DatePicker, Table, Button, Pagination, Spin } from 'antd';
+import posApi from '../../api/posApi';
 import styles from './ReturnInvoiceModal.module.css';
-
-// Mock data
-const MOCK_INVOICES = [
-    { id: 1, code: 'HD031593', time: '06/12/2025 11:31', staff: 'nhung', customer: 'a Việt', total: 940000 },
-    { id: 2, code: 'HD031590', time: '03/12/2025 14:42', staff: 'Chị Phương Anh', customer: 'C.Diệp', total: 1280000 },
-    { id: 3, code: 'HDO1764734397896', time: '03/12/2025 10:59', staff: 'nhung', customer: 'Khách lẻ', total: 800000 },
-    { id: 4, code: 'HD031586', time: '01/12/2025 19:39', staff: 'Chị Phương Anh', customer: 'anh Hà', total: 1380000 },
-    { id: 5, code: 'HD031585', time: '01/12/2025 14:16', staff: 'Chị Phương Anh', customer: 'a Tình', total: 2050000 },
-    { id: 6, code: 'HD031584', time: '01/12/2025 14:05', staff: 'Chị Phương Anh', customer: 'Trần Nguyễn', total: 1650000 },
-    { id: 7, code: 'HD031583', time: '01/12/2025 14:04', staff: 'Chị Phương Anh', customer: 'nguyễn hải thăng', total: 2050000 },
-];
 
 const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
     const [searchType, setSearchType] = useState('code');
+    const [searchValue, setSearchValue] = useState('');
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [invoices, setInvoices] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const pageSize = 7;
+
+    const fetchInvoices = useCallback(async () => {
+        if (!open) return;
+        setLoading(true);
+        try {
+            const response = await posApi.getInvoices({
+                search: searchValue || undefined,
+                page: currentPage,
+                limit: pageSize,
+            });
+            if (response.success) {
+                setInvoices(response.data.map(inv => ({
+                    id: inv.id,
+                    code: inv.invoice_number,
+                    time: inv.issue_date,
+                    staff: inv.created_by_name || 'N/A',
+                    customer: inv.customer_name || 'Khách lẻ',
+                    total: parseFloat(inv.total) || 0,
+                })));
+                setTotal(response.pagination?.total || 0);
+            }
+        } catch (error) {
+            console.error('Failed to fetch invoices:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [open, searchValue, currentPage]);
+
+    useEffect(() => {
+        fetchInvoices();
+    }, [fetchInvoices]);
 
     const searchOptions = [
         { key: 'code', label: 'Theo mã hóa đơn' },
@@ -80,7 +106,12 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
                 <div className={styles.sidebar}>
                     <div className={styles.searchSection}>
                         <h4>Tìm kiếm</h4>
-                        <Input placeholder="Theo mã hóa đơn" className={styles.searchInput} />
+                        <Input 
+                            placeholder="Theo mã hóa đơn" 
+                            className={styles.searchInput}
+                            value={searchValue}
+                            onChange={(e) => setSearchValue(e.target.value)}
+                        />
                         {searchOptions.map((opt) => (
                             <div
                                 key={opt.key}
@@ -111,24 +142,29 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
 
                 {/* Main Content */}
                 <div className={styles.mainContent}>
-                    <Table
-                        columns={columns}
-                        dataSource={MOCK_INVOICES}
-                        rowKey="id"
-                        pagination={false}
-                        size="small"
-                    />
+                    <Spin spinning={loading}>
+                        <Table
+                            columns={columns}
+                            dataSource={invoices}
+                            rowKey="id"
+                            pagination={false}
+                            size="small"
+                            locale={{ emptyText: 'Không có hóa đơn nào' }}
+                        />
+                    </Spin>
 
                     <div className={styles.footer}>
                         <Pagination
                             current={currentPage}
-                            total={693}
-                            pageSize={7}
+                            total={total}
+                            pageSize={pageSize}
                             onChange={setCurrentPage}
                             showSizeChanger={false}
                             size="small"
                         />
-                        <span className={styles.totalText}>Hiển thị 1 - 7 trên tổng số 693 hóa đơn</span>
+                        <span className={styles.totalText}>
+                            Hiển thị {Math.min((currentPage - 1) * pageSize + 1, total)} - {Math.min(currentPage * pageSize, total)} trên tổng số {total} hóa đơn
+                        </span>
                         <Button type="primary" onClick={onQuickReturn} className={styles.quickReturnBtn}>
                             Trả nhanh
                         </Button>

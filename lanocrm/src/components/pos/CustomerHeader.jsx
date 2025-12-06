@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Input, Button, Select, Dropdown } from 'antd';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Input, Button, Select, Dropdown, Spin, Empty } from 'antd';
 import {
     SearchOutlined,
     PlusOutlined,
@@ -11,10 +11,11 @@ import {
     ShopOutlined,
     CheckOutlined,
 } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import AddCustomerModal from './AddCustomerModal';
 import styles from './CustomerHeader.module.css';
 
-// Mock data for sellers
+// Mock data for sellers - có thể fetch từ API users/staff
 const SELLERS = [
     { id: 1, name: 'Trung', phone: '01666100999' },
     { id: 2, name: 'Chị Phương Anh', phone: '' },
@@ -40,7 +41,12 @@ const CustomerHeader = ({
     const [selectedChannel, setSelectedChannel] = useState(SALES_CHANNELS[0]);
     const [sellerSearch, setSellerSearch] = useState('');
     const [channelSearch, setChannelSearch] = useState('');
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [customerResults, setCustomerResults] = useState([]);
+    const [customerLoading, setCustomerLoading] = useState(false);
+    const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
     const customerSearchRef = useRef(null);
+    const searchTimeoutRef = useRef(null);
 
     // F4 shortcut for customer search
     useEffect(() => {
@@ -53,6 +59,51 @@ const CustomerHeader = ({
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
+
+    // Search customers with debounce
+    const searchCustomers = useCallback(async (keyword) => {
+        if (!keyword || keyword.length < 2) {
+            setCustomerResults([]);
+            setShowCustomerDropdown(false);
+            return;
+        }
+        setCustomerLoading(true);
+        try {
+            const response = await posApi.searchCustomers(keyword);
+            if (response.success) {
+                setCustomerResults(response.data || []);
+                setShowCustomerDropdown(true);
+            }
+        } catch (error) {
+            console.error('Customer search error:', error);
+        } finally {
+            setCustomerLoading(false);
+        }
+    }, []);
+
+    const handleCustomerSearchChange = (e) => {
+        const value = e.target.value;
+        setCustomerSearch(value);
+        
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        searchTimeoutRef.current = setTimeout(() => {
+            searchCustomers(value);
+        }, 300);
+    };
+
+    const handleSelectCustomer = (cust) => {
+        onCustomerChange?.({
+            id: cust.id,
+            name: cust.name,
+            phone: cust.phone,
+            email: cust.email,
+            address: cust.address,
+        });
+        setCustomerSearch(cust.name);
+        setShowCustomerDropdown(false);
+    };
 
     // Filter sellers
     const filteredSellers = SELLERS.filter(
@@ -156,18 +207,43 @@ const CustomerHeader = ({
 
             {/* Customer Search Row */}
             <div className={styles.searchRow}>
-                <Input
-                    ref={customerSearchRef}
-                    placeholder="Tìm khách hàng (F4)"
-                    prefix={<SearchOutlined />}
-                    suffix={
-                        <PlusOutlined
-                            className={styles.addIcon}
-                            onClick={() => setShowAddCustomerModal(true)}
-                        />
-                    }
-                    className={styles.searchInput}
-                />
+                <div className={styles.customerSearchWrapper}>
+                    <Input
+                        ref={customerSearchRef}
+                        placeholder="Tìm khách hàng (F4)"
+                        prefix={<SearchOutlined />}
+                        suffix={
+                            customerLoading ? <Spin size="small" /> :
+                            <PlusOutlined
+                                className={styles.addIcon}
+                                onClick={() => setShowAddCustomerModal(true)}
+                            />
+                        }
+                        className={styles.searchInput}
+                        value={customerSearch}
+                        onChange={handleCustomerSearchChange}
+                        onFocus={() => customerResults.length > 0 && setShowCustomerDropdown(true)}
+                        onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
+                    />
+                    {showCustomerDropdown && (
+                        <div className={styles.customerDropdown}>
+                            {customerResults.length > 0 ? (
+                                customerResults.map((cust) => (
+                                    <div
+                                        key={cust.id}
+                                        className={styles.customerItem}
+                                        onMouseDown={() => handleSelectCustomer(cust)}
+                                    >
+                                        <div className={styles.customerName}>{cust.name}</div>
+                                        {cust.phone && <div className={styles.customerPhone}>{cust.phone}</div>}
+                                    </div>
+                                ))
+                            ) : (
+                                <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không tìm thấy khách hàng" />
+                            )}
+                        </div>
+                    )}
+                </div>
                 <Select
                     defaultValue="default"
                     className={styles.priceListSelect}
