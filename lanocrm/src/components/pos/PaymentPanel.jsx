@@ -8,6 +8,7 @@ import {
 } from '@ant-design/icons';
 import CombinedPaymentModal from './CombinedPaymentModal';
 import CustomerHeader from './CustomerHeader';
+import PaymentButton from './PaymentButton';
 import styles from './PaymentPanel.module.css';
 
 const PaymentPanel = ({
@@ -224,15 +225,7 @@ const PaymentPanel = ({
             </div>
 
             {/* Payment Button */}
-            <Button
-                type="primary"
-                size="large"
-                block
-                className={styles.payButton}
-                onClick={onPayment}
-            >
-                THANH TOÁN
-            </Button>
+            <PaymentButton onClick={onPayment} />
 
             {/* Modals */}
             <CombinedPaymentModal

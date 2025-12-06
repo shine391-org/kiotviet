@@ -1,0 +1,181 @@
+.modal :global(.ant-modal-body) {
+    padding: 0;
+}
+
+.modalBody {
+    min-height: 450px;
+}
+
+.tabs {
+    height: 100%;
+}
+
+.tabs :global(.ant-tabs-nav) {
+    width: 180px;
+    padding: 16px 0;
+    border-right: 1px solid #f0f0f0;
+}
+
+.tabs :global(.ant-tabs-tab) {
+    padding: 12px 24px !important;
+    margin: 0 !important;
+    justify-content: flex-start;
+}
+
+.tabs :global(.ant-tabs-tab-active) {
+    background-color: #e6f4ff;
+    border-left: 3px solid #1890ff;
+}
+
+.tabs :global(.ant-tabs-content-holder) {
+    padding: 20px 24px;
+    overflow-y: auto;
+    max-height: 450px;
+}
+
+.tabContent {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Setting Row */
+.settingRow {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.settingRow:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.settingInfo {
+    flex: 1;
+}
+
+.settingLabel {
+    font-weight: 500;
+    color: #333;
+    min-width: 160px;
+    display: inline-block;
+}
+
+.settingDesc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: #888;
+}
+
+.learnMore {
+    color: #1890ff;
+    text-decoration: none;
+}
+
+.learnMore:hover {
+    text-decoration: underline;
+}
+
+/* Form Fields */
+.selectField {
+    width: 280px;
+}
+
+.inputField {
+    width: 280px;
+}
+
+/* Dimensions Group */
+.dimensionsGroup {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.weightInput {
+    width: 70px;
+}
+
+.dimInput {
+    width: 50px;
+}
+
+.unitSelect {
+    width: 70px;
+}
+
+.separator {
+    color: #999;
+    font-size: 14px;
+}
+
+/* Carriers List */
+.carriersList {
+    display: flex;
+    flex-direction: column;
+}
+
+.carrierRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.carrierRow:last-child {
+    border-bottom: none;
+}
+
+.carrierInfo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.carrierLogo {
+    width: 48px;
+    height: 32px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 11px;
+}
+
+.carrierName {
+    font-weight: 500;
+    color: #333;
+}
+
+.carrierActions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.disconnectedIcon {
+    color: #999;
+    font-size: 16px;
+}
+
+.moreBtn {
+    color: #666;
+}
+
+.moreBtn:hover {
+    color: #1890ff;
+}
+
+/* Modal Footer */
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}

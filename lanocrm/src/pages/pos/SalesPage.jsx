@@ -7,6 +7,7 @@ import ProductGrid from '../../components/pos/ProductGrid';
 import ShippingForm from '../../components/pos/ShippingForm';
 import DeliveryPartnersPanel from '../../components/pos/DeliveryPartnersPanel';
 import SalesModeNav from '../../components/pos/SalesModeNav';
+import PaymentButton from '../../components/pos/PaymentButton';
 import styles from './SalesPage.module.css';
 
 /**
@@ -162,6 +163,7 @@ const SalesPage = () => {
                             <span className={styles.itemCount}>{totals.itemCount}</span>
                             <span className={styles.totalAmount}>{totals.subtotal.toLocaleString('vi-VN')}</span>
                         </div>
+                        <PaymentButton onClick={handlePayment} />
                     </div>
                 );
 
@@ -171,9 +173,9 @@ const SalesPage = () => {
                         customer={customer}
                         onCustomerChange={setCustomer}
                         totals={totals}
-                        onPayment={handlePayment}
                         showDeliveryPanel={showDeliveryPanel}
                         onToggleDeliveryPanel={() => setShowDeliveryPanel(!showDeliveryPanel)}
+                        onPayment={handlePayment}
                     />
                 );
 
@@ -220,6 +222,7 @@ const SalesPage = () => {
                         selectedPartner={selectedDeliveryPartner}
                         onSelectPartner={setSelectedDeliveryPartner}
                         onClose={() => setShowDeliveryPanel(false)}
+                        onPayment={handlePayment}
                     />
                 )}
             </div>

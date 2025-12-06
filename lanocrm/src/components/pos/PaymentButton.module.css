@@ -1,0 +1,11 @@
+.paymentSection {
+    padding: var(--space-4);
+    background-color: var(--bg-primary);
+}
+
+.payBtn {
+    font-weight: var(--font-semibold);
+    height: 48px;
+    font-size: var(--text-base);
+    border-radius: var(--radius-lg);
+}

@@ -13,6 +13,8 @@
 /* Tabs */
 .tabs {
     height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 .tabs :global(.ant-tabs-nav) {
@@ -23,6 +25,15 @@
 
 .tabs :global(.ant-tabs-content-holder) {
     overflow-y: auto;
+    flex: 1;
+}
+
+.tabs :global(.ant-tabs-content) {
+    height: 100%;
+}
+
+.tabs :global(.ant-tabs-tabpane) {
+    height: 100%;
 }
 
 .tabLabel {
@@ -33,6 +44,9 @@
 
 .tabContent {
     padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
 /* Info Box */
@@ -60,11 +74,17 @@
 
 .settingBtn {
     color: var(--text-tertiary);
+    font-size: 18px;
+}
+
+.settingBtn:hover {
+    color: var(--color-primary-500);
 }
 
 /* Partners Section */
 .partnersSection {
     text-align: center;
+    flex: 1;
 }
 
 .partnersTitle {
@@ -105,11 +125,85 @@
 }
 
 .partnerLogo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    line-height: 1.1;
+}
+
+.logoMain {
+    font-size: 14px;
+}
+
+.logoSub {
+    font-size: 8px;
+    font-weight: var(--font-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Self Delivery Form */
+.selfDeliveryForm {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.formRow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.formLabel {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
     font-weight: var(--font-medium);
 }
 
-/* Self Delivery Content */
+.partnerSelectGroup {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.partnerSelect {
+    flex: 1;
+}
+
+.iconBtn {
+    color: var(--text-tertiary);
+    padding: 4px 8px;
+}
+
+.iconBtn:hover {
+    color: var(--color-primary-500);
+}
+
+.fullWidthSelect {
+    width: 100%;
+}
+
+.formInput {
+    width: 100%;
+}
+
+/* Payment Section */
+.paymentSection {
+    margin-top: auto;
+    padding-top: var(--space-4);
+}
+
+.payBtn {
+    font-weight: var(--font-semibold);
+    height: 48px;
+    font-size: var(--text-base);
+}
+
+/* Self Delivery Content (placeholder) */
 .selfDeliveryContent {
     text-align: center;
     padding: var(--space-8);

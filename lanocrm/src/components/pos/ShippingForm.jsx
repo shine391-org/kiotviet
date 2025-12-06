@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Input, Button, Select, Switch, Cascader, Tooltip } from 'antd';
+import { Input, Select, Switch, Cascader, Tooltip, Button } from 'antd';
 import {
     EnvironmentOutlined,
     UserOutlined,
@@ -9,6 +9,7 @@ import {
     DoubleLeftOutlined,
 } from '@ant-design/icons';
 import CustomerHeader from './CustomerHeader';
+import PaymentButton from './PaymentButton';
 import styles from './ShippingForm.module.css';
 
 // Mock address data
@@ -55,10 +56,9 @@ const ShippingForm = ({
     customer,
     onCustomerChange,
     totals,
-    onPayment,
-    onDelivery,
     showDeliveryPanel,
     onToggleDeliveryPanel,
+    onPayment,
 }) => {
     const [formData, setFormData] = useState({
         savedAddress: '',
@@ -245,24 +245,10 @@ const ShippingForm = ({
                 </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className={styles.actionButtons}>
-                <Button
-                    size="large"
-                    className={styles.deliveryBtn}
-                    onClick={onDelivery}
-                >
-                    GIAO HÀNG
-                </Button>
-                <Button
-                    type="primary"
-                    size="large"
-                    className={styles.payBtn}
-                    onClick={onPayment}
-                >
-                    THANH TOÁN
-                </Button>
-            </div>
+            {/* Payment Button - only show when DeliveryPanel is closed */}
+            {!showDeliveryPanel && (
+                <PaymentButton onClick={onPayment} />
+            )}
         </div>
     );
 };
