@@ -25,7 +25,8 @@ class BaselineSchema extends Migration
 `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY (`id`),
 KEY `idx_user_date` (`user_id`,`created_at`),
-KEY `idx_module_model` (`module`,`model_type`,`model_id`)
+KEY `idx_module_model` (`module`,`model_type`,`model_id`),
+CONSTRAINT `fk_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;');
         $this->db->query('DROP TABLE IF EXISTS `activity_types`;');
         $this->db->query('CREATE TABLE `activity_types` (
@@ -153,7 +154,9 @@ CONSTRAINT `fk_assignment_rules_last_assigned_id` FOREIGN KEY (`last_assigned_id
 `status` varchar(20) DEFAULT \'present\',
 `created_at` datetime DEFAULT NULL,
 `updated_at` datetime DEFAULT NULL,
-PRIMARY KEY (`id`)
+PRIMARY KEY (`id`),
+KEY `fk_attendance_employee_id` (`employee_id`),
+CONSTRAINT `fk_attendance_employee` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
         $this->db->query('DROP TABLE IF EXISTS `attendances`;');
         $this->db->query('CREATE TABLE `attendances` (
@@ -283,7 +286,9 @@ CONSTRAINT `fk_bill_of_materials_product_id` FOREIGN KEY (`product_id`) REFERENC
 `is_default` tinyint(1) DEFAULT \'0\',
 `created_at` datetime DEFAULT NULL,
 `updated_at` datetime DEFAULT NULL,
-PRIMARY KEY (`id`)
+PRIMARY KEY (`id`),
+KEY `fk_bom_product_id` (`product_id`),
+CONSTRAINT `fk_bom_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
         $this->db->query('DROP TABLE IF EXISTS `bom_items`;');
         $this->db->query('CREATE TABLE `bom_items` (
@@ -815,7 +820,13 @@ PRIMARY KEY (`id`),
 UNIQUE KEY `uq_employee_code` (`employee_code`),
 KEY `idx_employee_status` (`status`),
 KEY `fk_employees_branch_id` (`branch_id`),
-CONSTRAINT `fk_employees_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+KEY `fk_employees_department_id` (`department_id`),
+KEY `fk_employees_position_id` (`position_id`),
+KEY `fk_employees_user_id` (`user_id`),
+CONSTRAINT `fk_employees_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+CONSTRAINT `fk_employees_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+CONSTRAINT `fk_employees_position` FOREIGN KEY (`position_id`) REFERENCES `positions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+CONSTRAINT `fk_employees_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
         $this->db->query('DROP TABLE IF EXISTS `exchange_rates`;');
         $this->db->query('CREATE TABLE `exchange_rates` (
@@ -1072,7 +1083,9 @@ PRIMARY KEY (`id`)
 `description` varchar(255) DEFAULT NULL,
 `created_at` datetime DEFAULT NULL,
 `updated_at` datetime DEFAULT NULL,
-PRIMARY KEY (`id`)
+PRIMARY KEY (`id`),
+KEY `fk_jel_journal_entry_id` (`journal_entry_id`),
+CONSTRAINT `fk_jel_journal_entry` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
         $this->db->query('DROP TABLE IF EXISTS `knowledge_base_articles`;');
         $this->db->query('CREATE TABLE `knowledge_base_articles` (
@@ -1976,7 +1989,9 @@ CONSTRAINT `fk_pos_shifts_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`
 `level` int DEFAULT NULL,
 `created_at` datetime DEFAULT NULL,
 `updated_at` datetime DEFAULT NULL,
-PRIMARY KEY (`id`)
+PRIMARY KEY (`id`),
+KEY `fk_positions_department_id` (`department_id`),
+CONSTRAINT `fk_positions_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
         $this->db->query('DROP TABLE IF EXISTS `price_history`;');
         $this->db->query('CREATE TABLE `price_history` (
@@ -2026,10 +2041,12 @@ CONSTRAINT `fk_price_list_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCE
 `end_date` date DEFAULT NULL,
 `priority` int DEFAULT \'0\',
 `is_active` tinyint(1) DEFAULT \'1\',
+`is_system` tinyint(1) DEFAULT \'0\',
 `formula` text,
 `base_price_list_id` bigint unsigned DEFAULT NULL,
 `auto_update` tinyint(1) DEFAULT \'0\',
 `rounding_rule` varchar(50) DEFAULT \'none\',
+`config` json DEFAULT NULL,
 `created_at` datetime DEFAULT NULL,
 `updated_at` datetime DEFAULT NULL,
 `deleted_at` datetime DEFAULT NULL,
@@ -2150,6 +2167,35 @@ CONSTRAINT `fk_product_batches_product_id` FOREIGN KEY (`product_id`) REFERENCES
 CONSTRAINT `fk_product_batches_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
 CONSTRAINT `fk_product_batches_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;');
+        $this->db->query('DROP TABLE IF EXISTS `product_bundles`;');
+        $this->db->query('CREATE TABLE `product_bundles` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`parent_product_id` bigint unsigned NOT NULL,
+`child_product_id` bigint unsigned NOT NULL,
+`quantity` decimal(12,3) NOT NULL DEFAULT \'1.000\',
+`created_at` datetime DEFAULT NULL,
+`updated_at` datetime DEFAULT NULL,
+PRIMARY KEY (`id`),
+KEY `product_bundles_parent_product_id_foreign` (`parent_product_id`),
+KEY `product_bundles_child_product_id_foreign` (`child_product_id`),
+CONSTRAINT `product_bundles_child_product_id_foreign` FOREIGN KEY (`child_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+CONSTRAINT `product_bundles_parent_product_id_foreign` FOREIGN KEY (`parent_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;');
+        $this->db->query('DROP TABLE IF EXISTS `product_channels`;');
+        $this->db->query('CREATE TABLE `product_channels` (
+`id` bigint unsigned NOT NULL AUTO_INCREMENT,
+`product_id` bigint unsigned NOT NULL,
+`channel` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+`channel_product_id` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+`status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT \'disconnected\',
+`sync_status` varchar(20) COLLATE utf8mb4_general_ci NOT NULL DEFAULT \'synced\',
+`last_sync_at` datetime DEFAULT NULL,
+`created_at` datetime DEFAULT NULL,
+`updated_at` datetime DEFAULT NULL,
+PRIMARY KEY (`id`),
+UNIQUE KEY `product_id_channel` (`product_id`,`channel`),
+CONSTRAINT `product_channels_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;');
         $this->db->query('DROP TABLE IF EXISTS `product_categories`;');
         $this->db->query('CREATE TABLE `product_categories` (
 `id` bigint unsigned NOT NULL AUTO_INCREMENT,
@@ -2226,7 +2272,8 @@ KEY `customer_group_id` (`customer_group_id`),
 KEY `price_type` (`price_type`),
 KEY `status` (`status`),
 CONSTRAINT `fk_product_prices_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
-CONSTRAINT `fk_product_prices_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE
+CONSTRAINT `fk_product_prices_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE,
+CONSTRAINT `fk_product_prices_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
         $this->db->query('DROP TABLE IF EXISTS `product_serial_numbers`;');
         $this->db->query('CREATE TABLE `product_serial_numbers` (
@@ -2275,7 +2322,9 @@ CONSTRAINT `fk_product_serial_numbe_variant_id` FOREIGN KEY (`variant_id`) REFER
 PRIMARY KEY (`id`),
 UNIQUE KEY `unique_product_branch` (`product_id`,`branch_id`),
 KEY `idx_branch` (`branch_id`),
-KEY `idx_status` (`status`)
+KEY `idx_status` (`status`),
+CONSTRAINT `fk_psbb_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+CONSTRAINT `fk_psbb_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;');
         $this->db->query('DROP TABLE IF EXISTS `product_variants_v2`;');
         $this->db->query('CREATE TABLE `product_variants_v2` (

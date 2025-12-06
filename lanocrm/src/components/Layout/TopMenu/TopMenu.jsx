@@ -222,9 +222,8 @@ const TopMenu = () => {
                 <div className={styles.topSubmenuSection}>{section}</div>
               )}
               <div
-                className={`${styles.topSubmenuItems} ${
-                  section === 'Khác' ? styles.topSubmenuItemsWithDivider : ''
-                }`}
+                className={`${styles.topSubmenuItems} ${section === 'Khác' ? styles.topSubmenuItemsWithDivider : ''
+                  }`}
               >
                 {items.map((subItem) => (
                   <div key={subItem.key} className={styles.topSubmenuItem}>
@@ -264,11 +263,13 @@ const TopMenu = () => {
             return (
               <li key={menuItem.key} className={styles.topMenuItem}>
                 {menuItem.subItems && menuItem.subItems.length > 0 ? (
-                  <div className={styles.topMenuDropdown}>
+                  <div
+                    className={styles.topMenuDropdown}
+                    onMouseLeave={() => setOpenSubmenu(null)}
+                  >
                     <button
-                      className={`${styles.topMenuLink} ${
-                        isSubmenuOpen(menuItem) ? styles.active : ''
-                      } ${isSubmenuActive(menuItem) ? styles.hasActiveChild : ''}`}
+                      className={`${styles.topMenuLink} ${isSubmenuOpen(menuItem) ? styles.active : ''
+                        } ${isSubmenuActive(menuItem) ? styles.hasActiveChild : ''}`}
                       onClick={() => toggleSubmenu(menuItem.key)}
                       type="button"
                       title={menuItem.label}

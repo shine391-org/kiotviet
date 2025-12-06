@@ -1,0 +1,81 @@
+/* ReceiptDetailModal.module.css */
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.receiptCode {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.branchTag {
+    padding: 4px 12px;
+    background: #f0f5ff;
+    color: #1890ff;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.metaGrid {
+    display: flex;
+    gap: 32px;
+    padding: 16px 0;
+}
+
+.metaItem {
+    display: flex;
+    gap: 8px;
+}
+
+.metaLabel {
+    color: #8c8c8c;
+}
+
+.supplierLink {
+    padding-bottom: 16px;
+    display: flex;
+    gap: 8px;
+}
+
+.tableSection {
+    margin: 16px 0;
+}
+
+.tableHeader {
+    margin-bottom: 12px;
+}
+
+.summary {
+    background: #fafbfc;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 16px;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+}
+
+.summaryRow:not(:last-child) {
+    border-bottom: 1px dashed #e8e8e8;
+}
+
+.notesSection {
+    padding: 16px 0;
+    color: #8c8c8c;
+    display: flex;
+    align-items: center;
+}

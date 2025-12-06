@@ -1,0 +1,103 @@
+/* SupplierDetailPanel.module.css */
+
+.panel {
+    background: #fff;
+    padding: 16px 20px;
+}
+
+.panel :global(.ant-tabs-nav) {
+    margin-bottom: 16px;
+}
+
+.panel :global(.ant-tabs-tab) {
+    padding: 8px 0;
+    font-size: 13px;
+}
+
+.infoContent {
+    padding: 0;
+}
+
+.infoHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.supplierName {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+    color: #1f2937;
+}
+
+.supplierCode {
+    font-size: 13px;
+    font-weight: 400;
+    color: #6b7280;
+}
+
+.infoMeta {
+    display: flex;
+    gap: 20px;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.branchTag {
+    padding: 4px 12px;
+    background: #eff6ff;
+    color: #2563eb;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.infoItem {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.infoItem label {
+    font-size: 11px;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.infoItem span {
+    font-size: 13px;
+    color: #374151;
+}
+
+.infoActions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.infoActions :global(.ant-btn) {
+    border-radius: 6px;
+}
+
+.payableActions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+}
+
+.payableActions :global(.ant-btn) {
+    border-radius: 6px;
+}

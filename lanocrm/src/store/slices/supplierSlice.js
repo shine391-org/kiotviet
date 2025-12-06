@@ -8,10 +8,12 @@ import supplierApi from '../../api/supplierApi';
  * @agent-reusable: MEDIUM
  */
 const defaultPagination = { page: 1, limit: 15, total: 0, total_pages: 0 };
+const defaultSummary = { total_debt: 0, total_purchase: 0 };
 
 const initialState = {
   items: [],
   pagination: defaultPagination,
+  summary: defaultSummary,
   current: null,
   loading: false,
   currentLoading: false,
@@ -68,6 +70,7 @@ const supplierSlice = createSlice({
         state.loading = false;
         state.items = action.payload?.data || [];
         state.pagination = action.payload?.pagination || defaultPagination;
+        state.summary = action.payload?.summary || defaultSummary;
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
         state.loading = false;
