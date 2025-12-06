@@ -129,8 +129,10 @@ const PaymentModal = ({ open, supplier, onCancel, onSuccess }) => {
                         <InputNumber
                             style={{ width: '100%' }}
                             placeholder="Nhập số tiền thanh toán"
-                            formatter={(value) => `${value} `.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                            parser={(value) => value.replace(/\,/g, '')}
+                            formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                            parser={(value) => value.replace(/,/g, '')}
+                            min={0}
+                            max={999999999999}
                         />
                     </Form.Item>
 

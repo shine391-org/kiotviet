@@ -59,7 +59,7 @@ class SuppliersController extends BaseController
     }
 
     /**
-     * Get single supplier.
+     * Get single supplier with receipts and payables.
      * GET /api/suppliers/{id}
      */
     public function show($id = null)
@@ -71,8 +71,101 @@ class SuppliersController extends BaseController
                 return $this->failNotFound('Supplier not found');
             }
 
+            // Get receipts (lịch sử nhập/trả hàng) from purchase_orders + goods_receipts
+            $receipts = $this->getSupplierReceipts((int) $id);
+            
+            // Get payables (công nợ) from supplier_debt_transactions
+            $payables = $this->getSupplierPayables((int) $id);
+
+            $supplier['receipts'] = $receipts;
+            $supplier['payables'] = $payables;
+
             return $this->respond(['data' => $supplier]);
         });
+    }
+
+    /**
+     * Get supplier receipts (purchase orders + goods receipts).
+     */
+    private function getSupplierReceipts(int $partnerId): array
+    {
+        $db = \Config\Database::connect();
+        
+        // Get purchase orders for this supplier
+        $orders = $db->table('purchase_orders po')
+            ->select('po.order_number as code, po.order_date as time, po.total, po.status, u.full_name as creator, b.name as branch')
+            ->join('users u', 'u.id = po.created_by', 'left')
+            ->join('branches b', 'b.id = po.branch_id', 'left')
+            ->where('po.partner_id', $partnerId)
+            ->orWhere('po.supplier_id', $partnerId)
+            ->orderBy('po.order_date', 'DESC')
+            ->limit(50)
+            ->get()
+            ->getResultArray();
+
+        return array_map(function ($row) {
+            return [
+                'code' => $row['code'] ?? '',
+                'time' => $row['time'] ? date('d/m/Y H:i', strtotime($row['time'])) : '',
+                'creator' => $row['creator'] ?? '',
+                'branch' => $row['branch'] ?? '',
+                'total' => (float) ($row['total'] ?? 0),
+                'status' => $this->mapPOStatus($row['status'] ?? ''),
+            ];
+        }, $orders);
+    }
+
+    /**
+     * Get supplier payables (debt transactions).
+     */
+    private function getSupplierPayables(int $partnerId): array
+    {
+        $transactions = $this->debtModel
+            ->where('partner_id', $partnerId)
+            ->orderBy('transaction_date', 'DESC')
+            ->limit(50)
+            ->findAll();
+
+        return array_map(function ($row) {
+            $type = $row['type'] ?? '';
+            $typeLabel = match ($type) {
+                'adjust' => 'Điều chỉnh',
+                'payment' => 'Thanh toán',
+                'discount' => 'Chiết khấu',
+                default => 'Nhập hàng',
+            };
+
+            // For payment/discount, value is negative (reduces debt)
+            $value = (float) ($row['amount'] ?? 0);
+            if (in_array($type, ['payment', 'discount'])) {
+                $value = -$value;
+            }
+
+            return [
+                'code' => $row['reference_type'] ? strtoupper(substr($row['reference_type'], 0, 2)) . '-' . ($row['id'] ?? '') : 'TX-' . ($row['id'] ?? ''),
+                'time' => $row['transaction_date'] ? date('d/m/Y H:i', strtotime($row['transaction_date'])) : '',
+                'type' => $typeLabel,
+                'value' => $value,
+                'payable' => (float) ($row['debt_after'] ?? 0),
+            ];
+        }, $transactions);
+    }
+
+    /**
+     * Map PO status to Vietnamese.
+     */
+    private function mapPOStatus(string $status): string
+    {
+        return match ($status) {
+            'draft' => 'Nháp',
+            'pending' => 'Chờ xác nhận',
+            'confirmed' => 'Đã xác nhận',
+            'in_transit' => 'Đang vận chuyển',
+            'received' => 'Đã nhận hàng',
+            'completed' => 'Hoàn thành',
+            'cancelled' => 'Đã hủy',
+            default => $status,
+        };
     }
 
     /**
@@ -312,6 +405,117 @@ class SuppliersController extends BaseController
             return $this->respond([
                 'data' => $transactions,
                 'current_debt' => $supplier['current_debt'] ?? $supplier['debt_amount'] ?? 0,
+            ]);
+        });
+    }
+
+    // ============== EXPORT / IMPORT ==============
+
+    /**
+     * Export suppliers list to Excel.
+     * GET /api/suppliers/export
+     */
+    public function export()
+    {
+        return $this->wrap(function () {
+            $filters = $this->request->getGet() ?? [];
+            $exportService = new \App\Services\Suppliers\SupplierExportService();
+            $filepath = $exportService->exportSuppliers($filters);
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="suppliers_' . date('Ymd_His') . '.xlsx"')
+                ->setBody(file_get_contents($filepath));
+        });
+    }
+
+    /**
+     * Export supplier receipts (purchase history) to Excel.
+     * GET /api/suppliers/{id}/export-receipts
+     */
+    public function exportReceipts($id = null)
+    {
+        return $this->wrap(function () use ($id) {
+            $supplier = $this->repo->findById((int) $id);
+            if (!$supplier) {
+                return $this->failNotFound('Supplier not found');
+            }
+
+            $exportService = new \App\Services\Suppliers\SupplierExportService();
+            $filepath = $exportService->exportReceipts((int) $id);
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="supplier_receipts_' . $supplier['code'] . '_' . date('Ymd_His') . '.xlsx"')
+                ->setBody(file_get_contents($filepath));
+        });
+    }
+
+    /**
+     * Export supplier payables (debt history) to Excel.
+     * GET /api/suppliers/{id}/export-payables
+     */
+    public function exportPayables($id = null)
+    {
+        return $this->wrap(function () use ($id) {
+            $supplier = $this->repo->findById((int) $id);
+            if (!$supplier) {
+                return $this->failNotFound('Supplier not found');
+            }
+
+            $exportService = new \App\Services\Suppliers\SupplierExportService();
+            $filepath = $exportService->exportPayables((int) $id);
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="supplier_payables_' . $supplier['code'] . '_' . date('Ymd_His') . '.xlsx"')
+                ->setBody(file_get_contents($filepath));
+        });
+    }
+
+    /**
+     * Get import template.
+     * GET /api/suppliers/import-template
+     */
+    public function importTemplate()
+    {
+        return $this->wrap(function () {
+            $importService = new \App\Services\Suppliers\SupplierImportService();
+            $filepath = $importService->getTemplate();
+
+            return $this->response
+                ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->setHeader('Content-Disposition', 'attachment; filename="supplier_import_template.xlsx"')
+                ->setBody(file_get_contents($filepath));
+        });
+    }
+
+    /**
+     * Import suppliers from Excel.
+     * POST /api/suppliers/import
+     */
+    public function import()
+    {
+        return $this->wrap(function () {
+            $file = $this->request->getFile('file');
+            
+            if (!$file || !$file->isValid()) {
+                return $this->failValidationErrors('Vui lòng chọn file Excel hợp lệ');
+            }
+
+            $ext = $file->getClientExtension();
+            if (!in_array($ext, ['xlsx', 'xls'])) {
+                return $this->failValidationErrors('File phải có định dạng .xlsx hoặc .xls');
+            }
+
+            $filepath = $file->getTempName();
+            $importService = new \App\Services\Suppliers\SupplierImportService();
+            $result = $importService->importFromExcel($filepath);
+
+            return $this->respond([
+                'success' => true,
+                'message' => "Import hoàn tất: {$result['success']}/{$result['total']} thành công",
+                'data' => $result,
             ]);
         });
     }

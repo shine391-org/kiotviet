@@ -81,8 +81,9 @@ class ProductVariantsDemoSeeder extends Seeder
                 'image_count' => 1,
             ];
 
-            // Category Link
-            $categoryLinks[] = ['product_id' => $productId, 'category_id' => 101, 'created_at' => $now];
+            // Category Link (dùng category IDs từ CategorySeeder: 11, 12, 13, 21, 31, 32)
+            $catIds = [11, 12, 13, 21, 31, 32];
+            $categoryLinks[] = ['product_id' => $productId, 'category_id' => $catIds[$i % count($catIds)], 'created_at' => $now];
 
             // Legacy Price (Base)
             $prices[] = [

@@ -102,6 +102,94 @@ const supplierApi = {
     const response = await axiosInstance.get(`/suppliers/${id}/debt-history`, { params: { limit } });
     return response.data;
   },
+
+  // ============== EXPORT / IMPORT ==============
+
+  /**
+   * Export suppliers list to Excel.
+   * GET /api/suppliers/export
+   */
+  exportSuppliers: async (params = {}) => {
+    const response = await axiosInstance.get('/suppliers/export', {
+      params,
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `suppliers_${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Export supplier receipts to Excel.
+   * GET /api/suppliers/:id/export-receipts
+   */
+  exportReceipts: async (id) => {
+    const response = await axiosInstance.get(`/suppliers/${id}/export-receipts`, {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `supplier_receipts_${id}_${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Export supplier payables to Excel.
+   * GET /api/suppliers/:id/export-payables
+   */
+  exportPayables: async (id) => {
+    const response = await axiosInstance.get(`/suppliers/${id}/export-payables`, {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `supplier_payables_${id}_${Date.now()}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Download import template.
+   * GET /api/suppliers/import-template
+   */
+  downloadImportTemplate: async () => {
+    const response = await axiosInstance.get('/suppliers/import-template', {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'supplier_import_template.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
+
+  /**
+   * Import suppliers from Excel file.
+   * POST /api/suppliers/import
+   */
+  importSuppliers: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await axiosInstance.post('/suppliers/import', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
 };
 
 export default supplierApi;

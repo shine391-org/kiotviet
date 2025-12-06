@@ -45,6 +45,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-001',
                 'partner_id' => 1,
+                'supplier_id' => 1,
                 'branch_id' => 1,
                 'user_id' => 1,
                 'order_date' => $now->subDays(30)->toDateTimeString(),
@@ -59,6 +60,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-002',
                 'partner_id' => 2,
+                'supplier_id' => 2,
                 'branch_id' => 1,
                 'user_id' => 2,
                 'order_date' => $now->subDays(25)->toDateTimeString(),
@@ -73,6 +75,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-003',
                 'partner_id' => 3,
+                'supplier_id' => 3,
                 'branch_id' => 2,
                 'user_id' => 1,
                 'order_date' => $now->subDays(20)->toDateTimeString(),
@@ -87,6 +90,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-004',
                 'partner_id' => 4,
+                'supplier_id' => 4,
                 'branch_id' => 1,
                 'user_id' => 2,
                 'order_date' => $now->subDays(15)->toDateTimeString(),
@@ -101,6 +105,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-005',
                 'partner_id' => 5,
+                'supplier_id' => 5,
                 'branch_id' => 2,
                 'user_id' => 1,
                 'order_date' => $now->subDays(10)->toDateTimeString(),
@@ -115,6 +120,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-006',
                 'partner_id' => 6,
+                'supplier_id' => 6,
                 'branch_id' => 1,
                 'user_id' => 2,
                 'order_date' => $now->subDays(7)->toDateTimeString(),
@@ -129,6 +135,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-007',
                 'partner_id' => 7,
+                'supplier_id' => 7,
                 'branch_id' => 2,
                 'user_id' => 1,
                 'order_date' => $now->subDays(5)->toDateTimeString(),
@@ -143,6 +150,7 @@ class PurchaseOrdersDemoSeeder extends Seeder
             [
                 'order_number' => 'PO-2024-008',
                 'partner_id' => 8,
+                'supplier_id' => 8,
                 'branch_id' => 1,
                 'user_id' => 2,
                 'order_date' => $now->subDays(3)->toDateTimeString(),
@@ -212,6 +220,176 @@ class PurchaseOrdersDemoSeeder extends Seeder
 
         echo "      ✓ Created " . count($purchaseOrders) . " demo purchase orders\n";
         echo "      ✓ Created " . count($poItems) . " purchase order items\n";
+        
+        // Seed Goods Receipts (phiếu nhập kho) for completed/received POs
+        $this->seedGoodsReceipts($poIds, $now);
+        
+        // Seed Supplier Debt Transactions (công nợ nhà cung cấp)
+        $this->seedSupplierDebt($purchaseOrders, $now);
+    }
+    
+    private function seedGoodsReceipts(array $poIds, $now): void
+    {
+        if (!$this->db->tableExists('goods_receipts') || !$this->db->tableExists('goods_receipt_items')) {
+            return;
+        }
+        
+        // Cleanup old demo data
+        $this->db->table('goods_receipts')->like('receipt_number', 'GRN-2024-', 'after')->delete();
+        
+        // Create goods receipts for completed/received POs (first 3)
+        $receipts = [
+            [
+                'receipt_number' => 'GRN-2024-001',
+                'purchase_order_id' => $poIds[0]['id'],
+                'branch_id' => 1,
+                'status' => 'completed',
+                'created_at' => $now->subDays(23),
+                'updated_at' => $now->subDays(23),
+            ],
+            [
+                'receipt_number' => 'GRN-2024-002',
+                'purchase_order_id' => $poIds[1]['id'],
+                'branch_id' => 1,
+                'status' => 'completed',
+                'created_at' => $now->subDays(18),
+                'updated_at' => $now->subDays(18),
+            ],
+            [
+                'receipt_number' => 'GRN-2024-003',
+                'purchase_order_id' => $poIds[2]['id'],
+                'branch_id' => 2,
+                'status' => 'completed',
+                'created_at' => $now->subDays(13),
+                'updated_at' => $now->subDays(13),
+            ],
+        ];
+        
+        foreach ($receipts as $receipt) {
+            $this->db->table('goods_receipts')->insert($receipt);
+        }
+        
+        // Get inserted receipt IDs
+        $grnIds = $this->db->table('goods_receipts')
+            ->select('id, purchase_order_id')
+            ->like('receipt_number', 'GRN-2024-', 'after')
+            ->orderBy('id', 'ASC')
+            ->get()
+            ->getResultArray();
+        
+        if (empty($grnIds)) {
+            return;
+        }
+        
+        // Goods receipt items
+        $grnItems = [
+            // GRN-1 (from PO-1)
+            ['goods_receipt_id' => $grnIds[0]['id'], 'product_id' => 501, 'quantity' => 100, 'rate' => 400000, 'amount' => 40000000],
+            ['goods_receipt_id' => $grnIds[0]['id'], 'product_id' => 502, 'quantity' => 20, 'rate' => 500000, 'amount' => 10000000],
+            // GRN-2 (from PO-2)
+            ['goods_receipt_id' => $grnIds[1]['id'], 'product_id' => 503, 'quantity' => 50, 'rate' => 450000, 'amount' => 22500000],
+            ['goods_receipt_id' => $grnIds[1]['id'], 'product_id' => 501, 'quantity' => 25, 'rate' => 500000, 'amount' => 12500000],
+            // GRN-3 (from PO-3)
+            ['goods_receipt_id' => $grnIds[2]['id'], 'product_id' => 502, 'quantity' => 30, 'rate' => 1500000, 'amount' => 45000000],
+        ];
+        
+        foreach ($grnItems as $item) {
+            $item['created_at'] = $now;
+            $item['updated_at'] = $now;
+            $this->db->table('goods_receipt_items')->insert($item);
+        }
+        
+        echo "      ✓ Created " . count($receipts) . " goods receipts\n";
+        echo "      ✓ Created " . count($grnItems) . " goods receipt items\n";
+    }
+    
+    private function seedSupplierDebt(array $purchaseOrders, $now): void
+    {
+        if (!$this->db->tableExists('supplier_debt_transactions')) {
+            return;
+        }
+        
+        // Cleanup old demo data
+        $this->db->table('supplier_debt_transactions')->where('reference_type', 'purchase_order')->delete();
+        
+        $debtTransactions = [];
+        $partnerDebts = []; // Track debt per partner
+        
+        foreach ($purchaseOrders as $po) {
+            $partnerId = $po['partner_id'];
+            $total = $po['total'];
+            $paid = $po['paid_amount'];
+            $unpaid = $total - $paid;
+            
+            // Skip cancelled or draft orders
+            if (in_array($po['status'], ['cancelled', 'draft'])) {
+                continue;
+            }
+            
+            // Initialize partner debt tracking
+            if (!isset($partnerDebts[$partnerId])) {
+                $partnerDebts[$partnerId] = 0;
+            }
+            
+            $debtBefore = $partnerDebts[$partnerId];
+            
+            // Transaction 1: Debt increase from purchase (nhập hàng tăng nợ)
+            if ($unpaid > 0) {
+                $debtTransactions[] = [
+                    'partner_id' => $partnerId,
+                    'type' => 'adjust',
+                    'amount' => $total,
+                    'debt_before' => $debtBefore,
+                    'debt_after' => $debtBefore + $total,
+                    'payment_method' => null,
+                    'executor_id' => $po['created_by'],
+                    'note' => "Nhập hàng từ đơn {$po['order_number']}",
+                    'reference_type' => 'purchase_order',
+                    'reference_id' => null, // Will be updated later if needed
+                    'transaction_date' => $po['order_date'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $partnerDebts[$partnerId] += $total;
+            }
+            
+            // Transaction 2: Payment (thanh toán giảm nợ)
+            if ($paid > 0) {
+                $debtBefore = $partnerDebts[$partnerId];
+                $debtTransactions[] = [
+                    'partner_id' => $partnerId,
+                    'type' => 'payment',
+                    'amount' => $paid,
+                    'debt_before' => $debtBefore,
+                    'debt_after' => $debtBefore - $paid,
+                    'payment_method' => 'bank_transfer',
+                    'executor_id' => $po['created_by'],
+                    'note' => "Thanh toán đơn {$po['order_number']}",
+                    'reference_type' => 'purchase_order',
+                    'reference_id' => null,
+                    'transaction_date' => $po['order_date'],
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+                $partnerDebts[$partnerId] -= $paid;
+            }
+        }
+        
+        foreach ($debtTransactions as $tx) {
+            $this->db->table('supplier_debt_transactions')->insert($tx);
+        }
+        
+        // Update partner debt_amount
+        foreach ($partnerDebts as $partnerId => $debt) {
+            if ($debt > 0) {
+                $this->db->table('partners')
+                    ->where('id', $partnerId)
+                    ->update(['debt_amount' => $debt]);
+            }
+        }
+        
+        echo "      ✓ Created " . count($debtTransactions) . " supplier debt transactions\n";
+        echo "      ✓ Updated " . count($partnerDebts) . " partner debt amounts\n";
     }
     
     private function cleanupExisting(): void

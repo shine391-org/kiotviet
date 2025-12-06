@@ -6,6 +6,13 @@ cd /var/www/html
 
 echo "=== Starting Application Setup ==="
 
+# Fix writable directory permissions FIRST (before anything else)
+echo "Setting up writable directories..."
+mkdir -p writable/cache writable/logs writable/session writable/uploads writable/debugbar
+chown -R www-data:www-data writable
+chmod -R 775 writable
+echo "✓ Writable directories configured"
+
 DB_HOST="${DB_HOST:-db}"
 DB_USER="${DB_USER:-lanocrm_user}"
 DB_PASSWORD="${DB_PASSWORD:-KP7n4RjcDbedSE2W8GgA}"

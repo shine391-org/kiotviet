@@ -53,7 +53,7 @@ class DemoSeeder extends Seeder
             
             // Product Data
             'ProductVariantsDemoSeeder', // Variants
-            'PriceListDemoSeeder',       // Price Lists
+            // PriceListSeeder gọi ở đây (sau ProductVariantsDemoSeeder) để tránh FK cascade delete
             'ProductWarrantiesDemoSeeder', // Warranties
             'ManufacturingDemoSeeder',   // BOM (needs Products)
 
@@ -88,6 +88,11 @@ class DemoSeeder extends Seeder
             if (class_exists($class)) {
                 echo "Seeding demo: {$seederName}\n";
                 $this->call($class);
+                
+                // Gọi PriceListSeeder sau ProductVariantsDemoSeeder (tránh FK cascade delete)
+                if ($seederName === 'ProductVariantsDemoSeeder') {
+                    $this->call(\App\Database\Seeds\PriceListSeeder::class);
+                }
             } else {
                 echo "⚠️  Warning: Seeder {$seederName} not found\n";
             }

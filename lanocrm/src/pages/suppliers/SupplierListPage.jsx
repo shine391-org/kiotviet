@@ -89,6 +89,8 @@ const SupplierListPage = () => {
   const [selectedSupplierForAction, setSelectedSupplierForAction] = useState(null);
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
   const [selectedReceiptCode, setSelectedReceiptCode] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   // Handler for opening edit modal
   const handleOpenEdit = (supplier) => {
@@ -114,6 +116,50 @@ const SupplierListPage = () => {
   const handleReceiptClick = (code) => {
     setSelectedReceiptCode(code);
     setReceiptModalOpen(true);
+  };
+
+  // Export handlers
+  const handleExportSuppliers = async () => {
+    setExporting(true);
+    try {
+      await supplierApi.exportSuppliers(filters);
+      message.success('Xuất file thành công!');
+    } catch (err) {
+      message.error(err.message || 'Xuất file thất bại');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Import handler
+  const handleImportFile = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.xlsx,.xls';
+    input.onchange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      setImporting(true);
+      try {
+        const result = await supplierApi.importSuppliers(file);
+        message.success(result.message || 'Import thành công!');
+        dispatch(fetchSuppliers(filters));
+      } catch (err) {
+        message.error(err.message || 'Import thất bại');
+      } finally {
+        setImporting(false);
+      }
+    };
+    input.click();
+  };
+
+  const handleDownloadTemplate = async () => {
+    try {
+      await supplierApi.downloadImportTemplate();
+      message.success('Tải file mẫu thành công!');
+    } catch (err) {
+      message.error(err.message || 'Tải file mẫu thất bại');
+    }
   };
 
   // Full column definitions matching KiotViet design
@@ -385,10 +431,20 @@ const SupplierListPage = () => {
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateModalOpen(true)}>
                   Nhà cung cấp
                 </Button>
-                <Button icon={<ImportOutlined />} onClick={() => message.info('Import file sẽ được nối API khi sẵn sàng.')}>
-                  Import file
-                </Button>
-                <Button icon={<ExportOutlined />} onClick={() => message.success('Đã chuẩn bị dữ liệu mẫu để xuất.')}>
+                <Dropdown
+                  menu={{
+                    items: [
+                      { key: 'import', label: 'Import từ Excel', onClick: handleImportFile },
+                      { key: 'template', label: 'Tải file mẫu', onClick: handleDownloadTemplate },
+                    ],
+                  }}
+                  trigger={['click']}
+                >
+                  <Button icon={<ImportOutlined />} loading={importing}>
+                    Import file
+                  </Button>
+                </Dropdown>
+                <Button icon={<ExportOutlined />} onClick={handleExportSuppliers} loading={exporting}>
                   Xuất file
                 </Button>
                 <Dropdown menu={columnMenu} trigger={['click']}>

@@ -253,6 +253,9 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     
     // Suppliers (Partners with type=supplier)
     $routes->get('suppliers', 'Api\\SuppliersController::index');
+    $routes->get('suppliers/export', 'Api\\SuppliersController::export');
+    $routes->get('suppliers/import-template', 'Api\\SuppliersController::importTemplate');
+    $routes->post('suppliers/import', 'Api\\SuppliersController::import');
     $routes->get('suppliers/(:num)', 'Api\\SuppliersController::show/$1');
     $routes->post('suppliers', 'Api\\SuppliersController::create');
     $routes->put('suppliers/(:num)', 'Api\\SuppliersController::update/$1');
@@ -262,6 +265,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('suppliers/(:num)/payment', 'Api\\SuppliersController::payment/$1');
     $routes->post('suppliers/(:num)/discount', 'Api\\SuppliersController::discount/$1');
     $routes->get('suppliers/(:num)/debt-history', 'Api\\SuppliersController::debtHistory/$1');
+    $routes->get('suppliers/(:num)/export-receipts', 'Api\\SuppliersController::exportReceipts/$1');
+    $routes->get('suppliers/(:num)/export-payables', 'Api\\SuppliersController::exportPayables/$1');
     $routes->get('variants', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/deleted', 'Api\\ProductVariantsController::deletedList');
     $routes->get('variants/(:num)', 'Api\\ProductVariantsController::show/$1');

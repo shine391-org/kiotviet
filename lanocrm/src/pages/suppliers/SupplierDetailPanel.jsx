@@ -10,7 +10,9 @@ import {
     Select,
     Modal,
     message,
+    App,
 } from 'antd';
+import supplierApi from '../../api/supplierApi';
 import {
     EditOutlined,
     DeleteOutlined,
@@ -48,10 +50,37 @@ const SupplierDetailPanel = ({
     onDiscount,
     loading
 }) => {
+    const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('info');
     const [payableFilter, setPayableFilter] = useState('all');
+    const [exportingReceipts, setExportingReceipts] = useState(false);
+    const [exportingPayables, setExportingPayables] = useState(false);
 
     if (!supplier) return null;
+
+    const handleExportReceipts = async () => {
+        setExportingReceipts(true);
+        try {
+            await supplierApi.exportReceipts(supplier.id);
+            message.success('Xuất file lịch sử nhập hàng thành công!');
+        } catch (err) {
+            message.error(err.message || 'Xuất file thất bại');
+        } finally {
+            setExportingReceipts(false);
+        }
+    };
+
+    const handleExportPayables = async () => {
+        setExportingPayables(true);
+        try {
+            await supplierApi.exportPayables(supplier.id);
+            message.success('Xuất file công nợ thành công!');
+        } catch (err) {
+            message.error(err.message || 'Xuất file thất bại');
+        } finally {
+            setExportingPayables(false);
+        }
+    };
 
     const receipts = supplier.receipts || [];
     const payables = supplier.payables || [];
@@ -258,7 +287,9 @@ const SupplierDetailPanel = ({
                         locale={{ emptyText: 'Không có dữ liệu' }}
                     />
                     <div style={{ marginTop: 12 }}>
-                        <Button icon={<ExportOutlined />}>Xuất file</Button>
+                        <Button icon={<ExportOutlined />} onClick={handleExportReceipts} loading={exportingReceipts}>
+                            Xuất file
+                        </Button>
                     </div>
                 </TabPane>
 
@@ -288,13 +319,8 @@ const SupplierDetailPanel = ({
                         <Space>
                             <Button
                                 icon={<ExportOutlined />}
-                                onClick={() => message.info('Tính năng xuất file công nợ đang phát triển')}
-                            >
-                                Xuất file công nợ
-                            </Button>
-                            <Button
-                                icon={<ExportOutlined />}
-                                onClick={() => message.info('Tính năng xuất file đang phát triển')}
+                                onClick={handleExportPayables}
+                                loading={exportingPayables}
                             >
                                 Xuất file
                             </Button>

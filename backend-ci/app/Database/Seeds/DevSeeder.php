@@ -109,12 +109,8 @@ class DevSeeder extends Seeder
             'updated_at' => $now,
         ]);
 
-        // Categories mẫu (có parent/child)
-        $this->db->table('product_categories')->ignore(true)->insertBatch([
-            ['id'=> 101, 'parent_id'=>null, 'level'=>1, 'code'=>'TUI', 'name'=>'Túi xách', 'slug'=>'tui-xach', 'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
-            ['id'=> 102, 'parent_id'=>null, 'level'=>1, 'code'=>'VI',  'name'=>'Ví',      'slug'=>'vi',        'sort_order'=>2, 'status'=>'active', 'created_at'=>$now],
-            ['id'=> 103, 'parent_id'=>101, 'level'=>2, 'code'=>'TUI-DA','name'=>'Túi da',  'slug'=>'tui-da',   'sort_order'=>1, 'status'=>'active', 'created_at'=>$now],
-        ]);
+        // Categories (gọi CategorySeeder để tạo đầy đủ categories cho ProductSeeder)
+        $this->call('CategorySeeder');
 
         // Thuộc tính + options mẫu
         $this->db->table('product_attributes')->ignore(true)->insertBatch([
@@ -137,5 +133,8 @@ class DevSeeder extends Seeder
 
         // Gọi seeder sản phẩm/biến thể/ảnh mẫu
         $this->call('ProductSeeder');
+        
+        // Note: PriceListSeeder được gọi sau ProductVariantsDemoSeeder trong DemoSeeder
+        // vì ProductVariantsDemoSeeder xóa/tạo lại products, làm mất price_list_items do FK cascade
     }
 }

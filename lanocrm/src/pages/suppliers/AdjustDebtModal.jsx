@@ -79,8 +79,10 @@ const AdjustDebtModal = ({ open, supplier, onCancel, onSuccess }) => {
                     <InputNumber
                         style={{ width: '100%' }}
                         placeholder="Nhập giá trị điều chỉnh"
-                        formatter={(value) => `${value} `.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                        parser={(value) => value.replace(/\,/g, '')}
+                        formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                        parser={(value) => value.replace(/,/g, '')}
+                        min={-999999999999}
+                        max={999999999999}
                     />
                 </Form.Item>
 

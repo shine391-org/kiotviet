@@ -18,8 +18,73 @@ class StockMovementsDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        echo "   → Demo stock movements skipped (replaced by StockLedgersDemoSeeder)...\n";
-        return;
+        echo "   → Demo inventory stock...\n";
+        
+        $now = Time::now();
+        
+        // Seed inventory_stock for all products/variants
+        if ($this->db->tableExists('inventory_stock')) {
+            $products = $this->db->table('products')->select('id')->get()->getResultArray();
+            $warehouses = $this->db->table('warehouses')->select('id, branch_id')->get()->getResultArray();
+            
+            if (!empty($products) && !empty($warehouses)) {
+                $stockData = [];
+                foreach ($products as $product) {
+                    foreach ($warehouses as $wh) {
+                        $stockData[] = [
+                            'product_id' => $product['id'],
+                            'variant_id' => null,
+                            'warehouse_id' => $wh['id'],
+                            'branch_id' => $wh['branch_id'],
+                            'quantity_on_hand' => rand(10, 100),
+                            'quantity_reserved' => rand(0, 5),
+                            'minimum_stock' => 5,
+                            'last_movement_at' => $now,
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                
+                // Clear old data and insert
+                $this->db->table('inventory_stock')->truncate();
+                $this->db->table('inventory_stock')->insertBatch($stockData);
+                echo "      ✓ Created " . count($stockData) . " inventory stock records\n";
+            }
+        }
+        
+        // Seed product_stock_by_branch
+        if ($this->db->tableExists('product_stock_by_branch')) {
+            $products = $this->db->table('products')->select('id')->get()->getResultArray();
+            $branches = $this->db->table('branches')->select('id')->where('status', 'active')->get()->getResultArray();
+            
+            if (!empty($products) && !empty($branches)) {
+                $branchStock = [];
+                foreach ($products as $product) {
+                    foreach ($branches as $branch) {
+                        $stockQty = rand(20, 150);
+                        $reserved = rand(0, 10);
+                        $branchStock[] = [
+                            'product_id' => $product['id'],
+                            'branch_id' => $branch['id'],
+                            'stock_quantity' => $stockQty,
+                            'alert_stock' => 10,
+                            'reserved_stock' => $reserved,
+                            'available_stock' => $stockQty - $reserved,
+                            'status' => $stockQty > 10 ? 'in_stock' : ($stockQty > 0 ? 'low_stock' : 'out_of_stock'),
+                            'created_at' => $now,
+                            'updated_at' => $now,
+                        ];
+                    }
+                }
+                
+                $this->db->table('product_stock_by_branch')->truncate();
+                $this->db->table('product_stock_by_branch')->insertBatch($branchStock);
+                echo "      ✓ Created " . count($branchStock) . " branch stock records\n";
+            }
+        }
+        
+        return; // Skip old stock_movements code below
         
         $now = Time::now();
 

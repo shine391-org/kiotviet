@@ -18,8 +18,8 @@ class HRDemoSeeder extends Seeder
     {
         echo "   → Demo HR data (Departments, Employees, Attendance)...\n";
 
-        // Skip if HR tables are not present in schema
-        $requiredTables = ['departments', 'positions', 'employees', 'attendance', 'leave_applications'];
+        // Skip if HR core tables are not present
+        $requiredTables = ['departments', 'positions', 'employees'];
         foreach ($requiredTables as $table) {
             if (! $this->db->tableExists($table)) {
                 echo "      ⚠ Skipped HR demo (missing table: {$table})\n";
@@ -114,51 +114,55 @@ class HRDemoSeeder extends Seeder
             $this->db->table('employees')->ignore(true)->insert($emp);
         }
 
-        // 4. Attendance (Sample data for last 5 days)
-        for ($i = 0; $i < 5; $i++) {
-            $date = $now->subDays($i)->toDateString();
-            foreach ($employees as $emp) {
-                $this->db->table('attendance')->ignore(true)->insert([
-                    'employee_id' => $emp['id'],
-                    'date' => $date,
-                    'check_in' => '08:00:00',
-                    'check_out' => '17:00:00',
-                    'status' => 'present',
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
+        // 4. Attendance (Sample data for last 5 days) - sử dụng bảng attendances
+        if ($this->db->tableExists('attendances')) {
+            for ($i = 0; $i < 5; $i++) {
+                $date = $now->subDays($i)->toDateString();
+                foreach ($employees as $emp) {
+                    $this->db->table('attendances')->ignore(true)->insert([
+                        'employee_id' => $emp['id'],
+                        'attendance_date' => $date,
+                        'status' => 'present',
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ]);
+                }
             }
         }
 
-        // 5. Leave Types
-        $leaveTypes = [
-            ['id' => 1, 'leave_name' => 'Annual Leave', 'default_allocation' => 12],
-            ['id' => 2, 'leave_name' => 'Sick Leave', 'default_allocation' => 10],
-            ['id' => 3, 'leave_name' => 'Unpaid Leave', 'default_allocation' => 0],
-        ];
-        
-        foreach ($leaveTypes as $type) {
-            $type['created_at'] = $now;
-            $type['updated_at'] = $now;
-            $this->db->table('leave_types')->ignore(true)->insert($type);
+        // 5. Leave Types (conditional)
+        if ($this->db->tableExists('leave_types')) {
+            $leaveTypes = [
+                ['id' => 1, 'leave_name' => 'Annual Leave', 'default_allocation' => 12],
+                ['id' => 2, 'leave_name' => 'Sick Leave', 'default_allocation' => 10],
+                ['id' => 3, 'leave_name' => 'Unpaid Leave', 'default_allocation' => 0],
+            ];
+            
+            foreach ($leaveTypes as $type) {
+                $type['created_at'] = $now;
+                $type['updated_at'] = $now;
+                $this->db->table('leave_types')->ignore(true)->insert($type);
+            }
         }
 
-        // 6. Leave Applications
-        $leaves = [
-            [
-                'employee_id' => 3,
-                'leave_type_id' => 1, // Annual Leave
-                'from_date' => $now->addDays(5)->toDateString(),
-                'to_date' => $now->addDays(6)->toDateString(),
-                'reason' => 'Personal matters',
-                'status' => 'pending',
-            ]
-        ];
+        // 6. Leave Applications (conditional)
+        if ($this->db->tableExists('leave_applications') && $this->db->tableExists('leave_types')) {
+            $leaves = [
+                [
+                    'employee_id' => 3,
+                    'leave_type_id' => 1,
+                    'from_date' => $now->addDays(5)->toDateString(),
+                    'to_date' => $now->addDays(6)->toDateString(),
+                    'reason' => 'Personal matters',
+                    'status' => 'pending',
+                ]
+            ];
 
-        foreach ($leaves as $leave) {
-            $leave['created_at'] = $now;
-            $leave['updated_at'] = $now;
-            $this->db->table('leave_applications')->ignore(true)->insert($leave);
+            foreach ($leaves as $leave) {
+                $leave['created_at'] = $now;
+                $leave['updated_at'] = $now;
+                $this->db->table('leave_applications')->ignore(true)->insert($leave);
+            }
         }
 
         echo "      ✓ Created HR data\n";

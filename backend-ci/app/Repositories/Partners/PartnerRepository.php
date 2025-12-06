@@ -115,6 +115,15 @@ class PartnerRepository
     }
 
     /**
+     * Find partner by code.
+     */
+    public function findByCode(string $code): ?array
+    {
+        $row = $this->model->where('code', $code)->first();
+        return $row ? $this->hydrate($row) : null;
+    }
+
+    /**
      * Generate auto-incrementing code with transaction to prevent race condition.
      */
     private function generateCode(string $type = 'supplier'): string

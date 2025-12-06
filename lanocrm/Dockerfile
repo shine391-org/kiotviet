@@ -4,7 +4,7 @@ WORKDIR /app
 
 # Install dependencies (cached layer)
 COPY package*.json ./
-RUN npm ci --prefer-offline
+RUN npm install --prefer-offline
 
 # Copy source
 COPY . .
