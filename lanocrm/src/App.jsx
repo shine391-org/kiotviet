@@ -46,6 +46,9 @@ import DeliveryPartnerPage from './pages/orders/DeliveryPartnerPage';
 import ShipmentListPage from './pages/orders/ShipmentListPage';
 import SupplierListPage from './pages/suppliers/SupplierListPage';
 
+// POS Sales Page
+import SalesPage from './pages/pos/SalesPage';
+
 // Layout
 import MainLayout from './components/Layout/MainLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -75,6 +78,20 @@ function App() {
         <Routes>
           {/* Public Route - Login */}
           <Route path="/login" element={<Login />} />
+
+          {/* POS Page - Standalone without MainLayout */}
+          <Route
+            path="/pos"
+            element={
+              isAuthenticated ? (
+                <AntdApp>
+                  <SalesPage />
+                </AntdApp>
+              ) : (
+                <Navigate to="/login" replace />
+              )
+            }
+          />
 
           {/* Protected Routes - Wrapped in MainLayout */}
           <Route

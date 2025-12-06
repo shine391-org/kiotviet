@@ -1,0 +1,213 @@
+/**
+ * POS Header Styles
+ */
+
+.header {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 var(--space-4);
+    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+    gap: var(--space-4);
+    flex-shrink: 0;
+}
+
+/* Search Section */
+.searchSection {
+    flex: 0 0 280px;
+}
+
+.searchInput {
+    border-radius: var(--radius-md);
+    border: none;
+    background-color: white;
+}
+
+.searchInput .ant-input {
+    background: transparent;
+}
+
+.barcodeIcon {
+    color: var(--color-primary-500);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.barcodeIcon:hover {
+    color: var(--color-primary-700);
+}
+
+/* Tabs Section */
+.tabsSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    flex: 1;
+    overflow-x: auto;
+    padding: var(--space-1) 0;
+}
+
+.tabsSection::-webkit-scrollbar {
+    display: none;
+}
+
+/* Base Tab Style */
+.tab {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+}
+
+/* Invoice Tab (default - white/transparent) */
+.tabInvoice {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.tabInvoice:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+}
+
+.tabInvoice.tabActive {
+    background-color: white;
+    color: var(--color-primary-600);
+}
+
+.tabInvoice.tabActive:hover {
+    background-color: white;
+}
+
+/* Order Tab (orange) */
+.tabOrder {
+    background-color: var(--color-orange-500);
+    color: white;
+}
+
+.tabOrder:hover {
+    background-color: var(--color-orange-600);
+}
+
+.tabOrder.tabActive {
+    background-color: var(--color-orange-500);
+    color: white;
+    box-shadow: 0 0 0 2px white;
+}
+
+.tabOrder.tabActive:hover {
+    background-color: var(--color-orange-600);
+}
+
+/* Tab Elements */
+.tabIcon {
+    font-size: var(--text-base);
+    display: flex;
+    align-items: center;
+}
+
+.tabLabel {
+    font-weight: var(--font-medium);
+}
+
+.tabClose {
+    font-size: 10px;
+    padding: 2px;
+    border-radius: var(--radius-full);
+    opacity: 0.7;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabClose:hover {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Add Tab Button with Dropdown */
+.addTabBtn {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: white !important;
+    border-radius: var(--radius-full);
+    background-color: rgba(255, 255, 255, 0.2);
+    padding: var(--space-1) var(--space-2);
+}
+
+.addTabBtn:hover {
+    background-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.addTabCaret {
+    font-size: 10px;
+    opacity: 0.8;
+}
+
+/* Actions Section */
+.actionsSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.actionBtn {
+    color: white !important;
+    border-radius: var(--radius-md);
+}
+
+.actionBtn:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.userBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: white !important;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.userBtn:hover {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.userName {
+    font-weight: var(--font-medium);
+    max-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.menuIcon {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 var(--space-2);
+        gap: var(--space-2);
+    }
+
+    .searchSection {
+        flex: 1;
+    }
+
+    .userName {
+        display: none;
+    }
+
+    .tabLabel {
+        display: none;
+    }
+}

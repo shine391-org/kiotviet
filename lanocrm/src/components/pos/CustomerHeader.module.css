@@ -1,0 +1,109 @@
+/**
+ * Customer Header Styles - Reusable across sale modes
+ */
+
+/* Header Row */
+.headerRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.dateTime {
+    margin-left: auto;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+/* Seller/Channel Buttons */
+.sellerBtn,
+.channelBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-1) var(--space-2);
+    color: var(--text-primary);
+    font-weight: var(--font-medium);
+}
+
+.sellerBtn:hover,
+.channelBtn:hover {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* Dropdown Content */
+.dropdownContent {
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    min-width: 200px;
+    padding: var(--space-2);
+}
+
+.dropdownSearch {
+    margin-bottom: var(--space-2);
+}
+
+.dropdownList {
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.dropdownItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.dropdownItem:hover {
+    background-color: var(--bg-secondary);
+}
+
+.dropdownItemActive {
+    background-color: var(--color-primary-50);
+    color: var(--color-primary-600);
+}
+
+.sellerPhone {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    margin-left: auto;
+}
+
+.checkmark {
+    color: var(--color-primary-500);
+    margin-left: auto;
+}
+
+.channelIcon {
+    display: flex;
+    align-items: center;
+    font-size: var(--text-base);
+}
+
+/* Search Row */
+.searchRow {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.searchInput {
+    flex: 1;
+}
+
+.addIcon {
+    color: var(--color-primary-500);
+    cursor: pointer;
+}
+
+.addIcon:hover {
+    color: var(--color-primary-600);
+}
+
+.priceListSelect {
+    width: 140px;
+}

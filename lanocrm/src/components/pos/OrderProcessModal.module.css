@@ -1,0 +1,73 @@
+/**
+ * Order Process Modal Styles
+ */
+
+.modal :global(.ant-modal-body) {
+    padding: 0;
+}
+
+.content {
+    display: flex;
+    min-height: 400px;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 200px;
+    border-right: 1px solid var(--border-primary);
+    padding: var(--space-4);
+    background-color: var(--bg-secondary);
+}
+
+.searchSection h4,
+.dateSection h4 {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    margin-bottom: var(--space-2);
+    color: var(--text-primary);
+}
+
+.searchOption {
+    padding: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.searchOption:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.searchOption.active {
+    background-color: var(--color-primary-50);
+    color: var(--color-primary-600);
+}
+
+.dateSection {
+    margin-top: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-primary);
+}
+
+.datePicker {
+    width: 100%;
+    margin-bottom: var(--space-2);
+}
+
+/* Main Content */
+.mainContent {
+    flex: 1;
+    padding: var(--space-4);
+    overflow-x: auto;
+}
+
+.linkCode {
+    color: var(--color-primary-500);
+    cursor: pointer;
+}
+
+.linkCode:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,144 @@
+/**
+ * POS Sales Page Styles
+ * Supports 3 modes: quick, regular, delivery
+ */
+
+.salesPage {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+/* Main Content Layout */
+.mainContent {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    flex: 1;
+    overflow: hidden;
+    gap: 0;
+}
+
+/* Left Panel - Cart */
+.leftPanel {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    border-right: 1px solid var(--border-primary);
+    overflow: hidden;
+}
+
+/* Right Panel - Dynamic content */
+.rightPanel {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-primary);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Toggle Delivery Panel Button */
+.toggleDeliveryBtn {
+    position: absolute;
+    top: var(--space-2);
+    right: var(--space-2);
+    z-index: 10;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+/* Delivery Mode - 3 columns */
+.mainContent.deliveryMode {
+    grid-template-columns: 1fr 1fr;
+}
+
+.mainContent.deliveryMode.withDeliveryPanel {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+/* Regular Mode Layout (Product Grid + Mini Payment) */
+.regularModeLayout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+.regularPaymentSummary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    background-color: var(--bg-primary);
+    border-top: 1px solid var(--border-primary);
+    gap: var(--space-4);
+}
+
+.regularPaymentSummary .itemCount {
+    background-color: var(--color-primary-500);
+    color: white;
+    padding: var(--space-1) var(--space-3);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+}
+
+.regularPaymentSummary .totalAmount {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    margin-left: auto;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1200px) {
+    .mainContent.deliveryMode.withDeliveryPanel {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 1024px) {
+    .mainContent {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr auto;
+    }
+
+    .mainContent.deliveryMode,
+    .mainContent.deliveryMode.withDeliveryPanel {
+        grid-template-columns: 1fr;
+    }
+
+    .leftPanel {
+        border-right: none;
+        border-bottom: 1px solid var(--border-primary);
+    }
+
+    .rightPanel {
+        max-height: 50vh;
+    }
+}
+
+@media (max-width: 768px) {
+    .mainContent {
+        grid-template-rows: 1fr;
+    }
+
+    .rightPanel {
+        position: fixed;
+        bottom: 60px;
+        left: 0;
+        right: 0;
+        max-height: 60vh;
+        z-index: var(--z-modal);
+        box-shadow: var(--shadow-xl);
+        border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+        transform: translateY(100%);
+        transition: transform var(--transition-base);
+    }
+
+    .rightPanel.visible {
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,139 @@
+/**
+ * Combined Payment Modal Styles
+ */
+
+.modal :global(.ant-modal-header) {
+    text-align: center;
+    border-bottom: 1px solid var(--border-primary);
+    padding-bottom: var(--space-3);
+}
+
+.modal :global(.ant-modal-title) {
+    font-weight: var(--font-semibold);
+}
+
+/* Input Section */
+.inputSection {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.label {
+    color: var(--text-secondary);
+}
+
+.inputValue {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+}
+
+.inputRow {
+    margin-bottom: var(--space-4);
+}
+
+.amountInput {
+    width: 120px;
+    border-radius: var(--radius-full);
+    text-align: center;
+}
+
+/* Method Buttons */
+.methodButtons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.methodBtn {
+    border-radius: var(--radius-full) !important;
+    padding: var(--space-2) var(--space-4);
+}
+
+/* Summary Row */
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+    margin-bottom: var(--space-3);
+}
+
+.payAmount {
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+    color: var(--color-primary-600);
+}
+
+/* Payment Items */
+.paymentItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.deleteBtn {
+    color: var(--text-tertiary) !important;
+}
+
+.deleteBtn:hover {
+    color: var(--color-danger-500) !important;
+}
+
+.paymentMethod {
+    flex: 1;
+}
+
+.paymentAmount {
+    font-weight: var(--font-medium);
+}
+
+/* Total Row */
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3) 0;
+    margin-top: var(--space-2);
+    font-weight: var(--font-semibold);
+}
+
+.totalAmount {
+    font-size: var(--text-lg);
+}
+
+/* Change Row */
+.changeRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-2) 0;
+}
+
+.changeAmount {
+    font-weight: var(--font-medium);
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-primary);
+}
+
+.skipBtn {
+    border-radius: var(--radius-lg) !important;
+    min-width: 80px;
+}
+
+.confirmBtn {
+    border-radius: var(--radius-lg) !important;
+    min-width: 80px;
+}

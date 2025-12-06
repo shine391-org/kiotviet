@@ -1,0 +1,177 @@
+/**
+ * Product Grid Styles
+ */
+
+.productGrid {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--bg-primary);
+}
+
+/* Header */
+.header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border-primary);
+    flex-shrink: 0;
+}
+
+.searchInput {
+    flex: 1;
+}
+
+.priceListSelect {
+    width: 140px;
+}
+
+.viewToggle {
+    display: flex;
+    gap: 2px;
+    background-color: var(--bg-secondary);
+    padding: 2px;
+    border-radius: var(--radius-md);
+}
+
+.viewToggle .ant-btn {
+    border-radius: var(--radius-sm) !important;
+}
+
+/* Grid Container */
+.gridContainer {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-3);
+    overflow-y: auto;
+    align-content: start;
+}
+
+.gridContainer.listView {
+    grid-template-columns: 1fr;
+}
+
+.gridContainer.listView .productCard {
+    flex-direction: row;
+    gap: var(--space-3);
+}
+
+.gridContainer.listView .productImage {
+    width: 60px;
+    height: 60px;
+}
+
+.gridContainer.listView .productInfo {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Product Card */
+.productCard {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background-color: var(--bg-primary);
+}
+
+.productCard:hover {
+    border-color: var(--color-primary-400);
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-2px);
+}
+
+.productCard:active {
+    transform: translateY(0);
+}
+
+.productImage {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+    margin-bottom: var(--space-2);
+}
+
+.productImage img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.imagePlaceholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-tertiary);
+    font-size: 32px;
+}
+
+.productInfo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    flex: 1;
+}
+
+.productName {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    line-height: var(--leading-tight);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.productPrice {
+    font-size: var(--text-sm);
+    font-weight: var(--font-bold);
+    color: var(--color-primary-600);
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    padding: var(--space-3);
+    border-top: 1px solid var(--border-primary);
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .gridContainer {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .gridContainer {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-2);
+        padding: var(--space-2);
+    }
+
+    .header {
+        flex-wrap: wrap;
+        padding: var(--space-2);
+    }
+
+    .searchInput {
+        order: 1;
+        width: 100%;
+        flex: none;
+    }
+}

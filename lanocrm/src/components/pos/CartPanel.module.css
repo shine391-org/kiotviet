@@ -1,0 +1,219 @@
+/**
+ * Cart Panel Styles
+ */
+
+.cartPanel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background-color: var(--bg-primary);
+}
+
+/* Items List */
+.itemsList {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-2) 0;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: var(--text-tertiary);
+}
+
+.emptyState p {
+    margin: 0 0 var(--space-2);
+    font-size: var(--text-base);
+}
+
+.emptyState span {
+    font-size: var(--text-sm);
+}
+
+/* Cart Item Row */
+.cartItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-bottom: 1px solid var(--border-primary);
+    transition: background-color var(--transition-fast);
+}
+
+.cartItem:hover {
+    background-color: var(--bg-secondary);
+}
+
+.itemIndex {
+    flex: 0 0 24px;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    text-align: center;
+}
+
+.deleteBtn {
+    color: var(--text-tertiary) !important;
+}
+
+.deleteBtn:hover {
+    color: var(--color-danger-500) !important;
+}
+
+.itemInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.itemSku {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-family: var(--font-family-mono);
+}
+
+.itemName {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Quantity Section */
+.quantitySection {
+    flex: 0 0 80px;
+}
+
+.quantityWithButtons {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    background-color: var(--bg-secondary);
+}
+
+.quantityWithButtons .ant-btn {
+    border: none;
+    background: transparent;
+}
+
+.quantityInput {
+    width: 40px;
+    text-align: center;
+    border: none !important;
+    background: transparent !important;
+    padding: 0;
+}
+
+.quantityInput input {
+    text-align: center;
+}
+
+.quantityInputSimple {
+    width: 60px;
+    text-align: center;
+    border-color: var(--color-primary-400) !important;
+    color: var(--color-primary-600);
+    font-weight: var(--font-semibold);
+}
+
+.quantityInputSimple input {
+    text-align: center;
+    color: var(--color-primary-600);
+}
+
+/* Price Sections */
+.priceSection,
+.totalSection {
+    flex: 0 0 80px;
+    text-align: right;
+}
+
+.unitPrice {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+
+.itemTotal {
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.addBtn,
+.moreBtn {
+    color: var(--text-secondary) !important;
+}
+
+.addBtn:hover,
+.moreBtn:hover {
+    color: var(--color-primary-500) !important;
+}
+
+/* Order Note Section */
+.orderNoteSection {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border-primary);
+    background-color: var(--bg-secondary);
+}
+
+.noteIcon {
+    color: var(--text-tertiary);
+}
+
+.noteInput {
+    flex: 1;
+    font-size: var(--text-sm);
+}
+
+/* Delivery Summary (shown in delivery mode) */
+.deliverySummary {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border-primary);
+    background-color: var(--bg-primary);
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-1) 0;
+    font-size: var(--text-sm);
+}
+
+.summaryRow .itemCount {
+    background-color: var(--color-primary-500);
+    color: white;
+    padding: 0 var(--space-2);
+    border-radius: var(--radius-full);
+    font-size: var(--text-xs);
+    margin-left: var(--space-2);
+    margin-right: auto;
+}
+
+.summaryTotal {
+    font-weight: var(--font-medium);
+}
+
+.customerPay {
+    margin-top: var(--space-2);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--border-primary);
+    font-weight: var(--font-semibold);
+}
+
+.payAmount {
+    color: var(--color-primary-600);
+    font-size: var(--text-lg);
+    font-weight: var(--font-bold);
+}

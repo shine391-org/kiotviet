@@ -1,0 +1,237 @@
+/**
+ * Shipping Form Styles
+ */
+
+.shippingForm {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: var(--space-4);
+    background-color: var(--bg-primary);
+    overflow-y: auto;
+    gap: var(--space-3);
+    position: relative;
+}
+
+/* Toggle Panel Button - positioned on right edge */
+.togglePanelBtn {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    z-index: 10;
+    width: 24px;
+    height: 48px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-right: none;
+    border-radius: var(--radius-md) 0 0 var(--radius-md);
+    color: var(--color-primary-500);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.togglePanelBtn:hover {
+    background-color: var(--color-primary-50) !important;
+    color: var(--color-primary-600) !important;
+}
+
+/* Customer Header */
+.customerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.customerName {
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+}
+
+.dateTime {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+}
+
+/* Customer Search */
+.customerSearch {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.searchInput {
+    flex: 1;
+}
+
+.addIcon {
+    color: var(--color-primary-500);
+    cursor: pointer;
+}
+
+.priceListSelect {
+    width: 140px;
+}
+
+/* Form Rows */
+.formRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.rowIcon {
+    color: var(--color-primary-500);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.addressSelect {
+    flex: 1;
+}
+
+.recipientInput {
+    flex: 1;
+}
+
+.phoneInput {
+    width: 140px;
+}
+
+.addressDetailInput {
+    width: 100%;
+}
+
+.locationCascader {
+    width: 100%;
+}
+
+.wardInput {
+    width: 100%;
+}
+
+/* Package Row */
+.packageRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.weightInput {
+    width: 80px;
+}
+
+.unitSelect {
+    width: 80px;
+}
+
+.dimensionInput {
+    width: 50px;
+    text-align: center;
+}
+
+.dimensionSeparator {
+    color: var(--text-tertiary);
+}
+
+.courierNoteInput {
+    flex: 1;
+}
+
+/* Payment Section */
+.paymentSection {
+    margin-top: auto;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-primary);
+}
+
+.paymentRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.paymentRow span:first-child {
+    flex: 1;
+    font-size: var(--text-sm);
+}
+
+.paymentInput {
+    width: 120px;
+    text-align: right;
+}
+
+.codRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.codRow span:first-child {
+    flex: 1;
+    font-size: var(--text-sm);
+}
+
+.codAmount {
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Action Buttons */
+.actionButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.deliveryBtn {
+    height: 48px;
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-lg);
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-600);
+}
+
+.deliveryBtn:hover {
+    border-color: var(--color-primary-600) !important;
+    color: var(--color-primary-700) !important;
+}
+
+.payBtn {
+    height: 48px;
+    font-weight: var(--font-bold);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
+}
+
+.payBtn:hover {
+    background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 100%) !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .shippingForm {
+        padding: var(--space-3);
+    }
+
+    .packageRow {
+        flex-wrap: wrap;
+    }
+
+    .weightInput,
+    .dimensionInput {
+        width: 60px;
+    }
+
+    .actionButtons {
+        grid-template-columns: 1fr;
+    }
+}
