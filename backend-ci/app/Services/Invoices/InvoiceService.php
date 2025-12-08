@@ -223,6 +223,85 @@ class InvoiceService
         return ['success' => true, 'data' => $transformed];
     }
 
+    /**
+     * Generate invoice from a POS order (no VAT/tax code required).
+     *
+     * This is called automatically when a POS order is completed.
+     * Unlike generateFromOrders(), this method does not require:
+     * - Customer tax code
+     * - VAT calculations
+     *
+     * @agent-use: Internal - called from OrderService
+     */
+    public function generateFromPosOrder(array $order): array
+    {
+        $orderId = (int) ($order['id'] ?? 0);
+        if ($orderId <= 0) {
+            throw new InvalidArgumentException('Valid order id is required');
+        }
+
+        $branchId = (int) ($order['branch_id'] ?? 0);
+        if ($branchId <= 0) {
+            throw new InvalidArgumentException('branch_id is required');
+        }
+
+        // Check if already invoiced
+        $existing = $this->repo->findExistingInvoiceForOrders([$orderId]);
+        if ($existing) {
+            // Already invoiced, return existing
+            return ['success' => true, 'data' => $this->transformer->transform($existing)];
+        }
+
+        $customerId = $order['customer_id'] ?? null;
+        $subtotal = (float) ($order['subtotal'] ?? 0);
+        $discountTotal = (float) ($order['discount_total'] ?? 0);
+        $shippingFee = (float) ($order['shipping_fee'] ?? 0);
+        $taxTotal = (float) ($order['tax_total'] ?? 0);
+        $total = (float) ($order['total'] ?? 0);
+        $paidAmount = (float) ($order['paid_amount'] ?? 0);
+        $debtAmount = (float) ($order['debt_amount'] ?? 0);
+
+        $number = $this->repo->nextNumber($branchId, date('Y-m-d'));
+        $paymentStatus = $debtAmount <= 0.01 ? 'paid' : ($paidAmount > 0 ? 'partial' : 'unpaid');
+
+        $invoiceRow = [
+            'invoice_number' => $number,
+            'customer_id' => $customerId,
+            'branch_id' => $branchId,
+            'issue_date' => date('Y-m-d'),
+            'due_date' => null,
+            'subtotal' => $subtotal,
+            'vat_rate' => 0,
+            'vat_amount' => 0,
+            'tax_amount' => $taxTotal,
+            'total' => $total,
+            'goods_total' => $subtotal,
+            'discount_total' => $discountTotal,
+            'net_total' => $total,
+            'other_fee' => 0,
+            'shipping_fee' => $shippingFee,
+            'customer_payable' => $total,
+            'customer_paid' => $paidAmount,
+            'cod_amount' => $debtAmount,
+            'rounding_adjustment' => (float) ($order['rounding_adjustment'] ?? 0),
+            'payment_status' => $paymentStatus,
+            'payment_method' => $order['payment_method'] ?? null,
+            'total_paid' => $paidAmount,
+            'notes' => $order['notes'] ?? null,
+            'created_by' => $order['created_by'] ?? null,
+            'invoice_status' => 'completed',
+            'invoice_type' => 'pickup', // POS is typically pickup
+            'sales_channel' => 'pos',
+            'seller_id' => $order['created_by'] ?? null,
+        ];
+
+        $invoice = $this->repo->create($invoiceRow, [$orderId]);
+        $transformed = $this->transformer->transform($invoice);
+        $this->emit('invoice.generated', $transformed);
+
+        return ['success' => true, 'data' => $transformed];
+    }
+
     /** Generate PDF and return path. @agent-use: POST /api/invoices/{id}/pdf */
     public function generatePdf(int $id): array
     {
@@ -234,6 +313,53 @@ class InvoiceService
         $this->repo->updatePdfPath($id, $path);
         $invoice['pdf_path'] = $path;
         return ['success' => true, 'data' => $this->transformer->transform($invoice)];
+    }
+
+    /** Update invoice. @agent-use: PUT /api/invoices/{id} */
+    public function update(int $id, array $payload): array
+    {
+        $invoice = $this->repo->findById($id);
+        if (! $invoice) {
+            throw new RuntimeException('Invoice not found');
+        }
+
+        $validated = $this->validator->validateUpdate($payload);
+        $this->repo->update($id, $validated);
+        $updated = $this->repo->findById($id);
+
+        return ['success' => true, 'data' => $this->transformer->transform($updated)];
+    }
+
+    /** Cancel invoice. @agent-use: POST /api/invoices/{id}/cancel */
+    public function cancel(int $id): array
+    {
+        $invoice = $this->repo->findById($id);
+        if (! $invoice) {
+            throw new RuntimeException('Invoice not found');
+        }
+
+        if ($invoice['invoice_status'] === 'cancelled') {
+            throw new InvalidArgumentException('Invoice already cancelled');
+        }
+
+        $this->repo->update($id, ['invoice_status' => 'cancelled']);
+        $updated = $this->repo->findById($id);
+        $this->emit('invoice.cancelled', $this->transformer->transform($updated));
+
+        return ['success' => true, 'data' => $this->transformer->transform($updated)];
+    }
+
+    /** Delete invoice (soft delete). @agent-use: DELETE /api/invoices/{id} */
+    public function delete(int $id): array
+    {
+        $invoice = $this->repo->findById($id);
+        if (! $invoice) {
+            throw new RuntimeException('Invoice not found');
+        }
+
+        $this->repo->softDelete($id);
+
+        return ['success' => true, 'message' => 'Đã xóa hóa đơn thành công'];
     }
 
     private function assertOrdersBelongToBranch(array $orders, int $branchId): void

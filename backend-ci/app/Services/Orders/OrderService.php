@@ -15,6 +15,7 @@ use App\Services\POS\POSProfileService;
 use App\Services\POS\POSShiftService;
 use App\Services\Coupons\CouponService;
 use App\Services\Loyalty\LoyaltyService;
+use App\Services\Invoices\InvoiceService;
 use App\Validators\OrderValidator;
 use App\Validators\OrderCreateValidator;
 use App\Services\Webhooks\WebhookDispatcher;
@@ -45,6 +46,7 @@ class OrderService
     protected \App\Services\Payments\PaymentEntryService $paymentEntries;
     protected \App\Services\POS\POSTaxService $taxService;
     protected \App\Services\Accounting\CreditControlService $creditControl;
+    protected InvoiceService $invoiceService;
     protected BaseConnection $db;
 
     public function __construct(
@@ -110,6 +112,7 @@ class OrderService
             );
             $this->shiftService = new POSShiftService($shiftRepo, new \App\Validators\POSShiftValidator());
         }
+        $this->invoiceService = new InvoiceService();
     }
 
     /** Preview order totals with price lists applied. @agent-use: POST /api/orders/calculate-preview */
@@ -359,9 +362,10 @@ class OrderService
             $earnedPoints = 0;
             if (! empty($validated['customer_id'])) {
                 if ($redeemedPoints > 0) {
-                    $this->loyaltyService->redeem((int) $validated['customer_id'], $redeemedPoints, $order['id']);
+                    $this->loyaltyService->redeemPoints((int) $validated['customer_id'], $redeemedPoints, $order['id']);
                 }
-                $earnedPoints = $this->loyaltyService->earn((int) $validated['customer_id'], $totalWithShipping, $order['id']);
+                $earnResult = $this->loyaltyService->earnPoints((int) $validated['customer_id'], $totalWithShipping, $order['id']);
+                $earnedPoints = $earnResult['data']['points_earned'] ?? 0;
                 if ($earnedPoints > 0) {
                     $this->orders->updateFields($order['id'], ['loyalty_points_earned' => $earnedPoints]);
                     $order['loyalty_points_earned'] = $earnedPoints;
@@ -381,6 +385,12 @@ class OrderService
         if ($validated['order_type'] === 'pos') {
             $this->deductPosInventory($order, (int) ($validated['branch_id'] ?? 0));
             $this->logPosStatus($order);
+            // Auto generate invoice for POS orders
+            try {
+                $this->invoiceService->generateFromPosOrder($order);
+            } catch (\Throwable $e) {
+                log_message('error', 'Auto invoice generation failed for order ' . ($order['id'] ?? 'unknown') . ': ' . $e->getMessage());
+            }
         }
 
         $this->emit('order.created', $order);
