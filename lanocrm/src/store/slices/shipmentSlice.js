@@ -20,8 +20,8 @@ const defaultFilters = {
   sort: 'created_at,desc',
   page: 1,
   limit: 15,
-  branch: 'Lano - HN',
-  branches: ['Lano - HN'],
+  branch: null,
+  branches: [],
 };
 
 const aggregatePageTotals = (items = []) => {

@@ -91,9 +91,7 @@ class POSProfileService
         if (! $profile && $payload['user_id']) {
             $profile = $this->profiles->findForUser($payload['user_id'], $payload['branch_id']);
         }
-        if (! $profile) {
-            throw new RuntimeException('No POS profile configured for user');
-        }
+        // Return null profile if not found, allowing POS orders without configured profiles
         return ['success' => true, 'data' => $profile];
     }
 

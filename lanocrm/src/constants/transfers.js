@@ -4,6 +4,7 @@ export const TRANSFER_STATUSES = [
   { value: 'draft', label: 'Phiếu tạm', color: 'default' },
   { value: 'in_transit', label: 'Đang chuyển', color: 'blue' },
   { value: 'received', label: 'Đã nhận', color: 'green' },
+  { value: 'cancelled', label: 'Đã hủy', color: 'red' },
 ];
 
 export const RECEIVING_STATUS_OPTIONS = [
@@ -35,6 +36,7 @@ export const TRANSFER_RECEIVING_STATUS_BADGES = {
   draft: { color: 'default', text: 'Phiếu tạm' },
   in_transit: { color: 'blue', text: 'Đang chuyển' },
   received: { color: 'green', text: 'Đã nhận' },
+  cancelled: { color: 'red', text: 'Đã hủy' },
 };
 
 export const formatDateTime = (value) => {

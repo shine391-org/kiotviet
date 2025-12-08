@@ -24,6 +24,9 @@ import StockAuditListPage from './pages/inventory/StockAuditListPage';
 import StockAuditCreatePage from './pages/inventory/StockAuditCreatePage';
 import DisposalListPage from './pages/inventory/DisposalListPage';
 
+// Reports Pages
+import DailyReportPage from './pages/reports/DailyReportPage';
+
 // 🆕 PRODUCT PAGES
 import ProductListPage from './pages/products/ProductListPage';
 import ProductCreatePage from './pages/products/ProductCreatePage';
@@ -117,6 +120,7 @@ function App() {
                     <Route path="/inventory/audit/create" element={<StockAuditCreatePage />} />
                     <Route path="/inventory/dispose" element={<DisposalListPage />} />
                     <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
+                    <Route path="/reports/daily" element={<DailyReportPage />} />
                     <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />
                     <Route path="/online" element={<PlaceholderPage title="Bán online" />} />
 

@@ -31,7 +31,7 @@ const posApi = {
    * @returns {Promise<Object>}
    */
   searchCustomers: async (searchOrParams) => {
-    const params = typeof searchOrParams === 'string' 
+    const params = typeof searchOrParams === 'string'
       ? { search: searchOrParams }
       : searchOrParams;
     const response = await axiosInstance.get('/customers', {
@@ -52,9 +52,10 @@ const posApi = {
    */
   createSale: async (data) => {
     const payload = {
-      order_type: 'pos',
+      order_type: data.order_type || 'pos',
       customer_id: data.customer_id || null,
       branch_id: data.branch_id || 1,
+      user_id: data.user_id || null,
       order_date: data.order_date || new Date().toISOString().split('T')[0],
       items: data.items.map(item => ({
         product_id: item.product_id || item.id,
@@ -77,6 +78,7 @@ const posApi = {
       notes: data.notes || '',
     };
 
+    console.log('🔵 posApi.createSale final payload:', payload);
     const response = await axiosInstance.post('/orders', payload);
     return response.data;
   },
@@ -137,16 +139,22 @@ const posApi = {
   },
 
   /**
-   * Get invoices for return
+   * Get completed orders for return (returnable invoices)
    * @param {Object} params - Filter parameters
    * @returns {Promise<Object>}
    */
   getInvoices: async (params = {}) => {
-    const response = await axiosInstance.get('/invoices', {
+    const response = await axiosInstance.get('/orders', {
       params: {
         search: params.search || undefined,
         limit: params.limit || 20,
         page: params.page || 1,
+        search_type: params.searchType || undefined,
+        from_date: params.fromDate || undefined,
+        to_date: params.toDate || undefined,
+        // Only get completed/delivered orders that can be returned
+        status: params.status || 'COMPLETED,DELIVERED',
+        order_type: 'pos',
       },
     });
     return response.data;
@@ -186,6 +194,36 @@ const posApi = {
       unit: data.unit || 'Cái',
       product_type: 'goods',
       category_id: data.category ? [data.category] : [],
+    });
+    return response.data;
+  },
+
+  /**
+   * Get sellers/staff for POS
+   * @returns {Promise<Object>}
+   */
+  getSellers: async () => {
+    const response = await axiosInstance.get('/users', {
+      params: {
+        limit: 50,
+        status: 'active',
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Get daily report for POS end-of-day
+   * @param {Object} params - Filter parameters {date, branch_id, user_id}
+   * @returns {Promise<Object>}
+   */
+  getDailyReport: async (params = {}) => {
+    const response = await axiosInstance.get('/pos/daily-report', {
+      params: {
+        date: params.date || undefined,
+        branch_id: params.branch_id || undefined,
+        user_id: params.user_id || undefined,
+      },
     });
     return response.data;
   },

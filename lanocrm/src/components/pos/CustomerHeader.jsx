@@ -12,15 +12,9 @@ import {
     CheckOutlined,
 } from '@ant-design/icons';
 import posApi from '../../api/posApi';
+import priceListApi from '../../api/priceListApi';
 import AddCustomerModal from './AddCustomerModal';
 import styles from './CustomerHeader.module.css';
-
-// Mock data for sellers - có thể fetch từ API users/staff
-const SELLERS = [
-    { id: 1, name: 'Trung', phone: '01666100999' },
-    { id: 2, name: 'Chị Phương Anh', phone: '' },
-    { id: 3, name: 'nhung', phone: '' },
-];
 
 // Sales channels
 const SALES_CHANNELS = [
@@ -35,9 +29,11 @@ const CustomerHeader = ({
     customer,
     onCustomerChange,
     showDateTime = true,
+    onPriceListChange,
 }) => {
     const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
-    const [selectedSeller, setSelectedSeller] = useState(SELLERS[0]);
+    const [sellers, setSellers] = useState([]);
+    const [selectedSeller, setSelectedSeller] = useState(null);
     const [selectedChannel, setSelectedChannel] = useState(SALES_CHANNELS[0]);
     const [sellerSearch, setSellerSearch] = useState('');
     const [channelSearch, setChannelSearch] = useState('');
@@ -45,8 +41,57 @@ const CustomerHeader = ({
     const [customerResults, setCustomerResults] = useState([]);
     const [customerLoading, setCustomerLoading] = useState(false);
     const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+    const [priceLists, setPriceLists] = useState([]);
+    const [selectedPriceList, setSelectedPriceList] = useState('default');
     const customerSearchRef = useRef(null);
     const searchTimeoutRef = useRef(null);
+
+    // Fetch sellers from API
+    useEffect(() => {
+        const fetchSellers = async () => {
+            try {
+                const response = await posApi.getSellers();
+                if (response.success && response.data) {
+                    const sellerList = response.data.map(u => ({
+                        id: u.id,
+                        name: u.full_name || u.username,
+                        phone: u.phone || '',
+                    }));
+                    setSellers(sellerList);
+                    if (sellerList.length > 0) {
+                        setSelectedSeller(sellerList[0]);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch sellers:', error);
+            }
+        };
+        fetchSellers();
+    }, []);
+
+    // Fetch price lists from API
+    useEffect(() => {
+        const fetchPriceLists = async () => {
+            try {
+                const response = await priceListApi.getPriceLists({ is_active: 1, limit: 100 });
+                if (response.success && response.data) {
+                    const lists = response.data.map(p => ({
+                        value: p.id,
+                        label: p.name,
+                    }));
+                    setPriceLists([{ value: 'default', label: 'Bảng giá chung' }, ...lists]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch price lists:', error);
+            }
+        };
+        fetchPriceLists();
+    }, []);
+
+    const handlePriceListChange = (value) => {
+        setSelectedPriceList(value);
+        onPriceListChange?.(value === 'default' ? null : value);
+    };
 
     // F4 shortcut for customer search
     useEffect(() => {
@@ -60,22 +105,33 @@ const CustomerHeader = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
-    // Search customers with debounce
+    // Search customers with debounce - also fetches recent customers when keyword is empty
     const searchCustomers = useCallback(async (keyword) => {
-        if (!keyword || keyword.length < 2) {
-            setCustomerResults([]);
-            setShowCustomerDropdown(false);
-            return;
-        }
         setCustomerLoading(true);
         try {
-            const response = await posApi.searchCustomers(keyword);
-            if (response.success) {
-                setCustomerResults(response.data || []);
+            // Pass keyword or undefined to get all/recent customers
+            const response = await posApi.searchCustomers(keyword || '');
+            console.log('🔵 Customer search response:', response);
+
+            // Handle both response.success and direct data response
+            if (response.success && response.data) {
+                setCustomerResults(response.data);
                 setShowCustomerDropdown(true);
+            } else if (Array.isArray(response.data)) {
+                // Fallback: response might be {data: [...], pagination: {...}}
+                setCustomerResults(response.data);
+                setShowCustomerDropdown(true);
+            } else if (Array.isArray(response)) {
+                // Direct array response
+                setCustomerResults(response);
+                setShowCustomerDropdown(true);
+            } else {
+                console.warn('🔴 Unexpected customer search response format:', response);
+                setCustomerResults([]);
             }
         } catch (error) {
             console.error('Customer search error:', error);
+            setCustomerResults([]);
         } finally {
             setCustomerLoading(false);
         }
@@ -84,7 +140,7 @@ const CustomerHeader = ({
     const handleCustomerSearchChange = (e) => {
         const value = e.target.value;
         setCustomerSearch(value);
-        
+
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
@@ -106,7 +162,7 @@ const CustomerHeader = ({
     };
 
     // Filter sellers
-    const filteredSellers = SELLERS.filter(
+    const filteredSellers = sellers.filter(
         (s) => s.name.toLowerCase().includes(sellerSearch.toLowerCase()) ||
             s.phone.includes(sellerSearch)
     );
@@ -129,7 +185,7 @@ const CustomerHeader = ({
                 {/* Seller Dropdown */}
                 <Dropdown
                     trigger={['click']}
-                    dropdownRender={() => (
+                    popupRender={() => (
                         <div className={styles.dropdownContent}>
                             <Input
                                 placeholder="Tìm nhân viên..."
@@ -142,7 +198,7 @@ const CustomerHeader = ({
                                 {filteredSellers.map((seller) => (
                                     <div
                                         key={seller.id}
-                                        className={`${styles.dropdownItem} ${selectedSeller.id === seller.id ? styles.dropdownItemActive : ''}`}
+                                        className={`${styles.dropdownItem} ${selectedSeller?.id === seller.id ? styles.dropdownItemActive : ''}`}
                                         onClick={() => {
                                             setSelectedSeller(seller);
                                             setSellerSearch('');
@@ -150,7 +206,7 @@ const CustomerHeader = ({
                                     >
                                         <span>{seller.name}</span>
                                         {seller.phone && <span className={styles.sellerPhone}>{seller.phone}</span>}
-                                        {selectedSeller.id === seller.id && <CheckOutlined className={styles.checkmark} />}
+                                        {selectedSeller?.id === seller.id && <CheckOutlined className={styles.checkmark} />}
                                     </div>
                                 ))}
                             </div>
@@ -158,14 +214,14 @@ const CustomerHeader = ({
                     )}
                 >
                     <Button type="text" className={styles.sellerBtn}>
-                        {selectedSeller.name} <CaretDownOutlined />
+                        {selectedSeller?.name || 'Chọn NV'} <CaretDownOutlined />
                     </Button>
                 </Dropdown>
 
                 {/* Channel Dropdown */}
                 <Dropdown
                     trigger={['click']}
-                    dropdownRender={() => (
+                    popupRender={() => (
                         <div className={styles.dropdownContent}>
                             <Input
                                 placeholder="Tìm kênh..."
@@ -214,15 +270,15 @@ const CustomerHeader = ({
                         prefix={<SearchOutlined />}
                         suffix={
                             customerLoading ? <Spin size="small" /> :
-                            <PlusOutlined
-                                className={styles.addIcon}
-                                onClick={() => setShowAddCustomerModal(true)}
-                            />
+                                <PlusOutlined
+                                    className={styles.addIcon}
+                                    onClick={() => setShowAddCustomerModal(true)}
+                                />
                         }
                         className={styles.searchInput}
                         value={customerSearch}
                         onChange={handleCustomerSearchChange}
-                        onFocus={() => customerResults.length > 0 && setShowCustomerDropdown(true)}
+                        onFocus={() => searchCustomers(customerSearch)}
                         onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)}
                     />
                     {showCustomerDropdown && (
@@ -245,9 +301,10 @@ const CustomerHeader = ({
                     )}
                 </div>
                 <Select
-                    defaultValue="default"
+                    value={selectedPriceList}
+                    onChange={handlePriceListChange}
                     className={styles.priceListSelect}
-                    options={[{ value: 'default', label: 'Bảng giá chung' }]}
+                    options={priceLists.length > 0 ? priceLists : [{ value: 'default', label: 'Bảng giá chung' }]}
                 />
             </div>
 

@@ -87,9 +87,20 @@ class InvoiceRepository
     public function findAll(array $filters): array
     {
         $b = $this->invoices->builder();
-        $b->select('invoices.*, customers.name as customer_name, users.full_name as created_by_name')
+        $b->select('invoices.*,
+                customers.name as customer_name,
+                customers.code as customer_code,
+                customers.phone as phone,
+                customers.email as email,
+                customers.address as address,
+                customers.province as region,
+                customers.ward as ward,
+                branches.name as branch_name,
+                users.full_name as created_by_name')
             ->join('customers', 'customers.id = invoices.customer_id', 'left')
-            ->join('users', 'users.id = invoices.created_by', 'left');
+            ->join('branches', 'branches.id = invoices.branch_id', 'left')
+            ->join('users', 'users.id = invoices.created_by', 'left')
+            ->where('invoices.deleted_at', null);
 
         $this->applyFiltersToBuilder($b, $filters);
 
@@ -195,9 +206,26 @@ class InvoiceRepository
         ]);
     }
 
+    /** Update invoice. */
+    public function update(int $id, array $data): bool
+    {
+        $payload = $data + ['updated_at' => date('Y-m-d H:i:s')];
+        return (bool) $this->invoices->update($id, $payload);
+    }
+
+    /** Soft delete invoice. */
+    public function softDelete(int $id): bool
+    {
+        return (bool) $this->invoices->update($id, [
+            'deleted_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+    }
+
     private function applyFilters(array $filters)
     {
         $b = $this->invoices->builder();
+        $b->where('invoices.deleted_at', null);
         $this->applyFiltersToBuilder($b, $filters);
         return $b;
     }
@@ -210,28 +238,75 @@ class InvoiceRepository
         if (! empty($filters['branch_id'])) {
             $b->where('invoices.branch_id', $filters['branch_id']);
         }
+
+        // Support single status or array of statuses
         if (! empty($filters['invoice_status'])) {
-            $b->where('invoices.invoice_status', $filters['invoice_status']);
+            $statuses = is_array($filters['invoice_status'])
+                ? $filters['invoice_status']
+                : [$filters['invoice_status']];
+            $b->whereIn('invoices.invoice_status', $statuses);
         }
+
+        // Support single type or array of types
         if (! empty($filters['invoice_type'])) {
             $b->where('invoices.invoice_type', $filters['invoice_type']);
         }
+        if (! empty($filters['invoice_types'])) {
+            $types = is_array($filters['invoice_types'])
+                ? $filters['invoice_types']
+                : [$filters['invoice_types']];
+            $b->whereIn('invoices.invoice_type', $types);
+        }
+
         if (! empty($filters['e_invoice_status'])) {
             $b->where('invoices.e_invoice_status', $filters['e_invoice_status']);
         }
+        if (! empty($filters['delivery_status'])) {
+            $b->where('invoices.delivery_status', $filters['delivery_status']);
+        }
+        if (! empty($filters['shipping_partner'])) {
+            $b->where('invoices.shipping_partner', $filters['shipping_partner']);
+        }
+        if (! empty($filters['payment_method'])) {
+            $b->where('invoices.payment_method', $filters['payment_method']);
+        }
+        if (! empty($filters['sales_channel'])) {
+            $b->where('invoices.sales_channel', $filters['sales_channel']);
+        }
+        if (! empty($filters['created_by'])) {
+            $b->where('invoices.created_by', $filters['created_by']);
+        }
+        if (! empty($filters['seller_id'])) {
+            $b->where('invoices.seller_id', $filters['seller_id']);
+        }
+
         if (! empty($filters['search'])) {
             $s = $filters['search'];
             $b->groupStart()
                 ->like('invoices.invoice_number', $s)
                 ->orLike('invoices.notes', $s)
+                ->orLike('invoices.shipment_code', $s)
                 ->orLike('customers.name', $s)
+                ->orLike('customers.phone', $s)
                 ->groupEnd();
         }
-        if (! empty($filters['issue_date_from'])) {
-            $b->where('invoices.issue_date >=', $filters['issue_date_from']);
+
+        // Date filters (support both naming conventions)
+        $dateFrom = $filters['issue_date_from'] ?? $filters['date_from'] ?? null;
+        $dateTo = $filters['issue_date_to'] ?? $filters['date_to'] ?? null;
+        if (! empty($dateFrom)) {
+            $b->where('invoices.issue_date >=', $dateFrom);
         }
-        if (! empty($filters['issue_date_to'])) {
-            $b->where('invoices.issue_date <=', $filters['issue_date_to']);
+        if (! empty($dateTo)) {
+            $b->where('invoices.issue_date <=', $dateTo);
+        }
+
+        // Shipping time filters
+        if (! empty($filters['shipping_time_from'])) {
+            $b->where('invoices.delivery_time >=', $filters['shipping_time_from']);
+        }
+        if (! empty($filters['shipping_time_to'])) {
+            $b->where('invoices.delivery_time <=', $filters['shipping_time_to']);
         }
     }
 

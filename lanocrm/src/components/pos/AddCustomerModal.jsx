@@ -1,38 +1,10 @@
-import React, { useState } from 'react';
-import { Modal, Tabs, Input, Select, Radio, Button, Upload, DatePicker, Cascader, App } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, Tabs, Input, Select, Radio, Button, Upload, DatePicker, Cascader, App, Spin } from 'antd';
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
 import posApi from '../../api/posApi';
+import locationApi from '../../api/locationApi';
+import customerApi from '../../api/customerApi';
 import styles from './AddCustomerModal.module.css';
-
-// Province data - có thể fetch từ API sau
-const PROVINCES = [
-    {
-        value: 'Hà Nội',
-        label: 'Hà Nội',
-        children: [
-            { value: 'Quận Ba Đình', label: 'Quận Ba Đình' },
-            { value: 'Quận Cầu Giấy', label: 'Quận Cầu Giấy' },
-            { value: 'Quận Hoàn Kiếm', label: 'Quận Hoàn Kiếm' },
-        ],
-    },
-    {
-        value: 'TP. Hồ Chí Minh',
-        label: 'TP. Hồ Chí Minh',
-        children: [
-            { value: 'Quận 1', label: 'Quận 1' },
-            { value: 'Quận 3', label: 'Quận 3' },
-            { value: 'Quận 7', label: 'Quận 7' },
-        ],
-    },
-    {
-        value: 'Đà Nẵng',
-        label: 'Đà Nẵng',
-        children: [
-            { value: 'Hải Châu', label: 'Hải Châu' },
-            { value: 'Thanh Khê', label: 'Thanh Khê' },
-        ],
-    },
-];
 
 const BANKS = [
     { value: 'vcb', label: 'Vietcombank' },
@@ -50,6 +22,11 @@ const AddCustomerModal = ({
     const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('general');
     const [loading, setLoading] = useState(false);
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [customerGroups, setCustomerGroups] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
     const [formData, setFormData] = useState({
         // General Info
         customerCode: '',
@@ -82,6 +59,101 @@ const AddCustomerModal = ({
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
+    };
+
+    // Fetch provinces on mount
+    const fetchProvinces = useCallback(async () => {
+        setLocationsLoading(true);
+        try {
+            const response = await locationApi.getProvinces();
+            if (response.success && response.data) {
+                setProvinces(response.data.map(p => ({
+                    value: p.id,
+                    label: p.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch provinces:', error);
+        } finally {
+            setLocationsLoading(false);
+        }
+    }, []);
+
+    // Fetch districts when province changes
+    const fetchDistricts = useCallback(async (provinceId) => {
+        if (!provinceId) {
+            setDistricts([]);
+            setWards([]);
+            return;
+        }
+        try {
+            const response = await locationApi.getDistricts(provinceId);
+            if (response.success && response.data) {
+                setDistricts(response.data.map(d => ({
+                    value: d.id,
+                    label: d.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch districts:', error);
+        }
+    }, []);
+
+    // Fetch wards when district changes
+    const fetchWards = useCallback(async (districtId) => {
+        if (!districtId) {
+            setWards([]);
+            return;
+        }
+        try {
+            const response = await locationApi.getWards(districtId);
+            if (response.success && response.data) {
+                setWards(response.data.map(w => ({
+                    value: w.id,
+                    label: w.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch wards:', error);
+        }
+    }, []);
+
+    // Fetch customer groups
+    const fetchCustomerGroups = useCallback(async () => {
+        try {
+            const response = await customerApi.getGroups({ limit: 100 });
+            if (response.success && response.data) {
+                setCustomerGroups(response.data.map(g => ({
+                    value: g.id,
+                    label: g.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch customer groups:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (open) {
+            fetchProvinces();
+            fetchCustomerGroups();
+        }
+    }, [open, fetchProvinces, fetchCustomerGroups]);
+
+    const handleProvinceChange = (provinceId) => {
+        handleChange('province', provinceId);
+        handleChange('district', null);
+        handleChange('ward', null);
+        setDistricts([]);
+        setWards([]);
+        fetchDistricts(provinceId);
+    };
+
+    const handleDistrictChange = (districtId) => {
+        handleChange('district', districtId);
+        handleChange('ward', null);
+        setWards([]);
+        fetchWards(districtId);
     };
 
     const handleSave = async () => {
@@ -186,26 +258,48 @@ const AddCustomerModal = ({
                                 />
                             </div>
                             <div className={styles.formRow}>
-                                <label>Khu vực</label>
-                                <Cascader
-                                    options={PROVINCES}
-                                    placeholder="Chọn Tỉnh/TP - Quận/Huyện"
-                                    value={formData.region}
-                                    onChange={(val) => handleChange('region', val)}
+                                <label>Tỉnh/Thành phố</label>
+                                <Select
+                                    placeholder="Chọn Tỉnh/TP"
+                                    value={formData.province || undefined}
+                                    onChange={handleProvinceChange}
                                     className={styles.fullWidth}
+                                    options={provinces}
+                                    loading={locationsLoading}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
                                 />
                             </div>
                             <div className={styles.formRow}>
-                                <label>Phường xã</label>
+                                <label>Quận/Huyện</label>
+                                <Select
+                                    placeholder="Chọn Quận/Huyện"
+                                    value={formData.district || undefined}
+                                    onChange={handleDistrictChange}
+                                    className={styles.fullWidth}
+                                    options={districts}
+                                    disabled={!formData.province}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
+                                />
+                            </div>
+                            <div className={styles.formRow}>
+                                <label>Phường/Xã</label>
                                 <Select
                                     placeholder="Chọn Phường/Xã"
                                     value={formData.ward || undefined}
                                     onChange={(val) => handleChange('ward', val)}
                                     className={styles.fullWidth}
-                                    options={[
-                                        { value: 'p1', label: 'Phường 1' },
-                                        { value: 'p2', label: 'Phường 2' },
-                                    ]}
+                                    options={wards}
+                                    disabled={!formData.district}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
                                 />
                             </div>
                         </div>
@@ -219,10 +313,11 @@ const AddCustomerModal = ({
                                     value={formData.group || undefined}
                                     onChange={(val) => handleChange('group', val)}
                                     className={styles.fullWidth}
-                                    options={[
-                                        { value: 'vip', label: 'VIP' },
-                                        { value: 'regular', label: 'Khách thường' },
-                                    ]}
+                                    options={customerGroups}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
                                 />
                             </div>
                             <div className={styles.formRow}>

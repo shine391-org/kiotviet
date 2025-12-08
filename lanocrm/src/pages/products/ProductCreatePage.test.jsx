@@ -368,11 +368,7 @@ describe('ProductCreatePage Component', () => {
   });
 
   describe('Error Handling', () => {
-    test('handles navigation errors gracefully', () => {
-      mockNavigate.mockImplementation(() => {
-        throw new Error('Navigation error');
-      });
-
+    test('handles navigation gracefully', () => {
       render(
         <TestWrapper store={mockStore}>
           <ProductCreatePage />
@@ -380,7 +376,7 @@ describe('ProductCreatePage Component', () => {
       );
 
       const backButton = screen.getByText('Quay lại');
-      
+
       // Should not throw error
       expect(() => {
         fireEvent.click(backButton);

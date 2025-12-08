@@ -1,15 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   App,
   Button,
   Card,
-  Col,
-  Divider,
   Flex,
   Input,
   InputNumber,
-  Row,
+  Select,
   Space,
+  Spin,
   Tabs,
   Tag,
   Typography,
@@ -24,15 +23,12 @@ import {
   AppstoreOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import stockAuditApi from '../../api/stockAuditApi';
+import { getProducts } from '../../api/productApi';
 import styles from './StockAuditCreatePage.module.css';
-
-const SAMPLE_ITEMS = [
-  { code: 'VDN099-Xanh', name: 'Ví card holder', uom: 'Cái', stock: 10, actual: 9, price: 360000 },
-  { code: 'SOMI-TRANG-M', name: 'Sơ mi trắng', uom: 'Chiếc', stock: 15, actual: 15, price: 420000 },
-  { code: 'BALO-NEW', name: 'Balo thời trang', uom: 'Cái', stock: 7, actual: 5, price: 680000 },
-];
 
 const calcRow = (row) => {
   const diff = (Number(row.actual ?? 0) || 0) - (Number(row.stock ?? 0) || 0);
@@ -60,6 +56,12 @@ const StockAuditCreatePage = () => {
   const [filter, setFilter] = useState('all');
   const [notes, setNotes] = useState('');
   const [showHiddenCols, setShowHiddenCols] = useState(true);
+  const [auditId, setAuditId] = useState(null);
+  const [auditCode, setAuditCode] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [productOptions, setProductOptions] = useState([]);
+  const searchTimerRef = useRef(null);
 
   const filteredItems = useMemo(() => {
     if (filter === 'matched') return items.filter((i) => i.status === 'matched');
@@ -85,14 +87,129 @@ const StockAuditCreatePage = () => {
     setItems((prev) => prev.map((r) => (r.code === code ? calcRow({ ...r, actual: value }) : r)));
   };
 
-  const handleImportSample = () => {
-    setItems(SAMPLE_ITEMS.map(calcRow));
-    message.success('Đã nạp dữ liệu mẫu');
+  const searchProducts = useCallback((keyword) => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current);
+    }
+    if (!keyword || keyword.length < 2) {
+      setProductOptions([]);
+      return;
+    }
+    searchTimerRef.current = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await getProducts({ search: keyword, limit: 20 });
+        if (res?.success && res.data) {
+          const options = res.data.map((p) => ({
+            value: p.code,
+            label: `${p.code} - ${p.name}`,
+            product: p,
+          }));
+          setProductOptions(options);
+        }
+      } catch (err) {
+        console.error('Product search error:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+  }, []);
+
+  const handleProductSelect = (value, option) => {
+    const p = option.product;
+    if (!p) return;
+    const exists = items.find((i) => i.code === p.code);
+    if (exists) {
+      message.warning('Sản phẩm đã tồn tại trong danh sách');
+      return;
+    }
+    const newItem = calcRow({
+      code: p.code,
+      name: p.name,
+      uom: p.unit || 'Cái',
+      stock: p.quantity ?? p.stock_quantity ?? 0,
+      actual: null,
+      price: p.cost_price || p.import_price || 0,
+    });
+    setItems((prev) => [...prev, newItem]);
+    setProductOptions([]);
   };
 
   const handleUpload = () => message.info('Upload sẽ kết nối backend sau');
-  const handleSaveDraft = () => message.success('Đã lưu nháp (mock)');
-  const handleComplete = () => message.success('Đã hoàn thành (mock)');
+
+  const buildPayload = () => ({
+    notes,
+    items: items.map((i) => ({
+      product_code: i.code,
+      product_name: i.name,
+      current_qty: i.stock,
+      counted_qty: i.actual ?? 0,
+      unit_cost: i.price,
+    })),
+  });
+
+  const handleSaveDraft = async () => {
+    if (items.length === 0) {
+      message.warning('Vui lòng thêm sản phẩm vào phiếu kiểm kho');
+      return;
+    }
+    setSaving(true);
+    try {
+      const payload = buildPayload();
+      let res;
+      if (auditId) {
+        res = await stockAuditApi.updateAudit(auditId, payload);
+      } else {
+        res = await stockAuditApi.createAudit(payload);
+      }
+      if (res?.success) {
+        setAuditId(res.data?.id);
+        setAuditCode(res.data?.code);
+        message.success('Đã lưu tạm phiếu kiểm kho');
+      } else {
+        message.error(res?.message || 'Lưu thất bại');
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (items.length === 0) {
+      message.warning('Vui lòng thêm sản phẩm vào phiếu kiểm kho');
+      return;
+    }
+    setSaving(true);
+    try {
+      let id = auditId;
+      const payload = buildPayload();
+      if (!id) {
+        const createRes = await stockAuditApi.createAudit(payload);
+        if (!createRes?.success) {
+          message.error(createRes?.message || 'Tạo phiếu thất bại');
+          return;
+        }
+        id = createRes.data?.id;
+        setAuditId(id);
+        setAuditCode(createRes.data?.code);
+      } else {
+        await stockAuditApi.updateAudit(id, payload);
+      }
+      const res = await stockAuditApi.completeAudit(id);
+      if (res?.success) {
+        message.success('Đã hoàn thành phiếu kiểm kho');
+        navigate('/inventory/audit');
+      } else {
+        message.error(res?.message || 'Hoàn thành thất bại');
+      }
+    } catch (err) {
+      message.error(err?.response?.data?.message || 'Có lỗi xảy ra');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const columns = [
     { title: 'STT', dataIndex: 'index', width: 70, render: (_v, _r, idx) => idx + 1 },
@@ -128,22 +245,28 @@ const StockAuditCreatePage = () => {
   }));
 
   return (
+    <Spin spinning={saving} tip="Đang xử lý...">
     <div className={styles.page}>
       <div className={styles.header}> 
         <Space size={10} wrap>
           <Button icon={<ArrowLeftOutlined />} type="text" onClick={() => navigate(-1)}>
             Kiểm kho
           </Button>
-          <Input
-            allowClear
-            prefix={<SearchOutlined />}
+          <Select
+            showSearch
             placeholder="Tìm hàng hóa theo mã hoặc tên (F3)"
             className={styles.search}
+            style={{ width: 300 }}
+            filterOption={false}
+            onSearch={searchProducts}
+            onSelect={handleProductSelect}
+            options={productOptions}
+            notFoundContent={searchLoading ? <Spin size="small" /> : null}
+            suffixIcon={searchLoading ? <LoadingOutlined /> : <SearchOutlined />}
           />
           <Space size={6}>
             <Button icon={<AppstoreOutlined />} />
             <Button icon={showHiddenCols ? <EyeOutlined /> : <EyeInvisibleOutlined />} onClick={() => setShowHiddenCols((v) => !v)} />
-            <Button icon={<PlusOutlined />} type="dashed" onClick={() => message.info('Thêm dòng thủ công sắp có')} />
           </Space>
         </Space>
         <Space size={8} wrap>
@@ -165,10 +288,10 @@ const StockAuditCreatePage = () => {
           <div className={styles.tableBox}>
             {filteredItems.length === 0 ? (
               <div className={styles.emptyState}>
-                <Typography.Text strong>Thêm sản phẩm từ file excel</Typography.Text>
-                <Typography.Link onClick={() => message.info('Tải file mẫu đang chuẩn bị')}>
-                  Tải về file mẫu: Excel file
-                </Typography.Link>
+                <Typography.Text strong>Thêm sản phẩm vào phiếu kiểm kho</Typography.Text>
+                <Typography.Text type="secondary">
+                  Tìm kiếm và chọn sản phẩm từ thanh tìm kiếm bên trên, hoặc import từ file Excel
+                </Typography.Text>
                 <Space size={10}>
                   <Upload.Dragger
                     beforeUpload={() => false}
@@ -181,9 +304,6 @@ const StockAuditCreatePage = () => {
                     </p>
                     <p className="ant-upload-text">Chọn file dữ liệu</p>
                   </Upload.Dragger>
-                  <Button type="link" onClick={handleImportSample}>
-                    Dùng dữ liệu mẫu
-                  </Button>
                 </Space>
               </div>
             ) : (
@@ -209,7 +329,7 @@ const StockAuditCreatePage = () => {
             <Space direction="vertical" size={8} style={{ width: '100%' }}>
               <div>
                 <Typography.Text type="secondary">Mã kiểm kho</Typography.Text>
-                <Input placeholder="Mã phiếu tự động" disabled />
+                <Input placeholder="Mã phiếu tự động" disabled value={auditCode || ''} />
               </div>
               <div>
                 <Typography.Text type="secondary">Trạng thái</Typography.Text>
@@ -235,12 +355,13 @@ const StockAuditCreatePage = () => {
           </Card>
 
           <Flex gap={12} className={styles.actionBar}>
-            <Button block onClick={handleSaveDraft} icon={<UploadOutlined />}>Lưu tạm</Button>
-            <Button block type="primary" onClick={handleComplete} icon={<PlusOutlined />}>Hoàn thành</Button>
+            <Button block onClick={handleSaveDraft} icon={<UploadOutlined />} loading={saving}>Lưu tạm</Button>
+            <Button block type="primary" onClick={handleComplete} icon={<PlusOutlined />} loading={saving}>Hoàn thành</Button>
           </Flex>
         </div>
       </div>
     </div>
+    </Spin>
   );
 };
 

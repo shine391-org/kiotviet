@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
 import { Input, Button, Tooltip, Dropdown, Badge, AutoComplete } from 'antd';
 import {
     SearchOutlined,
@@ -29,7 +31,9 @@ import ReturnInvoiceModal from './ReturnInvoiceModal';
 import SyncDataModal from './SyncDataModal';
 import PrintSettingsDropdown from './PrintSettingsDropdown';
 import AddProductModal from './AddProductModal';
+import DisplaySettingsModal from './DisplaySettingsModal';
 import posApi from '../../api/posApi';
+import { logout } from '../../store/slices/authSlice';
 import styles from './SalesHeader.module.css';
 
 /**
@@ -46,11 +50,14 @@ const SalesHeader = ({
     onSearch,
     onAddProduct,
 }) => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
     const [searchText, setSearchText] = useState('');
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [showReturnModal, setShowReturnModal] = useState(false);
     const [showSyncModal, setShowSyncModal] = useState(false);
     const [showAddProductModal, setShowAddProductModal] = useState(false);
+    const [showDisplayModal, setShowDisplayModal] = useState(false);
     const [searchOptions, setSearchOptions] = useState([]);
     const searchInputRef = useRef(null);
 
@@ -90,47 +97,47 @@ const SalesHeader = ({
 
             // Build options for AutoComplete
             const options = filtered.map(product => ({
-            value: product.code,
-            label: (
-                <div className={styles.productOption}>
-                    <div className={styles.productImage}>
-                        {product.image ? (
-                            <img src={product.image} alt={product.name} />
-                        ) : (
-                            <div className={styles.imagePlaceholder} />
-                        )}
-                    </div>
-                    <div className={styles.productInfo}>
-                        <div className={styles.productName}>
-                            {product.name}
-                            {product.variant && <span className={styles.variant}>{product.variant}</span>}
+                value: product.code,
+                label: (
+                    <div className={styles.productOption}>
+                        <div className={styles.productImage}>
+                            {product.image ? (
+                                <img src={product.image} alt={product.name} />
+                            ) : (
+                                <div className={styles.imagePlaceholder} />
+                            )}
                         </div>
-                        {product.variants ? (
-                            <div className={styles.variantsCount}>{product.variants} sản phẩm cùng loại</div>
-                        ) : (
-                            <>
-                                <div className={styles.productCode}>{product.code}</div>
-                                <div className={styles.productStock}>Tồn: {product.stock} | KH đặt: {product.ordered}</div>
-                            </>
-                        )}
+                        <div className={styles.productInfo}>
+                            <div className={styles.productName}>
+                                {product.name}
+                                {product.variant && <span className={styles.variant}>{product.variant}</span>}
+                            </div>
+                            {product.variants ? (
+                                <div className={styles.variantsCount}>{product.variants} sản phẩm cùng loại</div>
+                            ) : (
+                                <>
+                                    <div className={styles.productCode}>{product.code}</div>
+                                    <div className={styles.productStock}>Tồn: {product.stock} | KH đặt: {product.ordered}</div>
+                                </>
+                            )}
+                        </div>
+                        <div className={styles.productPrice}>
+                            {product.price.toLocaleString('vi-VN')}
+                        </div>
                     </div>
-                    <div className={styles.productPrice}>
-                        {product.price.toLocaleString('vi-VN')}
-                    </div>
-                </div>
-            ),
-            product,
-        }));
+                ),
+                product,
+            }));
 
-        // Add "Thêm mới hàng hóa" option at the end
-        options.push({
-            value: '__add_new__',
-            label: (
-                <div className={styles.addNewOption}>
-                    <PlusOutlined /> Thêm mới hàng hóa
-                </div>
-            ),
-        });
+            // Add "Thêm mới hàng hóa" option at the end
+            options.push({
+                value: '__add_new__',
+                label: (
+                    <div className={styles.addNewOption}>
+                        <PlusOutlined /> Thêm mới hàng hóa
+                    </div>
+                ),
+            });
 
             setSearchOptions(options);
         } catch (error) {
@@ -182,6 +189,7 @@ const SalesHeader = ({
             key: 'report',
             label: 'Xem báo cáo cuối ngày',
             icon: <FileTextOutlined />,
+            onClick: () => navigate('/reports/daily'),
         },
         {
             key: 'process-order',
@@ -199,32 +207,38 @@ const SalesHeader = ({
             key: 'receipt',
             label: 'Lập phiếu thu',
             icon: <SnippetsOutlined />,
+            onClick: () => navigate('/cash'),
         },
         {
             key: 'voucher',
             label: 'Phát hành voucher',
             icon: <GiftOutlined />,
+            onClick: () => navigate('/customers/vouchers'),
         },
         {
             key: 'import',
             label: 'Import file',
             icon: <ImportOutlined />,
+            disabled: true, // TODO: Implement import functionality
         },
         { type: 'divider' },
         {
             key: 'display',
             label: 'Tùy chọn hiển thị',
             icon: <EyeOutlined />,
+            onClick: () => setShowDisplayModal(true),
         },
         {
             key: 'shortcuts',
             label: 'Phím tắt',
             icon: <QuestionCircleOutlined />,
+            disabled: true, // TODO: Implement shortcuts help modal
         },
         {
             key: 'admin',
             label: 'Quản lý',
             icon: <AppstoreOutlined />,
+            onClick: () => navigate('/dashboard'),
         },
         { type: 'divider' },
         {
@@ -232,6 +246,10 @@ const SalesHeader = ({
             label: 'Đăng xuất',
             icon: <LogoutOutlined />,
             danger: true,
+            onClick: () => {
+                dispatch(logout());
+                navigate('/login');
+            },
         },
     ];
 
@@ -260,7 +278,7 @@ const SalesHeader = ({
                         onSearch={handleSearchChange}
                         onSelect={handleProductSelect}
                         className={styles.searchAutoComplete}
-                        popupClassName={styles.searchDropdown}
+                        classNames={{ popup: { root: styles.searchDropdown } }}
                         notFoundContent={null}
                     >
                         <Input
@@ -386,6 +404,11 @@ const SalesHeader = ({
                 onClose={() => setShowAddProductModal(false)}
                 onSave={handleAddNewProduct}
                 initialName={searchText}
+            />
+
+            <DisplaySettingsModal
+                open={showDisplayModal}
+                onClose={() => setShowDisplayModal(false)}
             />
         </>
     );

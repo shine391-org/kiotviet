@@ -73,6 +73,7 @@ class ProductSeeder extends Seeder
                 'image' => $imgUrl, // Keeping this as main thumb
                 'images' => json_encode([$imgUrl]),
                 'status' => 'active',
+                'is_active' => 1,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

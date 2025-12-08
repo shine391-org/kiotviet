@@ -8,6 +8,7 @@ import {
     PictureOutlined,
 } from '@ant-design/icons';
 import posApi from '../../api/posApi';
+import priceListApi from '../../api/priceListApi';
 import styles from './ProductGrid.module.css';
 
 const ProductGrid = ({ onAddProduct }) => {
@@ -17,11 +18,15 @@ const ProductGrid = ({ onAddProduct }) => {
     const [products, setProducts] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [priceLists, setPriceLists] = useState([]);
+    const [selectedPriceList, setSelectedPriceList] = useState('default');
     const pageSize = 12;
 
     // Fetch products from API
     const fetchProducts = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
             const response = await posApi.searchProducts({
                 search: searchText,
@@ -39,9 +44,12 @@ const ProductGrid = ({ onAddProduct }) => {
                 }));
                 setProducts(productList);
                 setTotal(response.pagination?.total || productList.length);
+            } else {
+                setError(response.message || 'Không thể tải sản phẩm');
             }
         } catch (error) {
             console.error('Failed to fetch products:', error);
+            setError(error.response?.data?.message || 'Lỗi kết nối server');
         } finally {
             setLoading(false);
         }
@@ -50,6 +58,25 @@ const ProductGrid = ({ onAddProduct }) => {
     useEffect(() => {
         fetchProducts();
     }, [fetchProducts]);
+
+    // Fetch price lists
+    useEffect(() => {
+        const fetchPriceLists = async () => {
+            try {
+                const response = await priceListApi.getPriceLists({ is_active: 1, limit: 100 });
+                if (response.success && response.data) {
+                    const lists = response.data.map(p => ({
+                        value: p.id,
+                        label: p.name,
+                    }));
+                    setPriceLists([{ value: 'default', label: 'Bảng giá chung' }, ...lists]);
+                }
+            } catch (error) {
+                console.error('Failed to fetch price lists:', error);
+            }
+        };
+        fetchPriceLists();
+    }, []);
 
     // Debounce search
     useEffect(() => {
@@ -73,7 +100,7 @@ const ProductGrid = ({ onAddProduct }) => {
             {/* Header */}
             <div className={styles.header}>
                 <Input
-                    placeholder="Tìm khách hàng (F4)"
+                    placeholder="Tìm sản phẩm..."
                     prefix={<SearchOutlined />}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
@@ -82,9 +109,10 @@ const ProductGrid = ({ onAddProduct }) => {
                 />
                 <Button icon={<FilterOutlined />} />
                 <Select
-                    defaultValue="default"
+                    value={selectedPriceList}
+                    onChange={setSelectedPriceList}
                     className={styles.priceListSelect}
-                    options={[{ value: 'default', label: 'Bảng giá chung' }]}
+                    options={priceLists.length > 0 ? priceLists : [{ value: 'default', label: 'Bảng giá chung' }]}
                 />
                 <div className={styles.viewToggle}>
                     <Button
@@ -105,6 +133,11 @@ const ProductGrid = ({ onAddProduct }) => {
             <div className={`${styles.gridContainer} ${viewMode === 'list' ? styles.listView : ''}`}>
                 {loading ? (
                     <div className={styles.loadingContainer}><Spin /></div>
+                ) : error ? (
+                    <Empty
+                        description={error}
+                        image={Empty.PRESENTED_IMAGE_SIMPLE}
+                    />
                 ) : products.length === 0 ? (
                     <Empty description="Không tìm thấy sản phẩm" />
                 ) : (

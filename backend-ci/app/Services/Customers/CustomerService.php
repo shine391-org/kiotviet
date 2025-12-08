@@ -64,12 +64,34 @@ class CustomerService
 
         $this->guardUniqueTaxCode($validated['tax_code'] ?? null, null, $orgId);
 
+        // Auto-generate customer code if not provided
+        if (empty($validated['code'])) {
+            $validated['code'] = $this->generateCustomerCode($orgId);
+        }
+
         $created = $this->repo->create($validated);
 
         return [
             'success' => true,
             'data' => $this->transformer->transform($created),
         ];
+    }
+
+    /**
+     * Generate next customer code for organization.
+     * Format: KH + 5 digit padded number (e.g., KH00001)
+     */
+    private function generateCustomerCode(int $orgId): string
+    {
+        $lastCode = $this->repo->getLastCustomerCode($orgId);
+        
+        if ($lastCode && preg_match('/^KH(\d+)$/', $lastCode, $matches)) {
+            $nextNumber = (int) $matches[1] + 1;
+        } else {
+            $nextNumber = 1;
+        }
+        
+        return 'KH' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
     }
 
     /** Update customer. @agent-use: PUT /api/customers/{id} */
@@ -93,6 +115,22 @@ class CustomerService
         return [
             'success' => true,
             'data' => $this->transformer->transform($updated),
+        ];
+    }
+
+    /** Delete customer (soft delete). @agent-use: DELETE /api/customers/{id} */
+    public function delete(int $id): array
+    {
+        $existing = $this->repo->findById($id);
+        if (! $existing) {
+            throw new RuntimeException('Customer not found');
+        }
+
+        $this->repo->softDelete($id);
+
+        return [
+            'success' => true,
+            'message' => 'Đã xóa khách hàng thành công',
         ];
     }
 

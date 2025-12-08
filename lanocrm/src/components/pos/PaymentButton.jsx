@@ -6,7 +6,7 @@ import styles from './PaymentButton.module.css';
  * Shared Payment Button component used across all sale modes.
  * Displays a single "THANH TOÁN" button at the bottom of the active panel.
  */
-const PaymentButton = ({ onClick, className }) => {
+const PaymentButton = ({ onClick, className, loading = false, disabled = false }) => {
     return (
         <div className={`${styles.paymentSection} ${className || ''}`}>
             <Button
@@ -14,9 +14,11 @@ const PaymentButton = ({ onClick, className }) => {
                 size="large"
                 className={styles.payBtn}
                 onClick={onClick}
+                loading={loading}
+                disabled={loading || disabled}
                 block
             >
-                THANH TOÁN
+                {loading ? 'Đang xử lý...' : 'THANH TOÁN'}
             </Button>
         </div>
     );

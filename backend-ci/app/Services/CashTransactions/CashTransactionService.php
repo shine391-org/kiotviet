@@ -90,54 +90,36 @@ class CashTransactionService
      */
     public function createPayment(array $data): array
     {
-        error_log("DEBUG: CashTransactionService::createPayment() - Starting with data: " . json_encode($data));
-        
         // Validate created_by is provided
         if (!isset($data['created_by'])) {
-            error_log("DEBUG: CashTransactionService::createPayment() - Missing created_by field");
             throw new InvalidArgumentException('created_by field is required');
         }
         
-        error_log("DEBUG: CashTransactionService::createPayment() - About to validate payment data");
         // Validate payment data
         $validated = $this->validator->validatePayment($data);
-        error_log("DEBUG: CashTransactionService::createPayment() - Validation passed: " . json_encode($validated));
-        
         $validated['payment_method'] = $validated['payment_method'] ?? 'cash';
         $validated['status'] = $validated['status'] ?? 'approved';
         $validated['account_name'] = $validated['account_name'] ?? ($validated['payment_method'] === 'bank' ? 'Ngân hàng' : 'Tiền mặt');
 
-        error_log("DEBUG: CashTransactionService::createPayment() - About to validate reference");
         // Validate reference if provided
         if (!empty($validated['reference_type']) && !empty($validated['reference_id'])) {
             if ($this->referenceValidator) {
-                error_log("DEBUG: CashTransactionService::createPayment() - Validating reference: " . $validated['reference_type'] . " / " . $validated['reference_id']);
                 $this->referenceValidator->validateReference(
                     $validated['reference_type'],
                     $validated['reference_id'],
                     $validated['amount']
                 );
-                error_log("DEBUG: CashTransactionService::createPayment() - Reference validation passed");
             }
         }
 
-        error_log("DEBUG: CashTransactionService::createPayment() - About to call repository create");
         // Create transaction
-        try {
-            $transaction = $this->repo->create($validated);
-            error_log("DEBUG: CashTransactionService::createPayment() - Repository create completed: " . json_encode($transaction));
+        $transaction = $this->repo->create($validated);
 
-            error_log("DEBUG: CashTransactionService::createPayment() - About to return success response");
-            return [
-                'success' => true,
-                'message' => 'Payment created successfully',
-                'data' => $transaction,
-            ];
-        } catch (\Exception $e) {
-            error_log("DEBUG: CashTransactionService::createPayment() - Exception during create: " . $e->getMessage());
-            error_log("DEBUG: CashTransactionService::createPayment() - Exception trace: " . $e->getTraceAsString());
-            throw $e;
-        }
+        return [
+            'success' => true,
+            'message' => 'Payment created successfully',
+            'data' => $transaction,
+        ];
     }
 
     /**

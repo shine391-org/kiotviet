@@ -1,100 +1,146 @@
+/**
+ * Integration Tests for InvoiceListPage
+ * 
+ * Per TESTING-RULES.md:
+ * - Tests use REAL API calls (no mocking)
+ * - Tests run against lanocrm_test database
+ * - If tests fail, fix implementation, not the test
+ * 
+ * Prerequisites:
+ * - Backend running with test database
+ * - Valid auth token in localStorage or test auth setup
+ */
+
 import React from 'react';
-import { describe, it, vi, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
-import { configureStore } from '@reduxjs/toolkit';
+import { BrowserRouter } from 'react-router-dom';
 import { App as AntdApp, ConfigProvider } from 'antd';
+import { configureStore } from '@reduxjs/toolkit';
+import InvoiceListPage from './InvoiceListPage';
 import invoicesReducer from '../../store/slices/invoiceSlice';
 import branchReducer from '../../store/slices/branchSlice';
-import InvoiceListPage from './InvoiceListPage';
-import invoiceApi from '../../api/invoiceApi';
-import branchApi from '../../api/branchApi';
 
-vi.mock('../../api/invoiceApi', () => ({
-  default: {
-    getInvoices: vi.fn(),
-    getInvoice: vi.fn(),
-  },
-}));
+// NO MOCKING - Real API calls only
 
-vi.mock('../../api/branchApi', () => ({
-  default: {
-    getBranches: vi.fn(),
-    createBranch: vi.fn(),
-    updateBranch: vi.fn(),
-    deleteBranch: vi.fn(),
-    setDefaultBranch: vi.fn(),
-  },
-}));
-
-const renderPage = () => {
-  const store = configureStore({
+const createStore = () =>
+  configureStore({
     reducer: {
       invoices: invoicesReducer,
       branch: branchReducer,
     },
   });
 
-  return render(
-    <Provider store={store}>
-      <ConfigProvider>
-        <AntdApp>
-          <InvoiceListPage />
-        </AntdApp>
-      </ConfigProvider>
+const renderPage = () =>
+  render(
+    <Provider store={createStore()}>
+      <BrowserRouter>
+        <ConfigProvider>
+          <AntdApp>
+            <InvoiceListPage />
+          </AntdApp>
+        </ConfigProvider>
+      </BrowserRouter>
     </Provider>
   );
-};
 
 describe('InvoiceListPage', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  describe('Page Structure', () => {
+    it('renders search input', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/mã hóa đơn/i)).toBeInTheDocument();
+      });
+    });
+
+    it('renders create button', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Tạo mới/i })).toBeInTheDocument();
+      });
+    });
+
+    it('renders export button', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByRole('button', { name: /Xuất file/i })).toBeInTheDocument();
+      });
+    });
+
+    it('renders page totals section', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByText(/Khách cần trả:/)).toBeInTheDocument();
+        expect(screen.getByText(/Khách đã trả:/)).toBeInTheDocument();
+        expect(screen.getByText(/COD:/)).toBeInTheDocument();
+      });
+    });
   });
 
-  it('renders invoice list and allows selecting row', async () => {
-    invoiceApi.getInvoices.mockResolvedValue({
-      data: [
-        {
-          id: 1,
-          invoice_code: 'HD031576',
-          customer_name: 'a Tiến',
-          delivery_status: 'delivered',
-          invoice_status: 'completed',
-          issued_at: '2025-11-26 12:01:00',
-          customer_payable: 2150000,
-          customer_paid: 2150000,
+  describe('Table Display', () => {
+    it('renders invoice table', async () => {
+      renderPage();
+      
+      await waitFor(
+        () => {
+          expect(screen.getByRole('table')).toBeInTheDocument();
         },
-      ],
-      pagination: { page: 1, limit: 15, total: 1, total_pages: 1 },
-      totals: { customer_payable: 2150000, customer_paid: 2150000, cod_amount: 0, shipping_fee: 0 },
-    });
-    invoiceApi.getInvoice.mockResolvedValue({
-      data: {
-        id: 1,
-        invoice_code: 'HD031576',
-        customer_name: 'a Tiến',
-        payments: [
-          { id: 1, code: 'TTHD031575', time: '2025-11-25 15:42:00', creator: 'nhung', amount: 1800000, method: 'Chuyển khoản', status: 'Đã thanh toán', cash_flow: 1800000 },
-        ],
-      },
-    });
-    branchApi.getBranches.mockResolvedValue({ data: [{ id: 1, name: 'Lano - HN' }] });
-
-    renderPage();
-
-    expect(await screen.findByLabelText('Theo mã hóa đơn')).toBeInTheDocument();
-    expect(await screen.findByText('HD031576')).toBeInTheDocument();
-
-    const searchInput = screen.getByPlaceholderText('Theo mã hóa đơn');
-    fireEvent.change(searchInput, { target: { value: 'HD031' } });
-    await waitFor(() => {
-      expect(invoiceApi.getInvoices).toHaveBeenCalled();
+        { timeout: 10000 }
+      );
     });
 
-    fireEvent.click(screen.getByText('HD031576'));
-    await waitFor(() => expect(invoiceApi.getInvoice).toHaveBeenCalled());
-    expect(await screen.findByText('Lịch sử thanh toán')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Lịch sử thanh toán'));
-    expect(await screen.findByText('TTHD031575')).toBeInTheDocument();
-  }, 10000);
+    it('has column visibility toggle', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        const buttons = screen.getAllByRole('button');
+        const hasColumnButton = buttons.some(
+          (btn) => btn.querySelector('.anticon-column-height')
+        );
+        expect(hasColumnButton).toBe(true);
+      });
+    });
+
+    it('has refresh button', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        const buttons = screen.getAllByRole('button');
+        const hasRefreshButton = buttons.some(
+          (btn) => btn.querySelector('.anticon-reload')
+        );
+        expect(hasRefreshButton).toBe(true);
+      });
+    });
+  });
+
+  describe('Search Functionality', () => {
+    it('allows typing in search input', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText(/mã hóa đơn/i)).toBeInTheDocument();
+      });
+
+      const searchInput = screen.getByPlaceholderText(/mã hóa đơn/i);
+      fireEvent.change(searchInput, { target: { value: 'HD001' } });
+      
+      expect(searchInput).toHaveValue('HD001');
+    });
+  });
+
+  describe('Detail Panel', () => {
+    it('shows empty detail message when no invoice selected', async () => {
+      renderPage();
+      
+      await waitFor(() => {
+        expect(screen.getByText(/Chọn một hóa đơn/i)).toBeInTheDocument();
+      });
+    });
+  });
 });

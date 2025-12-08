@@ -13,7 +13,8 @@
 .itemsList {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-2) 0;
+    padding: 0;
+    border-top: 1px solid var(--border-primary);
 }
 
 .emptyState {
@@ -38,21 +39,34 @@
 .cartItem {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
     border-bottom: 1px solid var(--border-primary);
     transition: background-color var(--transition-fast);
+    background-color: var(--bg-primary);
 }
 
 .cartItem:hover {
-    background-color: var(--bg-secondary);
+    background-color: #f8fafc;
+}
+
+.cartItem:nth-child(even) {
+    background-color: #fafbfc;
+}
+
+.cartItem:nth-child(even):hover {
+    background-color: #f1f5f9;
 }
 
 .itemIndex {
-    flex: 0 0 24px;
+    flex: 0 0 28px;
     font-size: var(--text-sm);
-    color: var(--text-tertiary);
+    font-weight: var(--font-semibold);
+    color: var(--text-secondary);
     text-align: center;
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: 2px 0;
 }
 
 .deleteBtn {
@@ -132,19 +146,26 @@
 /* Price Sections */
 .priceSection,
 .totalSection {
-    flex: 0 0 80px;
+    flex: 0 0 100px;
     text-align: right;
 }
 
 .unitPrice {
     font-size: var(--text-sm);
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-family-mono), monospace;
 }
 
 .itemTotal {
-    font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
-    color: var(--text-primary);
+    font-size: var(--text-base);
+    font-weight: var(--font-bold);
+    color: var(--color-primary-600);
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-family-mono), monospace;
+    background-color: var(--color-primary-50);
+    padding: 4px 8px;
+    border-radius: var(--radius-md);
 }
 
 .addBtn,

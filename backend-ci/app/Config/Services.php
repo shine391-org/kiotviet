@@ -138,6 +138,7 @@ use App\Services\Returns\ReturnService;
 use App\Services\DeliveryNotes\DeliveryNoteService;
 use App\Services\Inventory\StockLedgerService;
 use App\Services\Inventory\StockReconciliationService;
+use App\Services\Inventory\StockAuditService;
 use App\Services\Inventory\ReorderPlanningService;
 use App\Services\Inventory\PurchaseSuggestionService;
 use App\Services\Orders\OrderStatusService;
@@ -593,6 +594,18 @@ class Services extends BaseService
             static::stockReconciliationValidator(false),
             static::stockLedgerService(false),
             static::stockBinRepository(false)
+        );
+    }
+
+    public static function stockAuditService(bool $getShared = true): StockAuditService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('stockAuditService');
+        }
+        return new StockAuditService(
+            static::stockReconciliationRepository(false),
+            static::stockReconciliationValidator(false),
+            static::stockLedgerService(false)
         );
     }
 
@@ -2777,6 +2790,15 @@ class Services extends BaseService
         if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('shippingService'); }
         return new \App\Services\Shipping\ShippingService(
             new \App\Repositories\Shipping\ShippingRepository()
+        );
+    }
+
+    public static function shipmentService(bool $getShared = true): \App\Services\Shipping\ShipmentService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('shipmentService'); }
+        return new \App\Services\Shipping\ShipmentService(
+            new \App\Repositories\Shipping\ShipmentRepository(),
+            new \App\Transformers\ShipmentTransformer()
         );
     }
 }

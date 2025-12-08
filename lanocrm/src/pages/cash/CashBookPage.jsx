@@ -171,7 +171,7 @@ const CashBookPage = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      message.success(`Đã xuất ${rows.length} dòng (tối đa 500)`);
+      message.success(`Đã xuất ${rows.length} dòng (tối đa ${SUMMARY_SAMPLE_LIMIT})`);
     } catch (err) {
       message.error(err.message || 'Xuất file thất bại');
     } finally {

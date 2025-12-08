@@ -1,5 +1,8 @@
 import React, { useState, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { App } from 'antd';
+import { selectUser } from '../../store/slices/authSlice';
+import posApi from '../../api/posApi';
 import SalesHeader from '../../components/pos/SalesHeader';
 import CartPanel from '../../components/pos/CartPanel';
 import PaymentPanel from '../../components/pos/PaymentPanel';
@@ -8,6 +11,7 @@ import ShippingForm from '../../components/pos/ShippingForm';
 import DeliveryPartnersPanel from '../../components/pos/DeliveryPartnersPanel';
 import SalesModeNav from '../../components/pos/SalesModeNav';
 import PaymentButton from '../../components/pos/PaymentButton';
+import CustomerHeader from '../../components/pos/CustomerHeader';
 import styles from './SalesPage.module.css';
 
 /**
@@ -24,22 +28,13 @@ const SALE_MODES = {
 
 const SalesPage = () => {
     const { message } = App.useApp();
+    const currentUser = useSelector(selectUser);
 
     // Current sale mode
     const [saleMode, setSaleMode] = useState(SALE_MODES.QUICK);
 
-    // Cart items state
-    const [cartItems, setCartItems] = useState([
-        // Mock data for initial development
-        {
-            id: 1,
-            sku: 'SP000011',
-            name: 'Túi Jeep vải loại nhỏ',
-            quantity: 1,
-            unitPrice: 550000,
-            total: 550000,
-        },
-    ]);
+    // Cart items state - start empty
+    const [cartItems, setCartItems] = useState([]);
 
     // Customer state
     const [customer, setCustomer] = useState(null);
@@ -61,6 +56,10 @@ const SalesPage = () => {
     const [showDeliveryPanel, setShowDeliveryPanel] = useState(true);
     const [selectedDeliveryPartner, setSelectedDeliveryPartner] = useState(null);
 
+    // Payment state
+    const [paymentLoading, setPaymentLoading] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState('CASH');
+
     // Calculate totals
     const totals = {
         itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
@@ -78,16 +77,26 @@ const SalesPage = () => {
     }, []);
 
     const handleAddProduct = useCallback((product) => {
+        // Normalize product structure (SalesHeader uses code/price, ProductGrid uses sku/unitPrice)
+        const normalizedProduct = {
+            id: product.id,
+            sku: product.sku || product.code,
+            name: product.name,
+            unitPrice: product.unitPrice || product.price || 0,
+            variantId: product.variantId || product.variant_id || null,
+            image: product.image || null,
+        };
+
         setCartItems((prev) => {
-            const existing = prev.find((item) => item.sku === product.sku);
+            const existing = prev.find((item) => item.sku === normalizedProduct.sku);
             if (existing) {
                 return prev.map((item) =>
-                    item.sku === product.sku
+                    item.sku === normalizedProduct.sku
                         ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * item.unitPrice }
                         : item
                 );
             }
-            return [...prev, { ...product, quantity: 1, total: product.unitPrice }];
+            return [...prev, { ...normalizedProduct, quantity: 1, total: normalizedProduct.unitPrice }];
         });
     }, []);
 
@@ -107,10 +116,90 @@ const SalesPage = () => {
         setCartItems((prev) => prev.filter((item) => item.id !== itemId));
     }, []);
 
-    const handlePayment = useCallback(() => {
-        message.success('Thanh toán thành công!');
-        setCartItems([]);
-    }, [message]);
+    const handlePayment = useCallback(async (method) => {
+        // Use passed method if it's a valid string, otherwise fallback to paymentMethod state
+        // This handles cases where React event objects are passed (e.g., from direct button onClick)
+        const finalMethod = (typeof method === 'string' && method) ? method : paymentMethod;
+
+        if (cartItems.length === 0) {
+            message.warning('Vui lòng thêm sản phẩm vào giỏ hàng');
+            return;
+        }
+
+        setPaymentLoading(true);
+        try {
+            const itemsPayload = cartItems.map(item => ({
+                product_id: item.id,
+                variant_id: item.variantId || null,
+                quantity: item.quantity,
+            }));
+
+            // Step 1: Call preview to get exact backend-calculated total
+            const previewResponse = await posApi.previewSale({
+                customer_id: customer?.id || null,
+                items: itemsPayload,
+            });
+
+            if (!previewResponse.success) {
+                message.error(previewResponse.message || 'Không thể xem trước đơn hàng');
+                return;
+            }
+
+            const backendTotal = previewResponse.data.total;
+
+            // Step 2: Create order with backend-calculated total
+            const payload = {
+                order_type: 'pos',
+                branch_id: currentUser?.branch_id || 1,
+                user_id: currentUser?.id || 1,
+                customer_id: customer?.id || null,
+                items: itemsPayload,
+                payments: [{
+                    payment_method: finalMethod,
+                    amount: backendTotal, // Use backend-calculated total
+                }],
+                notes: orderNote || null,
+            };
+
+            console.log('🔵 Creating order with payload:', payload);
+            const response = await posApi.createSale(payload);
+
+            if (response.success) {
+                message.success(`Thanh toán thành công! Đơn hàng: ${response.data?.order_number || 'N/A'}`);
+                setCartItems([]);
+                setOrderNote('');
+                setCustomer(null);
+            } else {
+                console.error('Order creation failed:', response);
+                message.error(response.message || response.error || 'Không thể tạo đơn hàng');
+            }
+        } catch (error) {
+            console.error('Payment error:', error);
+            console.error('Error response:', error.response?.data);
+
+            // Extract error message from various possible locations
+            const errorData = error.response?.data;
+            let errorMessage = 'Lỗi khi thanh toán';
+
+            if (errorData) {
+                // Try different error locations
+                if (errorData.messages?.error) {
+                    errorMessage = errorData.messages.error;
+                } else if (errorData.message) {
+                    errorMessage = errorData.message;
+                } else if (typeof errorData === 'string') {
+                    errorMessage = errorData;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            console.error('Validation error details:', errorMessage);
+            message.error(errorMessage);
+        } finally {
+            setPaymentLoading(false);
+        }
+    }, [cartItems, customer, currentUser, orderNote, paymentMethod, message]);
 
     const handleNewTab = useCallback((type) => {
         const newId = Math.max(...tabs.map((t) => t.id), 0) + 1;
@@ -151,19 +240,24 @@ const SalesPage = () => {
                         onCustomerChange={setCustomer}
                         totals={totals}
                         onPayment={handlePayment}
+                        loading={paymentLoading}
                     />
                 );
 
             case SALE_MODES.REGULAR:
                 return (
                     <div className={styles.regularModeLayout}>
+                        <CustomerHeader
+                            customer={customer}
+                            onCustomerChange={setCustomer}
+                        />
                         <ProductGrid onAddProduct={handleAddProduct} />
                         <div className={styles.regularPaymentSummary}>
                             <span>Tổng tiền hàng</span>
                             <span className={styles.itemCount}>{totals.itemCount}</span>
                             <span className={styles.totalAmount}>{totals.subtotal.toLocaleString('vi-VN')}</span>
                         </div>
-                        <PaymentButton onClick={handlePayment} />
+                        <PaymentButton onClick={handlePayment} loading={paymentLoading} disabled={cartItems.length === 0} />
                     </div>
                 );
 
@@ -193,6 +287,7 @@ const SalesPage = () => {
                 onTabChange={setActiveTabId}
                 onNewTab={handleNewTab}
                 onCloseTab={handleCloseTab}
+                onAddProduct={handleAddProduct}
             />
 
             {/* Main Content */}

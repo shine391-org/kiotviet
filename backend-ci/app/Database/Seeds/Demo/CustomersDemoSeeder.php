@@ -78,6 +78,10 @@ class CustomersDemoSeeder extends Seeder
             ['id' => 2018, 'code' => 'CUST-DEMO-018', 'name' => 'La Mỹ Duyên', 'phone' => '0912000018', 'email' => 'duyen.demo@lano.local', 'address' => '155 Lạch Tray, Hải Phòng', 'province' => 'Hải Phòng', 'district' => 'Ngô Quyền', 'ward' => 'Lạch Tray'],
             ['id' => 2019, 'code' => 'CUST-DEMO-019', 'name' => 'Đinh Mạnh Cường', 'phone' => '0912000019', 'email' => 'cuong.demo@lano.local', 'address' => '18 Lê Lợi, Vinh', 'province' => 'Nghệ An', 'district' => 'Vinh', 'ward' => 'Hưng Bình'],
             ['id' => 2020, 'code' => 'CUST-DEMO-020', 'name' => 'Phùng Thanh Mai', 'phone' => '0912000020', 'email' => 'mai.demo@lano.local', 'address' => '3 Hùng Vương, Huế', 'province' => 'Thừa Thiên Huế', 'district' => 'Huế', 'ward' => 'Phú Nhuận'],
+            
+            // Khách lẻ mặc định cho POS search
+            ['id' => 2021, 'code' => 'CUST-DEMO-021', 'name' => 'Khách lẻ', 'phone' => '0900000000', 'email' => 'khachle@lano.local', 'address' => 'Khách vãng lai', 'province' => 'Hà Nội', 'district' => 'Hoàn Kiếm', 'ward' => 'Hàng Bạc'],
+            ['id' => 2022, 'code' => 'CUST-DEMO-022', 'name' => 'Khách hàng VIP', 'phone' => '0900000001', 'email' => 'vip@lano.local', 'address' => '1 Tràng Tiền, Hà Nội', 'province' => 'Hà Nội', 'district' => 'Hoàn Kiếm', 'ward' => 'Tràng Tiền'],
         ];
 
         foreach ($demoRows as $row) {

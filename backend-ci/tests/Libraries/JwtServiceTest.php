@@ -18,9 +18,9 @@ class JwtServiceTest extends CIUnitTestCase
 
         $decoded = $jwt->decode($token);
 
-        $this->assertSame(10, $decoded->data->id);
-        $this->assertSame('admin', $decoded->data->role);
-        $this->assertGreaterThan(time(), $decoded->exp);
-        $this->assertLessThanOrEqual(time(), $decoded->iat);
+        $this->assertSame(10, $decoded['data']['id']);
+        $this->assertSame('admin', $decoded['data']['role']);
+        $this->assertGreaterThan(time(), $decoded['exp']);
+        $this->assertLessThanOrEqual(time(), $decoded['iat']);
     }
 }

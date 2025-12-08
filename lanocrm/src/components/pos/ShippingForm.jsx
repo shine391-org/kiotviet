@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Input, Select, Switch, Cascader, Tooltip, Button } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Input, Select, Switch, Tooltip, Button } from 'antd';
 import {
     EnvironmentOutlined,
     UserOutlined,
@@ -10,47 +10,8 @@ import {
 } from '@ant-design/icons';
 import CustomerHeader from './CustomerHeader';
 import PaymentButton from './PaymentButton';
+import locationApi from '../../api/locationApi';
 import styles from './ShippingForm.module.css';
-
-// Mock address data
-const VIETNAM_PROVINCES = [
-    {
-        value: 'hanoi',
-        label: 'Hà Nội',
-        children: [
-            {
-                value: 'badinh',
-                label: 'Quận Ba Đình',
-                children: [
-                    { value: 'thanhcong', label: 'Phường Thành Công' },
-                    { value: 'langha', label: 'Phường Láng Hạ' },
-                ],
-            },
-            {
-                value: 'caugiay',
-                label: 'Quận Cầu Giấy',
-                children: [
-                    { value: 'dichvong', label: 'Phường Dịch Vọng' },
-                    { value: 'maidichnew', label: 'Phường Mai Dịch' },
-                ],
-            },
-        ],
-    },
-    {
-        value: 'hcm',
-        label: 'TP. Hồ Chí Minh',
-        children: [
-            {
-                value: 'quan1',
-                label: 'Quận 1',
-                children: [
-                    { value: 'benghe', label: 'Phường Bến Nghé' },
-                    { value: 'benthanhph', label: 'Phường Bến Thành' },
-                ],
-            },
-        ],
-    },
-];
 
 const ShippingForm = ({
     customer,
@@ -60,12 +21,18 @@ const ShippingForm = ({
     onToggleDeliveryPanel,
     onPayment,
 }) => {
+    const [provinces, setProvinces] = useState([]);
+    const [districts, setDistricts] = useState([]);
+    const [wards, setWards] = useState([]);
+    const [locationsLoading, setLocationsLoading] = useState(false);
     const [formData, setFormData] = useState({
         savedAddress: '',
         recipientName: '',
         phone: '',
         addressDetail: '',
-        location: [],
+        province: null,
+        district: null,
+        ward: null,
         weight: 500,
         weightUnit: 'gram',
         dimensions: { l: 10, w: 10, h: 10 },
@@ -75,6 +42,83 @@ const ShippingForm = ({
         codAmount: totals.customerPay,
         customerPaid: 0,
     });
+
+    // Fetch provinces on mount
+    const fetchProvinces = useCallback(async () => {
+        setLocationsLoading(true);
+        try {
+            const response = await locationApi.getProvinces();
+            if (response.success && response.data) {
+                setProvinces(response.data.map(p => ({
+                    value: p.id,
+                    label: p.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch provinces:', error);
+        } finally {
+            setLocationsLoading(false);
+        }
+    }, []);
+
+    // Fetch districts when province changes
+    const fetchDistricts = useCallback(async (provinceId) => {
+        if (!provinceId) {
+            setDistricts([]);
+            setWards([]);
+            return;
+        }
+        try {
+            const response = await locationApi.getDistricts(provinceId);
+            if (response.success && response.data) {
+                setDistricts(response.data.map(d => ({
+                    value: d.id,
+                    label: d.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch districts:', error);
+        }
+    }, []);
+
+    // Fetch wards when district changes
+    const fetchWards = useCallback(async (districtId) => {
+        if (!districtId) {
+            setWards([]);
+            return;
+        }
+        try {
+            const response = await locationApi.getWards(districtId);
+            if (response.success && response.data) {
+                setWards(response.data.map(w => ({
+                    value: w.id,
+                    label: w.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch wards:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        fetchProvinces();
+    }, [fetchProvinces]);
+
+    const handleProvinceChange = (provinceId) => {
+        handleInputChange('province', provinceId);
+        handleInputChange('district', null);
+        handleInputChange('ward', null);
+        setDistricts([]);
+        setWards([]);
+        fetchDistricts(provinceId);
+    };
+
+    const handleDistrictChange = (districtId) => {
+        handleInputChange('district', districtId);
+        handleInputChange('ward', null);
+        setWards([]);
+        fetchWards(districtId);
+    };
 
     const handleInputChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -149,17 +193,44 @@ const ShippingForm = ({
             />
 
             {/* Province/District/Ward */}
-            <Cascader
-                options={VIETNAM_PROVINCES}
-                placeholder="Tỉnh/TP - Quận/Huyện"
-                value={formData.location}
-                onChange={(val) => handleInputChange('location', val)}
-                className={styles.locationCascader}
-            />
+            <div className={styles.locationRow}>
+                <Select
+                    placeholder="Tỉnh/Thành phố"
+                    value={formData.province || undefined}
+                    onChange={handleProvinceChange}
+                    options={provinces}
+                    loading={locationsLoading}
+                    className={styles.provinceSelect}
+                    showSearch
+                    filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                />
+                <Select
+                    placeholder="Quận/Huyện"
+                    value={formData.district || undefined}
+                    onChange={handleDistrictChange}
+                    options={districts}
+                    disabled={!formData.province}
+                    className={styles.districtSelect}
+                    showSearch
+                    filterOption={(input, option) =>
+                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                    }
+                />
+            </div>
 
-            <Input
+            <Select
                 placeholder="Phường/Xã"
-                className={styles.wardInput}
+                value={formData.ward || undefined}
+                onChange={(val) => handleInputChange('ward', val)}
+                options={wards}
+                disabled={!formData.district}
+                className={styles.wardSelect}
+                showSearch
+                filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                }
             />
 
             {/* Package Info */}

@@ -288,7 +288,7 @@ const ShipmentDetail = ({ shipment, loading, onClose }) => {
       columns={historyColumns}
       size="small"
       pagination={false}
-      rowKey={(r, idx) => r.time || idx}
+      rowKey={(r) => r.time || r.status || JSON.stringify(r)}
     />
   );
 

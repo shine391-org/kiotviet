@@ -67,7 +67,8 @@ axiosInstance.interceptors.response.use(
       
       switch (error.response.status) {
         case 400:
-          errorMessage = error.response.data?.message || 'Dữ liệu không hợp lệ';
+          errorMessage = error.response.data?.messages?.error || error.response.data?.message || 'Dữ liệu không hợp lệ';
+          console.error('🔴 Validation error details:', error.response.data);
           break;
           
         case 401:

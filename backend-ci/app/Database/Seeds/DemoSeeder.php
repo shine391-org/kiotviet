@@ -63,6 +63,7 @@ class DemoSeeder extends Seeder
             'InvoicesDemoSeeder',          // Invoices (needs Orders)
             'ReturnsDemoSeeder',           // Returns (needs Orders)
             'StockMovementsDemoSeeder',    // Stock movements (needs products/warehouses)
+            'StockTransfersDemoSeeder',    // Stock transfers (needs branches/products)
             // 'StockLedgersDemoSeeder',      // Stock ledgers (needs orders/deliveries/returns)
             'PurchaseOrdersDemoSeeder',    // POs (needs Suppliers, Products)
             'CashTransactionsDemoSeeder',  // Cash linked to orders/returns
@@ -92,6 +93,8 @@ class DemoSeeder extends Seeder
                 // Gọi PriceListSeeder sau ProductVariantsDemoSeeder (tránh FK cascade delete)
                 if ($seederName === 'ProductVariantsDemoSeeder') {
                     $this->call(\App\Database\Seeds\PriceListSeeder::class);
+                    // Gọi InventoryStockSeeder sau để có stock cho POS
+                    $this->call(\App\Database\Seeds\InventoryStockSeeder::class);
                 }
             } else {
                 echo "⚠️  Warning: Seeder {$seederName} not found\n";

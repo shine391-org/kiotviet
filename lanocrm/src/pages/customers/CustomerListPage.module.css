@@ -2,6 +2,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-top: 8px; /* Ensure content isn't covered by sticky header */
 }
 
 .headerRow {
@@ -24,7 +25,7 @@
 
 .layout {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 220px 1fr;
   gap: 12px;
   align-items: start;
 }
@@ -46,17 +47,21 @@
 }
 
 .tableStack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 340px;
   gap: 12px;
+  align-items: start;
 }
 
 .tableCard {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  overflow: auto;
 }
 
 .detailCard {
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 110px;
 }
 
 .detailHeader {
@@ -101,6 +106,17 @@
 
 .selectedRow {
   background: #e6f4ff !important;
+}
+
+@media (max-width: 1400px) {
+  .tableStack {
+    grid-template-columns: 1fr;
+  }
+
+  .detailCard {
+    position: relative;
+    top: 0;
+  }
 }
 
 @media (max-width: 1100px) {

@@ -59,6 +59,17 @@ export const updateCustomer = createAsyncThunk(
   }
 );
 
+export const deleteCustomer = createAsyncThunk(
+  'customer/delete',
+  async (id, { rejectWithValue }) => {
+    try {
+      return await customerApi.deleteCustomer(id);
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.message);
+    }
+  }
+);
+
 const customerSlice = createSlice({
   name: 'customer',
   initialState,
@@ -130,6 +141,19 @@ const customerSlice = createSlice({
         }
       })
       .addCase(updateCustomer.rejected, (state, action) => {
+        state.saving = false;
+        state.error = action.payload;
+      })
+
+      .addCase(deleteCustomer.pending, (state) => {
+        state.saving = true;
+        state.error = null;
+      })
+      .addCase(deleteCustomer.fulfilled, (state) => {
+        state.saving = false;
+        state.current = null;
+      })
+      .addCase(deleteCustomer.rejected, (state, action) => {
         state.saving = false;
         state.error = action.payload;
       });

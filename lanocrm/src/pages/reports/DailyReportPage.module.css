@@ -1,0 +1,129 @@
+.container {
+    padding: 24px;
+    background: #f5f5f5;
+    min-height: calc(100vh - 64px);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+}
+
+.filters {
+    display: flex;
+    gap: 12px;
+}
+
+.datePicker {
+    width: 150px;
+}
+
+.branchSelect {
+    width: 200px;
+}
+
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+.empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+    background: white;
+    border-radius: 8px;
+}
+
+.section {
+    margin-top: 16px;
+}
+
+.statCard {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.statCard :global(.ant-statistic-title) {
+    color: #666;
+    font-size: 14px;
+}
+
+.statCard :global(.ant-statistic-content) {
+    color: #333;
+}
+
+.statOrders :global(.ant-statistic-content-prefix) {
+    color: #1890ff;
+}
+
+.statItems :global(.ant-statistic-content-prefix) {
+    color: #52c41a;
+}
+
+.statRevenue :global(.ant-statistic-content-prefix) {
+    color: #faad14;
+}
+
+.statAvg :global(.ant-statistic-content-prefix) {
+    color: #722ed1;
+}
+
+.infoCard {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    height: 100%;
+}
+
+.infoCard :global(.ant-card-head-title) {
+    font-weight: 600;
+}
+
+.tableCard {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    height: 100%;
+}
+
+.tableCard :global(.ant-card-head-title) {
+    font-weight: 600;
+}
+
+.tableCard :global(.ant-table) {
+    font-size: 13px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 16px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .filters {
+        width: 100%;
+    }
+
+    .datePicker,
+    .branchSelect {
+        flex: 1;
+    }
+}

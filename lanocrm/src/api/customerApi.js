@@ -7,6 +7,7 @@
 import axiosInstance from './axios';
 
 const BASE = '/customers';
+const GROUPS_BASE = '/customer-groups';
 
 const customerApi = {
   /**
@@ -71,6 +72,16 @@ const customerApi = {
     return response.data;
   },
 
+  /**
+   * Delete a customer (soft delete).
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  deleteCustomer: async (id) => {
+    const response = await axiosInstance.delete(`${BASE}/${id}`);
+    return response.data;
+  },
+
   exportCustomers: async (params = {}) => {
     const response = await axiosInstance.get(`${BASE}/export`, {
       params,
@@ -85,6 +96,32 @@ const customerApi = {
     const response = await axiosInstance.post(`${BASE}/import`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    return response.data;
+  },
+
+  // Customer Groups
+  getGroups: async (params = {}) => {
+    const response = await axiosInstance.get(GROUPS_BASE, { params });
+    return response.data;
+  },
+
+  getGroup: async (id) => {
+    const response = await axiosInstance.get(`${GROUPS_BASE}/${id}`);
+    return response.data;
+  },
+
+  createGroup: async (data) => {
+    const response = await axiosInstance.post(GROUPS_BASE, data);
+    return response.data;
+  },
+
+  updateGroup: async (id, data) => {
+    const response = await axiosInstance.put(`${GROUPS_BASE}/${id}`, data);
+    return response.data;
+  },
+
+  deleteGroup: async (id) => {
+    const response = await axiosInstance.delete(`${GROUPS_BASE}/${id}`);
     return response.data;
   },
 };

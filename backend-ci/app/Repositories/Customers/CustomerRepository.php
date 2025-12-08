@@ -87,6 +87,17 @@ class CustomerRepository
     }
 
     /**
+     * Soft delete customer.
+     */
+    public function softDelete(int $id): bool
+    {
+        return (bool) $this->model->update($id, [
+            'deleted_at' => $this->now(),
+            'updated_at' => $this->now(),
+        ]);
+    }
+
+    /**
      * Check if tax code exists within an organization (exclude optional id).
      */
     public function taxCodeExists(string $taxCode, ?int $excludeId = null, ?int $organizationId = null): bool
@@ -104,6 +115,25 @@ class CustomerRepository
         }
 
         return $builder->countAllResults() > 0;
+    }
+
+    /**
+     * Get the last customer code (highest KH number) for an organization.
+     * Used for auto-generating next customer code.
+     */
+    public function getLastCustomerCode(int $organizationId): ?string
+    {
+        $row = $this->model->builder()
+            ->select('code')
+            ->where('organization_id', $organizationId)
+            ->where('deleted_at', null)
+            ->like('code', 'KH', 'after')
+            ->orderBy('code', 'DESC')
+            ->limit(1)
+            ->get()
+            ->getRowArray();
+
+        return $row['code'] ?? null;
     }
 
     /**

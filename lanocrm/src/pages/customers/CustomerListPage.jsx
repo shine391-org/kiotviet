@@ -28,7 +28,9 @@ import {
   Skeleton,
 } from 'antd';
 import {
+  DeleteOutlined,
   DownloadOutlined,
+  EditOutlined,
   ExportOutlined,
   ImportOutlined,
   MailOutlined,
@@ -44,6 +46,8 @@ import {
   fetchCustomers,
   fetchCustomer,
   createCustomer,
+  updateCustomer,
+  deleteCustomer,
   clearCustomerError,
 } from '../../store/slices/customerSlice';
 import customerApi from '../../api/customerApi';
@@ -130,7 +134,8 @@ const CustomerListPage = () => {
   });
   const [searchText, setSearchText] = useState('');
   const [selectedId, setSelectedId] = useState(null);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerMode, setDrawerMode] = useState('create');
   const [uploading, setUploading] = useState(false);
   const [visibleCols, setVisibleCols] = useState([
     'code',
@@ -180,7 +185,7 @@ const CustomerListPage = () => {
     () => [
       { key: 'code', title: 'Mã khách hàng', dataIndex: 'code', width: 130, render: (v, r) => v || `KH${r.id}` },
       { key: 'name', title: 'Tên khách hàng', dataIndex: 'name', render: (v) => <Text strong>{v || 'Chưa có tên'}</Text> },
-      { key: 'customer_type', title: 'Loại khách hàng', dataIndex: 'customer_type', width: 140, render: typeTag },
+      { key: 'customer_type', title: 'Loại KH', dataIndex: 'customer_type', width: 120, render: typeTag },
       { key: 'phone', title: 'Điện thoại', dataIndex: 'phone', width: 140 },
       { key: 'phone2', title: 'Điện thoại 2', dataIndex: 'phone2', width: 140 },
       { key: 'customer_group_id', title: 'Nhóm khách hàng', dataIndex: 'customer_group_id', render: (v) => v || 'Chưa có' },
@@ -247,6 +252,43 @@ const CustomerListPage = () => {
     if (selectedId) {
       dispatch(fetchCustomer(selectedId));
     }
+  };
+
+  const openCreate = () => {
+    setDrawerMode('create');
+    form.resetFields();
+    form.setFieldsValue({ customer_type: 'INDIVIDUAL', status: 'ACTIVE' });
+    setDrawerOpen(true);
+  };
+
+  const openEdit = () => {
+    if (!current) return;
+    setDrawerMode('edit');
+    form.setFieldsValue({
+      ...current,
+      birthday: current.birthday ? dayjs(current.birthday) : null,
+    });
+    setDrawerOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (!current) return;
+    modal.confirm({
+      title: 'Xác nhận xóa',
+      content: `Bạn có chắc muốn xóa khách hàng "${current.name}"?`,
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await dispatch(deleteCustomer(current.id)).unwrap();
+          message.success('Đã xóa khách hàng');
+          handleRefresh();
+        } catch (err) {
+          modal.error({ title: 'Xóa thất bại', content: err?.message || 'Không thể xóa' });
+        }
+      },
+    });
   };
 
   const handleExport = async () => {
@@ -354,25 +396,45 @@ const CustomerListPage = () => {
           <Col span={12}>{infoRow('Mã số thuế', current.tax_code)}</Col>
           <Col span={12}>{infoRow('Nợ hiện tại', moneyFormat(current.current_debt))}</Col>
         </Row>
+
+        <Divider style={{ margin: '16px 0' }} />
+        <Space>
+          <Button type="primary" icon={<EditOutlined />} onClick={openEdit}>
+            Sửa
+          </Button>
+          <Button danger icon={<DeleteOutlined />} onClick={handleDelete}>
+            Xóa
+          </Button>
+        </Space>
       </>
     );
   };
 
-  const onCreate = async () => {
+  const onSave = async () => {
     try {
       const values = await form.validateFields();
       const payload = {
         ...values,
         birthday: values.birthday ? values.birthday.format('YYYY-MM-DD') : null,
       };
-      await dispatch(createCustomer(payload)).unwrap();
-      message.success('Tạo khách hàng thành công');
-      setCreateOpen(false);
+
+      if (drawerMode === 'create') {
+        await dispatch(createCustomer(payload)).unwrap();
+        message.success('Tạo khách hàng thành công');
+      } else {
+        await dispatch(updateCustomer({ id: current.id, data: payload })).unwrap();
+        message.success('Cập nhật khách hàng thành công');
+      }
+
+      setDrawerOpen(false);
       form.resetFields();
       handleRefresh();
     } catch (err) {
       if (err?.message) {
-        modal.error({ title: 'Tạo khách hàng thất bại', content: err.message });
+        modal.error({ 
+          title: drawerMode === 'create' ? 'Tạo khách hàng thất bại' : 'Cập nhật thất bại', 
+          content: err.message 
+        });
       }
     }
   };
@@ -390,7 +452,7 @@ const CustomerListPage = () => {
         />
 
         <Space className={styles.actions} wrap>
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
             Khách hàng
           </Button>
           <Tooltip title="Gửi tin nhắn (sắp ra mắt)">
@@ -563,14 +625,14 @@ const CustomerListPage = () => {
       </div>
 
       <Drawer
-        title="Tạo khách hàng"
+        title={drawerMode === 'create' ? 'Tạo khách hàng' : 'Sửa khách hàng'}
         width={640}
-        onClose={() => setCreateOpen(false)}
-        open={createOpen}
+        onClose={() => setDrawerOpen(false)}
+        open={drawerOpen}
         extra={
           <Space>
-            <Button onClick={() => setCreateOpen(false)}>Bỏ qua</Button>
-            <Button type="primary" loading={saving} onClick={onCreate}>
+            <Button onClick={() => setDrawerOpen(false)}>Bỏ qua</Button>
+            <Button type="primary" loading={saving} onClick={onSave}>
               Lưu
             </Button>
           </Space>
@@ -584,27 +646,27 @@ const CustomerListPage = () => {
                 name="name"
                 rules={[{ required: true, message: 'Vui lòng nhập tên' }]}
               >
-                <Input placeholder="Bắt buộc" />
+                <Input id="customer-name" placeholder="Bắt buộc" aria-label="Tên khách hàng" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Mã khách hàng" name="code">
-                <Input placeholder="Tự động nếu để trống" />
+                <Input id="customer-code" placeholder="Tự động nếu để trống" aria-label="Mã khách hàng" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Điện thoại 1" name="phone">
-                <Input />
+                <Input id="customer-phone" aria-label="Điện thoại 1" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Điện thoại 2" name="phone2">
-                <Input />
+                <Input id="customer-phone2" aria-label="Điện thoại 2" />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Email" name="email">
-                <Input />
+                <Input id="customer-email" aria-label="Email" />
               </Form.Item>
             </Col>
             <Col span={12}>

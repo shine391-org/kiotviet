@@ -44,6 +44,12 @@ class CustomersController extends BaseController
         return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $data)));
     }
 
+    /** Delete customer (soft delete). @agent-use: DELETE /api/customers/{id} */
+    public function delete($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->delete((int) $id)));
+    }
+
     /** Export customers to CSV. @agent-use: GET /api/customers/export */
     public function export()
     {

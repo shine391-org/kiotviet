@@ -1,7 +1,7 @@
 import axiosInstance from './axios';
 import stockAudits, { stockAuditDetails } from '../mock/stockAudits';
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const toDate = (value) => (value ? new Date(value) : null);
 
@@ -129,6 +129,26 @@ const stockAuditApi = {
       return { success: false, message: 'Không tìm thấy phiếu kiểm kho' };
     }
     return { success: true, audit: { ...(row || {}), ...(detail?.audit || {}) } };
+  },
+
+  createAudit: async (data) => {
+    const response = await axiosInstance.post('/inventory/stock-audits', data);
+    return response.data;
+  },
+
+  updateAudit: async (id, data) => {
+    const response = await axiosInstance.put(`/inventory/stock-audits/${id}`, data);
+    return response.data;
+  },
+
+  completeAudit: async (id, data = {}) => {
+    const response = await axiosInstance.post(`/inventory/stock-audits/${id}/complete`, data);
+    return response.data;
+  },
+
+  cancelAudit: async (id, data = {}) => {
+    const response = await axiosInstance.post(`/inventory/stock-audits/${id}/cancel`, data);
+    return response.data;
   },
 };
 

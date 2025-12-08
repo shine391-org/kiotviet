@@ -332,7 +332,7 @@ const TopMenu = () => {
         </ul>
       </div>
 
-      <NavLink to="/sales" className={styles.ctaButton}>
+      <NavLink to="/pos" className={styles.ctaButton}>
         <ShoppingCartOutlined />
         <span>Bán hàng</span>
       </NavLink>

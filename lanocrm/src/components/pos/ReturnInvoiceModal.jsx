@@ -20,17 +20,21 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
         try {
             const response = await posApi.getInvoices({
                 search: searchValue || undefined,
+                searchType: searchType || undefined,
+                fromDate: fromDate ? fromDate.format('YYYY-MM-DD') : undefined,
+                toDate: toDate ? toDate.format('YYYY-MM-DD') : undefined,
                 page: currentPage,
                 limit: pageSize,
             });
             if (response.success) {
-                setInvoices(response.data.map(inv => ({
-                    id: inv.id,
-                    code: inv.invoice_number,
-                    time: inv.issue_date,
-                    staff: inv.created_by_name || 'N/A',
-                    customer: inv.customer_name || 'Khách lẻ',
-                    total: parseFloat(inv.total) || 0,
+                // Map orders data to invoice display format
+                setInvoices(response.data.map(order => ({
+                    id: order.id,
+                    code: order.order_number,
+                    time: order.order_date || order.created_at,
+                    staff: order.user_name || order.created_by_name || 'N/A',
+                    customer: order.customer_name || 'Khách lẻ',
+                    total: parseFloat(order.total) || 0,
                 })));
                 setTotal(response.pagination?.total || 0);
             }
@@ -39,7 +43,7 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
         } finally {
             setLoading(false);
         }
-    }, [open, searchValue, currentPage]);
+    }, [open, searchValue, searchType, fromDate, toDate, currentPage]);
 
     useEffect(() => {
         fetchInvoices();
@@ -106,8 +110,8 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
                 <div className={styles.sidebar}>
                     <div className={styles.searchSection}>
                         <h4>Tìm kiếm</h4>
-                        <Input 
-                            placeholder="Theo mã hóa đơn" 
+                        <Input
+                            placeholder="Theo mã hóa đơn"
                             className={styles.searchInput}
                             value={searchValue}
                             onChange={(e) => setSearchValue(e.target.value)}

@@ -16,6 +16,13 @@ class InvoiceModel extends Model
         'invoice_status',
         'invoice_type',
         'e_invoice_status',
+        'delivery_status',
+        'shipment_code',
+        'shipping_partner',
+        'delivery_time',
+        'delivery_note',
+        'sales_channel',
+        'seller_id',
         'customer_id',
         'branch_id',
         'issue_date',
@@ -27,6 +34,7 @@ class InvoiceModel extends Model
         'vat_rate',
         'vat_amount',
         'tax_amount',
+        'tax_discount',
         'total',
         'other_fee',
         'shipping_fee',
@@ -35,6 +43,8 @@ class InvoiceModel extends Model
         'cod_amount',
         'rounding_adjustment',
         'payment_status',
+        'payment_discount',
+        'payment_method',
         'total_paid',
         'currency_code',
         'exchange_rate',
@@ -45,6 +55,7 @@ class InvoiceModel extends Model
         'created_by',
         'created_at',
         'updated_at',
+        'deleted_at',
     ];
     protected $useTimestamps = false;
 }

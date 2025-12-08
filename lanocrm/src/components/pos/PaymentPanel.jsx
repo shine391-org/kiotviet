@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Input, Button, Radio, Tooltip, Dropdown, Select } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Input, Button, Radio, Tooltip, Dropdown, Select, Spin } from 'antd';
 import {
     StarOutlined,
     MoreOutlined,
@@ -9,6 +9,7 @@ import {
 import CombinedPaymentModal from './CombinedPaymentModal';
 import CustomerHeader from './CustomerHeader';
 import PaymentButton from './PaymentButton';
+import bankAccountApi from '../../api/bankAccountApi';
 import styles from './PaymentPanel.module.css';
 
 const PaymentPanel = ({
@@ -16,27 +17,89 @@ const PaymentPanel = ({
     onCustomerChange,
     totals,
     onPayment,
+    loading = false,
 }) => {
     const [paymentMethod, setPaymentMethod] = useState('cash');
     const [customerPayAmount, setCustomerPayAmount] = useState(totals.customerPay);
     const [showCombinedModal, setShowCombinedModal] = useState(false);
+    const [bankAccounts, setBankAccounts] = useState([]);
+    const [selectedBankAccount, setSelectedBankAccount] = useState(null);
+    const [bankAccountsLoading, setBankAccountsLoading] = useState(false);
+    const [qrCode, setQrCode] = useState(null);
+
+    // Fetch bank accounts from API
+    const fetchBankAccounts = useCallback(async () => {
+        setBankAccountsLoading(true);
+        try {
+            const response = await bankAccountApi.getAll({ is_active: 1 });
+            if (response.data?.success && response.data?.data) {
+                const accounts = response.data.data.map(acc => ({
+                    value: acc.id,
+                    label: `${acc.bank_name} - ${acc.account_number} - ${acc.account_holder}`,
+                }));
+                setBankAccounts(accounts);
+                if (accounts.length > 0 && !selectedBankAccount) {
+                    setSelectedBankAccount(accounts[0].value);
+                }
+            }
+        } catch (error) {
+            console.error('Failed to fetch bank accounts:', error);
+        } finally {
+            setBankAccountsLoading(false);
+        }
+    }, [selectedBankAccount]);
+
+    // Fetch QR code for selected bank account
+    const [qrLoading, setQrLoading] = useState(false);
+    const fetchQrCode = useCallback(async () => {
+        if (!selectedBankAccount) {
+            console.warn('No bank account selected');
+            return;
+        }
+        if (totals.customerPay <= 0) {
+            console.warn('Customer pay is 0, cannot generate QR');
+            return;
+        }
+
+        setQrLoading(true);
+        try {
+            const response = await bankAccountApi.getQR(
+                selectedBankAccount,
+                totals.customerPay,
+                'Thanh toan POS'
+            );
+            console.log('QR Response:', response);
+            // Response from axios: response.data = backend response
+            const result = response.data || response;
+            if (result?.success && result?.data?.qr_url) {
+                setQrCode(result.data.qr_url);
+            } else if (result?.qr_url) {
+                setQrCode(result.qr_url);
+            }
+        } catch (error) {
+            console.error('Failed to fetch QR code:', error);
+        } finally {
+            setQrLoading(false);
+        }
+    }, [selectedBankAccount, totals.customerPay]);
+
+    useEffect(() => {
+        fetchBankAccounts();
+    }, []);
+
+    useEffect(() => {
+        if (paymentMethod === 'transfer' && selectedBankAccount) {
+            fetchQrCode();
+        }
+    }, [paymentMethod, selectedBankAccount, totals.customerPay, fetchQrCode]);
 
     // Sync customerPayAmount with totals
     useEffect(() => {
         setCustomerPayAmount(totals.customerPay);
     }, [totals.customerPay]);
 
-    // F4 shortcut for customer search
-    useEffect(() => {
-        const handleKeyDown = (e) => {
-            if (e.key === 'F4') {
-                e.preventDefault();
-                customerSearchRef.current?.focus();
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
+
+    // Note: F4 shortcut for customer search is handled in CustomerHeader component
 
     // Quick payment amounts - unique and sorted
     const baseAmounts = [
@@ -53,7 +116,13 @@ const PaymentPanel = ({
 
     const handleCombinedPayment = (payments) => {
         console.log('Combined payments:', payments);
-        onPayment();
+        // Pass first payment method for combined payments
+        onPayment?.(payments[0]?.payment_method?.toUpperCase() || 'CASH');
+    };
+
+    const handlePaymentClick = () => {
+        // Pass current payment method to parent, uppercase for backend
+        onPayment?.(paymentMethod.toUpperCase());
     };
 
     // Dropdown menu for more payment options
@@ -167,24 +236,49 @@ const PaymentPanel = ({
 
                     {paymentMethod === 'transfer' && (
                         <div className={styles.transferContent}>
-                            <div className={styles.qrSection}>
-                                <div className={styles.qrCode}>
-                                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=BIDV-2206331765" alt="QR Code" />
+                            {bankAccountsLoading ? (
+                                <div className={styles.loadingContainer}><Spin size="small" /></div>
+                            ) : bankAccounts.length > 0 ? (
+                                <div className={styles.qrSection}>
+                                    <div className={styles.qrCode}>
+                                        {qrLoading ? (
+                                            <Spin size="large" />
+                                        ) : qrCode ? (
+                                            <img src={qrCode} alt="QR Code" />
+                                        ) : (
+                                            <QrcodeOutlined style={{ fontSize: 80, color: '#ccc' }} />
+                                        )}
+                                    </div>
+                                    <div className={styles.bankInfo}>
+                                        <Select
+                                            value={selectedBankAccount}
+                                            onChange={(value) => {
+                                                setSelectedBankAccount(value);
+                                                setQrCode(null); // Reset QR when bank changes
+                                            }}
+                                            className={styles.bankSelect}
+                                            options={bankAccounts}
+                                        />
+                                        <Button
+                                            type="primary"
+                                            className={styles.showQrBtn}
+                                            onClick={fetchQrCode}
+                                            loading={qrLoading}
+                                            disabled={!selectedBankAccount || totals.customerPay <= 0}
+                                        >
+                                            📱 Tạo mã QR
+                                        </Button>
+                                        {totals.customerPay <= 0 && (
+                                            <span className={styles.qrHint}>Thêm sản phẩm để tạo QR</span>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className={styles.bankInfo}>
-                                    <Select
-                                        defaultValue="bidv"
-                                        className={styles.bankSelect}
-                                        options={[
-                                            { value: 'bidv', label: 'BIDV - 2206331765 - NGUYEN THI ...' },
-                                            { value: 'vcb', label: 'VCB - 1234567890 - NGUYEN THI ...' },
-                                        ]}
-                                    />
-                                    <Button type="link" className={styles.showQrBtn}>
-                                        📱 Hiện mã QR
-                                    </Button>
+                            ) : (
+                                <div className={styles.emptyWallet}>
+                                    <p>Chưa có tài khoản ngân hàng</p>
+                                    <Button type="link">+ Thêm tài khoản</Button>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     )}
 
@@ -193,10 +287,10 @@ const PaymentPanel = ({
                             <Select
                                 placeholder="Chọn tài khoản ngân hàng"
                                 className={styles.fullWidth}
-                                options={[
-                                    { value: 'bidv', label: 'BIDV - 2206331765 - NGUYEN THI PHUONG ANH' },
-                                    { value: 'vcb', label: 'VCB - 1234567890 - NGUYEN THI PHUONG ANH' },
-                                ]}
+                                value={selectedBankAccount}
+                                onChange={setSelectedBankAccount}
+                                options={bankAccounts}
+                                loading={bankAccountsLoading}
                             />
                         </div>
                     )}
@@ -225,7 +319,7 @@ const PaymentPanel = ({
             </div>
 
             {/* Payment Button */}
-            <PaymentButton onClick={onPayment} />
+            <PaymentButton onClick={handlePaymentClick} loading={loading} />
 
             {/* Modals */}
             <CombinedPaymentModal

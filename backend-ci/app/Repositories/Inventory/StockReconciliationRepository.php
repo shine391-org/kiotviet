@@ -52,8 +52,16 @@ class StockReconciliationRepository
     {
         $b = $this->db->table('stock_reconciliations');
         if (! empty($filters['branch_id'])) { $b->where('branch_id', $filters['branch_id']); }
-        if (! empty($filters['status'])) { $b->where('status', $filters['status']); }
+        if (! empty($filters['status'])) {
+            if (is_array($filters['status'])) {
+                $b->whereIn('status', $filters['status']);
+            } else {
+                $b->where('status', $filters['status']);
+            }
+        }
         if (! empty($filters['search'])) { $b->like('recon_number', $filters['search']); }
+        if (! empty($filters['date_from'])) { $b->where('created_at >=', $filters['date_from']); }
+        if (! empty($filters['date_to'])) { $b->where('created_at <=', $filters['date_to']); }
         return $b->orderBy('id', 'DESC')->limit(200)->get()->getResultArray();
     }
 
@@ -62,6 +70,18 @@ class StockReconciliationRepository
         $row = $this->recon->find($id);
         if (! $row) { return null; }
         $items = $this->items->where('reconciliation_id', $id)->findAll();
+        $row['items'] = $items;
+        return $row;
+    }
+
+    public function findByCode(string $code): ?array
+    {
+        $row = $this->db->table('stock_reconciliations')
+            ->where('recon_number', $code)
+            ->get()
+            ->getRowArray();
+        if (! $row) { return null; }
+        $items = $this->items->where('reconciliation_id', $row['id'])->findAll();
         $row['items'] = $items;
         return $row;
     }

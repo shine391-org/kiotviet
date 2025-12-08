@@ -48,6 +48,24 @@ class InvoicesController extends BaseController
         return $this->wrap(fn () => $this->respond($this->service->generatePdf((int) $id)));
     }
 
+    /** Update invoice. @agent-use: PUT /api/invoices/{id} */
+    public function update($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->update((int) $id, $this->safeInput())));
+    }
+
+    /** Cancel invoice. @agent-use: POST /api/invoices/{id}/cancel */
+    public function cancel($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->cancel((int) $id)));
+    }
+
+    /** Delete invoice (soft delete). @agent-use: DELETE /api/invoices/{id} */
+    public function delete($id)
+    {
+        return $this->wrap(fn () => $this->respond($this->service->delete((int) $id)));
+    }
+
     private function wrap(callable $action)
     {
         try {

@@ -2,7 +2,7 @@
 import axiosInstance from './axios';
 import mockShipments from '../mock/shipments';
 
-const USE_MOCK = true; // Toggle easily if backend endpoint sẵn sàng
+const USE_MOCK = false; // Toggle easily if backend endpoint sẵn sàng
 
 const toDate = (value) => (value ? new Date(value) : null);
 

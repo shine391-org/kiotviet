@@ -5,26 +5,30 @@
 .header {
     display: flex;
     align-items: center;
-    height: 56px;
-    padding: 0 var(--space-4);
+    height: 52px;
+    padding: 0 var(--space-3);
     background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%);
-    gap: var(--space-4);
+    gap: var(--space-3);
     flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* Search Section */
 .searchSection {
-    flex: 0 0 280px;
+    flex: 0 0 320px;
 }
 
 .searchInput {
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     border: none;
     background-color: white;
+    height: 36px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .searchInput .ant-input {
     background: transparent;
+    font-size: var(--text-sm);
 }
 
 .barcodeIcon {
@@ -56,12 +60,14 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    padding: var(--space-2) var(--space-3);
-    border-radius: var(--radius-md);
+    padding: 6px var(--space-3);
+    border-radius: var(--radius-lg);
     cursor: pointer;
     white-space: nowrap;
     transition: all var(--transition-fast);
     font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    border: 1px solid transparent;
 }
 
 /* Invoice Tab (default - white/transparent) */

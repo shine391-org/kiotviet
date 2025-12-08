@@ -95,6 +95,36 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('stock-entries/(:num)/submit', 'Api\\StockEntriesController::submit/$1');
     $routes->post('stock-entries/(:num)/cancel', 'Api\\StockEntriesController::cancel/$1');
     $routes->post('stock-entries/returns', 'Api\\StockEntryReturnsController::create');
+
+    // Stock Transfers (Inventory Transfer)
+    $routes->get('inventory/transfers', 'Api\\StockTransfersController::index');
+    $routes->get('inventory/transfers/(:segment)', 'Api\\StockTransfersController::show/$1');
+    $routes->post('inventory/transfers', 'Api\\StockTransfersController::create');
+    $routes->put('inventory/transfers/(:num)', 'Api\\StockTransfersController::update/$1');
+    $routes->post('inventory/transfers/(:num)/submit', 'Api\\StockTransfersController::submit/$1');
+    $routes->post('inventory/transfers/(:num)/receive', 'Api\\StockTransfersController::receive/$1');
+    $routes->post('inventory/transfers/(:num)/cancel', 'Api\\StockTransfersController::cancel/$1');
+    $routes->post('inventory/transfers/(:segment)/open', 'Api\\StockTransfersController::open/$1');
+    $routes->post('inventory/transfers/(:segment)/duplicate', 'Api\\StockTransfersController::duplicate/$1');
+    $routes->post('inventory/transfers/(:segment)/notes', 'Api\\StockTransfersController::saveNotes/$1');
+
+    // Stock Audits (Inventory Audit / Kiểm kho)
+    $routes->get('inventory/stock-audits', 'Api\\StockAuditsController::index');
+    $routes->get('inventory/stock-audits/(:segment)', 'Api\\StockAuditsController::show/$1');
+    $routes->post('inventory/stock-audits', 'Api\\StockAuditsController::create');
+    $routes->put('inventory/stock-audits/(:num)', 'Api\\StockAuditsController::update/$1');
+    $routes->post('inventory/stock-audits/(:num)/complete', 'Api\\StockAuditsController::complete/$1');
+    $routes->post('inventory/stock-audits/(:num)/cancel', 'Api\\StockAuditsController::cancel/$1');
+
+    // Stock Disposals (Xuất hủy hàng)
+    $routes->get('inventory/disposals', 'Api\\StockDisposalsController::index');
+    $routes->get('inventory/disposals/(:segment)', 'Api\\StockDisposalsController::show/$1');
+    $routes->post('inventory/disposals', 'Api\\StockDisposalsController::create');
+    $routes->put('inventory/disposals/(:num)', 'Api\\StockDisposalsController::update/$1');
+    $routes->post('inventory/disposals/(:num)/complete', 'Api\\StockDisposalsController::complete/$1');
+    $routes->post('inventory/disposals/(:num)/cancel', 'Api\\StockDisposalsController::cancel/$1');
+
+
     $routes->post('pick-lists', 'Api\\PickListsController::create');
     $routes->get('pick-lists/(:num)', 'Api\\PickListsController::show/$1');
     $routes->post('packing-slips', 'Api\\PackingSlipsController::create');
@@ -241,6 +271,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
     $routes->post('customers', 'Api\\CustomersController::create');
     $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
+    $routes->delete('customers/(:num)', 'Api\\CustomersController::delete/$1');
     $routes->get('customers/export', 'Api\\CustomersController::export');
     $routes->post('customers/import', 'Api\\CustomersController::import');
     
@@ -377,6 +408,10 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->put('shipping/rates/(:num)', 'Api\\ShippingController::updateRate/$1');
     $routes->delete('shipping/rates/(:num)', 'Api\\ShippingController::deleteRate/$1');
 
+    // Shipments (delivery tracking view from invoices)
+    $routes->get('shipments', 'Api\\ShipmentsController::index');
+    $routes->get('shipments/(:num)', 'Api\\ShipmentsController::show/$1');
+
     // Coupons
     $routes->get('coupons', 'Api\\CouponsController::index');
     $routes->get('coupons/(:num)', 'Api\\CouponsController::show/$1');
@@ -480,6 +515,9 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->post('invoices', 'Api\\InvoicesController::create');
     $routes->post('invoices/generate', 'Api\\InvoicesController::generate');
     $routes->post('invoices/(:num)/pdf', 'Api\\InvoicesController::generatePdf/$1');
+    $routes->put('invoices/(:num)', 'Api\\InvoicesController::update/$1');
+    $routes->post('invoices/(:num)/cancel', 'Api\\InvoicesController::cancel/$1');
+    $routes->delete('invoices/(:num)', 'Api\\InvoicesController::delete/$1');
 
     // Returns
     $routes->get('returns', 'Api\\ReturnsController::index');

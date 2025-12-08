@@ -1,20 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Input, Select, Button, Upload, App } from 'antd';
 import { PlusOutlined, PictureOutlined } from '@ant-design/icons';
 import posApi from '../../api/posApi';
+import categoryApi from '../../api/categoryApi';
 import styles from './AddProductModal.module.css';
-
-// Product categories - có thể fetch từ API
-const PRODUCT_CATEGORIES = [
-    { value: 1, label: 'Túi xách' },
-    { value: 2, label: 'Ví da' },
-    { value: 3, label: 'Thắt lưng' },
-    { value: 4, label: 'Phụ kiện' },
-];
 
 const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
     const { message } = App.useApp();
     const [loading, setLoading] = useState(false);
+    const [categories, setCategories] = useState([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
     const [formData, setFormData] = useState({
         productCode: '',
         productName: initialName,
@@ -26,6 +21,24 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
         images: [],
     });
 
+    // Fetch categories from API
+    const fetchCategories = useCallback(async () => {
+        setCategoriesLoading(true);
+        try {
+            const response = await categoryApi.getCategories({ limit: 100 });
+            if (response.success && response.data) {
+                setCategories(response.data.map(c => ({
+                    value: c.id,
+                    label: c.name,
+                })));
+            }
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        } finally {
+            setCategoriesLoading(false);
+        }
+    }, []);
+
     // Reset form when modal opens with new initialName
     useEffect(() => {
         if (open) {
@@ -34,8 +47,9 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
                 productName: initialName,
                 productCode: '',
             }));
+            fetchCategories();
         }
-    }, [open, initialName]);
+    }, [open, initialName, fetchCategories]);
 
     const handleChange = (field, value) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -131,8 +145,13 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
                                     placeholder="---Lựa chọn---"
                                     value={formData.category}
                                     onChange={(val) => handleChange('category', val)}
-                                    options={PRODUCT_CATEGORIES}
+                                    options={categories}
+                                    loading={categoriesLoading}
                                     className={styles.select}
+                                    showSearch
+                                    filterOption={(input, option) =>
+                                        (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                                    }
                                 />
                                 <Button type="text" icon={<PlusOutlined />} className={styles.addBtn} />
                             </div>

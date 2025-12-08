@@ -91,7 +91,7 @@ const CombinedPaymentModal = ({
             {/* Customer Pay Amount */}
             <div className={styles.summaryRow}>
                 <span>Khách cần trả</span>
-                <span className={styles.payAmount}>{customerPay.toLocaleString('vi-VN')}</span>
+                <span className={styles.payAmount}>{(customerPay || 0).toLocaleString('vi-VN')}</span>
             </div>
 
             {/* Added Payments List */}

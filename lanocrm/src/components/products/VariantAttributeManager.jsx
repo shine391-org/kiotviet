@@ -541,7 +541,7 @@ const VariantAttributeManager = ({
                           (opt.label || '').toLowerCase().includes(input.toLowerCase())
                         }
                         // Để đảm bảo options đã disabled sẽ hiển thị rõ là disable
-                        dropdownRender={menu => (
+                        popupRender={menu => (
                           <div>{menu}</div>
                         )}
                       />
