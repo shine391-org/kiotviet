@@ -187,11 +187,29 @@ class PurchaseOrderRepository
 
     public function findById(int $id): ?array
     {
-        $order = $this->orders->find($id);
+        $order = $this->db->table('purchase_orders po')
+            ->select('po.*, p.name as supplier_name, p.code as supplier_code, 
+                      u.full_name as creator_name, b.name as branch_name')
+            ->join('partners p', 'p.id = po.partner_id', 'left')
+            ->join('users u', 'u.id = po.created_by', 'left')
+            ->join('branches b', 'b.id = po.branch_id', 'left')
+            ->where('po.id', $id)
+            ->get()
+            ->getRowArray();
+        
         if (! $order) {
             return null;
         }
-        $items = $this->items->where('purchase_order_id', $id)->findAll();
+        
+        // Get items with product info
+        $items = $this->db->table('purchase_order_items poi')
+            ->select('poi.*, pr.code as product_code, pr.name as product_name, 
+                      pr.selling_price as import_price')
+            ->join('products pr', 'pr.id = poi.product_id', 'left')
+            ->where('poi.purchase_order_id', $id)
+            ->get()
+            ->getResultArray();
+        
         $order = $this->hydrate($order);
         $order['items'] = array_map(fn ($i) => $this->hydrateItem($i), $items);
         return $order;

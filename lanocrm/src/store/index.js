@@ -20,6 +20,7 @@ import stockAuditReducer from './slices/stockAuditSlice';
 import disposalReducer from './slices/disposalSlice';
 import supplierReducer from './slices/supplierSlice';
 import purchaseReducer from './slices/purchaseSlice';
+import purchaseReturnReducer from './slices/purchaseReturnSlice';
 
 const store = configureStore({
   reducer: {
@@ -44,6 +45,7 @@ const store = configureStore({
     disposals: disposalReducer,
     supplier: supplierReducer,
     purchases: purchaseReducer,
+    purchaseReturns: purchaseReturnReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

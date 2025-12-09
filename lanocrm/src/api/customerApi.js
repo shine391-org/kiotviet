@@ -124,6 +124,48 @@ const customerApi = {
     const response = await axiosInstance.delete(`${GROUPS_BASE}/${id}`);
     return response.data;
   },
+
+  // Customer Addresses (for "Địa chỉ nhận hàng" tab)
+  getAddresses: async (customerId) => {
+    const response = await axiosInstance.get(`${BASE}/${customerId}/addresses`);
+    return response.data;
+  },
+
+  createAddress: async (customerId, data) => {
+    const response = await axiosInstance.post(`${BASE}/${customerId}/addresses`, data);
+    return response.data;
+  },
+
+  updateAddress: async (customerId, addressId, data) => {
+    const response = await axiosInstance.put(`${BASE}/${customerId}/addresses/${addressId}`, data);
+    return response.data;
+  },
+
+  deleteAddress: async (customerId, addressId) => {
+    const response = await axiosInstance.delete(`${BASE}/${customerId}/addresses/${addressId}`);
+    return response.data;
+  },
+
+  // Customer Debt Operations (for "Nợ cần thu từ khách" tab)
+  getDebts: async (customerId, type = 'all') => {
+    const response = await axiosInstance.get(`${BASE}/${customerId}/debts`, { params: { type } });
+    return response.data;
+  },
+
+  recordPayment: async (customerId, data) => {
+    const response = await axiosInstance.post(`${BASE}/${customerId}/debts/payment`, data);
+    return response.data;
+  },
+
+  adjustDebt: async (customerId, data) => {
+    const response = await axiosInstance.post(`${BASE}/${customerId}/debts/adjust`, data);
+    return response.data;
+  },
+
+  applyDiscount: async (customerId, data) => {
+    const response = await axiosInstance.post(`${BASE}/${customerId}/debts/discount`, data);
+    return response.data;
+  },
 };
 
 export default customerApi;

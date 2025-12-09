@@ -45,7 +45,7 @@ class CustomerService
         ];
     }
 
-    /** Get customer detail. @agent-use: GET /api/customers/{id} */
+    /** Get customer detail with related data. @agent-use: GET /api/customers/{id} */
     public function get(int $id): array
     {
         $customer = $this->repo->findById($id);
@@ -53,7 +53,37 @@ class CustomerService
             throw new RuntimeException('Customer not found');
         }
 
-        return ['success' => true, 'data' => $this->transformer->transform($customer)];
+        $data = $this->transformer->transform($customer);
+
+        // Load related data with error handling for each
+        try {
+            $data['orders'] = $this->repo->findOrdersByCustomerId($id);
+        } catch (\Throwable $e) {
+            $data['orders'] = [];
+        }
+        
+        try {
+            $data['debts'] = $this->repo->findDebtsByCustomerId($id);
+        } catch (\Throwable $e) {
+            $data['debts'] = [];
+        }
+        
+        try {
+            $data['addresses'] = $this->repo->findAddressesByCustomerId($id);
+        } catch (\Throwable $e) {
+            $data['addresses'] = [];
+        }
+        
+        // Load customer group name
+        if ($customer['customer_group_id'] ?? null) {
+            try {
+                $data['customer_group_name'] = $this->repo->findCustomerGroupName((int) $customer['customer_group_id']);
+            } catch (\Throwable $e) {
+                $data['customer_group_name'] = null;
+            }
+        }
+
+        return ['success' => true, 'data' => $data];
     }
 
     /** Create customer. @agent-use: POST /api/customers */

@@ -1,0 +1,137 @@
+/* CreateCustomerModal.module.css */
+
+.modal :global(.ant-modal-content) {
+    padding: 0;
+}
+
+.modal :global(.ant-modal-header) {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f0f0f0;
+    margin: 0;
+}
+
+.modal :global(.ant-modal-body) {
+    padding: 0;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.modal :global(.ant-modal-footer) {
+    padding: 12px 24px;
+    border-top: 1px solid #f0f0f0;
+    margin: 0;
+}
+
+.form {
+    padding: 0;
+}
+
+.section {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.section :global(.ant-form-item) {
+    margin-bottom: 12px;
+}
+
+.section :global(.ant-form-item-label) {
+    padding-bottom: 4px;
+}
+
+.section :global(.ant-form-item-label > label) {
+    font-size: 13px;
+    color: #374151;
+}
+
+.uploadItem {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.uploadPlaceholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+    font-size: 12px;
+    text-align: center;
+    padding: 8px;
+}
+
+.uploadPlaceholder small {
+    font-size: 10px;
+    color: #9ca3af;
+    margin-top: 4px;
+}
+
+/* Collapse styling */
+.collapse {
+    border: none;
+    background: transparent;
+}
+
+.collapse :global(.ant-collapse-item) {
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.collapse :global(.ant-collapse-header) {
+    padding: 12px 24px !important;
+    font-weight: 600;
+    font-size: 14px;
+    color: #374151;
+    background: #fff;
+}
+
+.collapse :global(.ant-collapse-content-box) {
+    padding: 16px 24px !important;
+}
+
+.collapse :global(.ant-form-item) {
+    margin-bottom: 12px;
+}
+
+.collapse :global(.ant-form-item-label) {
+    padding-bottom: 4px;
+}
+
+.collapse :global(.ant-form-item-label > label) {
+    font-size: 13px;
+    color: #374151;
+}
+
+/* Footer */
+.footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.footer :global(.ant-btn) {
+    border-radius: 6px;
+    min-width: 80px;
+}
+
+/* Input styling */
+.modal :global(.ant-input),
+.modal :global(.ant-select-selector),
+.modal :global(.ant-picker) {
+    border-radius: 6px !important;
+}
+
+.modal :global(.ant-input::placeholder) {
+    color: #9ca3af;
+}
+
+/* Radio group */
+.modal :global(.ant-radio-group) {
+    display: flex;
+    gap: 24px;
+}
+
+.modal :global(.ant-radio-wrapper) {
+    font-size: 13px;
+}

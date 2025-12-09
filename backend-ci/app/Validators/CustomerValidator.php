@@ -110,7 +110,7 @@ class CustomerValidator
         $data['phone'] = $this->optionalPhone($input['phone'] ?? null, 'phone');
         $data['phone2'] = $this->optionalPhone($input['phone2'] ?? null, 'phone2');
         $data['gender'] = $this->optionalGender($input['gender'] ?? null);
-        $data['facebook'] = $this->optionalUrl($input['facebook'] ?? null, 'facebook', 255);
+        $data['facebook'] = $this->optionalString($input['facebook'] ?? null, 255);
         $data['company_name'] = $this->optionalString($input['company_name'] ?? null, 255);
         $data['tax_code'] = $this->optionalTaxCode($input['tax_code'] ?? null);
         $data['buyer_name'] = $this->optionalString($input['buyer_name'] ?? null, 255);
@@ -200,7 +200,7 @@ class CustomerValidator
             $data['phone2'] = $this->optionalPhone($input['phone2'], 'phone2');
         }
         if (array_key_exists('facebook', $input)) {
-            $data['facebook'] = $this->optionalUrl($input['facebook'], 'facebook', 255);
+            $data['facebook'] = $this->optionalString($input['facebook'], 255);
         }
         if (array_key_exists('company_name', $input)) {
             $data['company_name'] = $this->optionalString($input['company_name'], 255);

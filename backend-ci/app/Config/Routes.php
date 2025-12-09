@@ -268,12 +268,23 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
 
     // Customers
     $routes->get('customers', 'Api\\CustomersController::index');
-    $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
-    $routes->post('customers', 'Api\\CustomersController::create');
-    $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
-    $routes->delete('customers/(:num)', 'Api\\CustomersController::delete/$1');
     $routes->get('customers/export', 'Api\\CustomersController::export');
     $routes->post('customers/import', 'Api\\CustomersController::import');
+    $routes->post('customers', 'Api\\CustomersController::create');
+    // Customer Addresses (nested under customers, must be before (:num) alone)
+    $routes->get('customers/(:num)/addresses', 'Api\\CustomerAddressesController::index/$1');
+    $routes->post('customers/(:num)/addresses', 'Api\\CustomerAddressesController::create/$1');
+    $routes->put('customers/(:num)/addresses/(:num)', 'Api\\CustomerAddressesController::update/$1/$2');
+    $routes->delete('customers/(:num)/addresses/(:num)', 'Api\\CustomerAddressesController::delete/$1/$2');
+    // Customer Debt Operations (nested under customers)
+    $routes->get('customers/(:num)/debts', 'Api\\CustomerDebtController::index/$1');
+    $routes->post('customers/(:num)/debts/payment', 'Api\\CustomerDebtController::payment/$1');
+    $routes->post('customers/(:num)/debts/adjust', 'Api\\CustomerDebtController::adjust/$1');
+    $routes->post('customers/(:num)/debts/discount', 'Api\\CustomerDebtController::discount/$1');
+    // Customers CRUD (single customer by id)
+    $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
+    $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
+    $routes->delete('customers/(:num)', 'Api\\CustomersController::delete/$1');
     
     // Customer Groups
     $routes->get('customer-groups', 'Api\\CustomerGroupsController::index');
@@ -467,6 +478,15 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-orders/(:num)', 'Api\\PurchaseOrdersController::show/$1');
     $routes->post('purchase-orders/(:num)/submit', 'Api\\PurchaseOrdersController::submit/$1');
     $routes->post('purchase-orders/(:num)/cancel', 'Api\\PurchaseOrdersController::cancel/$1');
+
+    // Purchase Returns (Trả hàng nhập)
+    $routes->get('purchase-returns', 'PurchaseReturnController::index');
+    $routes->get('purchase-returns/export', 'PurchaseReturnController::export');
+    $routes->get('purchase-returns/(:num)', 'PurchaseReturnController::show/$1');
+    $routes->post('purchase-returns', 'PurchaseReturnController::create');
+    $routes->put('purchase-returns/(:num)', 'PurchaseReturnController::update/$1');
+    $routes->delete('purchase-returns/(:num)', 'PurchaseReturnController::delete/$1');
+    $routes->post('purchase-returns/(:num)/status', 'PurchaseReturnController::updateStatus/$1');
     $routes->post('goods-receipts', 'Api\\GoodsReceiptsController::create');
     $routes->get('goods-receipts/(:num)', 'Api\\GoodsReceiptsController::show/$1');
     $routes->post('landed-costs', 'Api\\LandedCostsController::create');

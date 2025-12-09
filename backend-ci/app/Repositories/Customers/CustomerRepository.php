@@ -137,6 +137,106 @@ class CustomerRepository
     }
 
     /**
+     * Find orders for a customer (for "Lịch sử bán/trả hàng" tab).
+     */
+    public function findOrdersByCustomerId(int $customerId): array
+    {
+        $rows = $this->db->table('orders o')
+            ->select('o.code, o.created_at, o.status, o.total, u.name as seller, b.name as branch')
+            ->join('users u', 'u.id = o.created_by', 'left')
+            ->join('branches b', 'b.id = o.branch_id', 'left')
+            ->where('o.customer_id', $customerId)
+            ->where('o.deleted_at', null)
+            ->orderBy('o.created_at', 'DESC')
+            ->limit(50)
+            ->get()
+            ->getResultArray();
+
+        return array_map(function ($row) {
+            return [
+                'code' => $row['code'],
+                'created_at' => $row['created_at'],
+                'seller' => $row['seller'] ?? '—',
+                'branch' => $row['branch'] ?? '—',
+                'total' => (float) ($row['total'] ?? 0),
+                'status' => $row['status'] ?? 'Chưa xử lý',
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Find debt transactions for a customer (for "Nợ cần thu từ khách" tab).
+     */
+    public function findDebtsByCustomerId(int $customerId): array
+    {
+        // Get orders with debt as debt transactions
+        $rows = $this->db->table('orders o')
+            ->select('o.code, o.created_at, o.total as value, o.debt_amount as balance')
+            ->where('o.customer_id', $customerId)
+            ->where('o.deleted_at', null)
+            ->where('o.debt_amount >', 0)
+            ->orderBy('o.created_at', 'DESC')
+            ->limit(50)
+            ->get()
+            ->getResultArray();
+
+        return array_map(function ($row) {
+            return [
+                'code' => $row['code'],
+                'created_at' => $row['created_at'],
+                'type' => 'Bán hàng',
+                'value' => (float) ($row['value'] ?? 0),
+                'balance' => (float) ($row['balance'] ?? 0),
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Find shipping addresses for a customer (for "Địa chỉ nhận hàng" tab).
+     * Note: If customer_addresses table doesn't exist, returns empty array.
+     */
+    public function findAddressesByCustomerId(int $customerId): array
+    {
+        // Check if table exists first
+        if (! $this->db->tableExists('customer_addresses')) {
+            return [];
+        }
+
+        $rows = $this->db->table('customer_addresses')
+            ->where('customer_id', $customerId)
+            ->where('deleted_at', null)
+            ->orderBy('created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+
+        return array_map(function ($row) {
+            return [
+                'id' => (int) $row['id'],
+                'name' => $row['name'] ?? '',
+                'recipient_name' => $row['recipient_name'] ?? '',
+                'phone' => $row['phone'] ?? '',
+                'address' => $row['address'] ?? '',
+                'created_at' => $row['created_at'] ?? null,
+            ];
+        }, $rows);
+    }
+
+    /**
+     * Find customer group name by ID.
+     */
+    public function findCustomerGroupName(int $groupId): ?string
+    {
+        $row = $this->db->table('customer_groups')
+            ->select('name_vi, name')
+            ->where('id', $groupId)
+            ->where('deleted_at', null)
+            ->get()
+            ->getRowArray();
+
+        return $row['name_vi'] ?? $row['name'] ?? null;
+    }
+
+    /**
      * Apply filters to builder.
      */
     private function applyFilters(array $filters)
