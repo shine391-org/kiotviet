@@ -76,21 +76,35 @@ class CustomerAddressesController extends BaseController
                 'updated_at' => date('Y-m-d H:i:s'),
             ];
 
-            // If this is set as default, unset others
-            if ($data['is_default']) {
-                $this->db->table('customer_addresses')
-                    ->where('customer_id', (int) $customerId)
-                    ->update(['is_default' => 0]);
+            // Use transaction for atomic default address handling
+            $this->db->transStart();
+
+            try {
+                // If this is set as default, unset others
+                if ($data['is_default']) {
+                    $this->db->table('customer_addresses')
+                        ->where('customer_id', (int) $customerId)
+                        ->update(['is_default' => 0]);
+                }
+
+                $this->db->table('customer_addresses')->insert($data);
+                $data['id'] = $this->db->insertID();
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    throw new \RuntimeException('Failed to create address');
+                }
+
+                return $this->respondCreated([
+                    'success' => true,
+                    'data' => $data,
+                    'message' => 'Đã thêm địa chỉ thành công',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
             }
-
-            $this->db->table('customer_addresses')->insert($data);
-            $data['id'] = $this->db->insertID();
-
-            return $this->respondCreated([
-                'success' => true,
-                'data' => $data,
-                'message' => 'Đã thêm địa chỉ thành công',
-            ]);
         });
     }
 
@@ -143,24 +157,39 @@ class CustomerAddressesController extends BaseController
             if (array_key_exists('ward', $input)) {
                 $data['ward'] = trim($input['ward']) ?: null;
             }
-            if (array_key_exists('is_default', $input)) {
-                $data['is_default'] = (int) $input['is_default'];
-                if ($data['is_default']) {
-                    $this->db->table('customer_addresses')
-                        ->where('customer_id', (int) $customerId)
-                        ->where('id !=', (int) $id)
-                        ->update(['is_default' => 0]);
+
+            // Use transaction for atomic default address handling
+            $this->db->transStart();
+
+            try {
+                if (array_key_exists('is_default', $input)) {
+                    $data['is_default'] = (int) $input['is_default'];
+                    if ($data['is_default']) {
+                        $this->db->table('customer_addresses')
+                            ->where('customer_id', (int) $customerId)
+                            ->where('id !=', (int) $id)
+                            ->update(['is_default' => 0]);
+                    }
                 }
+
+                $this->db->table('customer_addresses')
+                    ->where('id', (int) $id)
+                    ->update($data);
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    throw new \RuntimeException('Failed to update address');
+                }
+
+                return $this->respond([
+                    'success' => true,
+                    'message' => 'Đã cập nhật địa chỉ',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
             }
-
-            $this->db->table('customer_addresses')
-                ->where('id', (int) $id)
-                ->update($data);
-
-            return $this->respond([
-                'success' => true,
-                'message' => 'Đã cập nhật địa chỉ',
-            ]);
         });
     }
 

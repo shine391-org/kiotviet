@@ -113,7 +113,7 @@ const CreateCustomerModal = ({
             }
 
             onSuccess?.();
-            onCancel();
+            onCancel?.();
             form.resetFields();
         } catch (err) {
             if (err?.errorFields) {

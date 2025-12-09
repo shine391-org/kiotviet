@@ -28,8 +28,6 @@ class PurchaseReturnItemModel extends Model
         'discount_per_item',
         'amount',
         'notes',
-        'created_at',
-        'updated_at',
     ];
 
     protected $useTimestamps = true;
@@ -38,5 +36,8 @@ class PurchaseReturnItemModel extends Model
 
     protected $validationRules = [
         'purchase_return_id' => 'required|integer',
+        'quantity' => 'required|integer|greater_than[0]',
+        'return_price' => 'required|numeric|greater_than_equal_to[0]',
+        'amount' => 'required|numeric|greater_than_equal_to[0]',
     ];
 }

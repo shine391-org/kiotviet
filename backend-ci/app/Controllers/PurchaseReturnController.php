@@ -79,11 +79,17 @@ class PurchaseReturnController extends ResourceController
         $items = $data['items'] ?? [];
         unset($data['items']);
 
-        $userId = auth()->id() ?? 1;
+        // Require authentication - no silent fallback
+        $userId = auth()->id();
+        if (!$userId) {
+            return $this->failUnauthorized('Authentication required');
+        }
 
         try {
             $result = $this->service->create($data, $items, $userId);
             return $this->respondCreated(['data' => $result, 'message' => 'Purchase return created successfully']);
+        } catch (\InvalidArgumentException $e) {
+            return $this->fail($e->getMessage(), 400);
         } catch (\Exception $e) {
             return $this->fail($e->getMessage());
         }
@@ -181,10 +187,36 @@ class PurchaseReturnController extends ResourceController
         try {
             $filename = $this->service->export(array_filter($filters));
 
-            return $this->response
+            // Set headers before streaming
+            $this->response
                 ->setContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 ->setHeader('Content-Disposition', 'attachment; filename="' . basename($filename) . '"')
-                ->setBody(file_get_contents($filename));
+                ->setHeader('Content-Length', (string)filesize($filename));
+
+            // Stream file in chunks to avoid loading into memory
+            $handle = fopen($filename, 'rb');
+            if ($handle === false) {
+                return $this->fail('Failed to open export file');
+            }
+
+            // Send headers
+            $this->response->send();
+
+            // Stream content
+            while (!feof($handle)) {
+                echo fread($handle, 8192);
+                if (ob_get_level() > 0) {
+                    ob_flush();
+                }
+                flush();
+            }
+            fclose($handle);
+
+            // Clean up temp file
+            unlink($filename);
+
+            // Exit to prevent further output
+            exit;
         } catch (\Exception $e) {
             return $this->fail('Export failed: ' . $e->getMessage());
         }

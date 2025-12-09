@@ -85,52 +85,67 @@ class CustomerDebtController extends BaseController
                 return $this->failValidationErrors('Amount must be greater than 0');
             }
 
-            // Get current customer debt
-            $customer = $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
+            // Start transaction for atomic operations
+            $this->db->transStart();
 
-            if (! $customer) {
-                return $this->failNotFound('Customer not found');
-            }
+            try {
+                // Get current customer debt
+                $customer = $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->where('deleted_at', null)
+                    ->get()
+                    ->getRowArray();
 
-            $currentDebt = (float) ($customer['current_debt'] ?? 0);
-            $newDebt = max(0, $currentDebt - $amount);
+                if (! $customer) {
+                    $this->db->transRollback();
+                    return $this->failNotFound('Customer not found');
+                }
 
-            // Create debt transaction
-            $code = $this->generateCode('TT');
-            $this->db->table('customer_debt_transactions')->insert([
-                'customer_id' => (int) $customerId,
-                'code' => $code,
-                'type' => 'PAYMENT',
-                'value' => -$amount, // Negative because it reduces debt
-                'balance' => $newDebt,
-                'notes' => $input['notes'] ?? null,
-                'created_by' => $input['created_by'] ?? null,
-                'branch_id' => $input['branch_id'] ?? null,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+                $currentDebt = (float) ($customer['current_debt'] ?? 0);
+                $newDebt = max(0, $currentDebt - $amount);
 
-            // Update customer debt
-            $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->update([
-                    'current_debt' => $newDebt,
+                // Create debt transaction
+                $code = $this->generateCode('TT');
+                $this->db->table('customer_debt_transactions')->insert([
+                    'customer_id' => (int) $customerId,
+                    'code' => $code,
+                    'type' => 'PAYMENT',
+                    'value' => -$amount, // Negative because it reduces debt
+                    'balance' => $newDebt,
+                    'notes' => $input['notes'] ?? null,
+                    'created_by' => $input['created_by'] ?? null,
+                    'branch_id' => $input['branch_id'] ?? null,
+                    'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
 
-            return $this->respondCreated([
-                'success' => true,
-                'data' => [
-                    'code' => $code,
-                    'amount' => $amount,
-                    'new_debt' => $newDebt,
-                ],
-                'message' => 'Đã ghi nhận thanh toán',
-            ]);
+                // Update customer debt
+                $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->update([
+                        'current_debt' => $newDebt,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    return $this->failServerError('Transaction failed');
+                }
+
+                return $this->respondCreated([
+                    'success' => true,
+                    'data' => [
+                        'code' => $code,
+                        'amount' => $amount,
+                        'new_debt' => $newDebt,
+                    ],
+                    'message' => 'Đã ghi nhận thanh toán',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
+            }
         });
     }
 
@@ -152,52 +167,67 @@ class CustomerDebtController extends BaseController
                 return $this->failValidationErrors('Amount cannot be 0');
             }
 
-            // Get current customer debt
-            $customer = $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
+            // Start transaction for atomic operations
+            $this->db->transStart();
 
-            if (! $customer) {
-                return $this->failNotFound('Customer not found');
-            }
+            try {
+                // Get current customer debt
+                $customer = $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->where('deleted_at', null)
+                    ->get()
+                    ->getRowArray();
 
-            $currentDebt = (float) ($customer['current_debt'] ?? 0);
-            $newDebt = max(0, $currentDebt + $amount);
+                if (! $customer) {
+                    $this->db->transRollback();
+                    return $this->failNotFound('Customer not found');
+                }
 
-            // Create debt transaction
-            $code = $this->generateCode('DC');
-            $this->db->table('customer_debt_transactions')->insert([
-                'customer_id' => (int) $customerId,
-                'code' => $code,
-                'type' => 'ADJUSTMENT',
-                'value' => $amount,
-                'balance' => $newDebt,
-                'notes' => $input['notes'] ?? null,
-                'created_by' => $input['created_by'] ?? null,
-                'branch_id' => $input['branch_id'] ?? null,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+                $currentDebt = (float) ($customer['current_debt'] ?? 0);
+                $newDebt = max(0, $currentDebt + $amount);
 
-            // Update customer debt
-            $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->update([
-                    'current_debt' => $newDebt,
+                // Create debt transaction
+                $code = $this->generateCode('DC');
+                $this->db->table('customer_debt_transactions')->insert([
+                    'customer_id' => (int) $customerId,
+                    'code' => $code,
+                    'type' => 'ADJUSTMENT',
+                    'value' => $amount,
+                    'balance' => $newDebt,
+                    'notes' => $input['notes'] ?? null,
+                    'created_by' => $input['created_by'] ?? null,
+                    'branch_id' => $input['branch_id'] ?? null,
+                    'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
 
-            return $this->respondCreated([
-                'success' => true,
-                'data' => [
-                    'code' => $code,
-                    'amount' => $amount,
-                    'new_debt' => $newDebt,
-                ],
-                'message' => 'Đã điều chỉnh công nợ',
-            ]);
+                // Update customer debt
+                $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->update([
+                        'current_debt' => $newDebt,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    return $this->failServerError('Transaction failed');
+                }
+
+                return $this->respondCreated([
+                    'success' => true,
+                    'data' => [
+                        'code' => $code,
+                        'amount' => $amount,
+                        'new_debt' => $newDebt,
+                    ],
+                    'message' => 'Đã điều chỉnh công nợ',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
+            }
         });
     }
 
@@ -219,52 +249,67 @@ class CustomerDebtController extends BaseController
                 return $this->failValidationErrors('Discount amount must be greater than 0');
             }
 
-            // Get current customer debt
-            $customer = $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->where('deleted_at', null)
-                ->get()
-                ->getRowArray();
+            // Start transaction for atomic operations
+            $this->db->transStart();
 
-            if (! $customer) {
-                return $this->failNotFound('Customer not found');
-            }
+            try {
+                // Get current customer debt
+                $customer = $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->where('deleted_at', null)
+                    ->get()
+                    ->getRowArray();
 
-            $currentDebt = (float) ($customer['current_debt'] ?? 0);
-            $newDebt = max(0, $currentDebt - $amount);
+                if (! $customer) {
+                    $this->db->transRollback();
+                    return $this->failNotFound('Customer not found');
+                }
 
-            // Create debt transaction
-            $code = $this->generateCode('CK');
-            $this->db->table('customer_debt_transactions')->insert([
-                'customer_id' => (int) $customerId,
-                'code' => $code,
-                'type' => 'DISCOUNT',
-                'value' => -$amount,
-                'balance' => $newDebt,
-                'notes' => $input['notes'] ?? null,
-                'created_by' => $input['created_by'] ?? null,
-                'branch_id' => $input['branch_id'] ?? null,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+                $currentDebt = (float) ($customer['current_debt'] ?? 0);
+                $newDebt = max(0, $currentDebt - $amount);
 
-            // Update customer debt
-            $this->db->table('customers')
-                ->where('id', (int) $customerId)
-                ->update([
-                    'current_debt' => $newDebt,
+                // Create debt transaction
+                $code = $this->generateCode('CK');
+                $this->db->table('customer_debt_transactions')->insert([
+                    'customer_id' => (int) $customerId,
+                    'code' => $code,
+                    'type' => 'DISCOUNT',
+                    'value' => -$amount,
+                    'balance' => $newDebt,
+                    'notes' => $input['notes'] ?? null,
+                    'created_by' => $input['created_by'] ?? null,
+                    'branch_id' => $input['branch_id'] ?? null,
+                    'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
 
-            return $this->respondCreated([
-                'success' => true,
-                'data' => [
-                    'code' => $code,
-                    'amount' => $amount,
-                    'new_debt' => $newDebt,
-                ],
-                'message' => 'Đã áp dụng chiết khấu',
-            ]);
+                // Update customer debt
+                $this->db->table('customers')
+                    ->where('id', (int) $customerId)
+                    ->update([
+                        'current_debt' => $newDebt,
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    return $this->failServerError('Transaction failed');
+                }
+
+                return $this->respondCreated([
+                    'success' => true,
+                    'data' => [
+                        'code' => $code,
+                        'amount' => $amount,
+                        'new_debt' => $newDebt,
+                    ],
+                    'message' => 'Đã áp dụng chiết khấu',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
+            }
         });
     }
 
@@ -280,11 +325,46 @@ class CustomerDebtController extends BaseController
         };
     }
 
+    /**
+     * Generate unique code with retry logic for concurrency safety
+     */
     private function generateCode(string $prefix): string
     {
-        $timestamp = date('ymdHis');
-        $random = str_pad(random_int(0, 999), 3, '0', STR_PAD_LEFT);
-        return $prefix . $timestamp . $random;
+        $datePrefix = $prefix . date('ymd');
+        $maxRetries = 5;
+
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+            // Get the last code for today
+            $lastCode = $this->db->table('customer_debt_transactions')
+                ->where('code LIKE', $datePrefix . '%')
+                ->orderBy('code', 'DESC')
+                ->limit(1)
+                ->get()
+                ->getRowArray();
+
+            $nextNum = 1;
+            if ($lastCode && !empty($lastCode['code'])) {
+                $numPart = (int) substr($lastCode['code'], strlen($datePrefix));
+                $nextNum = $numPart + 1;
+            }
+
+            $candidateCode = $datePrefix . str_pad((string) $nextNum, 4, '0', STR_PAD_LEFT);
+
+            // Check if this code already exists (race condition check)
+            $exists = $this->db->table('customer_debt_transactions')
+                ->where('code', $candidateCode)
+                ->countAllResults();
+
+            if ($exists === 0) {
+                return $candidateCode;
+            }
+
+            // Small delay before retry to reduce contention
+            usleep(5000); // 5ms
+        }
+
+        // Fallback with microseconds for guaranteed uniqueness
+        return $datePrefix . substr((string)(microtime(true) * 1000000), -8);
     }
 
     private function wrap(callable $action)

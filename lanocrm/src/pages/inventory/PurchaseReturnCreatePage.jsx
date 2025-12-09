@@ -76,6 +76,18 @@ const PurchaseReturnCreatePage = () => {
         dispatch(fetchBranches());
         // Load initial suppliers
         loadSuppliers('');
+
+        // Cleanup function to clear timers on unmount
+        return () => {
+            if (supplierTimerRef.current) {
+                clearTimeout(supplierTimerRef.current);
+                supplierTimerRef.current = null;
+            }
+            if (searchTimerRef.current) {
+                clearTimeout(searchTimerRef.current);
+                searchTimerRef.current = null;
+            }
+        };
     }, [dispatch]);
 
     // Load suppliers from API
@@ -252,11 +264,24 @@ const PurchaseReturnCreatePage = () => {
         },
     ];
 
-    const handleSaveDraft = async () => {
+    /**
+     * Shared helper for saving purchase return (draft or final)
+     */
+    const savePurchaseReturn = async (status, successMessage) => {
+        // Validate required fields
+        if (!branchId) {
+            message.warning('Vui lòng chọn chi nhánh');
+            return;
+        }
+        if (!supplierId) {
+            message.warning('Vui lòng chọn nhà cung cấp');
+            return;
+        }
         if (items.length === 0) {
             message.warning('Vui lòng thêm ít nhất một sản phẩm');
             return;
         }
+
         setSubmitting(true);
         try {
             const payload = {
@@ -266,7 +291,7 @@ const PurchaseReturnCreatePage = () => {
                 notes,
                 discount,
                 ncc_da_tra: supplierPaid,
-                status: 'draft',
+                status,
                 items: items.map((i) => ({
                     product_id: i.product_id,
                     product_code: i.product_code,
@@ -279,7 +304,7 @@ const PurchaseReturnCreatePage = () => {
             };
             const res = await purchaseReturnApi.createPurchaseReturn(payload);
             if (res.data) {
-                message.success('Đã lưu tạm phiếu trả hàng nhập');
+                message.success(successMessage);
                 navigate('/inventory/purchase-returns');
             } else {
                 message.error(res.message || 'Lỗi tạo phiếu');
@@ -291,44 +316,9 @@ const PurchaseReturnCreatePage = () => {
         }
     };
 
-    const handleSubmit = async () => {
-        if (items.length === 0) {
-            message.warning('Vui lòng thêm ít nhất một sản phẩm');
-            return;
-        }
-        setSubmitting(true);
-        try {
-            const payload = {
-                branch_id: branchId,
-                partner_id: supplierId,
-                return_date: returnDate?.format('YYYY-MM-DD HH:mm:ss'),
-                notes,
-                discount,
-                ncc_da_tra: supplierPaid,
-                status: 'returned',
-                items: items.map((i) => ({
-                    product_id: i.product_id,
-                    product_code: i.product_code,
-                    product_name: i.product_name,
-                    quantity: i.quantity,
-                    import_price: i.import_price,
-                    return_price: i.return_price,
-                    amount: i.amount,
-                })),
-            };
-            const res = await purchaseReturnApi.createPurchaseReturn(payload);
-            if (res.data) {
-                message.success('Đã tạo phiếu trả hàng nhập thành công');
-                navigate('/inventory/purchase-returns');
-            } else {
-                message.error(res.message || 'Lỗi tạo phiếu');
-            }
-        } catch (err) {
-            message.error(err.response?.data?.message || 'Lỗi tạo phiếu');
-        } finally {
-            setSubmitting(false);
-        }
-    };
+    const handleSaveDraft = () => savePurchaseReturn('draft', 'Đã lưu tạm phiếu trả hàng nhập');
+
+    const handleSubmit = () => savePurchaseReturn('returned', 'Đã tạo phiếu trả hàng nhập thành công');
 
     return (
         <div className={styles.page}>

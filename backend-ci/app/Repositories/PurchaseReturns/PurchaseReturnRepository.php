@@ -37,10 +37,59 @@ class PurchaseReturnRepository
             ->join('purchase_orders po', 'po.id = pr.purchase_order_id', 'left')
             ->join('users uc', 'uc.id = pr.created_by', 'left')
             ->join('users ur', 'ur.id = pr.returned_by', 'left')
-            ->join('branches b', 'b.id = pr.branch_id', 'left')
-            ->where('pr.deleted_at IS NULL');
+            ->join('branches b', 'b.id = pr.branch_id', 'left');
 
-        // Apply filters
+        // Apply common filters
+        $this->applyFilters($builder, $filters);
+
+        // Count total before pagination
+        $countBuilder = clone $builder;
+        $total = $countBuilder->countAllResults(false);
+
+        // Calculate totals with same filters
+        $totalsBuilder = $this->db->table('purchase_returns pr')
+            ->select('SUM(pr.total_amount) as total_amount, SUM(pr.discount) as total_discount, 
+                      SUM(pr.ncc_can_tra) as total_ncc_can_tra, SUM(pr.ncc_da_tra) as total_ncc_da_tra')
+            ->join('partners p', 'p.id = pr.partner_id', 'left');
+        
+        $this->applyFilters($totalsBuilder, $filters);
+        $totalsResult = $totalsBuilder->get()->getRowArray();
+
+        // Pagination
+        $page = max(1, (int)($filters['page'] ?? 1));
+        $limit = max(1, min(100, (int)($filters['limit'] ?? 15)));
+        $offset = ($page - 1) * $limit;
+
+        $builder->orderBy('pr.created_at', 'DESC')
+            ->limit($limit, $offset);
+
+        $rows = $builder->get()->getResultArray();
+        $data = array_map(fn($row) => $this->hydrateListRow($row), $rows);
+
+        return [
+            'data' => $data,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'total_pages' => (int)ceil($total / $limit),
+            ],
+            'totals' => [
+                'total_amount' => (float)($totalsResult['total_amount'] ?? 0),
+                'total_discount' => (float)($totalsResult['total_discount'] ?? 0),
+                'total_ncc_can_tra' => (float)($totalsResult['total_ncc_can_tra'] ?? 0),
+                'total_ncc_da_tra' => (float)($totalsResult['total_ncc_da_tra'] ?? 0),
+            ],
+        ];
+    }
+
+    /**
+     * Apply common filters to a query builder.
+     */
+    private function applyFilters($builder, array $filters): void
+    {
+        $builder->where('pr.deleted_at IS NULL');
+
         if (!empty($filters['branch_id'])) {
             $builder->where('pr.branch_id', $filters['branch_id']);
         }
@@ -74,71 +123,6 @@ class PurchaseReturnRepository
                 ->orLike('p.code', $search)
                 ->groupEnd();
         }
-
-        // Count total before pagination
-        $countBuilder = clone $builder;
-        $total = $countBuilder->countAllResults(false);
-
-        // Calculate totals
-        $totalsBuilder = $this->db->table('purchase_returns pr')
-            ->select('SUM(pr.total_amount) as total_amount, SUM(pr.discount) as total_discount, 
-                      SUM(pr.ncc_can_tra) as total_ncc_can_tra, SUM(pr.ncc_da_tra) as total_ncc_da_tra')
-            ->join('partners p', 'p.id = pr.partner_id', 'left')
-            ->where('pr.deleted_at IS NULL');
-
-        // Re-apply filters for totals
-        if (!empty($filters['branch_id'])) {
-            $totalsBuilder->where('pr.branch_id', $filters['branch_id']);
-        }
-        if (!empty($filters['status'])) {
-            if (is_array($filters['status'])) {
-                $totalsBuilder->whereIn('pr.status', $filters['status']);
-            } else {
-                $totalsBuilder->where('pr.status', $filters['status']);
-            }
-        }
-        if (!empty($filters['date_from'])) {
-            $totalsBuilder->where('pr.return_date >=', $filters['date_from'] . ' 00:00:00');
-        }
-        if (!empty($filters['date_to'])) {
-            $totalsBuilder->where('pr.return_date <=', $filters['date_to'] . ' 23:59:59');
-        }
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $totalsBuilder->groupStart()
-                ->like('pr.return_number', $search)
-                ->orLike('p.name', $search)
-                ->orLike('p.code', $search)
-                ->groupEnd();
-        }
-        $totalsResult = $totalsBuilder->get()->getRowArray();
-
-        // Pagination
-        $page = max(1, (int)($filters['page'] ?? 1));
-        $limit = max(1, min(100, (int)($filters['limit'] ?? 15)));
-        $offset = ($page - 1) * $limit;
-
-        $builder->orderBy('pr.created_at', 'DESC')
-            ->limit($limit, $offset);
-
-        $rows = $builder->get()->getResultArray();
-        $data = array_map(fn($row) => $this->hydrateListRow($row), $rows);
-
-        return [
-            'data' => $data,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => (int)$total,
-                'total_pages' => (int)ceil($total / $limit),
-            ],
-            'totals' => [
-                'total_amount' => (float)($totalsResult['total_amount'] ?? 0),
-                'total_discount' => (float)($totalsResult['total_discount'] ?? 0),
-                'total_ncc_can_tra' => (float)($totalsResult['total_ncc_can_tra'] ?? 0),
-                'total_ncc_da_tra' => (float)($totalsResult['total_ncc_da_tra'] ?? 0),
-            ],
-        ];
     }
 
     private function hydrateListRow(array $row): array
@@ -258,9 +242,10 @@ class PurchaseReturnRepository
         return $this->findById($id);
     }
 
-    public function updateStatus(int $id, string $status): bool
+    public function updateStatus(int $id, string $status, array $data = []): bool
     {
-        return (bool)$this->returns->update($id, ['status' => $status, 'updated_at' => $this->now()]);
+        $updateData = array_merge($data, ['status' => $status, 'updated_at' => $this->now()]);
+        return (bool)$this->returns->update($id, $updateData);
     }
 
     public function delete(int $id): bool
@@ -268,11 +253,47 @@ class PurchaseReturnRepository
         return (bool)$this->returns->delete($id);
     }
 
+    /**
+     * Generate next return number with atomic sequence to avoid duplicates
+     */
     public function nextNumber(): string
     {
         $prefix = 'THN' . date('Ymd');
-        $count = $this->returns->where('return_number LIKE', $prefix . '%')->countAllResults();
-        return $prefix . str_pad((string)($count + 1), 3, '0', STR_PAD_LEFT);
+        $maxRetries = 5;
+
+        for ($attempt = 0; $attempt < $maxRetries; $attempt++) {
+            // Get the last number for today atomically
+            $lastReturn = $this->db->table('purchase_returns')
+                ->where('return_number LIKE', $prefix . '%')
+                ->where('deleted_at IS NULL')
+                ->orderBy('return_number', 'DESC')
+                ->limit(1)
+                ->get()
+                ->getRowArray();
+
+            $nextNum = 1;
+            if ($lastReturn && !empty($lastReturn['return_number'])) {
+                $numPart = (int)substr($lastReturn['return_number'], strlen($prefix));
+                $nextNum = $numPart + 1;
+            }
+
+            $candidateNumber = $prefix . str_pad((string)$nextNum, 3, '0', STR_PAD_LEFT);
+
+            // Check if this number already exists (race condition check)
+            $exists = $this->db->table('purchase_returns')
+                ->where('return_number', $candidateNumber)
+                ->countAllResults();
+
+            if ($exists === 0) {
+                return $candidateNumber;
+            }
+
+            // Small delay before retry to reduce contention
+            usleep(10000); // 10ms
+        }
+
+        // Fallback with microseconds for guaranteed uniqueness
+        return $prefix . substr((string)(microtime(true) * 1000000), -6);
     }
 
     private function hydrateItem(array $row): array

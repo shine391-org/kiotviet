@@ -93,10 +93,8 @@ const CustomerDetailPanel = ({
     const handleExportOrders = async () => {
         setExportingOrders(true);
         try {
-            // TODO: Implement order export API
-            message.success('Xuất file lịch sử bán hàng thành công!');
-        } catch (err) {
-            message.error(err.message || 'Xuất file thất bại');
+            // Feature not yet implemented - show info message
+            message.info('Tính năng xuất file lịch sử bán hàng đang được phát triển');
         } finally {
             setExportingOrders(false);
         }
@@ -105,10 +103,8 @@ const CustomerDetailPanel = ({
     const handleExportDebt = async () => {
         setExportingDebt(true);
         try {
-            // TODO: Implement debt export API
-            message.success('Xuất file công nợ thành công!');
-        } catch (err) {
-            message.error(err.message || 'Xuất file thất bại');
+            // Feature not yet implemented - show info message
+            message.info('Tính năng xuất file công nợ đang được phát triển');
         } finally {
             setExportingDebt(false);
         }

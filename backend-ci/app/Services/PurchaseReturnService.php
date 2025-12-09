@@ -31,6 +31,11 @@ class PurchaseReturnService
 
     public function create(array $data, array $items, int $userId): array
     {
+        // Validate items is non-empty
+        if (empty($items) || !is_array($items)) {
+            throw new \InvalidArgumentException('Cannot create purchase return with no items');
+        }
+
         $data['created_by'] = $userId;
         $data['status'] = $data['status'] ?? 'draft';
 
@@ -73,7 +78,7 @@ class PurchaseReturnService
             $data['returned_by'] = $returnedBy;
             $data['return_date'] = date('Y-m-d H:i:s');
         }
-        return $this->repository->updateStatus($id, $status);
+        return $this->repository->updateStatus($id, $status, $data);
     }
 
     public function delete(int $id): bool
@@ -82,15 +87,10 @@ class PurchaseReturnService
     }
 
     /**
-     * Export purchase returns to Excel
+     * Export purchase returns to Excel with chunked processing
      */
     public function export(array $filters = []): string
     {
-        // Get all data without pagination
-        $filters['limit'] = 10000;
-        $result = $this->repository->list($filters);
-        $data = $result['data'];
-
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle('Trả hàng nhập');
@@ -119,40 +119,82 @@ class PurchaseReturnService
             $col++;
         }
 
-        // Data rows
-        $row = 2;
-        foreach ($data as $item) {
-            $sheet->setCellValue('A' . $row, $item['return_number']);
-            $sheet->setCellValue('B' . $row, $item['purchase_order_number']);
-            $sheet->setCellValue('C' . $row, $item['return_date']);
-            $sheet->setCellValue('D' . $row, $item['supplier_name']);
-            $sheet->setCellValue('E' . $row, $item['branch_name']);
-            $sheet->setCellValue('F' . $row, $item['total_amount']);
-            $sheet->setCellValue('G' . $row, $item['discount']);
-            $sheet->setCellValue('H' . $row, $item['ncc_can_tra']);
-            $sheet->setCellValue('I' . $row, $item['ncc_da_tra']);
-            $sheet->setCellValue('J' . $row, $this->getStatusLabel($item['status']));
-            $sheet->setCellValue('K' . $row, $item['creator_name']);
-            $sheet->setCellValue('L' . $row, $item['returner_name']);
-            $sheet->setCellValue('M' . $row, $item['notes']);
-            $row++;
-        }
-
         // Style header row
         $sheet->getStyle('A1:M1')->getFont()->setBold(true);
         $sheet->getStyle('A1:M1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
             ->getStartColor()->setRGB('E8E8E8');
 
-        $filename = WRITEPATH . 'exports/purchase_returns_' . date('Ymd_His') . '.xlsx';
-        
-        // Ensure directory exists
-        if (!is_dir(WRITEPATH . 'exports')) {
-            mkdir(WRITEPATH . 'exports', 0755, true);
+        // Process data in chunks to avoid memory exhaustion
+        $chunkSize = 500;
+        $page = 1;
+        $row = 2;
+        $hasMore = true;
+
+        while ($hasMore) {
+            $filters['page'] = $page;
+            $filters['limit'] = $chunkSize;
+            $result = $this->repository->list($filters);
+            $data = $result['data'];
+
+            if (empty($data)) {
+                $hasMore = false;
+                break;
+            }
+
+            foreach ($data as $item) {
+                $sheet->setCellValue('A' . $row, $item['return_number']);
+                $sheet->setCellValue('B' . $row, $item['purchase_order_number']);
+                $sheet->setCellValue('C' . $row, $item['return_date']);
+                $sheet->setCellValue('D' . $row, $item['supplier_name']);
+                $sheet->setCellValue('E' . $row, $item['branch_name']);
+                $sheet->setCellValue('F' . $row, $item['total_amount']);
+                $sheet->setCellValue('G' . $row, $item['discount']);
+                $sheet->setCellValue('H' . $row, $item['ncc_can_tra']);
+                $sheet->setCellValue('I' . $row, $item['ncc_da_tra']);
+                $sheet->setCellValue('J' . $row, $this->getStatusLabel($item['status']));
+                $sheet->setCellValue('K' . $row, $item['creator_name']);
+                $sheet->setCellValue('L' . $row, $item['returner_name']);
+                $sheet->setCellValue('M' . $row, $item['notes']);
+                $row++;
+            }
+
+            // Check if we have more pages
+            $hasMore = count($data) === $chunkSize;
+            $page++;
+
+            // Free memory after each chunk
+            unset($data);
         }
 
-        $writer = new Xlsx($spreadsheet);
-        $writer->save($filename);
+        $filename = WRITEPATH . 'exports/purchase_returns_' . date('Ymd_His') . '.xlsx';
+        
+        // Ensure directory exists with error handling
+        $exportsDir = WRITEPATH . 'exports';
+        if (!is_dir($exportsDir)) {
+            if (!mkdir($exportsDir, 0755, true) && !is_dir($exportsDir)) {
+                throw new \RuntimeException(
+                    'Failed to create exports directory: ' . $exportsDir . 
+                    ' (errno: ' . error_get_last()['message'] . ')'
+                );
+            }
+        }
+
+        // Write file with error handling
+        try {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save($filename);
+        } catch (\Throwable $e) {
+            throw new \RuntimeException(
+                'Failed to write export file: ' . $e->getMessage(),
+                0,
+                $e
+            );
+        } finally {
+            // Free spreadsheet memory
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+        }
 
         return $filename;
     }

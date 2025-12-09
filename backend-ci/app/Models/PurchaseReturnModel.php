@@ -31,9 +31,6 @@ class PurchaseReturnModel extends Model
         'notes',
         'created_by',
         'returned_by',
-        'created_at',
-        'updated_at',
-        'deleted_at',
     ];
 
     protected $useTimestamps = true;
