@@ -434,7 +434,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.0,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -447,7 +447,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 40000,
                 'paid_ratio' => 0.35,
                 'items' => [
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 2, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -461,7 +461,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.4,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50302, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -474,7 +474,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 0.5,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 2, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -488,7 +488,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.2,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50102, 'quantity' => 1, 'pricing' => 'flash30'],
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -502,7 +502,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.6,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -515,8 +515,8 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 20000,
                 'paid_ratio' => 0.5,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -530,7 +530,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.7,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -544,7 +544,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -557,7 +557,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 30000,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50302, 'quantity' => 2, 'pricing' => 'standard'],
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                 ],
             ],
@@ -571,7 +571,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 20000,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 501, 'variant_id' => 50102, 'quantity' => 1, 'pricing' => 'flash30'],
                 ],
             ],
@@ -585,7 +585,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -599,8 +599,8 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 15000,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50302, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
                 ],
             ],
@@ -614,7 +614,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 2, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -628,7 +628,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -641,7 +641,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 0,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 1, 'pricing' => 'standard'],
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
@@ -655,7 +655,7 @@ class OrdersDemoSeeder extends Seeder
                 'shipping_fee' => 40000,
                 'paid_ratio' => 1.0,
                 'items' => [
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 2, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50302, 'quantity' => 2, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -669,13 +669,13 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 1.0,
                 'items' => [
                     ['product_id' => 501, 'variant_id' => 50101, 'quantity' => 1, 'pricing' => 'vip20'],
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50201, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
                 'order_number' => 'DH-DEMO-019',
                 'customer_id' => 2009,
-                'branch_id' => 6,
+                'branch_id' => 5,
                 'status' => 'cancelled',
                 'order_type' => 'offline',
                 'payment_method' => 'CASH',
@@ -683,7 +683,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.0,
                 'cancellation_reason' => 'Khách đổi ý',
                 'items' => [
-                    ['product_id' => 502, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 502, 'variant_id' => 50202, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
             [
@@ -697,7 +697,7 @@ class OrdersDemoSeeder extends Seeder
                 'paid_ratio' => 0.15,
                 'cancellation_reason' => 'Hết hàng',
                 'items' => [
-                    ['product_id' => 503, 'variant_id' => null, 'quantity' => 1, 'pricing' => 'standard'],
+                    ['product_id' => 503, 'variant_id' => 50301, 'quantity' => 1, 'pricing' => 'standard'],
                 ],
             ],
         ];

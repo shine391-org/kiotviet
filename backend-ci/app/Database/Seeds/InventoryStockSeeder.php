@@ -61,9 +61,8 @@ class InventoryStockSeeder extends Seeder
                         'branch_id' => $branchId,
                         'quantity_on_hand' => $defaultQty,
                         'quantity_reserved' => 0,
-                        'quantity_available' => $defaultQty,
-                        'reorder_point' => 10,
-                        'reorder_quantity' => 20,
+                        'minimum_stock' => 10,
+                        'last_movement_at' => $now,
                         'created_at' => $now,
                         'updated_at' => $now,
                     ];
@@ -77,9 +76,8 @@ class InventoryStockSeeder extends Seeder
                     'branch_id' => $branchId,
                     'quantity_on_hand' => $defaultQty,
                     'quantity_reserved' => 0,
-                    'quantity_available' => $defaultQty,
-                    'reorder_point' => 10,
-                    'reorder_quantity' => 20,
+                    'minimum_stock' => 10,
+                    'last_movement_at' => $now,
                     'created_at' => $now,
                     'updated_at' => $now,
                 ];
@@ -96,8 +94,8 @@ class InventoryStockSeeder extends Seeder
             ->where('warehouse_id', $warehouseId)
             ->delete();
 
-        // Insert new stock records
-        $this->db->table('inventory_stock')->insertBatch($stockRecords);
+        // Insert new stock records (ignore duplicates)
+        $this->db->table('inventory_stock')->ignore(true)->insertBatch($stockRecords);
 
         echo "✅ Seeded " . count($stockRecords) . " inventory stock records.\n";
     }

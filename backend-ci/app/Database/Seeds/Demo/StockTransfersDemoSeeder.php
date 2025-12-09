@@ -8,6 +8,19 @@ class StockTransfersDemoSeeder extends Seeder
 {
     public function run()
     {
+        // Cleanup existing demo data
+        $demoCodes = ['TRF250001', 'TRF250002', 'TRF250003', 'TRF250004', 'TRF250005'];
+        $existing = $this->db->table('stock_transfers')
+            ->select('id')
+            ->whereIn('code', $demoCodes)
+            ->get()
+            ->getResultArray();
+        
+        if (! empty($existing)) {
+            $ids = array_column($existing, 'id');
+            $this->db->table('stock_transfer_items')->whereIn('transfer_id', $ids)->delete();
+            $this->db->table('stock_transfers')->whereIn('id', $ids)->delete();
+        }
         // Get branches
         $branches = $this->db->table('branches')->get()->getResultArray();
         if (count($branches) < 2) {

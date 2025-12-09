@@ -58,6 +58,14 @@ class InvoicesDemoSeeder extends Seeder
             $paidAmount = min((float) ($order['paid_amount'] ?? 0), $total);
             $paymentStatus = $this->paymentStatus($total, $paidAmount);
 
+            // Shipment data for shipments page
+            $shippingPartners = ['GHTK', 'GHN', 'VNPost', 'J&T Express', 'Viettel Post'];
+            $deliveryStatuses = ['pending', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'failed'];
+            $deliveryStatus = $deliveryStatuses[$idx % count($deliveryStatuses)];
+            $shippingPartner = $shippingPartners[$idx % count($shippingPartners)];
+            $shipmentCode = sprintf('VĐ-DEMO-%d-%04d', $branchId, $branchCounters[$branchId]);
+            $deliveryTime = $deliveryStatus === 'delivered' ? $dueDate->format('Y-m-d H:i:s') : null;
+
             $invoiceRows[] = [
                 'invoice_number' => $invoiceNumber,
                 'customer_id' => $order['customer_id'] ?? null,
@@ -82,6 +90,12 @@ class InvoicesDemoSeeder extends Seeder
                 'total_paid' => $paidAmount,
                 'invoice_status' => 'completed',
                 'invoice_type' => 'standard',
+                // Shipment columns for shipments page
+                'shipment_code' => $shipmentCode,
+                'delivery_status' => $deliveryStatus,
+                'shipping_partner' => $shippingPartner,
+                'delivery_time' => $deliveryTime,
+                'delivery_note' => $deliveryStatus === 'delivered' ? 'Đã giao thành công' : null,
                 'pdf_path' => null,
                 'notes' => 'Hóa đơn demo gắn với ' . ($order['order_number'] ?? 'đơn hàng'),
                 'meta' => json_encode(['source' => 'demo']),
