@@ -8,7 +8,6 @@ import {
   Tooltip,
   Dropdown,
   Checkbox,
-  Spin,
 } from 'antd';
 import {
   SearchOutlined,
@@ -20,7 +19,6 @@ import {
 import ReturnFilters from '../../components/returns/ReturnFilters';
 import ReturnTable, { returnColumnCatalog } from '../../components/returns/ReturnTable';
 import ReturnSummary from '../../components/returns/ReturnSummary';
-import ReturnDetail from '../../components/returns/ReturnDetail';
 import {
   fetchReturns,
   fetchReturnDetail,
@@ -92,13 +90,12 @@ const ReturnListPage = () => {
   };
 
   const onSelectRow = (record) => {
-    setSelectedId(record.id || record.return_code);
+    if (record === null) {
+      setSelectedId(null);
+    } else {
+      setSelectedId(record.id || record.return_code);
+    }
   };
-
-  const selectedReturn = useMemo(() => {
-    if (current && (current.id === selectedId || current.return_code === selectedId)) return current;
-    return items.find((x) => x.id === selectedId || x.return_code === selectedId) || null;
-  }, [current, selectedId, items]);
 
   const columnMenuItems = Object.keys(returnColumnCatalog).map((key) => ({
     key,
@@ -116,64 +113,66 @@ const ReturnListPage = () => {
 
   return (
     <div className={styles.page}>
-      <div className={styles.headerRow}>
-        <Input
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder="Theo mã phiếu trả"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className={styles.search}
-        />
-        <Space>
-          <Tooltip title="Tạo phiếu trả hàng">
-            <Button type="primary" icon={<PlusOutlined />}>Trả hàng</Button>
-          </Tooltip>
-          <Tooltip title="Xuất file">
-            <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất file</Button>
-          </Tooltip>
-          <Dropdown menu={columnMenu} trigger={['click']}>
-            <Button icon={<ColumnHeightOutlined />} />
-          </Dropdown>
-          <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchReturns(filters))} />
-        </Space>
-      </div>
-
-      <ReturnSummary totals={totals} />
-
-      <div className={styles.layout}>
+      <div className={styles.content}>
         <ReturnFilters
           filters={filters}
           onChange={(payload) => dispatch(setReturnFilters(payload))}
           branches={branches}
         />
 
-        <div className={styles.tableArea}>
-          <ReturnTable
-            data={items}
-            loading={loading}
-            pagination={pagination}
-            onPageChange={(pageInfo) => {
-              dispatch(setReturnPage(pageInfo));
-              dispatch(fetchReturns({ ...filters, ...pageInfo }));
-            }}
-            onSelectRow={onSelectRow}
-            selectedRowKey={selectedId}
-            visibleColumns={visibleColumns}
-            onToggleColumn={handleToggleColumn}
-          />
+        <div className={styles.contentMain}>
+          <div className={styles.tablePanel}>
+            <div className={styles.toolbarRow}>
+              <Input
+                allowClear
+                prefix={<SearchOutlined />}
+                placeholder="Theo mã phiếu trả"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className={styles.searchBox}
+              />
+              <Space className={styles.actions}>
+                <Tooltip title="Tạo phiếu trả hàng">
+                  <Button type="primary" icon={<PlusOutlined />}>Trả hàng</Button>
+                </Tooltip>
+                <Tooltip title="Xuất file">
+                  <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất file</Button>
+                </Tooltip>
+                <Dropdown menu={columnMenu} trigger={['click']}>
+                  <Button icon={<ColumnHeightOutlined />} />
+                </Dropdown>
+                <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchReturns(filters))} />
+              </Space>
+            </div>
 
-          <div className={styles.pageTotals}>
-            <Space size="large">
-              <span>Tổng tiền hàng: {pageTotals.goods_total.toLocaleString('vi-VN')} đ</span>
-              <span>Cần trả khách: {pageTotals.need_refund.toLocaleString('vi-VN')} đ</span>
-              <span>Đã trả khách: {pageTotals.refunded.toLocaleString('vi-VN')} đ</span>
-            </Space>
+            <ReturnSummary totals={totals} />
+
+            <div className={styles.tableWrapper}>
+              <ReturnTable
+                data={items}
+                loading={loading}
+                pagination={pagination}
+                onPageChange={(pageInfo) => {
+                  dispatch(setReturnPage(pageInfo));
+                  dispatch(fetchReturns({ ...filters, ...pageInfo }));
+                }}
+                onSelectRow={onSelectRow}
+                selectedRowKey={selectedId}
+                visibleColumns={visibleColumns}
+                onToggleColumn={handleToggleColumn}
+                detailData={current}
+                detailLoading={detailLoading}
+              />
+            </div>
+
+            <div className={styles.pageTotals}>
+              <Space size="large">
+                <span>Tổng tiền hàng: {pageTotals.goods_total.toLocaleString('vi-VN')} đ</span>
+                <span>Cần trả khách: {pageTotals.need_refund.toLocaleString('vi-VN')} đ</span>
+                <span>Đã trả khách: {pageTotals.refunded.toLocaleString('vi-VN')} đ</span>
+              </Space>
+            </div>
           </div>
-
-          <Spin spinning={detailLoading}>
-            <ReturnDetail data={selectedReturn} />
-          </Spin>
         </div>
       </div>
     </div>

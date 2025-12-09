@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
-import { Table, Tag, Dropdown, Checkbox, Button, Typography } from 'antd';
+import { Table, Tag, Dropdown, Checkbox, Button, Typography, Spin } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
 import { RETURN_STATUSES, formatReturnDate } from '../../constants/returns';
+import ReturnDetailPanel from './ReturnDetailPanel';
 
 const statusMap = RETURN_STATUSES.reduce((acc, s) => ({ ...acc, [s.value]: s }), {});
 
@@ -94,6 +95,8 @@ const ReturnTable = ({
   selectedRowKey,
   visibleColumns,
   onToggleColumn,
+  detailData,
+  detailLoading,
 }) => {
   const columns = useMemo(() => {
     return visibleColumns
@@ -115,6 +118,8 @@ const ReturnTable = ({
 
   const menu = { items: columnMenuItems };
 
+  const getRowKey = (record) => record.id || record.return_code;
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -126,7 +131,7 @@ const ReturnTable = ({
         </Dropdown>
       </div>
       <Table
-        rowKey={(record) => record.id || record.return_code}
+        rowKey={getRowKey}
         dataSource={data}
         columns={columns}
         loading={loading}
@@ -137,11 +142,43 @@ const ReturnTable = ({
           showSizeChanger: true,
           onChange: (page, pageSize) => onPageChange({ page, limit: pageSize }),
         }}
+        rowSelection={{
+          type: 'checkbox',
+          selectedRowKeys: selectedRowKey ? [selectedRowKey] : [],
+          onChange: (keys) => {
+            const id = keys[keys.length - 1];
+            if (id && id !== selectedRowKey) {
+              const record = data.find((r) => getRowKey(r) === id);
+              if (record) onSelectRow(record);
+            }
+          },
+        }}
+        expandable={{
+          expandedRowKeys: selectedRowKey ? [selectedRowKey] : [],
+          expandIcon: () => null, // Hide default expand icon
+          expandedRowRender: (record) => (
+            <Spin spinning={detailLoading}>
+              <ReturnDetailPanel
+                data={detailData?.id === record.id ? detailData : record}
+              />
+            </Spin>
+          ),
+        }}
         onRow={(record) => ({
-          onClick: () => onSelectRow && onSelectRow(record),
+          onClick: () => {
+            const key = getRowKey(record);
+            if (key === selectedRowKey) {
+              // Click same row = collapse
+              onSelectRow(null);
+            } else {
+              // Click different row = expand this one
+              onSelectRow(record);
+            }
+          },
+          className: getRowKey(record) === selectedRowKey ? 'table-row-selected' : '',
         })}
-        rowClassName={(record) => (record.id === selectedRowKey || record.return_code === selectedRowKey ? 'table-row-selected' : '')}
         size="middle"
+        scroll={{ x: 1100 }}
       />
     </div>
   );

@@ -11,6 +11,9 @@ export default defineConfig(({ mode }) => {
     (env.VITE_API_BASE_URL?.startsWith('http') ? env.VITE_API_BASE_URL : '') ||
     'http://localhost:8000';
 
+  console.log('[Vite Config] Proxy target:', proxyTarget);
+  console.log('[Vite Config] process.env.VITE_API_URL:', process.env.VITE_API_URL);
+
   return {
     plugins: [react()],
     resolve: {
@@ -26,6 +29,14 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget.replace(/\/api\/?$/, ''),
           changeOrigin: true,
           secure: false,
+          configure: (proxy) => {
+            proxy.on('proxyReq', (proxyReq, req) => {
+              console.log('[Proxy]', req.method, req.url, '->', proxyReq.path);
+            });
+            proxy.on('error', (err, req) => {
+              console.error('[Proxy Error]', req.url, err.message);
+            });
+          },
         },
       },
     },

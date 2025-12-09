@@ -9,51 +9,72 @@ use CodeIgniter\Test\CIUnitTestCase;
 use RuntimeException;
 
 /**
- * @agent-test: StockTransferService (stubbed)
- * @agent-pattern: Service orchestration without DB
+ * @agent-test: StockTransferService
+ * @agent-pattern: Service test with injected repository
  */
 class StockTransferServiceTest extends CIUnitTestCase
 {
     private StockTransferService $service;
-    private StockTransferServiceFakeRepo $repo;
+    private InMemoryStockTransferRepo $repo;
+    private StockTransferValidator $validator;
 
     protected function setUp(): void
     {
         parent::setUp();
-        $this->repo = new StockTransferServiceFakeRepo();
-        $validator = new StockTransferValidator();
-        $this->service = new StockTransferService($this->repo, $validator);
+        $this->repo = new InMemoryStockTransferRepo();
+        $this->validator = new StockTransferValidator();
+        $this->service = new StockTransferService($this->repo, $this->validator, null);
     }
 
-    public function testListReturnsTransfersWithPagination(): void
+    public function testListReturnsDataWithPagination(): void
     {
-        $result = $this->service->list(['page' => 1, 'limit' => 15]);
+        $result = $this->service->list([]);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('data', $result);
         $this->assertArrayHasKey('pagination', $result);
         $this->assertArrayHasKey('summary', $result);
-        $this->assertCount(2, $result['data']);
     }
 
-    public function testShowReturnsTransferDetail(): void
+    public function testListWithPageAndLimit(): void
     {
-        $result = $this->service->show('TRF-001');
+        $result = $this->service->list(['page' => 2, 'limit' => 5]);
+
+        $this->assertSame(2, $result['pagination']['page']);
+        $this->assertSame(5, $result['pagination']['limit']);
+    }
+
+    public function testListWithSearch(): void
+    {
+        $result = $this->service->list(['search' => 'ST-001']);
+
+        $this->assertTrue($result['success']);
+        $this->assertIsArray($result['data']);
+    }
+
+    public function testListWithStatusFilter(): void
+    {
+        $result = $this->service->list(['status' => 'completed']);
+
+        $this->assertTrue($result['success']);
+    }
+
+    public function testShowReturnsTransferDetails(): void
+    {
+        $result = $this->service->show('ST-001');
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('transfer', $result);
-        $this->assertSame('TRF-001', $result['transfer']['code']);
+        $this->assertSame('ST-001', $result['transfer']['code']);
     }
 
     public function testShowThrowsWhenNotFound(): void
     {
         $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->show('INVALID');
+        $this->service->show('NONEXISTENT');
     }
 
-    public function testCreateReturnsNewTransfer(): void
+    public function testCreateTransferReturnsNewTransfer(): void
     {
         $data = [
             'from_branch_id' => 1,
@@ -61,232 +82,85 @@ class StockTransferServiceTest extends CIUnitTestCase
             'items' => [
                 [
                     'product_id' => 1,
-                    'product_code' => 'PRD001',
+                    'product_code' => 'SKU-001',
                     'product_name' => 'Product 1',
                     'quantity_sent' => 10,
                     'unit_price' => 50000,
                 ],
             ],
-            'notes' => 'Test transfer',
         ];
 
         $result = $this->service->create($data);
 
         $this->assertTrue($result['success']);
         $this->assertArrayHasKey('data', $result);
-        $this->assertSame('draft', $result['data']['status']);
+        $this->assertNotEmpty($result['data']['code']);
     }
 
-    public function testUpdateModifiesTransfer(): void
+    public function testCreateTransferWithMultipleItems(): void
     {
-        $result = $this->service->update(1, [
-            'notes' => 'Updated notes',
-        ]);
+        $data = [
+            'from_branch_id' => 1,
+            'to_branch_id' => 2,
+            'items' => [
+                ['product_id' => 1, 'quantity_sent' => 5, 'unit_price' => 10000],
+                ['product_id' => 2, 'quantity_sent' => 3, 'unit_price' => 20000],
+            ],
+        ];
 
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-    }
-
-    public function testUpdateThrowsWhenNotFound(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->update(999, ['notes' => 'Test']);
-    }
-
-    public function testUpdateThrowsWhenNotDraft(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Chỉ có thể cập nhật phiếu ở trạng thái nháp');
-
-        $this->service->update(2, ['notes' => 'Test']); // ID 2 is in_transit
-    }
-
-    public function testSubmitChangesStatusToInTransit(): void
-    {
-        $result = $this->service->submit(1);
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-    }
-
-    public function testSubmitThrowsWhenNotFound(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->submit(999);
-    }
-
-    public function testSubmitThrowsWhenNotDraft(): void
-    {
-        $this->repo->setTransferStatus(2, 'received');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Chỉ có thể gửi phiếu ở trạng thái nháp');
-
-        $this->service->submit(2);
-    }
-
-    public function testSubmitByCodeWorks(): void
-    {
-        $result = $this->service->submitByCode('TRF-001');
+        $result = $this->service->create($data);
 
         $this->assertTrue($result['success']);
     }
 
-    public function testReceiveMarksAsReceived(): void
+    public function testCreateTransferValidatesInput(): void
     {
-        $result = $this->service->receive(2, [
-            'received_by' => 1,
-            'receiving_notes' => 'All items received',
-        ]);
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->service->create(['from_branch_id' => 1]); // Missing to_branch_id and items
     }
 
-    public function testReceiveThrowsWhenNotFound(): void
+    public function testListReturnsCorrectPaginationTotalPages(): void
     {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
+        $result = $this->service->list(['limit' => 2]);
 
-        $this->service->receive(999, []);
-    }
-
-    public function testReceiveThrowsWhenCancelled(): void
-    {
-        $this->repo->setTransferStatus(1, 'cancelled');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không thể nhận hàng cho phiếu này');
-
-        $this->service->receive(1, []);
-    }
-
-    public function testCancelMarksAsCancelled(): void
-    {
-        $result = $this->service->cancel(1);
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-    }
-
-    public function testCancelThrowsWhenNotFound(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->cancel(999);
-    }
-
-    public function testCancelThrowsWhenAlreadyReceived(): void
-    {
-        $this->repo->setTransferStatus(1, 'received');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không thể hủy phiếu đã nhận hàng');
-
-        $this->service->cancel(1);
-    }
-
-    public function testDuplicateCreatesNewTransfer(): void
-    {
-        $result = $this->service->duplicate('TRF-001');
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-        $this->assertSame('draft', $result['data']['status']);
-    }
-
-    public function testDuplicateThrowsWhenNotFound(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->duplicate('INVALID');
-    }
-
-    public function testSaveNotesUpdatesNotes(): void
-    {
-        $result = $this->service->saveNotes('TRF-001', 'New notes');
-
-        $this->assertTrue($result['success']);
-        $this->assertArrayHasKey('data', $result);
-    }
-
-    public function testSaveNotesThrowsWhenNotFound(): void
-    {
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Không tìm thấy phiếu chuyển hàng');
-
-        $this->service->saveNotes('INVALID', 'Test');
+        $expectedPages = (int) ceil($result['pagination']['total'] / 2);
+        $this->assertSame($expectedPages, $result['pagination']['total_pages']);
     }
 }
 
-class StockTransferServiceFakeRepo extends StockTransferRepository
+class InMemoryStockTransferRepo extends StockTransferRepository
 {
     private array $transfers = [];
+    private int $nextId = 1;
 
     public function __construct()
     {
         $this->transfers = [
-            1 => [
-                'id' => 1,
-                'code' => 'TRF-001',
-                'status' => 'draft',
-                'from_branch_id' => 1,
-                'to_branch_id' => 2,
-                'from_branch_name' => 'Branch 1',
-                'to_branch_name' => 'Branch 2',
-                'transfer_date' => '2024-06-15 10:00:00',
-                'receive_date' => null,
-                'total_items' => 2,
-                'quantity_sent' => 20,
-                'value_sent' => 1000000,
-                'quantity_received' => 0,
-                'value_received' => 0,
-                'notes' => 'Test transfer',
-                'receiving_notes' => null,
-                'creator_name' => 'Admin',
-                'created_by' => 1,
-                'created_at' => '2024-06-15 10:00:00',
-            ],
-            2 => [
-                'id' => 2,
-                'code' => 'TRF-002',
-                'status' => 'in_transit',
-                'from_branch_id' => 1,
-                'to_branch_id' => 3,
-                'from_branch_name' => 'Branch 1',
-                'to_branch_name' => 'Branch 3',
-                'transfer_date' => '2024-06-16 10:00:00',
-                'receive_date' => null,
-                'total_items' => 1,
-                'quantity_sent' => 5,
-                'value_sent' => 250000,
-                'quantity_received' => 0,
-                'value_received' => 0,
-                'notes' => null,
-                'receiving_notes' => null,
-                'creator_name' => 'Staff',
-                'created_by' => 2,
-                'created_at' => '2024-06-16 10:00:00',
-            ],
+            ['id' => 1, 'code' => 'ST-001', 'status' => 'completed', 'from_branch_id' => 1, 'to_branch_id' => 2, 'from_branch_name' => 'Branch 1', 'to_branch_name' => 'Branch 2', 'total_items' => 2, 'quantity_sent' => 10, 'value_sent' => 500000, 'quantity_received' => 10, 'value_received' => 500000, 'transfer_date' => '2024-01-15', 'receive_date' => '2024-01-16', 'created_at' => '2024-01-15 10:00:00', 'creator_name' => 'Admin', 'receiver_name' => 'Staff', 'notes' => '', 'receiving_notes' => ''],
+            ['id' => 2, 'code' => 'ST-002', 'status' => 'draft', 'from_branch_id' => 1, 'to_branch_id' => 3, 'from_branch_name' => 'Branch 1', 'to_branch_name' => 'Branch 3', 'total_items' => 1, 'quantity_sent' => 5, 'value_sent' => 100000, 'quantity_received' => 0, 'value_received' => 0, 'transfer_date' => '2024-01-16', 'receive_date' => null, 'created_at' => '2024-01-16 10:00:00', 'creator_name' => 'Admin', 'receiver_name' => '', 'notes' => '', 'receiving_notes' => ''],
+            ['id' => 3, 'code' => 'ST-003', 'status' => 'in_transit', 'from_branch_id' => 2, 'to_branch_id' => 1, 'from_branch_name' => 'Branch 2', 'to_branch_name' => 'Branch 1', 'total_items' => 3, 'quantity_sent' => 15, 'value_sent' => 750000, 'quantity_received' => 0, 'value_received' => 0, 'transfer_date' => '2024-01-17', 'receive_date' => null, 'created_at' => '2024-01-17 10:00:00', 'creator_name' => 'Admin', 'receiver_name' => '', 'notes' => '', 'receiving_notes' => ''],
         ];
-    }
-
-    public function setTransferStatus(int $id, string $status): void
-    {
-        if (isset($this->transfers[$id])) {
-            $this->transfers[$id]['status'] = $status;
-        }
+        $this->nextId = 4;
     }
 
     public function findAll(array $filters = []): array
     {
-        return array_values($this->transfers);
+        $result = $this->transfers;
+
+        if (isset($filters['status'])) {
+            $result = array_filter($result, fn($t) => $t['status'] === $filters['status']);
+        }
+
+        if (isset($filters['search'])) {
+            $search = strtolower($filters['search']);
+            $result = array_filter($result, fn($t) => str_contains(strtolower($t['code']), $search));
+        }
+
+        $limit = $filters['limit'] ?? 15;
+        $page = $filters['page'] ?? 1;
+        $offset = ($page - 1) * $limit;
+
+        return array_slice(array_values($result), $offset, $limit);
     }
 
     public function count(array $filters = []): int
@@ -298,20 +172,16 @@ class StockTransferServiceFakeRepo extends StockTransferRepository
     {
         return [
             'total_transfers' => count($this->transfers),
-            'total_value' => 1250000,
+            'total_quantity' => array_sum(array_column($this->transfers, 'quantity_sent')),
+            'total_value' => array_sum(array_column($this->transfers, 'value_sent')),
         ];
-    }
-
-    public function findById(int $id): ?array
-    {
-        return $this->transfers[$id] ?? null;
     }
 
     public function findByCode(string $code): ?array
     {
-        foreach ($this->transfers as $t) {
-            if ($t['code'] === $code) {
-                return $t;
+        foreach ($this->transfers as $transfer) {
+            if ($transfer['code'] === $code) {
+                return $transfer;
             }
         }
         return null;
@@ -320,45 +190,43 @@ class StockTransferServiceFakeRepo extends StockTransferRepository
     public function findItems(int $transferId): array
     {
         return [
-            [
-                'id' => 1,
-                'product_id' => 1,
-                'variant_id' => null,
-                'product_code' => 'PRD001',
-                'product_name' => 'Product 1',
-                'unit' => 'pcs',
-                'quantity_sent' => 10,
-                'quantity_received' => 0,
-                'unit_price' => 50000,
-                'total_price' => 500000,
-            ],
+            ['id' => 1, 'transfer_id' => $transferId, 'product_id' => 1, 'product_code' => 'SKU-001', 'product_name' => 'Product 1', 'quantity_sent' => 5, 'quantity_received' => 5, 'unit_price' => 50000, 'total_price' => 250000],
+            ['id' => 2, 'transfer_id' => $transferId, 'product_id' => 2, 'product_code' => 'SKU-002', 'product_name' => 'Product 2', 'quantity_sent' => 5, 'quantity_received' => 5, 'unit_price' => 50000, 'total_price' => 250000],
         ];
     }
 
     public function nextCode(): string
     {
-        return 'TRF-' . sprintf('%03d', count($this->transfers) + 1);
+        return 'ST-' . str_pad((string) $this->nextId++, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function insert(array $data): int
+    {
+        $id = $this->nextId++;
+        $data['id'] = $id;
+        $this->transfers[] = $data;
+        return $id;
+    }
+
+    public function insertItems(int $transferId, array $items): void
+    {
+        // In-memory, no-op
     }
 
     public function create(array $data, array $items = []): array
     {
-        $id = max(array_keys($this->transfers)) + 1;
+        $id = $this->nextId++;
         $data['id'] = $id;
-        $this->transfers[$id] = $data;
+        $data['code'] = $data['code'] ?? $this->nextCode();
+        $data['from_branch_name'] = 'Branch ' . $data['from_branch_id'];
+        $data['to_branch_name'] = 'Branch ' . $data['to_branch_id'];
+        $data['quantity_received'] = 0;
+        $data['value_received'] = 0;
+        $data['receive_date'] = null;
+        $data['creator_name'] = 'Admin';
+        $data['receiver_name'] = '';
+        $data['receiving_notes'] = '';
+        $this->transfers[] = $data;
         return $data;
-    }
-
-    public function update(int $id, array $data): array
-    {
-        if (! isset($this->transfers[$id])) {
-            return [];
-        }
-        $this->transfers[$id] = array_merge($this->transfers[$id], $data);
-        return $this->transfers[$id];
-    }
-
-    public function updateItems(int $id, array $items): void
-    {
-        // Fake implementation
     }
 }

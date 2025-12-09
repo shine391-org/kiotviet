@@ -1,0 +1,187 @@
+.panel {
+    background: #fff;
+    border: 1px solid #e0e6ed;
+}
+
+/* Header Row */
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 16px;
+    background: #fafbfc;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.starIcon {
+    color: #faad14;
+    cursor: pointer;
+}
+
+/* Tabs */
+.tabs {
+    padding: 0 16px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.tabs :global(.ant-tabs-nav) {
+    margin-bottom: 0;
+}
+
+/* Info Tab */
+.infoTab {
+    padding: 16px;
+}
+
+.customerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.customerName {
+    margin: 0 !important;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.editIcon {
+    color: #1890ff;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.returnCode {
+    color: #1890ff;
+    font-weight: normal;
+}
+
+.branchLabel {
+    color: #1890ff;
+}
+
+/* Info Grid */
+.infoGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px 24px;
+    margin-bottom: 16px;
+}
+
+.infoCol {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.infoRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.label {
+    color: #6b7280;
+    min-width: 90px;
+}
+
+.subLabel {
+    color: #6b7280;
+}
+
+.link {
+    color: #1890ff;
+}
+
+.link:hover {
+    text-decoration: underline;
+}
+
+/* Items Section */
+.itemsSection {
+    margin: 16px 0;
+}
+
+.itemsTable :global(.ant-table-thead > tr > th) {
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 12px;
+    color: #374151;
+}
+
+.itemsTable :global(.ant-table-tbody > tr > td) {
+    font-size: 13px;
+}
+
+/* Bottom Section */
+.bottomSection {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.notesArea {
+    flex: 1;
+}
+
+.notesInput {
+    border-radius: 6px;
+}
+
+.summaryArea {
+    width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summaryRow {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    padding: 2px 0;
+}
+
+.summaryRow.highlight {
+    color: #1890ff;
+    font-weight: 600;
+}
+
+/* Actions */
+.actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e6ed;
+}
+
+/* Payments Tab */
+.paymentsTab {
+    padding: 16px;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .infoGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .infoGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .bottomSection {
+        flex-direction: column;
+    }
+
+    .summaryArea {
+        width: 100%;
+    }
+}

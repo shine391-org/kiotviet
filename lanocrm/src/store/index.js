@@ -19,6 +19,7 @@ import transferReducer from './slices/transferSlice';
 import stockAuditReducer from './slices/stockAuditSlice';
 import disposalReducer from './slices/disposalSlice';
 import supplierReducer from './slices/supplierSlice';
+import purchaseReducer from './slices/purchaseSlice';
 
 const store = configureStore({
   reducer: {
@@ -42,12 +43,13 @@ const store = configureStore({
     stockAudits: stockAuditReducer,
     disposals: disposalReducer,
     supplier: supplierReducer,
+    purchases: purchaseReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
-    devTools: import.meta.env.MODE !== 'production',
+  devTools: import.meta.env.MODE !== 'production',
 });
 
 export default store;

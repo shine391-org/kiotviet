@@ -85,29 +85,114 @@ class ReturnRepository
     /** Fetch return with items. */
     public function findById(int $id): ?array
     {
-        $row = $this->returns->find($id);
+        $row = $this->db->table($this->returns->table . ' AS r')
+            ->select('
+                r.*,
+                r.created_at AS return_time,
+                o.order_number AS invoice_code,
+                c.name AS customer_name,
+                b.name AS branch_name,
+                u.full_name AS seller_name
+            ')
+            ->join('orders o', 'o.id = r.order_id', 'left')
+            ->join('customers c', 'c.id = r.customer_id', 'left')
+            ->join('branches b', 'b.id = o.branch_id', 'left')
+            ->join('users u', 'u.id = r.created_by', 'left')
+            ->where('r.id', $id)
+            ->get()
+            ->getRowArray();
+
         if (! $row) {
             return null;
         }
         $row = $this->hydrate($row);
         $row['items'] = $this->items->where('return_id', $id)->findAll();
+        
+        // Fetch payment history from cash_transactions
+        $row['payment_history'] = $this->getPaymentHistory($id);
+        
         return $row;
+    }
+
+    /** Get payment history for a return from cash_transactions */
+    public function getPaymentHistory(int $returnId): array
+    {
+        $payments = $this->db->table('cash_transactions AS ct')
+            ->select('
+                ct.id,
+                ct.reference_code AS receipt_code,
+                ct.created_at,
+                ct.amount,
+                ct.payment_method,
+                ct.status,
+                ct.created_by_name AS creator_name,
+                ct.staff_name AS receiver_name,
+                ct.bank_account AS account_number,
+                ct.note AS notes
+            ')
+            ->where('ct.reference_type', 'return')
+            ->where('ct.reference_id', $returnId)
+            ->where('ct.deleted_at IS NULL')
+            ->orderBy('ct.created_at', 'DESC')
+            ->get()
+            ->getResultArray();
+        
+        return $payments;
     }
 
     /** List returns with filters + pagination. */
     public function findAll(array $filters): array
     {
-        $b = $this->applyFilters($filters);
+        $b = $this->db->table($this->returns->table . ' AS r')
+            ->select('
+                r.id,
+                r.return_number,
+                r.order_id,
+                r.customer_id,
+                r.return_amount,
+                r.refund_shipping_fee,
+                r.refund_amount,
+                r.refund_method,
+                r.reason,
+                r.reason_detail,
+                r.status,
+                r.approved_by,
+                r.approved_at,
+                r.rejected_by,
+                r.rejected_at,
+                r.completed_at,
+                r.notes,
+                r.lock_version,
+                r.created_by,
+                r.created_at,
+                r.updated_at,
+                r.created_at AS return_time,
+                o.order_number AS invoice_code,
+                c.name AS customer_name,
+                b.name AS branch_name,
+                u.full_name AS seller_name
+            ')
+            ->join('orders o', 'o.id = r.order_id', 'left')
+            ->join('customers c', 'c.id = r.customer_id', 'left')
+            ->join('branches b', 'b.id = o.branch_id', 'left')
+            ->join('users u', 'u.id = r.created_by', 'left')
+            ->where('r.deleted_at IS NULL', null, false);
+
+        $this->applyFiltersToBuilder($b, $filters);
+
         $limit = $filters['limit'] ?? 20;
         $page = $filters['page'] ?? 1;
         $offset = ($page - 1) * $limit;
-        $rows = $b->orderBy('created_at', 'DESC')->limit($limit, $offset)->get()->getResultArray();
+        $rows = $b->orderBy('r.created_at', 'DESC')->limit($limit, $offset)->get()->getResultArray();
         return array_map(fn ($r) => $this->hydrate($r), $rows);
     }
 
     public function count(array $filters): int
     {
-        return $this->applyFilters($filters)->countAllResults();
+        $b = $this->db->table($this->returns->table . ' AS r')
+            ->where('r.deleted_at IS NULL', null, false);
+        $this->applyFiltersToBuilder($b, $filters);
+        return $b->countAllResults();
     }
 
     /** Orders + order_items helper. */
@@ -168,22 +253,23 @@ class ReturnRepository
         return $updated;
     }
 
-    private function applyFilters(array $filters)
+    private function applyFiltersToBuilder($b, array $filters): void
     {
-        $b = $this->returns->builder();
         if (! empty($filters['order_id'])) {
-            $b->where('order_id', $filters['order_id']);
+            $b->where('r.order_id', $filters['order_id']);
         }
         if (! empty($filters['customer_id'])) {
-            $b->where('customer_id', $filters['customer_id']);
+            $b->where('r.customer_id', $filters['customer_id']);
         }
         if (! empty($filters['status'])) {
-            $b->where('status', $filters['status']);
+            $b->where('r.status', $filters['status']);
         }
         if (! empty($filters['return_number'])) {
-            $b->like('return_number', $filters['return_number']);
+            $b->like('r.return_number', $filters['return_number']);
         }
-        return $b;
+        if (! empty($filters['search'])) {
+            $b->like('r.return_number', $filters['search']);
+        }
     }
 
     private function hydrate(array $row): array

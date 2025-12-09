@@ -461,6 +461,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('purchase-invoices/(:num)', 'Api\\PurchaseInvoicesController::show/$1');
     $routes->post('purchase-invoices/(:num)/submit', 'Api\\PurchaseInvoicesController::submit/$1');
     $routes->post('purchase-invoices/(:num)/cancel', 'Api\\PurchaseInvoicesController::cancel/$1');
+    $routes->get('purchase-orders', 'Api\\PurchaseOrdersController::index');
+    $routes->get('purchase-orders/export', 'Api\\PurchaseOrdersController::export');
     $routes->post('purchase-orders', 'Api\\PurchaseOrdersController::create');
     $routes->get('purchase-orders/(:num)', 'Api\\PurchaseOrdersController::show/$1');
     $routes->post('purchase-orders/(:num)/submit', 'Api\\PurchaseOrdersController::submit/$1');
