@@ -1,0 +1,7239 @@
+mysqldump: [Warning] Using a password on the command line interface can be insecure.
+-- MySQL dump 10.13  Distrib 8.4.7, for Linux (x86_64)
+--
+-- Host: localhost    Database: lanocrm_dev
+-- ------------------------------------------------------
+-- Server version	8.4.7
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `activity_logs`
+--
+
+DROP TABLE IF EXISTS `activity_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `activity_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `action` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `module` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `model_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `model_id` bigint unsigned DEFAULT NULL,
+  `old_values` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `new_values` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_user_date` (`user_id`,`created_at`),
+  KEY `idx_module_model` (`module`,`model_type`,`model_id`),
+  CONSTRAINT `fk_activity_logs_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `activity_logs`
+--
+
+LOCK TABLES `activity_logs` WRITE;
+/*!40000 ALTER TABLE `activity_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `activity_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `activity_types`
+--
+
+DROP TABLE IF EXISTS `activity_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `activity_types` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `activity_name` varchar(150) NOT NULL,
+  `billing_rate` decimal(12,2) DEFAULT '0.00',
+  `cost_rate` decimal(12,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_activity_name` (`activity_name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `activity_types`
+--
+
+LOCK TABLES `activity_types` WRITE;
+/*!40000 ALTER TABLE `activity_types` DISABLE KEYS */;
+/*!40000 ALTER TABLE `activity_types` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `appointments`
+--
+
+DROP TABLE IF EXISTS `appointments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `appointments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `lead_id` bigint unsigned DEFAULT NULL,
+  `contract_id` bigint unsigned DEFAULT NULL,
+  `start_time` datetime NOT NULL,
+  `end_time` datetime NOT NULL,
+  `status` varchar(30) DEFAULT 'scheduled',
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_appointment_time` (`start_time`,`end_time`),
+  KEY `fk_appointments_customer_id` (`customer_id`),
+  KEY `fk_appointments_lead_id` (`lead_id`),
+  KEY `fk_appointments_contract_id` (`contract_id`),
+  CONSTRAINT `fk_appointments_contract_id` FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_appointments_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_appointments_lead_id` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `appointments`
+--
+
+LOCK TABLES `appointments` WRITE;
+/*!40000 ALTER TABLE `appointments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `appointments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `approval_actions`
+--
+
+DROP TABLE IF EXISTS `approval_actions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `approval_actions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `approval_id` bigint unsigned NOT NULL,
+  `action` varchar(20) NOT NULL,
+  `actor_id` bigint unsigned DEFAULT NULL,
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_actions_approval` (`approval_id`),
+  KEY `fk_approval_actions_actor_id` (`actor_id`),
+  CONSTRAINT `fk_approval_actions_actor_id` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_approval_actions_approval_id` FOREIGN KEY (`approval_id`) REFERENCES `approvals` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `approval_actions`
+--
+
+LOCK TABLES `approval_actions` WRITE;
+/*!40000 ALTER TABLE `approval_actions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `approval_actions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `approvals`
+--
+
+DROP TABLE IF EXISTS `approvals`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `approvals` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `entity_type` varchar(50) DEFAULT 'order',
+  `entity_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'pending',
+  `approver_queue` text NOT NULL,
+  `current_index` int DEFAULT '0',
+  `current_approver_id` bigint unsigned DEFAULT NULL,
+  `requested_by` bigint unsigned DEFAULT NULL,
+  `requested_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_approval_entity` (`entity_type`,`entity_id`),
+  KEY `idx_approval_order` (`order_id`,`status`),
+  KEY `fk_approvals_current_approver_id` (`current_approver_id`),
+  CONSTRAINT `fk_approvals_current_approver_id` FOREIGN KEY (`current_approver_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_approvals_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `approvals`
+--
+
+LOCK TABLES `approvals` WRITE;
+/*!40000 ALTER TABLE `approvals` DISABLE KEYS */;
+/*!40000 ALTER TABLE `approvals` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `assets`
+--
+
+DROP TABLE IF EXISTS `assets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `asset_number` varchar(60) NOT NULL,
+  `asset_name` varchar(255) NOT NULL,
+  `category` varchar(120) DEFAULT NULL,
+  `purchase_date` date DEFAULT NULL,
+  `cost` decimal(14,2) DEFAULT '0.00',
+  `location` varchar(255) DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `salvage_value` decimal(14,2) DEFAULT '0.00',
+  `useful_life_months` int DEFAULT '0',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_asset_number` (`asset_number`),
+  KEY `idx_asset_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assets`
+--
+
+LOCK TABLES `assets` WRITE;
+/*!40000 ALTER TABLE `assets` DISABLE KEYS */;
+/*!40000 ALTER TABLE `assets` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `assignment_logs`
+--
+
+DROP TABLE IF EXISTS `assignment_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignment_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `assignment_rule_id` bigint unsigned NOT NULL,
+  `entity_type` varchar(80) NOT NULL,
+  `entity_id` bigint unsigned NOT NULL,
+  `assignee_id` bigint unsigned NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_assignment_log_rule` (`assignment_rule_id`),
+  KEY `idx_assignment_log_entity` (`entity_type`,`entity_id`),
+  KEY `fk_assignment_logs_assignee_id` (`assignee_id`),
+  CONSTRAINT `fk_assignment_logs_assignee_id` FOREIGN KEY (`assignee_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_assignment_logs_assignment_rule_id` FOREIGN KEY (`assignment_rule_id`) REFERENCES `assignment_rules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assignment_logs`
+--
+
+LOCK TABLES `assignment_logs` WRITE;
+/*!40000 ALTER TABLE `assignment_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `assignment_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `assignment_rules`
+--
+
+DROP TABLE IF EXISTS `assignment_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `assignment_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `entity_type` varchar(80) NOT NULL,
+  `strategy` varchar(50) DEFAULT 'round_robin',
+  `team_members` json NOT NULL,
+  `last_assigned_id` bigint unsigned DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_assignment_entity` (`entity_type`,`is_active`),
+  KEY `fk_assignment_rules_last_assigned_id` (`last_assigned_id`),
+  CONSTRAINT `fk_assignment_rules_last_assigned_id` FOREIGN KEY (`last_assigned_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `assignment_rules`
+--
+
+LOCK TABLES `assignment_rules` WRITE;
+/*!40000 ALTER TABLE `assignment_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `assignment_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attendances`
+--
+
+DROP TABLE IF EXISTS `attendances`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attendances` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint unsigned NOT NULL,
+  `attendance_date` date NOT NULL,
+  `status` varchar(20) DEFAULT 'present',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_attendance_day` (`employee_id`,`attendance_date`),
+  CONSTRAINT `fk_attendances_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=121 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attendances`
+--
+
+LOCK TABLES `attendances` WRITE;
+/*!40000 ALTER TABLE `attendances` DISABLE KEYS */;
+INSERT INTO `attendances` VALUES (1,1,'2025-12-09','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(2,2,'2025-12-09','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(3,3,'2025-12-09','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(4,1,'2025-12-08','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(5,2,'2025-12-08','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(6,3,'2025-12-08','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(7,1,'2025-12-07','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(8,2,'2025-12-07','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(9,3,'2025-12-07','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(10,1,'2025-12-06','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(11,2,'2025-12-06','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(12,3,'2025-12-06','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(13,1,'2025-12-05','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(14,2,'2025-12-05','present','2025-12-09 11:31:02','2025-12-09 11:31:02'),(15,3,'2025-12-05','present','2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `attendances` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attribute_options`
+--
+
+DROP TABLE IF EXISTS `attribute_options`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attribute_options` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `attribute_id` bigint unsigned NOT NULL,
+  `option_name` varchar(255) DEFAULT NULL,
+  `color_code` varchar(50) DEFAULT NULL,
+  `sort_order` int DEFAULT '0',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_attribute_options_attribute_id` (`attribute_id`),
+  CONSTRAINT `fk_attribute_options_attribute_id` FOREIGN KEY (`attribute_id`) REFERENCES `attributes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attribute_options`
+--
+
+LOCK TABLES `attribute_options` WRITE;
+/*!40000 ALTER TABLE `attribute_options` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attribute_options` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attributes`
+--
+
+DROP TABLE IF EXISTS `attributes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attributes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `attribute_key` varchar(100) DEFAULT NULL,
+  `type` varchar(50) DEFAULT 'select',
+  `is_required` tinyint DEFAULT '0',
+  `is_filterable` tinyint DEFAULT '0',
+  `sort_order` int DEFAULT '0',
+  `status` varchar(20) DEFAULT 'active',
+  `is_visible` tinyint DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attributes`
+--
+
+LOCK TABLES `attributes` WRITE;
+/*!40000 ALTER TABLE `attributes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attributes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `audit_logs`
+--
+
+DROP TABLE IF EXISTS `audit_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `audit_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `company_id` bigint unsigned NOT NULL,
+  `entity_type` varchar(120) NOT NULL,
+  `entity_id` bigint unsigned NOT NULL,
+  `action` varchar(80) NOT NULL,
+  `changes` json DEFAULT NULL,
+  `actor_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_audit_logs_entity` (`entity_type`,`entity_id`),
+  KEY `idx_audit_logs_company` (`company_id`),
+  KEY `fk_audit_logs_actor_id` (`actor_id`),
+  CONSTRAINT `fk_audit_logs_actor_id` FOREIGN KEY (`actor_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_audit_logs_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `audit_logs`
+--
+
+LOCK TABLES `audit_logs` WRITE;
+/*!40000 ALTER TABLE `audit_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bank_accounts`
+--
+
+DROP TABLE IF EXISTS `bank_accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bank_accounts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bank_name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `bank_code` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `account_number` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `account_name` varchar(150) COLLATE utf8mb4_general_ci NOT NULL,
+  `branch_name` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `qr_template` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'QR code template URL pattern',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bank_code` (`bank_code`),
+  KEY `idx_bank_active` (`is_active`),
+  KEY `idx_bank_branch` (`branch_id`),
+  CONSTRAINT `fk_bank_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bank_accounts`
+--
+
+LOCK TABLES `bank_accounts` WRITE;
+/*!40000 ALTER TABLE `bank_accounts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bank_accounts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bank_reconciliation_logs`
+--
+
+DROP TABLE IF EXISTS `bank_reconciliation_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bank_reconciliation_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bank_reconciliation_id` bigint unsigned NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `message` text,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bank_reco_log` (`bank_reconciliation_id`),
+  CONSTRAINT `fk_bank_reconciliation__bank_reconciliation_` FOREIGN KEY (`bank_reconciliation_id`) REFERENCES `bank_reconciliations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bank_reconciliation_logs`
+--
+
+LOCK TABLES `bank_reconciliation_logs` WRITE;
+/*!40000 ALTER TABLE `bank_reconciliation_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bank_reconciliation_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bank_reconciliations`
+--
+
+DROP TABLE IF EXISTS `bank_reconciliations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bank_reconciliations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bank_statement_id` bigint unsigned NOT NULL,
+  `payment_entry_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'pending',
+  `matched_amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bank_reco_statement` (`bank_statement_id`),
+  KEY `fk_bank_reconciliations_payment_entry_id` (`payment_entry_id`),
+  CONSTRAINT `fk_bank_reconciliations_bank_statement_id` FOREIGN KEY (`bank_statement_id`) REFERENCES `bank_statements` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_bank_reconciliations_payment_entry_id` FOREIGN KEY (`payment_entry_id`) REFERENCES `payment_entries` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bank_reconciliations`
+--
+
+LOCK TABLES `bank_reconciliations` WRITE;
+/*!40000 ALTER TABLE `bank_reconciliations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bank_reconciliations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bank_statements`
+--
+
+DROP TABLE IF EXISTS `bank_statements`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bank_statements` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `account_number` varchar(50) NOT NULL,
+  `amount` decimal(14,2) NOT NULL,
+  `currency` varchar(10) DEFAULT 'VND',
+  `reference_no` varchar(120) DEFAULT NULL,
+  `reference_date` date DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'imported',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bank_statement_ref` (`reference_no`,`reference_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bank_statements`
+--
+
+LOCK TABLES `bank_statements` WRITE;
+/*!40000 ALTER TABLE `bank_statements` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bank_statements` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bill_of_materials`
+--
+
+DROP TABLE IF EXISTS `bill_of_materials`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bill_of_materials` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `version` varchar(50) DEFAULT NULL,
+  `quantity` decimal(12,3) DEFAULT '1.000',
+  `uom` varchar(50) DEFAULT NULL,
+  `cost` decimal(14,4) DEFAULT '0.0000',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bom_product` (`product_id`),
+  KEY `idx_bom_active` (`is_active`),
+  CONSTRAINT `fk_bill_of_materials_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bill_of_materials`
+--
+
+LOCK TABLES `bill_of_materials` WRITE;
+/*!40000 ALTER TABLE `bill_of_materials` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bill_of_materials` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `bom_items`
+--
+
+DROP TABLE IF EXISTS `bom_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `bom_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `bom_id` bigint unsigned NOT NULL,
+  `component_product_id` bigint unsigned NOT NULL,
+  `quantity` decimal(12,3) DEFAULT '0.000',
+  `uom` varchar(50) DEFAULT NULL,
+  `scrap_percent` decimal(6,3) DEFAULT '0.000',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_bom_item_bom` (`bom_id`),
+  KEY `idx_bom_item_component` (`component_product_id`),
+  CONSTRAINT `fk_bom_items_bom_id` FOREIGN KEY (`bom_id`) REFERENCES `bill_of_materials` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_bom_items_component_product_id` FOREIGN KEY (`component_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `bom_items`
+--
+
+LOCK TABLES `bom_items` WRITE;
+/*!40000 ALTER TABLE `bom_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `bom_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `branches`
+--
+
+DROP TABLE IF EXISTS `branches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `branches` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(20) DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `branches`
+--
+
+LOCK TABLES `branches` WRITE;
+/*!40000 ALTER TABLE `branches` DISABLE KEYS */;
+INSERT INTO `branches` VALUES (1,'Chi nhánh Hà Nội','HN01','active','2025-12-09 11:31:02',NULL,NULL),(2,'Chi nhánh HCM','HCM01','active','2025-12-09 11:31:02',NULL,NULL),(3,'Chi nhánh Đà Nẵng','DN01','active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(4,'Chi nhánh Cần Thơ','CT01','active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(5,'Chi nhánh Hải Phòng','HP01','active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(6,'Chi nhánh Test (Inactive)','TEST01','inactive','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `branches` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `campaign_members`
+--
+
+DROP TABLE IF EXISTS `campaign_members`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `campaign_members` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `campaign_id` bigint unsigned NOT NULL,
+  `lead_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_campaign_member_campaign` (`campaign_id`),
+  KEY `fk_campaign_members_customer_id` (`customer_id`),
+  KEY `fk_campaign_members_lead_id` (`lead_id`),
+  CONSTRAINT `fk_campaign_members_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_campaign_members_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_campaign_members_lead_id` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `campaign_members`
+--
+
+LOCK TABLES `campaign_members` WRITE;
+/*!40000 ALTER TABLE `campaign_members` DISABLE KEYS */;
+/*!40000 ALTER TABLE `campaign_members` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `campaigns`
+--
+
+DROP TABLE IF EXISTS `campaigns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `campaigns` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `status` varchar(50) DEFAULT 'draft',
+  `source` varchar(100) DEFAULT NULL,
+  `budget` decimal(14,2) DEFAULT '0.00',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `campaigns`
+--
+
+LOCK TABLES `campaigns` WRITE;
+/*!40000 ALTER TABLE `campaigns` DISABLE KEYS */;
+/*!40000 ALTER TABLE `campaigns` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cash_transactions`
+--
+
+DROP TABLE IF EXISTS `cash_transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cash_transactions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `type` enum('RECEIPT','PAYMENT') NOT NULL,
+  `amount` decimal(12,2) NOT NULL,
+  `category` varchar(50) NOT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `status` varchar(20) DEFAULT NULL,
+  `account_name` varchar(120) DEFAULT NULL,
+  `description` text,
+  `reference_type` varchar(50) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `reference_code` varchar(100) DEFAULT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `created_by` bigint unsigned NOT NULL,
+  `created_by_name` varchar(120) DEFAULT NULL,
+  `staff_name` varchar(120) DEFAULT NULL,
+  `payer_code` varchar(60) DEFAULT NULL,
+  `payer_name` varchar(180) DEFAULT NULL,
+  `payer_phone` varchar(50) DEFAULT NULL,
+  `payer_address` varchar(255) DEFAULT NULL,
+  `bank_account` varchar(60) DEFAULT NULL,
+  `transfer_note` varchar(255) DEFAULT NULL,
+  `transaction_date` date NOT NULL,
+  `note` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_type_category` (`type`,`category`),
+  KEY `idx_branch` (`branch_id`),
+  KEY `idx_reference` (`reference_type`,`reference_id`),
+  KEY `idx_transaction_date` (`transaction_date`),
+  KEY `idx_created_by` (`created_by`),
+  KEY `idx_deleted_at` (`deleted_at`),
+  KEY `idx_reference_id` (`reference_id`),
+  CONSTRAINT `fk_cash_transactions_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_cash_transactions_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_cash_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_cash_transactions_user` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `chk_cash_amount` CHECK ((`amount` > 0))
+) ENGINE=InnoDB AUTO_INCREMENT=172 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cash_transactions`
+--
+
+LOCK TABLES `cash_transactions` WRITE;
+/*!40000 ALTER TABLE `cash_transactions` DISABLE KEYS */;
+INSERT INTO `cash_transactions` VALUES (139,'RECEIPT',173460.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-002 (partial)','order',247,'DH-DEMO-002',2,1,'Demo Admin','demo-staff','CUST-2002','Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội',NULL,NULL,'2025-11-10','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(140,'RECEIPT',189464.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-003 (partial)','order',248,'DH-DEMO-003',3,1,'Demo Admin','demo-staff','CUST-2003','Phạm Gia Bảo','0912000003','22 Nguyễn Huệ, HCM',NULL,NULL,'2025-11-11','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(141,'RECEIPT',224000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-004 (partial)','order',249,'DH-DEMO-004',4,1,'Demo Admin','demo-staff','CUST-2004','Lê Hồng Nhung','0912000004','35 Hai Bà Trưng, HCM',NULL,NULL,'2025-11-12','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(142,'RECEIPT',87024.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-005 (partial)','order',250,'DH-DEMO-005',5,1,'Demo Admin','demo-staff','CUST-2005','Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng',NULL,NULL,'2025-11-13','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(143,'RECEIPT',298980.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-006 (partial)','order',251,'DH-DEMO-006',1,1,'Demo Admin','demo-staff','CUST-2006','Đặng Bích Trâm','0912000006','101 Võ Văn Tần, HCM',NULL,NULL,'2025-11-14','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(144,'RECEIPT',230000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-007 (partial)','order',252,'DH-DEMO-007',2,1,'Demo Admin','demo-staff','CUST-2007','Huỳnh Tuấn Kiệt','0912000007','45 Trần Phú, Nha Trang',NULL,NULL,'2025-11-15','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(145,'RECEIPT',281946.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-008 (partial)','order',253,'DH-DEMO-008',3,1,'Demo Admin','demo-staff','CUST-2008','Lý Thu Uyên','0912000008','68 Lê Lợi, Huế',NULL,NULL,'2025-11-16','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(146,'RECEIPT',479600.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-009 (paid)','order',254,'DH-DEMO-009',1,1,'Demo Admin','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-11-17','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(147,'RECEIPT',651600.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-010 (paid)','order',255,'DH-DEMO-010',2,1,'Demo Admin','demo-staff','CUST-2012','CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM',NULL,NULL,'2025-11-18','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(148,'RECEIPT',408870.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-011 (paid)','order',256,'DH-DEMO-011',3,1,'Demo Admin','demo-staff','CUST-2013','Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang',NULL,NULL,'2025-11-19','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(149,'RECEIPT',470800.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-012 (paid)','order',257,'DH-DEMO-012',4,1,'Demo Admin','demo-staff','CUST-2014','Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội',NULL,NULL,'2025-11-20','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(150,'RECEIPT',634600.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-013 (paid)','order',258,'DH-DEMO-013',5,1,'Demo Admin','demo-staff','CUST-2015','CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM',NULL,NULL,'2025-11-21','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(151,'RECEIPT',449400.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-014 (paid)','order',259,'DH-DEMO-014',1,1,'Demo Admin','demo-staff','CUST-2016','Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội',NULL,NULL,'2025-11-22','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(152,'RECEIPT',498300.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-015 (paid)','order',260,'DH-DEMO-015',2,1,'Demo Admin','demo-staff','CUST-2017','Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long',NULL,NULL,'2025-11-23','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(153,'RECEIPT',436000.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-016 (paid)','order',261,'DH-DEMO-016',3,1,'Demo Admin','demo-staff','CUST-2018','La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng',NULL,NULL,'2025-11-24','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(154,'RECEIPT',516600.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-017 (paid)','order',262,'DH-DEMO-017',4,1,'Demo Admin','demo-staff','CUST-2019','Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh',NULL,NULL,'2025-11-25','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(155,'RECEIPT',421960.00,'sales','CASH','approved','Quỹ demo','Thu đơn DH-DEMO-018 (paid)','order',263,'DH-DEMO-018',5,1,'Demo Admin','demo-staff','CUST-2020','Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế',NULL,NULL,'2025-11-26','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(156,'RECEIPT',1369500.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-021 (partial)','order',266,'DH-DEMO-021',5,1,'Demo Admin','demo-staff','CUST-2020','Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế',NULL,NULL,'2025-11-29','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(157,'RECEIPT',364000.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-022 (partial)','order',267,'DH-DEMO-022',3,1,'Demo Admin','demo-staff','CUST-2008','Lý Thu Uyên','0912000008','68 Lê Lợi, Huế',NULL,NULL,'2025-11-30','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(158,'RECEIPT',128700.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-024 (partial)','order',269,'DH-DEMO-024',4,1,'Demo Admin','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-12-02','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(159,'RECEIPT',488000.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-025 (paid)','order',270,'DH-DEMO-025',3,1,'Demo Admin','demo-staff','CUST-2015','CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM',NULL,NULL,'2025-12-03','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(160,'RECEIPT',603750.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-026 (partial)','order',271,'DH-DEMO-026',1,1,'Demo Admin','demo-staff','CUST-2006','Đặng Bích Trâm','0912000006','101 Võ Văn Tần, HCM',NULL,NULL,'2025-12-04','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(161,'RECEIPT',1867800.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-027 (paid)','order',272,'DH-DEMO-027',4,1,'Demo Admin','demo-staff','CUST-2017','Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long',NULL,NULL,'2025-12-05','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(162,'RECEIPT',1045000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-030 (partial)','order',275,'DH-DEMO-030',3,1,'Demo Admin','demo-staff','CUST-2002','Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội',NULL,NULL,'2025-12-08','Thanh toán một phần','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(163,'RECEIPT',562000.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-031 (paid)','order',276,'DH-DEMO-031',2,1,'Demo Admin','demo-staff','CUST-2012','CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM',NULL,NULL,'2025-12-09','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(164,'RECEIPT',1211700.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-032 (paid)','order',277,'DH-DEMO-032',2,1,'Demo Admin','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-12-10','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(165,'RECEIPT',444400.00,'sales','EWALLET','approved','Quỹ demo','Thu đơn DH-DEMO-033 (paid)','order',278,'DH-DEMO-033',4,1,'Demo Admin','demo-staff','CUST-2015','CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM',NULL,NULL,'2025-12-11','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(166,'RECEIPT',2002000.00,'sales','BANK_TRANSFER','approved','Quỹ demo','Thu đơn DH-DEMO-034 (paid)','order',279,'DH-DEMO-034',1,1,'Demo Admin','demo-staff','CUST-2015','CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM',NULL,NULL,'2025-12-12','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(167,'RECEIPT',1050000.00,'sales','COD','approved','Quỹ demo','Thu đơn DH-DEMO-035 (paid)','order',280,'DH-DEMO-035',5,1,'Demo Admin','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-12-13','Thanh toán đủ','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(168,'PAYMENT',226000.00,'refund','CASH','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-001','return_order',28,'RET-DEMO-001',2,2,'Demo Manager','demo-staff','CUST-2012','CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM',NULL,NULL,'2025-12-09','Hoàn tiền theo phiếu trả hàng','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(169,'PAYMENT',155400.00,'refund','BANK_TRANSFER','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-002','return_order',29,'RET-DEMO-002',3,2,'Demo Manager','demo-staff','CUST-2013','Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang',NULL,NULL,'2025-12-09','Hoàn tiền theo phiếu trả hàng','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(170,'PAYMENT',262000.00,'refund','CASH','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-027','return_order',33,'RET-DEMO-027',4,2,'Demo Manager','demo-staff','CUST-2017','Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long',NULL,NULL,'2025-12-09','Hoàn tiền theo phiếu trả hàng','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(171,'PAYMENT',256000.00,'refund','CASH','approved','Quỹ demo','Hoàn tiền trả hàng RET-DEMO-035','return_order',34,'RET-DEMO-035',5,2,'Demo Manager','demo-staff','CUST-2011','Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội',NULL,NULL,'2025-12-09','Hoàn tiền theo phiếu trả hàng','2025-12-09 11:52:25','2025-12-09 11:52:25',NULL);
+/*!40000 ALTER TABLE `cash_transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `chart_of_accounts`
+--
+
+DROP TABLE IF EXISTS `chart_of_accounts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `chart_of_accounts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `account_type` varchar(50) NOT NULL,
+  `currency` varchar(10) DEFAULT NULL,
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `is_group` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_coa_code` (`code`),
+  KEY `idx_coa_parent` (`parent_id`),
+  CONSTRAINT `fk_chart_of_accounts_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `chart_of_accounts`
+--
+
+LOCK TABLES `chart_of_accounts` WRITE;
+/*!40000 ALTER TABLE `chart_of_accounts` DISABLE KEYS */;
+INSERT INTO `chart_of_accounts` VALUES (1,'111','Tiền mặt','asset',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(2,'112','Tiền gửi ngân hàng','asset',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(3,'131','Phải thu khách hàng','asset',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(4,'156','Hàng hóa','asset',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(5,'331','Phải trả người bán','liability',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(6,'511','Doanh thu bán hàng','revenue',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(7,'632','Giá vốn hàng bán','expense',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL),(8,'642','Chi phí quản lý','expense',NULL,NULL,0,'2025-12-09 11:34:09','2025-12-09 11:34:09',NULL);
+/*!40000 ALTER TABLE `chart_of_accounts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `companies`
+--
+
+DROP TABLE IF EXISTS `companies`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `companies` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `is_default` tinyint(1) DEFAULT '0',
+  `status` varchar(30) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_company_code` (`code`),
+  KEY `idx_company_status` (`status`,`is_default`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `companies`
+--
+
+LOCK TABLES `companies` WRITE;
+/*!40000 ALTER TABLE `companies` DISABLE KEYS */;
+INSERT INTO `companies` VALUES (1,'COMP-DEFAULT','Default Company',1,'active','2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `companies` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `company_permissions`
+--
+
+DROP TABLE IF EXISTS `company_permissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `company_permissions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `company_id` bigint unsigned NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `role_name` varchar(100) DEFAULT NULL,
+  `permissions` json DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_company_permission` (`company_id`,`user_id`,`role_name`),
+  KEY `idx_company_permissions_company` (`company_id`),
+  KEY `fk_company_permissions_user_id` (`user_id`),
+  CONSTRAINT `fk_company_permissions_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_company_permissions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=58 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `company_permissions`
+--
+
+LOCK TABLES `company_permissions` WRITE;
+/*!40000 ALTER TABLE `company_permissions` DISABLE KEYS */;
+INSERT INTO `company_permissions` VALUES (2,1,10,'admin','[\"admin\", \"read\", \"write\", \"share\", \"delete\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(3,1,11,'manager','[\"read\", \"write\", \"share\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(4,1,12,'manager','[\"read\", \"write\", \"share\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(5,1,13,'viewer','[\"read\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(6,1,14,'viewer','[\"read\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(7,1,15,'viewer','[\"read\"]','2025-12-09 11:31:02','2025-12-09 11:31:02'),(8,1,1,'admin','[\"admin\", \"read\", \"write\", \"share\"]','2025-12-09 11:32:12','2025-12-09 11:32:12');
+/*!40000 ALTER TABLE `company_permissions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `contract_templates`
+--
+
+DROP TABLE IF EXISTS `contract_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contract_templates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `terms` text,
+  `status` varchar(30) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `contract_templates`
+--
+
+LOCK TABLES `contract_templates` WRITE;
+/*!40000 ALTER TABLE `contract_templates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `contract_templates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `contract_terms`
+--
+
+DROP TABLE IF EXISTS `contract_terms`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contract_terms` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `contract_id` bigint unsigned NOT NULL,
+  `description` text,
+  `is_completed` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_contract_terms` (`contract_id`),
+  CONSTRAINT `fk_contract_terms_contract_id` FOREIGN KEY (`contract_id`) REFERENCES `contracts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `contract_terms`
+--
+
+LOCK TABLES `contract_terms` WRITE;
+/*!40000 ALTER TABLE `contract_terms` DISABLE KEYS */;
+/*!40000 ALTER TABLE `contract_terms` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `contracts`
+--
+
+DROP TABLE IF EXISTS `contracts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `contracts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `template_id` bigint unsigned DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `value` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(30) DEFAULT 'draft',
+  `auto_renew` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_contracts_customer_id` (`customer_id`),
+  KEY `fk_contracts_template_id` (`template_id`),
+  CONSTRAINT `fk_contracts_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_contracts_template_id` FOREIGN KEY (`template_id`) REFERENCES `contract_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `contracts`
+--
+
+LOCK TABLES `contracts` WRITE;
+/*!40000 ALTER TABLE `contracts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `contracts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `coupon_usages`
+--
+
+DROP TABLE IF EXISTS `coupon_usages`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `coupon_usages` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `coupon_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `used_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_coupon_usage_coupon` (`coupon_id`),
+  KEY `idx_coupon_usage_order` (`order_id`),
+  KEY `fk_coupon_usages_customer_id` (`customer_id`),
+  CONSTRAINT `fk_coupon_usages_coupon_id` FOREIGN KEY (`coupon_id`) REFERENCES `coupons` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_coupon_usages_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_coupon_usages_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `coupon_usages`
+--
+
+LOCK TABLES `coupon_usages` WRITE;
+/*!40000 ALTER TABLE `coupon_usages` DISABLE KEYS */;
+/*!40000 ALTER TABLE `coupon_usages` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `coupons`
+--
+
+DROP TABLE IF EXISTS `coupons`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `coupons` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(100) NOT NULL,
+  `discount_type` varchar(20) DEFAULT 'percent',
+  `discount_value` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `min_amount` decimal(14,2) DEFAULT '0.00',
+  `expiry_date` date DEFAULT NULL,
+  `usage_limit` int DEFAULT '0',
+  `used_count` int DEFAULT '0',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `coupons`
+--
+
+LOCK TABLES `coupons` WRITE;
+/*!40000 ALTER TABLE `coupons` DISABLE KEYS */;
+/*!40000 ALTER TABLE `coupons` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `credit_limits`
+--
+
+DROP TABLE IF EXISTS `credit_limits`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `credit_limits` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned NOT NULL,
+  `limit_amount` decimal(14,2) DEFAULT '0.00',
+  `on_hold` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_credit_limit_customer` (`customer_id`),
+  CONSTRAINT `fk_credit_limits_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `credit_limits`
+--
+
+LOCK TABLES `credit_limits` WRITE;
+/*!40000 ALTER TABLE `credit_limits` DISABLE KEYS */;
+/*!40000 ALTER TABLE `credit_limits` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer_addresses`
+--
+
+DROP TABLE IF EXISTS `customer_addresses`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customer_addresses` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên địa chỉ (Nhà, Văn phòng, etc.)',
+  `recipient_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Tên người nhận',
+  `phone` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `address` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `province` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `district` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ward` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_cust_addr_customer` (`customer_id`),
+  CONSTRAINT `fk_cust_addr_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=153 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer_addresses`
+--
+
+LOCK TABLES `customer_addresses` WRITE;
+/*!40000 ALTER TABLE `customer_addresses` DISABLE KEYS */;
+INSERT INTO `customer_addresses` VALUES (134,2022,'Demo-Nhà riêng','Khách hàng VIP','0900000001','Số 10, Đường ABC, Quận 1, Hà Nội','Hà Nội','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(135,2021,'Demo-Nhà riêng','Khách lẻ','0900000000','Số 20, Đường ABC, Quận 1, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(136,2021,'Demo-Văn phòng','Khách lẻ','0900000000','Số 20, Đường ABC, Quận 3, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(137,2020,'Demo-Nhà riêng','Phùng Thanh Mai','0912000020','Số 30, Đường ABC, Quận 1, Đà Nẵng','Đà Nẵng','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(138,2020,'Demo-Văn phòng','Phùng Thanh Mai','0912000020','Số 30, Đường ABC, Quận 3, Đà Nẵng','Đà Nẵng','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(139,2020,'Demo-Kho hàng','Phùng Thanh Mai','0912000020','Số 30, Đường ABC, Quận 7, Đà Nẵng','Đà Nẵng','Quận 7','Phường 3',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(140,2019,'Demo-Nhà riêng','Đinh Mạnh Cường','0912000019','Số 40, Đường ABC, Quận 1, Hải Phòng','Hải Phòng','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(141,2018,'Demo-Nhà riêng','La Mỹ Duyên','0912000018','Số 50, Đường ABC, Quận 1, Hà Nội','Hà Nội','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(142,2018,'Demo-Văn phòng','La Mỹ Duyên','0912000018','Số 50, Đường ABC, Quận 3, Hà Nội','Hà Nội','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(143,2017,'Demo-Nhà riêng','Đỗ Hồng Ngọc','0912000017','Số 60, Đường ABC, Quận 1, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(144,2017,'Demo-Văn phòng','Đỗ Hồng Ngọc','0912000017','Số 60, Đường ABC, Quận 3, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(145,2017,'Demo-Kho hàng','Đỗ Hồng Ngọc','0912000017','Số 60, Đường ABC, Quận 7, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 7','Phường 3',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(146,2016,'Demo-Nhà riêng','Trịnh Quốc Thái','0912000016','Số 70, Đường ABC, Quận 1, Đà Nẵng','Đà Nẵng','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(147,2015,'Demo-Nhà riêng','CTY Thiết Kế Mộc','0912000015','Số 80, Đường ABC, Quận 1, Hải Phòng','Hải Phòng','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(148,2015,'Demo-Văn phòng','CTY Thiết Kế Mộc','0912000015','Số 80, Đường ABC, Quận 3, Hải Phòng','Hải Phòng','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(149,2014,'Demo-Nhà riêng','Công ty Vận Tải Nhanh','0912000014','Số 90, Đường ABC, Quận 1, Hà Nội','Hà Nội','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(150,2014,'Demo-Văn phòng','Công ty Vận Tải Nhanh','0912000014','Số 90, Đường ABC, Quận 3, Hà Nội','Hà Nội','Quận 3','Phường 2',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(151,2014,'Demo-Kho hàng','Công ty Vận Tải Nhanh','0912000014','Số 90, Đường ABC, Quận 7, Hà Nội','Hà Nội','Quận 7','Phường 3',0,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL),(152,2013,'Demo-Nhà riêng','Hộ KD Minh Quân','0912000013','Số 100, Đường ABC, Quận 1, TP. Hồ Chí Minh','TP. Hồ Chí Minh','Quận 1','Phường 1',1,'2025-12-09 17:40:45','2025-12-09 17:40:45',NULL);
+/*!40000 ALTER TABLE `customer_addresses` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer_debt_transactions`
+--
+
+DROP TABLE IF EXISTS `customer_debt_transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customer_debt_transactions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL COMMENT 'Reference to orders table if applicable',
+  `code` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL COMMENT 'Transaction code (auto-generated or reference)',
+  `type` enum('SALE','PAYMENT','ADJUSTMENT','DISCOUNT','REFUND') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'SALE' COMMENT 'Transaction type',
+  `value` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Transaction value (positive for debt increase, negative for decrease)',
+  `balance` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Running balance after this transaction',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `created_by` int DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_cust_debt_customer` (`customer_id`),
+  KEY `idx_cust_debt_order` (`order_id`),
+  KEY `idx_cust_debt_type` (`type`),
+  CONSTRAINT `fk_cust_debt_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=136 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer_debt_transactions`
+--
+
+LOCK TABLES `customer_debt_transactions` WRITE;
+/*!40000 ALTER TABLE `customer_debt_transactions` DISABLE KEYS */;
+INSERT INTO `customer_debt_transactions` VALUES (114,2022,NULL,'CDT-DEMO-00001','SALE',1451339.00,1451339.00,'Demo transaction SALE',1,1,'2025-12-07 17:40:45','2025-12-07 17:40:45',NULL),(115,2022,NULL,'CDT-DEMO-00002','PAYMENT',-1451339.00,0.00,'Demo transaction PAYMENT',1,1,'2025-12-08 17:40:45','2025-12-08 17:40:45',NULL),(116,2021,NULL,'CDT-DEMO-00003','SALE',1637050.00,1637050.00,'Demo transaction SALE',1,1,'2025-12-03 17:40:45','2025-12-03 17:40:45',NULL),(117,2021,NULL,'CDT-DEMO-00004','PAYMENT',-535371.00,1101679.00,'Demo transaction PAYMENT',1,1,'2025-12-04 17:40:45','2025-12-04 17:40:45',NULL),(118,2020,NULL,'CDT-DEMO-00005','SALE',736068.00,736068.00,'Demo transaction SALE',1,1,'2025-11-27 17:40:45','2025-11-27 17:40:45',NULL),(119,2020,NULL,'CDT-DEMO-00006','PAYMENT',-566604.00,169464.00,'Demo transaction PAYMENT',1,1,'2025-11-28 17:40:45','2025-11-28 17:40:45',NULL),(120,2020,NULL,'CDT-DEMO-00007','SALE',861405.00,1030869.00,'Demo transaction SALE',1,1,'2025-11-29 17:40:45','2025-11-29 17:40:45',NULL),(121,2020,NULL,'CDT-DEMO-00008','PAYMENT',-243765.00,787104.00,'Demo transaction PAYMENT',1,1,'2025-11-30 17:40:45','2025-11-30 17:40:45',NULL),(122,2019,NULL,'CDT-DEMO-00009','SALE',630320.00,630320.00,'Demo transaction SALE',1,1,'2025-11-26 17:40:45','2025-11-26 17:40:45',NULL),(123,2018,NULL,'CDT-DEMO-00010','SALE',739800.00,739800.00,'Demo transaction SALE',1,1,'2025-11-21 17:40:45','2025-11-21 17:40:45',NULL),(124,2018,NULL,'CDT-DEMO-00011','PAYMENT',-739800.00,0.00,'Demo transaction PAYMENT',1,1,'2025-11-22 17:40:45','2025-11-22 17:40:45',NULL),(125,2017,NULL,'CDT-DEMO-00012','SALE',2732738.00,2732738.00,'Demo transaction SALE',1,1,'2025-11-17 17:40:45','2025-11-17 17:40:45',NULL),(126,2017,NULL,'CDT-DEMO-00013','PAYMENT',-1551270.00,1181468.00,'Demo transaction PAYMENT',1,1,'2025-11-18 17:40:45','2025-11-18 17:40:45',NULL),(127,2016,NULL,'CDT-DEMO-00014','SALE',700371.00,700371.00,'Demo transaction SALE',1,1,'2025-11-11 17:40:45','2025-11-11 17:40:45',NULL),(128,2016,NULL,'CDT-DEMO-00015','PAYMENT',-511417.00,188954.00,'Demo transaction PAYMENT',1,1,'2025-11-12 17:40:45','2025-11-12 17:40:45',NULL),(129,2016,NULL,'CDT-DEMO-00016','SALE',805203.00,994157.00,'Demo transaction SALE',1,1,'2025-11-13 17:40:45','2025-11-13 17:40:45',NULL),(130,2016,NULL,'CDT-DEMO-00017','PAYMENT',-208410.00,785747.00,'Demo transaction PAYMENT',1,1,'2025-11-14 17:40:45','2025-11-14 17:40:45',NULL),(131,2015,NULL,'CDT-DEMO-00018','SALE',1381756.00,1381756.00,'Demo transaction SALE',1,1,'2025-11-10 17:40:45','2025-11-10 17:40:45',NULL),(132,2014,NULL,'CDT-DEMO-00019','SALE',1795967.00,1795967.00,'Demo transaction SALE',1,1,'2025-11-05 17:40:45','2025-11-05 17:40:45',NULL),(133,2014,NULL,'CDT-DEMO-00020','PAYMENT',-1795967.00,0.00,'Demo transaction PAYMENT',1,1,'2025-11-06 17:40:45','2025-11-06 17:40:45',NULL),(134,2013,NULL,'CDT-DEMO-00021','SALE',1654074.00,1654074.00,'Demo transaction SALE',1,1,'2025-11-01 17:40:45','2025-11-01 17:40:45',NULL),(135,2013,NULL,'CDT-DEMO-00022','PAYMENT',-1144357.00,509717.00,'Demo transaction PAYMENT',1,1,'2025-11-02 17:40:45','2025-11-02 17:40:45',NULL);
+/*!40000 ALTER TABLE `customer_debt_transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer_groups`
+--
+
+DROP TABLE IF EXISTS `customer_groups`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customer_groups` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_vi` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_en` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_customer_group_code` (`code`),
+  KEY `customer_groups_parent_id_foreign` (`parent_id`),
+  KEY `customer_groups_branch_id_foreign` (`branch_id`),
+  CONSTRAINT `customer_groups_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `customer_groups_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `customer_groups` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer_groups`
+--
+
+LOCK TABLES `customer_groups` WRITE;
+/*!40000 ALTER TABLE `customer_groups` DISABLE KEYS */;
+INSERT INTO `customer_groups` VALUES (1,'CG-STD','Khách chuẩn',NULL,NULL,NULL,1,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'CG-VIP','Khách VIP',NULL,NULL,NULL,0,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(3,'CG-WHS','Khách sỉ',NULL,NULL,NULL,0,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `customer_groups` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer_price_lists`
+--
+
+DROP TABLE IF EXISTS `customer_price_lists`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customer_price_lists` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned NOT NULL,
+  `price_list_id` bigint unsigned NOT NULL,
+  `valid_from` date DEFAULT NULL,
+  `valid_to` date DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_cpl_customer` (`customer_id`,`price_list_id`),
+  KEY `fk_customer_price_lists_price_list_id` (`price_list_id`),
+  CONSTRAINT `fk_customer_price_lists_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_customer_price_lists_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer_price_lists`
+--
+
+LOCK TABLES `customer_price_lists` WRITE;
+/*!40000 ALTER TABLE `customer_price_lists` DISABLE KEYS */;
+/*!40000 ALTER TABLE `customer_price_lists` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customers`
+--
+
+DROP TABLE IF EXISTS `customers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `organization_id` bigint unsigned DEFAULT NULL,
+  `customer_group_id` bigint unsigned DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `phone2` varchar(50) DEFAULT NULL,
+  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
+  `facebook` varchar(255) DEFAULT NULL,
+  `customer_type` enum('INDIVIDUAL','COMPANY','HOUSEHOLD') NOT NULL DEFAULT 'INDIVIDUAL',
+  `company_name` varchar(255) DEFAULT NULL,
+  `tax_code` varchar(20) DEFAULT NULL,
+  `buyer_name` varchar(255) DEFAULT NULL,
+  `invoice_company_name` varchar(255) DEFAULT NULL,
+  `invoice_address` varchar(500) DEFAULT NULL,
+  `invoice_province` varchar(120) DEFAULT NULL,
+  `invoice_district` varchar(120) DEFAULT NULL,
+  `invoice_ward` varchar(120) DEFAULT NULL,
+  `invoice_email` varchar(255) DEFAULT NULL,
+  `invoice_phone` varchar(50) DEFAULT NULL,
+  `cccd_cmnd` varchar(50) DEFAULT NULL,
+  `id_number` varchar(50) DEFAULT NULL,
+  `bank_account` varchar(50) DEFAULT NULL,
+  `bank_name` varchar(255) DEFAULT NULL,
+  `notes` text,
+  `code` varchar(50) DEFAULT NULL,
+  `address` varchar(500) DEFAULT NULL,
+  `province` varchar(120) DEFAULT NULL,
+  `district` varchar(120) DEFAULT NULL,
+  `ward` varchar(120) DEFAULT NULL,
+  `birthday` date DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'active',
+  `last_transaction_at` datetime DEFAULT NULL,
+  `current_debt` decimal(15,2) DEFAULT '0.00',
+  `total_sales` decimal(15,2) DEFAULT '0.00',
+  `total_sales_net` decimal(15,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_tax_code_per_org` (`organization_id`,`tax_code`),
+  KEY `idx_customers_tax_code` (`tax_code`),
+  KEY `fk_customers_customer_group` (`customer_group_id`),
+  CONSTRAINT `fk_customers_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_customers_organization` FOREIGN KEY (`organization_id`) REFERENCES `organizations` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=2023 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customers`
+--
+
+LOCK TABLES `customers` WRITE;
+/*!40000 ALTER TABLE `customers` DISABLE KEYS */;
+INSERT INTO `customers` VALUES (2001,1,NULL,'Nguyễn Minh An','an.demo@lano.local','0912000001',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-001','12 Trần Hưng Đạo, Hà Nội','Hà Nội','Hoàn Kiếm','Hàng Bài',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2002,1,NULL,'Trần Thu Hà','ha.demo@lano.local','0912000002',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-002','89 Lý Thường Kiệt, Hà Nội','Hà Nội','Hoàn Kiếm','Cửa Nam',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2003,1,NULL,'Phạm Gia Bảo','bao.demo@lano.local','0912000003',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-003','22 Nguyễn Huệ, HCM','Hồ Chí Minh','Quận 1','Bến Nghé',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2004,1,NULL,'Lê Hồng Nhung','nhung.demo@lano.local','0912000004',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-004','35 Hai Bà Trưng, HCM','Hồ Chí Minh','Quận 1','Bến Thành',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2005,1,NULL,'Vũ Hoàng Long','long.demo@lano.local','0912000005',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-005','15 Nguyễn Tri Phương, Đà Nẵng','Đà Nẵng','Hải Châu','Thạch Thang',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2006,1,NULL,'Đặng Bích Trâm','tram.demo@lano.local','0912000006',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-006','101 Võ Văn Tần, HCM','Hồ Chí Minh','Quận 3','6',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2007,1,NULL,'Huỳnh Tuấn Kiệt','kiet.demo@lano.local','0912000007',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-007','45 Trần Phú, Nha Trang','Khánh Hòa','Nha Trang','Lộc Thọ',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2008,1,NULL,'Lý Thu Uyên','uyen.demo@lano.local','0912000008',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-008','68 Lê Lợi, Huế','Thừa Thiên Huế','Huế','Phú Hội',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2009,1,NULL,'Ngô Nhật Anh','nha.demo@lano.local','0912000009',NULL,'MALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-009','12 Nguyễn Văn Linh, Đà Nẵng','Đà Nẵng','Hải Châu','Nam Dương',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2010,1,NULL,'Tạ Kim Yến','yen.demo@lano.local','0912000010',NULL,'FEMALE',NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-010','99 Phan Chu Trinh, Đà Nẵng','Đà Nẵng','Hải Châu','Hải Châu 1',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2011,1,NULL,'Công ty Ánh Dương','contact@anhduong.vn','0912000011',NULL,NULL,NULL,'COMPANY','Công ty TNHH Ánh Dương','0101234567',NULL,'Công ty TNHH Ánh Dương','11 Duy Tân, Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-011','11 Duy Tân, Cầu Giấy, Hà Nội','Hà Nội','Cầu Giấy','Dịch Vọng',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2012,1,NULL,'CTCP Gỗ Xanh','ke.toan@goxanh.vn','0912000012',NULL,NULL,NULL,'COMPANY','CTCP Gỗ Xanh','0312345678',NULL,'CTCP Gỗ Xanh','45 Pasteur, Quận 1',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-012','45 Pasteur, Quận 1, HCM','Hồ Chí Minh','Quận 1','Bến Nghé',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2013,1,NULL,'Hộ KD Minh Quân','minhquan@hkd.vn','0912000013',NULL,NULL,NULL,'HOUSEHOLD','Hộ KD Minh Quân','4200123456',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-013','22 Trần Phú, Nha Trang','Khánh Hòa','Nha Trang','Vạn Thạnh',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2014,1,NULL,'Công ty Vận Tải Nhanh','sale@vantaNhanh.vn','0912000014',NULL,NULL,NULL,'COMPANY','Công ty Vận Tải Nhanh','0109988776',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-014','88 Kim Mã, Ba Đình, Hà Nội','Hà Nội','Ba Đình','Kim Mã',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2015,1,NULL,'CTY Thiết Kế Mộc','info@thietkemoc.vn','0912000015',NULL,NULL,NULL,'COMPANY','CTY Thiết Kế Mộc','0311122233',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-015','12 Nguyễn Trãi, Quận 5, HCM','Hồ Chí Minh','Quận 5','7',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2016,1,NULL,'Trịnh Quốc Thái','thai.demo@lano.local','0912000016',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-016','14 Lê Duẩn, Hà Nội','Hà Nội','Ba Đình','Điện Biên',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2017,1,NULL,'Đỗ Hồng Ngọc','ngoc.demo@lano.local','0912000017',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-017','7 Nguyễn Văn Cừ, Hạ Long','Quảng Ninh','Hạ Long','Bạch Đằng',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2018,1,NULL,'La Mỹ Duyên','duyen.demo@lano.local','0912000018',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-018','155 Lạch Tray, Hải Phòng','Hải Phòng','Ngô Quyền','Lạch Tray',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2019,1,NULL,'Đinh Mạnh Cường','cuong.demo@lano.local','0912000019',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-019','18 Lê Lợi, Vinh','Nghệ An','Vinh','Hưng Bình',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2020,1,NULL,'Phùng Thanh Mai','mai.demo@lano.local','0912000020',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-020','3 Hùng Vương, Huế','Thừa Thiên Huế','Huế','Phú Nhuận',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2021,1,NULL,'Khách lẻ','khachle@lano.local','0900000000',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-021','Khách vãng lai','Hà Nội','Hoàn Kiếm','Hàng Bạc',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(2022,1,NULL,'Khách hàng VIP','vip@lano.local','0900000001',NULL,NULL,NULL,'INDIVIDUAL',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'CUST-DEMO-022','1 Tràng Tiền, Hà Nội','Hà Nội','Hoàn Kiếm','Tràng Tiền',NULL,1,'ACTIVE',NULL,0.00,0.00,0.00,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL);
+/*!40000 ALTER TABLE `customers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `delivery_note_items`
+--
+
+DROP TABLE IF EXISTS `delivery_note_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `delivery_note_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `delivery_note_id` bigint unsigned NOT NULL,
+  `order_item_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `quantity` decimal(12,3) DEFAULT '0.000',
+  `delivered_quantity` decimal(12,3) DEFAULT '0.000',
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_delivery_note_items_order_item` (`order_item_id`),
+  KEY `idx_dn_items_note` (`delivery_note_id`),
+  KEY `idx_dn_items_product` (`product_id`,`variant_id`),
+  KEY `fk_delivery_note_items_variant_id` (`variant_id`),
+  KEY `fk_delivery_note_items_batch_id` (`batch_id`),
+  CONSTRAINT `fk_delivery_note_items_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_note_items_note` FOREIGN KEY (`delivery_note_id`) REFERENCES `delivery_notes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_note_items_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_note_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_note_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=541 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `delivery_note_items`
+--
+
+LOCK TABLES `delivery_note_items` WRITE;
+/*!40000 ALTER TABLE `delivery_note_items` DISABLE KEYS */;
+INSERT INTO `delivery_note_items` VALUES (479,251,521,501,50101,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(480,251,522,502,50201,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(481,252,523,503,50301,NULL,NULL,2.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(482,253,524,501,50101,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(483,253,525,503,50302,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(484,254,526,502,50202,NULL,NULL,2.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(485,255,527,501,50102,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(486,255,528,502,50201,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(487,256,529,501,50101,NULL,NULL,1.000,0.500,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(488,256,530,503,50301,NULL,NULL,1.000,0.500,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(489,257,531,502,50202,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(490,257,532,503,50301,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(491,258,533,501,50101,NULL,NULL,1.000,0.500,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(492,258,534,502,50201,NULL,NULL,1.000,0.500,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(493,259,535,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(494,259,536,502,50202,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(495,260,537,503,50302,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(496,260,538,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(497,261,539,502,50201,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(498,261,540,501,50102,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(499,262,541,503,50301,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(500,262,542,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(501,263,543,502,50202,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(502,263,544,503,50302,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(503,263,545,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(504,264,546,502,50201,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(505,265,547,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(506,265,548,503,50301,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(507,266,549,502,50202,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(508,266,550,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(509,267,551,503,50302,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(510,268,552,501,50101,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(511,268,553,502,50201,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(512,269,556,524,52402,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(513,270,557,512,NULL,NULL,NULL,4.000,4.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(514,270,558,512,51201,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(515,270,559,502,NULL,NULL,NULL,4.000,4.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(516,271,560,516,51602,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(517,272,561,509,50902,NULL,NULL,4.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(518,272,562,525,52501,NULL,NULL,2.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(519,272,563,525,NULL,NULL,NULL,2.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(520,273,564,526,NULL,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(521,273,565,526,NULL,NULL,NULL,4.000,4.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(522,274,566,518,51802,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(523,274,567,507,50702,NULL,NULL,3.000,3.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(524,275,568,520,NULL,NULL,NULL,3.000,3.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(525,275,569,527,NULL,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(526,275,570,514,NULL,NULL,NULL,5.000,5.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(527,276,573,508,50801,NULL,NULL,3.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(528,277,574,509,50902,NULL,NULL,4.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(529,277,575,507,50702,NULL,NULL,1.000,0.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(530,278,576,526,52602,NULL,NULL,4.000,4.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(531,279,577,502,NULL,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(532,280,578,516,NULL,NULL,NULL,3.000,3.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(533,280,579,511,51102,NULL,NULL,5.000,5.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(534,280,580,501,NULL,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(535,281,581,503,50302,NULL,NULL,2.000,2.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(536,281,582,520,NULL,NULL,NULL,5.000,5.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(537,281,583,509,50902,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(538,282,584,514,NULL,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(539,282,585,505,NULL,NULL,NULL,5.000,5.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(540,282,586,515,51502,NULL,NULL,1.000,1.000,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL);
+/*!40000 ALTER TABLE `delivery_note_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `delivery_notes`
+--
+
+DROP TABLE IF EXISTS `delivery_notes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `delivery_notes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `delivery_number` varchar(50) NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `delivery_date` date DEFAULT NULL,
+  `expected_delivery_date` date DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `shipping_address` text,
+  `tracking_number` varchar(120) DEFAULT NULL,
+  `carrier` varchar(120) DEFAULT NULL,
+  `notes` text,
+  `confirmed_by` bigint unsigned DEFAULT NULL,
+  `confirmed_at` datetime DEFAULT NULL,
+  `delivered_by` bigint unsigned DEFAULT NULL,
+  `delivered_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_delivery_number` (`delivery_number`),
+  KEY `fk_delivery_notes_customer` (`customer_id`),
+  KEY `fk_delivery_notes_branch` (`branch_id`),
+  KEY `idx_delivery_order_branch` (`order_id`,`branch_id`),
+  CONSTRAINT `fk_delivery_notes_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_notes_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_delivery_notes_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=283 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `delivery_notes`
+--
+
+LOCK TABLES `delivery_notes` WRITE;
+/*!40000 ALTER TABLE `delivery_notes` DISABLE KEYS */;
+INSERT INTO `delivery_notes` VALUES (251,'DN-DEMO-001',281,2001,1,'2025-11-11','2025-11-11','draft','12 Trần Hưng Đạo, Hà Nội','TRK-001','Demo Carrier','Demo delivery note from DH-DEMO-001',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(252,'DN-DEMO-002',282,2002,2,'2025-11-12','2025-11-12','draft','89 Lý Thường Kiệt, Hà Nội','TRK-002','Demo Carrier','Demo delivery note from DH-DEMO-002',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(253,'DN-DEMO-003',283,2003,3,'2025-11-13','2025-11-13','confirmed','22 Nguyễn Huệ, HCM','TRK-003','Demo Carrier','Demo delivery note from DH-DEMO-003',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(254,'DN-DEMO-004',284,2004,4,'2025-11-14','2025-11-14','confirmed','35 Hai Bà Trưng, HCM','TRK-004','Demo Carrier','Demo delivery note from DH-DEMO-004',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(255,'DN-DEMO-005',285,2005,5,'2025-11-15','2025-11-15','confirmed','15 Nguyễn Tri Phương, Đà Nẵng','TRK-005','Demo Carrier','Demo delivery note from DH-DEMO-005',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(256,'DN-DEMO-006',286,2006,1,'2025-11-16','2025-11-16','shipped','101 Võ Văn Tần, HCM','TRK-006','Demo Carrier','Demo delivery note from DH-DEMO-006',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(257,'DN-DEMO-007',287,2007,2,'2025-11-17','2025-11-17','delivered','45 Trần Phú, Nha Trang','TRK-007','Demo Carrier','Demo delivery note from DH-DEMO-007',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(258,'DN-DEMO-008',288,2008,3,'2025-11-18','2025-11-18','shipped','68 Lê Lợi, Huế','TRK-008','Demo Carrier','Demo delivery note from DH-DEMO-008',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(259,'DN-DEMO-009',289,2011,1,'2025-11-19','2025-11-19','delivered','11 Duy Tân, Cầu Giấy, Hà Nội','TRK-009','Demo Carrier','Demo delivery note from DH-DEMO-009',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(260,'DN-DEMO-010',290,2012,2,'2025-11-20','2025-11-20','delivered','45 Pasteur, Quận 1, HCM','TRK-010','Demo Carrier','Demo delivery note from DH-DEMO-010',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(261,'DN-DEMO-011',291,2013,3,'2025-11-21','2025-11-21','delivered','22 Trần Phú, Nha Trang','TRK-011','Demo Carrier','Demo delivery note from DH-DEMO-011',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(262,'DN-DEMO-012',292,2014,4,'2025-11-22','2025-11-22','delivered','88 Kim Mã, Ba Đình, Hà Nội','TRK-012','Demo Carrier','Demo delivery note from DH-DEMO-012',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(263,'DN-DEMO-013',293,2015,5,'2025-11-23','2025-11-23','delivered','12 Nguyễn Trãi, Quận 5, HCM','TRK-013','Demo Carrier','Demo delivery note from DH-DEMO-013',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(264,'DN-DEMO-014',294,2016,1,'2025-11-24','2025-11-24','delivered','14 Lê Duẩn, Hà Nội','TRK-014','Demo Carrier','Demo delivery note from DH-DEMO-014',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(265,'DN-DEMO-015',295,2017,2,'2025-11-25','2025-11-25','delivered','7 Nguyễn Văn Cừ, Hạ Long','TRK-015','Demo Carrier','Demo delivery note from DH-DEMO-015',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(266,'DN-DEMO-016',296,2018,3,'2025-11-26','2025-11-26','delivered','155 Lạch Tray, Hải Phòng','TRK-016','Demo Carrier','Demo delivery note from DH-DEMO-016',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(267,'DN-DEMO-017',297,2019,4,'2025-11-27','2025-11-27','delivered','18 Lê Lợi, Vinh','TRK-017','Demo Carrier','Demo delivery note from DH-DEMO-017',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(268,'DN-DEMO-018',298,2020,5,'2025-11-28','2025-11-28','delivered','3 Hùng Vương, Huế','TRK-018','Demo Carrier','Demo delivery note from DH-DEMO-018',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(269,'DN-DEMO-019',301,2005,5,'2025-12-01','2025-12-01','delivered','15 Nguyễn Tri Phương, Đà Nẵng','TRK-019','Demo Carrier','Demo delivery note from DH-DEMO-021',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(270,'DN-DEMO-020',302,2016,3,'2025-12-02','2025-12-02','delivered','14 Lê Duẩn, Hà Nội','TRK-020','Demo Carrier','Demo delivery note from DH-DEMO-022',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(271,'DN-DEMO-021',303,2005,3,'2025-12-03','2025-12-03','delivered','15 Nguyễn Tri Phương, Đà Nẵng','TRK-021','Demo Carrier','Demo delivery note from DH-DEMO-023',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(272,'DN-DEMO-022',304,2019,5,'2025-12-04','2025-12-04','confirmed','18 Lê Lợi, Vinh','TRK-022','Demo Carrier','Demo delivery note from DH-DEMO-024',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(273,'DN-DEMO-023',305,2020,3,'2025-12-05','2025-12-05','delivered','3 Hùng Vương, Huế','TRK-023','Demo Carrier','Demo delivery note from DH-DEMO-025',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(274,'DN-DEMO-024',306,2012,3,'2025-12-06','2025-12-06','delivered','45 Pasteur, Quận 1, HCM','TRK-024','Demo Carrier','Demo delivery note from DH-DEMO-026',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(275,'DN-DEMO-025',307,2002,3,'2025-12-07','2025-12-07','delivered','89 Lý Thường Kiệt, Hà Nội','TRK-025','Demo Carrier','Demo delivery note from DH-DEMO-027',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(276,'DN-DEMO-026',309,2005,4,'2025-12-09','2025-12-09','draft','15 Nguyễn Tri Phương, Đà Nẵng','TRK-026','Demo Carrier','Demo delivery note from DH-DEMO-029',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(277,'DN-DEMO-027',310,2018,1,'2025-12-10','2025-12-10','confirmed','155 Lạch Tray, Hải Phòng','TRK-027','Demo Carrier','Demo delivery note from DH-DEMO-030',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(278,'DN-DEMO-028',311,2015,4,'2025-12-11','2025-12-11','delivered','12 Nguyễn Trãi, Quận 5, HCM','TRK-028','Demo Carrier','Demo delivery note from DH-DEMO-031',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(279,'DN-DEMO-029',312,2015,5,'2025-12-12','2025-12-12','delivered','12 Nguyễn Trãi, Quận 5, HCM','TRK-029','Demo Carrier','Demo delivery note from DH-DEMO-032',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(280,'DN-DEMO-030',313,2014,4,'2025-12-13','2025-12-13','delivered','88 Kim Mã, Ba Đình, Hà Nội','TRK-030','Demo Carrier','Demo delivery note from DH-DEMO-033',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(281,'DN-DEMO-031',314,2012,3,'2025-12-14','2025-12-14','delivered','45 Pasteur, Quận 1, HCM','TRK-031','Demo Carrier','Demo delivery note from DH-DEMO-034',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL),(282,'DN-DEMO-032',315,2011,2,'2025-12-15','2025-12-15','delivered','11 Duy Tân, Cầu Giấy, Hà Nội','TRK-032','Demo Carrier','Demo delivery note from DH-DEMO-035',NULL,NULL,NULL,NULL,'2025-12-10 04:20:57','2025-12-10 04:20:57',NULL);
+/*!40000 ALTER TABLE `delivery_notes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `departments`
+--
+
+DROP TABLE IF EXISTS `departments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `departments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `departments`
+--
+
+LOCK TABLES `departments` WRITE;
+/*!40000 ALTER TABLE `departments` DISABLE KEYS */;
+INSERT INTO `departments` VALUES (1,'Ban Giám Đốc','BGD','Board of Directors','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(2,'Phòng Kinh Doanh','KD','Sales Department','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(3,'Phòng Kế Toán','KT','Accounting Department','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(4,'Phòng Nhân Sự','NS','HR Department','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(5,'Kho Vận','KV','Logistics Department','active','2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `departments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `depreciation_schedule_lines`
+--
+
+DROP TABLE IF EXISTS `depreciation_schedule_lines`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `depreciation_schedule_lines` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `schedule_id` bigint unsigned NOT NULL,
+  `period_no` int NOT NULL,
+  `posting_date` date NOT NULL,
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `posted_gl_entry_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_dep_line` (`schedule_id`,`period_no`),
+  KEY `idx_dep_line_schedule` (`schedule_id`),
+  KEY `fk_depreciation_schedul_posted_gl_entry_id` (`posted_gl_entry_id`),
+  CONSTRAINT `fk_depreciation_schedul_posted_gl_entry_id` FOREIGN KEY (`posted_gl_entry_id`) REFERENCES `gl_entries` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_depreciation_schedul_schedule_id` FOREIGN KEY (`schedule_id`) REFERENCES `depreciation_schedules` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `depreciation_schedule_lines`
+--
+
+LOCK TABLES `depreciation_schedule_lines` WRITE;
+/*!40000 ALTER TABLE `depreciation_schedule_lines` DISABLE KEYS */;
+/*!40000 ALTER TABLE `depreciation_schedule_lines` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `depreciation_schedules`
+--
+
+DROP TABLE IF EXISTS `depreciation_schedules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `depreciation_schedules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `asset_id` bigint unsigned NOT NULL,
+  `method` varchar(50) DEFAULT 'straight_line',
+  `rate` decimal(6,3) DEFAULT '0.000',
+  `start_date` date DEFAULT NULL,
+  `total_periods` int DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_dep_asset` (`asset_id`),
+  CONSTRAINT `fk_depreciation_schedul_asset_id` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `depreciation_schedules`
+--
+
+LOCK TABLES `depreciation_schedules` WRITE;
+/*!40000 ALTER TABLE `depreciation_schedules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `depreciation_schedules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `devices`
+--
+
+DROP TABLE IF EXISTS `devices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `devices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pos',
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `meta` json DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_device_code` (`code`),
+  KEY `devices_branch_id_foreign` (`branch_id`),
+  CONSTRAINT `devices_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `devices`
+--
+
+LOCK TABLES `devices` WRITE;
+/*!40000 ALTER TABLE `devices` DISABLE KEYS */;
+INSERT INTO `devices` VALUES (1,'DEV-POS-01','POS Hà Nội','pos',1,'active',NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'DEV-POS-02','POS HCM','pos',2,'active',NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `devices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `districts`
+--
+
+DROP TABLE IF EXISTS `districts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `districts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `province_id` bigint unsigned NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name_en` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name_en` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `code_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_district_code` (`code`),
+  KEY `idx_district_province` (`province_id`),
+  KEY `idx_district_active` (`is_active`),
+  CONSTRAINT `fk_district_province` FOREIGN KEY (`province_id`) REFERENCES `provinces` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `districts`
+--
+
+LOCK TABLES `districts` WRITE;
+/*!40000 ALTER TABLE `districts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `districts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `document_shares`
+--
+
+DROP TABLE IF EXISTS `document_shares`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `document_shares` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `company_id` bigint unsigned NOT NULL,
+  `entity_type` varchar(120) NOT NULL,
+  `entity_id` bigint unsigned NOT NULL,
+  `shared_with_user_id` bigint unsigned DEFAULT NULL,
+  `shared_with_role` varchar(100) DEFAULT NULL,
+  `permissions` json DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_doc_share_user` (`company_id`,`entity_type`,`entity_id`,`shared_with_user_id`,`shared_with_role`),
+  KEY `idx_document_shares_entity` (`entity_type`,`entity_id`),
+  KEY `idx_document_shares_company` (`company_id`),
+  KEY `fk_document_shares_shared_with_user_id` (`shared_with_user_id`),
+  CONSTRAINT `fk_document_shares_company_id` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_document_shares_shared_with_user_id` FOREIGN KEY (`shared_with_user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `document_shares`
+--
+
+LOCK TABLES `document_shares` WRITE;
+/*!40000 ALTER TABLE `document_shares` DISABLE KEYS */;
+/*!40000 ALTER TABLE `document_shares` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `e_invoice_logs`
+--
+
+DROP TABLE IF EXISTS `e_invoice_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `e_invoice_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'queued',
+  `payload` json DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_einvoice_invoice` (`invoice_id`),
+  CONSTRAINT `fk_e_invoice_logs_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `e_invoice_logs`
+--
+
+LOCK TABLES `e_invoice_logs` WRITE;
+/*!40000 ALTER TABLE `e_invoice_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `e_invoice_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ecommerce_webhook_logs`
+--
+
+DROP TABLE IF EXISTS `ecommerce_webhook_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ecommerce_webhook_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `source` varchar(50) DEFAULT NULL,
+  `event_type` varchar(100) NOT NULL,
+  `idempotency_key` varchar(150) NOT NULL,
+  `status` varchar(30) DEFAULT 'processed',
+  `payload_hash` varchar(64) DEFAULT NULL,
+  `processed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ecommerce_idempotency` (`idempotency_key`),
+  KEY `idx_ecommerce_event_status` (`event_type`,`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ecommerce_webhook_logs`
+--
+
+LOCK TABLES `ecommerce_webhook_logs` WRITE;
+/*!40000 ALTER TABLE `ecommerce_webhook_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ecommerce_webhook_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `email_campaign_logs`
+--
+
+DROP TABLE IF EXISTS `email_campaign_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `email_campaign_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `email_campaign_id` bigint unsigned NOT NULL,
+  `member_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'queued',
+  `message` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_email_campaign_log` (`email_campaign_id`),
+  KEY `fk_email_campaign_logs_member_id` (`member_id`),
+  CONSTRAINT `fk_email_campaign_logs_email_campaign_id` FOREIGN KEY (`email_campaign_id`) REFERENCES `email_campaigns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_email_campaign_logs_member_id` FOREIGN KEY (`member_id`) REFERENCES `campaign_members` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `email_campaign_logs`
+--
+
+LOCK TABLES `email_campaign_logs` WRITE;
+/*!40000 ALTER TABLE `email_campaign_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `email_campaign_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `email_campaigns`
+--
+
+DROP TABLE IF EXISTS `email_campaigns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `email_campaigns` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `campaign_id` bigint unsigned DEFAULT NULL,
+  `subject` varchar(255) NOT NULL,
+  `template` text,
+  `schedule_at` datetime DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'draft',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_email_campaigns_campaign_id` (`campaign_id`),
+  CONSTRAINT `fk_email_campaigns_campaign_id` FOREIGN KEY (`campaign_id`) REFERENCES `campaigns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `email_campaigns`
+--
+
+LOCK TABLES `email_campaigns` WRITE;
+/*!40000 ALTER TABLE `email_campaigns` DISABLE KEYS */;
+/*!40000 ALTER TABLE `email_campaigns` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `employees`
+--
+
+DROP TABLE IF EXISTS `employees`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `employees` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `employee_code` varchar(60) NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'active',
+  `join_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `code` varchar(60) DEFAULT NULL,
+  `first_name` varchar(120) DEFAULT NULL,
+  `last_name` varchar(120) DEFAULT NULL,
+  `email` varchar(120) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `department_id` bigint unsigned DEFAULT NULL,
+  `position_id` bigint unsigned DEFAULT NULL,
+  `hire_date` date DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_employee_code` (`employee_code`),
+  KEY `idx_employee_status` (`status`),
+  KEY `fk_employees_branch_id` (`branch_id`),
+  KEY `fk_employees_department_id` (`department_id`),
+  KEY `fk_employees_position_id` (`position_id`),
+  KEY `fk_employees_user_id` (`user_id`),
+  CONSTRAINT `fk_employees_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_employees_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_employees_position` FOREIGN KEY (`position_id`) REFERENCES `positions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_employees_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `employees`
+--
+
+LOCK TABLES `employees` WRITE;
+/*!40000 ALTER TABLE `employees` DISABLE KEYS */;
+INSERT INTO `employees` VALUES (1,'EMP001','Admin User',NULL,'active',NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',1,'EMP001','Admin','User','admin@lanocrm.local','0900000001',1,1,'2023-12-09'),(2,'EMP002','Manager Test',NULL,'active',NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',2,'EMP002','Manager','Test','manager@lanocrm.local','0900000002',2,2,'2024-12-09'),(3,'EMP003','Staff Test',NULL,'active',NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',3,'EMP003','Staff','Test','staff@lanocrm.local','0900000003',2,3,'2025-06-09');
+/*!40000 ALTER TABLE `employees` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `exchange_rates`
+--
+
+DROP TABLE IF EXISTS `exchange_rates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `exchange_rates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `currency` varchar(10) NOT NULL,
+  `rate` decimal(16,6) NOT NULL,
+  `valid_from` date NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_exchange_rate_curr_date` (`currency`,`valid_from`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `exchange_rates`
+--
+
+LOCK TABLES `exchange_rates` WRITE;
+/*!40000 ALTER TABLE `exchange_rates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `exchange_rates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `gl_entries`
+--
+
+DROP TABLE IF EXISTS `gl_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `gl_entries` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `posting_date` date NOT NULL,
+  `account_id` bigint unsigned NOT NULL,
+  `debit` decimal(14,2) DEFAULT '0.00',
+  `credit` decimal(14,2) DEFAULT '0.00',
+  `party_type` varchar(60) DEFAULT NULL,
+  `party_id` bigint unsigned DEFAULT NULL,
+  `reference_type` varchar(100) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `remarks` text,
+  `currency` varchar(10) DEFAULT 'VND',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_gl_account` (`account_id`),
+  KEY `idx_gl_posting_date` (`posting_date`),
+  KEY `idx_gl_party` (`party_type`,`party_id`),
+  CONSTRAINT `fk_gl_entries_account_id` FOREIGN KEY (`account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `gl_entries`
+--
+
+LOCK TABLES `gl_entries` WRITE;
+/*!40000 ALTER TABLE `gl_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `gl_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `goods_receipt_items`
+--
+
+DROP TABLE IF EXISTS `goods_receipt_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `goods_receipt_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `goods_receipt_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `quantity` decimal(14,3) DEFAULT '0.000',
+  `rate` decimal(14,2) DEFAULT '0.00',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_grn_item_grn` (`goods_receipt_id`),
+  KEY `fk_goods_receipt_items_product_id` (`product_id`),
+  CONSTRAINT `fk_goods_receipt_items_goods_receipt_id` FOREIGN KEY (`goods_receipt_id`) REFERENCES `goods_receipts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_goods_receipt_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=26 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `goods_receipt_items`
+--
+
+LOCK TABLES `goods_receipt_items` WRITE;
+/*!40000 ALTER TABLE `goods_receipt_items` DISABLE KEYS */;
+INSERT INTO `goods_receipt_items` VALUES (21,13,501,100.000,400000.00,40000000.00,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(22,13,502,20.000,500000.00,10000000.00,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(23,14,503,50.000,450000.00,22500000.00,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(24,14,501,25.000,500000.00,12500000.00,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(25,15,502,30.000,1500000.00,45000000.00,'2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `goods_receipt_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `goods_receipts`
+--
+
+DROP TABLE IF EXISTS `goods_receipts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `goods_receipts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `receipt_number` varchar(50) NOT NULL,
+  `purchase_order_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_grn_number` (`receipt_number`),
+  KEY `fk_goods_receipts_branch_id` (`branch_id`),
+  KEY `fk_goods_receipts_purchase_order_id` (`purchase_order_id`),
+  CONSTRAINT `fk_goods_receipts_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_goods_receipts_purchase_order_id` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `goods_receipts`
+--
+
+LOCK TABLES `goods_receipts` WRITE;
+/*!40000 ALTER TABLE `goods_receipts` DISABLE KEYS */;
+INSERT INTO `goods_receipts` VALUES (13,'GRN-2024-001',33,1,'completed','2025-11-16 11:52:25','2025-11-16 11:52:25'),(14,'GRN-2024-002',34,1,'completed','2025-11-21 11:52:25','2025-11-21 11:52:25'),(15,'GRN-2024-003',35,2,'completed','2025-11-26 11:52:25','2025-11-26 11:52:25');
+/*!40000 ALTER TABLE `goods_receipts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `inventory_alerts`
+--
+
+DROP TABLE IF EXISTS `inventory_alerts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `inventory_alerts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `alert_type` varchar(50) DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `current_quantity` decimal(10,2) DEFAULT NULL,
+  `threshold_quantity` decimal(10,2) DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `resolved_by` int DEFAULT NULL,
+  `resolved_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_inventory_alerts_product_id` (`product_id`),
+  KEY `fk_inventory_alerts_variant_id` (`variant_id`),
+  KEY `fk_inventory_alerts_warehouse_id` (`warehouse_id`),
+  CONSTRAINT `fk_inventory_alerts_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_alerts_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_alerts_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `inventory_alerts`
+--
+
+LOCK TABLES `inventory_alerts` WRITE;
+/*!40000 ALTER TABLE `inventory_alerts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `inventory_alerts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `inventory_movements`
+--
+
+DROP TABLE IF EXISTS `inventory_movements`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `inventory_movements` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
+  `quantity` decimal(10,2) DEFAULT NULL,
+  `reference_type` varchar(50) DEFAULT NULL,
+  `reference_id` int DEFAULT NULL,
+  `notes` text,
+  `created_by` int DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_inventory_movements_product_id` (`product_id`),
+  KEY `fk_inventory_movements_variant_id` (`variant_id`),
+  KEY `fk_inventory_movements_branch_id` (`branch_id`),
+  KEY `fk_inventory_movements_batch_id` (`batch_id`),
+  CONSTRAINT `fk_inventory_movements_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_movements_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_movements_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_movements_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `inventory_movements`
+--
+
+LOCK TABLES `inventory_movements` WRITE;
+/*!40000 ALTER TABLE `inventory_movements` DISABLE KEYS */;
+/*!40000 ALTER TABLE `inventory_movements` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `inventory_stock`
+--
+
+DROP TABLE IF EXISTS `inventory_stock`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `inventory_stock` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `quantity_on_hand` decimal(10,2) DEFAULT '0.00',
+  `quantity_reserved` decimal(10,2) DEFAULT '0.00',
+  `minimum_stock` decimal(10,2) DEFAULT '0.00',
+  `last_movement_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_inventory_stock_product_id` (`product_id`),
+  KEY `fk_inventory_stock_variant_id` (`variant_id`),
+  KEY `fk_inventory_stock_branch_id` (`branch_id`),
+  KEY `fk_inventory_stock_warehouse` (`warehouse_id`),
+  CONSTRAINT `fk_inventory_stock_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_stock_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_stock_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_stock_warehouse` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=421 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `inventory_stock`
+--
+
+LOCK TABLES `inventory_stock` WRITE;
+/*!40000 ALTER TABLE `inventory_stock` DISABLE KEYS */;
+INSERT INTO `inventory_stock` VALUES (1,1,1,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(2,1,1,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(3,1,1,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(4,1,1,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(5,1,1,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(6,1,1,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(7,1,1,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(8,1,1,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(9,1,1,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(10,1,1,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(11,1,1,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(12,1,1,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(13,1,1,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(14,1,1,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(15,1,1,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(16,1,1,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(17,1,1,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(18,1,1,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(19,1,1,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(20,1,1,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(21,1,1,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(22,1,1,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(23,1,1,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(24,1,1,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(25,1,1,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(26,1,1,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(27,1,1,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(28,1,1,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(29,1,1,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(30,1,1,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(31,1,1,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(32,1,1,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(33,1,1,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(34,1,1,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(35,1,1,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(36,1,1,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(37,1,1,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(38,1,1,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(39,1,1,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(40,1,1,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(41,1,1,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(42,1,1,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(43,1,1,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(44,1,1,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(45,1,1,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(46,1,1,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(47,1,1,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(48,1,1,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(49,1,1,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(50,1,1,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(51,1,1,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(52,1,1,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(53,1,1,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(54,1,1,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(55,1,1,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(56,1,1,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(57,1,1,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(58,1,1,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(59,1,1,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(60,1,1,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(61,1,2,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(62,1,2,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(63,1,2,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(64,1,2,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(65,1,2,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(66,1,2,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(67,1,2,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(68,1,2,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(69,1,2,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(70,1,2,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(71,1,2,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(72,1,2,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(73,1,2,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(74,1,2,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(75,1,2,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(76,1,2,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(77,1,2,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(78,1,2,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(79,1,2,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(80,1,2,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(81,1,2,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(82,1,2,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(83,1,2,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(84,1,2,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(85,1,2,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(86,1,2,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(87,1,2,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(88,1,2,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(89,1,2,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(90,1,2,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(91,1,2,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(92,1,2,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(93,1,2,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(94,1,2,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(95,1,2,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(96,1,2,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(97,1,2,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(98,1,2,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(99,1,2,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(100,1,2,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(101,1,2,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(102,1,2,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(103,1,2,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(104,1,2,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(105,1,2,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(106,1,2,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(107,1,2,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(108,1,2,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(109,1,2,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(110,1,2,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(111,1,2,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(112,1,2,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(113,1,2,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(114,1,2,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(115,1,2,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(116,1,2,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(117,1,2,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(118,1,2,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(119,1,2,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(120,1,2,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(121,2,3,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(122,2,3,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(123,2,3,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(124,2,3,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(125,2,3,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(126,2,3,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(127,2,3,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(128,2,3,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(129,2,3,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(130,2,3,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(131,2,3,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(132,2,3,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(133,2,3,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(134,2,3,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(135,2,3,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(136,2,3,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(137,2,3,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(138,2,3,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(139,2,3,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(140,2,3,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(141,2,3,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(142,2,3,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(143,2,3,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(144,2,3,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(145,2,3,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(146,2,3,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(147,2,3,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(148,2,3,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(149,2,3,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(150,2,3,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(151,2,3,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(152,2,3,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(153,2,3,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(154,2,3,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(155,2,3,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(156,2,3,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(157,2,3,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(158,2,3,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(159,2,3,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(160,2,3,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(161,2,3,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(162,2,3,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(163,2,3,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(164,2,3,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(165,2,3,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(166,2,3,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(167,2,3,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(168,2,3,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(169,2,3,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(170,2,3,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(171,2,3,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(172,2,3,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(173,2,3,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(174,2,3,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(175,2,3,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(176,2,3,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(177,2,3,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(178,2,3,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(179,2,3,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(180,2,3,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(181,2,4,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(182,2,4,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(183,2,4,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(184,2,4,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(185,2,4,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(186,2,4,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(187,2,4,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(188,2,4,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(189,2,4,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(190,2,4,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(191,2,4,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(192,2,4,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(193,2,4,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(194,2,4,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(195,2,4,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(196,2,4,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(197,2,4,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(198,2,4,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(199,2,4,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(200,2,4,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(201,2,4,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(202,2,4,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(203,2,4,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(204,2,4,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(205,2,4,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(206,2,4,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(207,2,4,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(208,2,4,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(209,2,4,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(210,2,4,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(211,2,4,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(212,2,4,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(213,2,4,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(214,2,4,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(215,2,4,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(216,2,4,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(217,2,4,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(218,2,4,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(219,2,4,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(220,2,4,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(221,2,4,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(222,2,4,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(223,2,4,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(224,2,4,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(225,2,4,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(226,2,4,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(227,2,4,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(228,2,4,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(229,2,4,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(230,2,4,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(231,2,4,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(232,2,4,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(233,2,4,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(234,2,4,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(235,2,4,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(236,2,4,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(237,2,4,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(238,2,4,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(239,2,4,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(240,2,4,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(241,3,5,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(242,3,5,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(243,3,5,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(244,3,5,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(245,3,5,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(246,3,5,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(247,3,5,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(248,3,5,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(249,3,5,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(250,3,5,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(251,3,5,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(252,3,5,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(253,3,5,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(254,3,5,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(255,3,5,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(256,3,5,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(257,3,5,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(258,3,5,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(259,3,5,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(260,3,5,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(261,3,5,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(262,3,5,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(263,3,5,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(264,3,5,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(265,3,5,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(266,3,5,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(267,3,5,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(268,3,5,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(269,3,5,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(270,3,5,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(271,3,5,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(272,3,5,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(273,3,5,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(274,3,5,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(275,3,5,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(276,3,5,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(277,3,5,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(278,3,5,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(279,3,5,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(280,3,5,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(281,3,5,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(282,3,5,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(283,3,5,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(284,3,5,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(285,3,5,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(286,3,5,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(287,3,5,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(288,3,5,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(289,3,5,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(290,3,5,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(291,3,5,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(292,3,5,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(293,3,5,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(294,3,5,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(295,3,5,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(296,3,5,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(297,3,5,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(298,3,5,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(299,3,5,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(300,3,5,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(301,4,6,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(302,4,6,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(303,4,6,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(304,4,6,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(305,4,6,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(306,4,6,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(307,4,6,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(308,4,6,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(309,4,6,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(310,4,6,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(311,4,6,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(312,4,6,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(313,4,6,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(314,4,6,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(315,4,6,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(316,4,6,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(317,4,6,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(318,4,6,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(319,4,6,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(320,4,6,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(321,4,6,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(322,4,6,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(323,4,6,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(324,4,6,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(325,4,6,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(326,4,6,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(327,4,6,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(328,4,6,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(329,4,6,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(330,4,6,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(331,4,6,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(332,4,6,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(333,4,6,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(334,4,6,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(335,4,6,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(336,4,6,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(337,4,6,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(338,4,6,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(339,4,6,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(340,4,6,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(341,4,6,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(342,4,6,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(343,4,6,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(344,4,6,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(345,4,6,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(346,4,6,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(347,4,6,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(348,4,6,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(349,4,6,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(350,4,6,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(351,4,6,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(352,4,6,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(353,4,6,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(354,4,6,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(355,4,6,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(356,4,6,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(357,4,6,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(358,4,6,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(359,4,6,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(360,4,6,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(361,5,7,501,50101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(362,5,7,501,50102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(363,5,7,502,50201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(364,5,7,502,50202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(365,5,7,503,50301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(366,5,7,503,50302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(367,5,7,504,50401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(368,5,7,504,50402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(369,5,7,505,50501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(370,5,7,505,50502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(371,5,7,506,50601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(372,5,7,506,50602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(373,5,7,507,50701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(374,5,7,507,50702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(375,5,7,508,50801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(376,5,7,508,50802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(377,5,7,509,50901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(378,5,7,509,50902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(379,5,7,510,51001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(380,5,7,510,51002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(381,5,7,511,51101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(382,5,7,511,51102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(383,5,7,512,51201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(384,5,7,512,51202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(385,5,7,513,51301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(386,5,7,513,51302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(387,5,7,514,51401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(388,5,7,514,51402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(389,5,7,515,51501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(390,5,7,515,51502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(391,5,7,516,51601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(392,5,7,516,51602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(393,5,7,517,51701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(394,5,7,517,51702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(395,5,7,518,51801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(396,5,7,518,51802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(397,5,7,519,51901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(398,5,7,519,51902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(399,5,7,520,52001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(400,5,7,520,52002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(401,5,7,521,52101,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(402,5,7,521,52102,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(403,5,7,522,52201,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(404,5,7,522,52202,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(405,5,7,523,52301,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(406,5,7,523,52302,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(407,5,7,524,52401,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(408,5,7,524,52402,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(409,5,7,525,52501,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(410,5,7,525,52502,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(411,5,7,526,52601,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(412,5,7,526,52602,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(413,5,7,527,52701,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(414,5,7,527,52702,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(415,5,7,528,52801,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(416,5,7,528,52802,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(417,5,7,529,52901,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(418,5,7,529,52902,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(419,5,7,530,53001,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(420,5,7,530,53002,50.00,0.00,10.00,'2025-12-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `inventory_stock` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `inventory_valuation`
+--
+
+DROP TABLE IF EXISTS `inventory_valuation`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `inventory_valuation` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `avg_cost` decimal(12,2) DEFAULT '0.00',
+  `total_cost` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_inventory_valuation_product_id` (`product_id`),
+  KEY `fk_inventory_valuation_variant_id` (`variant_id`),
+  CONSTRAINT `fk_inventory_valuation_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_inventory_valuation_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `inventory_valuation`
+--
+
+LOCK TABLES `inventory_valuation` WRITE;
+/*!40000 ALTER TABLE `inventory_valuation` DISABLE KEYS */;
+/*!40000 ALTER TABLE `inventory_valuation` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `invoice_orders`
+--
+
+DROP TABLE IF EXISTS `invoice_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `invoice_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned DEFAULT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_invoice_orders_invoice` (`invoice_id`),
+  KEY `fk_invoice_orders_order` (`order_id`),
+  CONSTRAINT `fk_invoice_orders_invoice` FOREIGN KEY (`invoice_id`) REFERENCES `invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_invoice_orders_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `invoice_orders`
+--
+
+LOCK TABLES `invoice_orders` WRITE;
+/*!40000 ALTER TABLE `invoice_orders` DISABLE KEYS */;
+INSERT INTO `invoice_orders` VALUES (104,104,289,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(105,105,290,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(106,106,291,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(107,107,292,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(108,108,293,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(109,109,294,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(110,110,295,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(111,111,296,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(112,112,297,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(113,113,298,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(114,114,301,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(115,115,302,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(116,116,303,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(117,117,306,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(118,118,311,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(119,119,312,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(120,120,313,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(121,121,314,'2025-12-10 04:57:11','2025-12-10 04:57:11'),(122,122,315,'2025-12-10 04:57:11','2025-12-10 04:57:11');
+/*!40000 ALTER TABLE `invoice_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `invoices`
+--
+
+DROP TABLE IF EXISTS `invoices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `invoices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_number` varchar(50) DEFAULT NULL COMMENT 'Generated when issuing invoice',
+  `invoice_status` varchar(30) DEFAULT NULL,
+  `invoice_type` varchar(20) DEFAULT NULL,
+  `e_invoice_status` varchar(30) DEFAULT NULL,
+  `delivery_status` varchar(30) DEFAULT NULL,
+  `shipment_code` varchar(100) DEFAULT NULL,
+  `shipping_partner` varchar(50) DEFAULT NULL,
+  `delivery_time` datetime DEFAULT NULL,
+  `delivery_note` varchar(500) DEFAULT NULL,
+  `sales_channel` varchar(50) DEFAULT NULL,
+  `seller_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `issue_date` date DEFAULT NULL,
+  `due_date` date DEFAULT NULL,
+  `subtotal` decimal(10,2) DEFAULT '0.00',
+  `goods_total` decimal(10,2) DEFAULT '0.00',
+  `discount_total` decimal(10,2) DEFAULT '0.00',
+  `net_total` decimal(10,2) DEFAULT '0.00',
+  `vat_rate` decimal(5,2) DEFAULT '0.00',
+  `vat_amount` decimal(10,2) DEFAULT '0.00',
+  `tax_amount` decimal(10,2) DEFAULT '0.00',
+  `tax_discount` decimal(10,2) DEFAULT '0.00',
+  `other_fee` decimal(10,2) DEFAULT '0.00',
+  `shipping_fee` decimal(10,2) DEFAULT '0.00',
+  `customer_payable` decimal(10,2) DEFAULT '0.00',
+  `customer_paid` decimal(10,2) DEFAULT '0.00',
+  `cod_amount` decimal(10,2) DEFAULT '0.00',
+  `rounding_adjustment` decimal(10,2) DEFAULT '0.00',
+  `payment_status` varchar(20) DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_discount` decimal(10,2) DEFAULT '0.00',
+  `total_paid` decimal(10,2) DEFAULT '0.00',
+  `currency_code` varchar(10) DEFAULT 'VND',
+  `exchange_rate` decimal(15,6) DEFAULT '1.000000',
+  `last_payment_date` datetime DEFAULT NULL,
+  `total` decimal(10,2) DEFAULT '0.00',
+  `pdf_path` varchar(255) DEFAULT NULL,
+  `notes` text,
+  `meta` json DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `invoice_number` (`invoice_number`),
+  KEY `fk_invoices_customer_id` (`customer_id`),
+  KEY `fk_invoices_branch_id` (`branch_id`),
+  CONSTRAINT `fk_invoices_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_invoices_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=123 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `invoices`
+--
+
+LOCK TABLES `invoices` WRITE;
+/*!40000 ALTER TABLE `invoices` DISABLE KEYS */;
+INSERT INTO `invoices` VALUES (104,'HD-DEMO-1-0001','completed','standard',NULL,'pending','VĐ-DEMO-1-0001','GHTK',NULL,NULL,NULL,NULL,2011,1,'2025-11-30','2025-12-12',436000.00,436000.00,0.00,436000.00,0.10,43600.00,43600.00,0.00,0.00,0.00,479600.00,479600.00,0.00,0.00,'paid',NULL,0.00,479600.00,'VND',1.000000,NULL,479600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-009','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(105,'HD-DEMO-2-0001','completed','standard',NULL,'shipping','VĐ-DEMO-2-0001','GHN',NULL,NULL,NULL,NULL,2012,2,'2025-12-01','2025-12-13',651600.00,664000.00,42400.00,651600.00,0.05,32580.00,32580.00,0.00,0.00,30000.00,651600.00,651600.00,0.00,0.00,'paid',NULL,0.00,651600.00,'VND',1.000000,NULL,651600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-010','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(106,'HD-DEMO-3-0001','completed','standard',NULL,'delivered','VĐ-DEMO-3-0001','VNPost','2025-12-14 00:00:00','Đã giao thành công',NULL,NULL,2013,3,'2025-12-02','2025-12-14',389400.00,436000.00,66600.00,389400.00,0.05,19470.00,19470.00,0.00,0.00,20000.00,408870.00,408870.00,0.00,0.00,'paid',NULL,0.00,408870.00,'VND',1.000000,NULL,408870.00,NULL,'Hóa đơn demo gắn với DH-DEMO-011','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(107,'HD-DEMO-4-0001','completed','standard',NULL,'failed','VĐ-DEMO-4-0001','J&T Express',NULL,NULL,NULL,NULL,2014,4,'2025-12-03','2025-12-15',428000.00,428000.00,0.00,428000.00,0.10,42800.00,42800.00,0.00,0.00,0.00,470800.00,470800.00,0.00,0.00,'paid',NULL,0.00,470800.00,'VND',1.000000,NULL,470800.00,NULL,'Hóa đơn demo gắn với DH-DEMO-012','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(108,'HD-DEMO-5-0001','completed','standard',NULL,'returning','VĐ-DEMO-5-0001','Viettel Post',NULL,NULL,NULL,NULL,2015,5,'2025-12-04','2025-12-16',634600.00,662000.00,42400.00,634600.00,0.05,31730.00,31730.00,0.00,0.00,15000.00,634600.00,634600.00,0.00,0.00,'paid',NULL,0.00,634600.00,'VND',1.000000,NULL,634600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-013','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(109,'HD-DEMO-1-0002','completed','standard',NULL,'pending','VĐ-DEMO-1-0002','GHTK',NULL,NULL,NULL,NULL,2016,1,'2025-12-05','2025-12-17',428000.00,428000.00,0.00,428000.00,0.05,21400.00,21400.00,0.00,0.00,0.00,449400.00,449400.00,0.00,0.00,'paid',NULL,0.00,449400.00,'VND',1.000000,NULL,449400.00,NULL,'Hóa đơn demo gắn với DH-DEMO-014','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(110,'HD-DEMO-2-0002','completed','standard',NULL,'shipping','VĐ-DEMO-2-0002','GHN',NULL,NULL,NULL,NULL,2017,2,'2025-12-06','2025-12-18',453000.00,428000.00,0.00,453000.00,0.10,45300.00,45300.00,0.00,0.00,25000.00,498300.00,498300.00,0.00,0.00,'paid',NULL,0.00,498300.00,'VND',1.000000,NULL,498300.00,NULL,'Hóa đơn demo gắn với DH-DEMO-015','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(111,'HD-DEMO-3-0002','completed','standard',NULL,'delivered','VĐ-DEMO-3-0002','VNPost','2025-12-19 00:00:00','Đã giao thành công',NULL,NULL,2018,3,'2025-12-07','2025-12-19',436000.00,436000.00,0.00,436000.00,0.05,21800.00,21800.00,0.00,0.00,0.00,436000.00,436000.00,0.00,0.00,'paid',NULL,0.00,436000.00,'VND',1.000000,NULL,436000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-016','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(112,'HD-DEMO-4-0002','completed','standard',NULL,'failed','VĐ-DEMO-4-0002','J&T Express',NULL,NULL,NULL,NULL,2019,4,'2025-12-08','2025-12-20',492000.00,452000.00,0.00,492000.00,0.05,24600.00,24600.00,0.00,0.00,40000.00,516600.00,516600.00,0.00,0.00,'paid',NULL,0.00,516600.00,'VND',1.000000,NULL,516600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-017','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(113,'HD-DEMO-5-0002','completed','standard',NULL,'returning','VĐ-DEMO-5-0002','Viettel Post',NULL,NULL,NULL,NULL,2020,5,'2025-12-09','2025-12-21',383600.00,426000.00,42400.00,383600.00,0.10,38360.00,38360.00,0.00,0.00,0.00,421960.00,421960.00,0.00,0.00,'paid',NULL,0.00,421960.00,'VND',1.000000,NULL,421960.00,NULL,'Hóa đơn demo gắn với DH-DEMO-018','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(114,'HD-DEMO-5-0003','completed','standard',NULL,'pending','VĐ-DEMO-5-0003','GHTK',NULL,NULL,NULL,NULL,2005,5,'2025-12-10','2025-12-22',556000.00,536000.00,0.00,556000.00,0.10,55600.00,55600.00,0.00,0.00,20000.00,611600.00,611600.00,0.00,0.00,'paid',NULL,0.00,611600.00,'VND',1.000000,NULL,611600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-021','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(115,'HD-DEMO-3-0003','completed','standard',NULL,'shipping','VĐ-DEMO-3-0003','GHN',NULL,NULL,NULL,NULL,2016,3,'2025-12-10','2025-12-22',2220000.00,2180000.00,0.00,2220000.00,0.10,222000.00,222000.00,0.00,0.00,40000.00,2220000.00,2220000.00,0.00,0.00,'paid',NULL,0.00,2220000.00,'VND',1.000000,NULL,2220000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-022','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(116,'HD-DEMO-3-0004','completed','standard',NULL,'delivered','VĐ-DEMO-3-0004','VNPost','2025-12-22 00:00:00','Đã giao thành công',NULL,NULL,2005,3,'2025-12-10','2025-12-22',272000.00,252000.00,0.00,272000.00,0.05,13600.00,13600.00,0.00,0.00,20000.00,285600.00,285600.00,0.00,0.00,'paid',NULL,0.00,285600.00,'VND',1.000000,NULL,285600.00,NULL,'Hóa đơn demo gắn với DH-DEMO-023','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(117,'HD-DEMO-3-0005','completed','standard',NULL,'failed','VĐ-DEMO-3-0005','J&T Express',NULL,NULL,NULL,NULL,2012,3,'2025-12-10','2025-12-22',1234000.00,1214000.00,0.00,1234000.00,0.05,61700.00,61700.00,0.00,0.00,20000.00,1295700.00,1295700.00,0.00,0.00,'paid',NULL,0.00,1295700.00,'VND',1.000000,NULL,1295700.00,NULL,'Hóa đơn demo gắn với DH-DEMO-026','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(118,'HD-DEMO-4-0003','completed','standard',NULL,'returning','VĐ-DEMO-4-0003','Viettel Post',NULL,NULL,NULL,NULL,2015,4,'2025-12-10','2025-12-22',1118000.00,1088000.00,0.00,1118000.00,0.10,111800.00,111800.00,0.00,0.00,30000.00,1118000.00,1118000.00,0.00,0.00,'paid',NULL,0.00,1118000.00,'VND',1.000000,NULL,1118000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-031','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(119,'HD-DEMO-5-0004','completed','standard',NULL,'pending','VĐ-DEMO-5-0004','GHTK',NULL,NULL,NULL,NULL,2015,5,'2025-12-10','2025-12-22',244000.00,204000.00,0.00,244000.00,0.05,12200.00,12200.00,0.00,0.00,40000.00,256200.00,256200.00,0.00,0.00,'paid',NULL,0.00,256200.00,'VND',1.000000,NULL,256200.00,NULL,'Hóa đơn demo gắn với DH-DEMO-032','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(120,'HD-DEMO-4-0004','completed','standard',NULL,'shipping','VĐ-DEMO-4-0004','GHN',NULL,NULL,NULL,NULL,2014,4,'2025-12-10','2025-12-22',2138000.00,2108000.00,0.00,2138000.00,0.10,213800.00,213800.00,0.00,0.00,30000.00,2351800.00,2351800.00,0.00,0.00,'paid',NULL,0.00,2351800.00,'VND',1.000000,NULL,2351800.00,NULL,'Hóa đơn demo gắn với DH-DEMO-033','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(121,'HD-DEMO-3-0006','completed','standard',NULL,'delivered','VĐ-DEMO-3-0006','VNPost','2025-12-22 00:00:00','Đã giao thành công',NULL,NULL,2012,3,'2025-12-10','2025-12-22',1890000.00,1890000.00,0.00,1890000.00,0.10,189000.00,189000.00,0.00,0.00,0.00,1890000.00,1890000.00,0.00,0.00,'paid',NULL,0.00,1890000.00,'VND',1.000000,NULL,1890000.00,NULL,'Hóa đơn demo gắn với DH-DEMO-034','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL),(122,'HD-DEMO-2-0003','completed','standard',NULL,'failed','VĐ-DEMO-2-0003','J&T Express',NULL,NULL,NULL,NULL,2011,2,'2025-12-10','2025-12-22',1528000.00,1528000.00,0.00,1528000.00,0.05,76400.00,76400.00,0.00,0.00,0.00,1604400.00,1604400.00,0.00,0.00,'paid',NULL,0.00,1604400.00,'VND',1.000000,NULL,1604400.00,NULL,'Hóa đơn demo gắn với DH-DEMO-035','{\"source\": \"demo\"}',1,'2025-12-10 04:57:11','2025-12-10 04:57:11',NULL);
+/*!40000 ALTER TABLE `invoices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `job_logs`
+--
+
+DROP TABLE IF EXISTS `job_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `job_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `job_id` bigint unsigned NOT NULL,
+  `status` varchar(30) NOT NULL,
+  `message` text,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_job_log_job` (`job_id`),
+  CONSTRAINT `fk_job_logs_job_id` FOREIGN KEY (`job_id`) REFERENCES `job_queue` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `job_logs`
+--
+
+LOCK TABLES `job_logs` WRITE;
+/*!40000 ALTER TABLE `job_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `job_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `job_queue`
+--
+
+DROP TABLE IF EXISTS `job_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `job_queue` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `payload` json DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'queued',
+  `attempts` int DEFAULT '0',
+  `max_attempts` int DEFAULT '3',
+  `next_run_at` datetime DEFAULT NULL,
+  `last_error` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_job_status` (`status`,`next_run_at`),
+  KEY `idx_job_name` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `job_queue`
+--
+
+LOCK TABLES `job_queue` WRITE;
+/*!40000 ALTER TABLE `job_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `job_queue` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `journal_entries`
+--
+
+DROP TABLE IF EXISTS `journal_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `journal_entries` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `reference_number` varchar(50) DEFAULT NULL,
+  `date` date NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `journal_entries`
+--
+
+LOCK TABLES `journal_entries` WRITE;
+/*!40000 ALTER TABLE `journal_entries` DISABLE KEYS */;
+INSERT INTO `journal_entries` VALUES (1,'JE-2024-001','2025-12-04','Thu tiền bán hàng','posted',1,'2025-12-09 11:34:09','2025-12-09 11:34:09'),(2,'JE-2024-002','2025-12-07','Thanh toán tiền điện','posted',1,'2025-12-09 11:34:09','2025-12-09 11:34:09');
+/*!40000 ALTER TABLE `journal_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `journal_entry_lines`
+--
+
+DROP TABLE IF EXISTS `journal_entry_lines`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `journal_entry_lines` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `journal_entry_id` bigint unsigned NOT NULL,
+  `account_code` varchar(50) NOT NULL,
+  `debit` decimal(14,2) DEFAULT '0.00',
+  `credit` decimal(14,2) DEFAULT '0.00',
+  `description` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_jel_journal_entry_id` (`journal_entry_id`),
+  CONSTRAINT `fk_jel_journal_entry` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `journal_entry_lines`
+--
+
+LOCK TABLES `journal_entry_lines` WRITE;
+/*!40000 ALTER TABLE `journal_entry_lines` DISABLE KEYS */;
+INSERT INTO `journal_entry_lines` VALUES (1,1,'111',5000000.00,0.00,'Thu tiền mặt','2025-12-09 11:34:09','2025-12-09 11:34:09'),(2,1,'511',0.00,5000000.00,'Doanh thu','2025-12-09 11:34:09','2025-12-09 11:34:09'),(3,2,'642',1000000.00,0.00,'Chi phí điện','2025-12-09 11:34:09','2025-12-09 11:34:09'),(4,2,'112',0.00,1000000.00,'Chuyển khoản','2025-12-09 11:34:09','2025-12-09 11:34:09'),(5,1,'111',5000000.00,0.00,'Thu tiền mặt','2025-12-09 11:41:50','2025-12-09 11:41:50'),(6,1,'511',0.00,5000000.00,'Doanh thu','2025-12-09 11:41:50','2025-12-09 11:41:50'),(7,2,'642',1000000.00,0.00,'Chi phí điện','2025-12-09 11:41:50','2025-12-09 11:41:50'),(8,2,'112',0.00,1000000.00,'Chuyển khoản','2025-12-09 11:41:50','2025-12-09 11:41:50'),(9,1,'111',5000000.00,0.00,'Thu tiền mặt','2025-12-09 11:45:53','2025-12-09 11:45:53'),(10,1,'511',0.00,5000000.00,'Doanh thu','2025-12-09 11:45:53','2025-12-09 11:45:53'),(11,2,'642',1000000.00,0.00,'Chi phí điện','2025-12-09 11:45:53','2025-12-09 11:45:53'),(12,2,'112',0.00,1000000.00,'Chuyển khoản','2025-12-09 11:45:53','2025-12-09 11:45:53'),(13,1,'111',5000000.00,0.00,'Thu tiền mặt','2025-12-09 11:49:22','2025-12-09 11:49:22'),(14,1,'511',0.00,5000000.00,'Doanh thu','2025-12-09 11:49:22','2025-12-09 11:49:22'),(15,2,'642',1000000.00,0.00,'Chi phí điện','2025-12-09 11:49:22','2025-12-09 11:49:22'),(16,2,'112',0.00,1000000.00,'Chuyển khoản','2025-12-09 11:49:22','2025-12-09 11:49:22'),(17,1,'111',5000000.00,0.00,'Thu tiền mặt','2025-12-09 11:52:25','2025-12-09 11:52:25'),(18,1,'511',0.00,5000000.00,'Doanh thu','2025-12-09 11:52:25','2025-12-09 11:52:25'),(19,2,'642',1000000.00,0.00,'Chi phí điện','2025-12-09 11:52:25','2025-12-09 11:52:25'),(20,2,'112',0.00,1000000.00,'Chuyển khoản','2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `journal_entry_lines` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `knowledge_base_articles`
+--
+
+DROP TABLE IF EXISTS `knowledge_base_articles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `knowledge_base_articles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `category_id` bigint unsigned DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `content` text,
+  `is_published` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_kb_article_category` (`category_id`),
+  KEY `idx_kb_article_published` (`is_published`),
+  CONSTRAINT `fk_knowledge_base_artic_category_id` FOREIGN KEY (`category_id`) REFERENCES `knowledge_base_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `knowledge_base_articles`
+--
+
+LOCK TABLES `knowledge_base_articles` WRITE;
+/*!40000 ALTER TABLE `knowledge_base_articles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `knowledge_base_articles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `knowledge_base_categories`
+--
+
+DROP TABLE IF EXISTS `knowledge_base_categories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `knowledge_base_categories` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `description` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_kb_category` (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `knowledge_base_categories`
+--
+
+LOCK TABLES `knowledge_base_categories` WRITE;
+/*!40000 ALTER TABLE `knowledge_base_categories` DISABLE KEYS */;
+/*!40000 ALTER TABLE `knowledge_base_categories` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `landed_cost_items`
+--
+
+DROP TABLE IF EXISTS `landed_cost_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `landed_cost_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `landed_cost_voucher_id` bigint unsigned NOT NULL,
+  `goods_receipt_item_id` bigint unsigned DEFAULT NULL,
+  `cost_component` varchar(150) NOT NULL,
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_lcv_item` (`landed_cost_voucher_id`),
+  KEY `fk_landed_cost_items_goods_receipt_item_i` (`goods_receipt_item_id`),
+  CONSTRAINT `fk_landed_cost_items_goods_receipt_item_i` FOREIGN KEY (`goods_receipt_item_id`) REFERENCES `goods_receipt_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_landed_cost_items_landed_cost_voucher_` FOREIGN KEY (`landed_cost_voucher_id`) REFERENCES `landed_cost_vouchers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `landed_cost_items`
+--
+
+LOCK TABLES `landed_cost_items` WRITE;
+/*!40000 ALTER TABLE `landed_cost_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `landed_cost_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `landed_cost_vouchers`
+--
+
+DROP TABLE IF EXISTS `landed_cost_vouchers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `landed_cost_vouchers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `voucher_number` varchar(50) NOT NULL,
+  `goods_receipt_id` bigint unsigned DEFAULT NULL,
+  `total_cost` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(30) DEFAULT 'draft',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_lcv_number` (`voucher_number`),
+  KEY `fk_landed_cost_vouchers_goods_receipt_id` (`goods_receipt_id`),
+  CONSTRAINT `fk_landed_cost_vouchers_goods_receipt_id` FOREIGN KEY (`goods_receipt_id`) REFERENCES `goods_receipts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `landed_cost_vouchers`
+--
+
+LOCK TABLES `landed_cost_vouchers` WRITE;
+/*!40000 ALTER TABLE `landed_cost_vouchers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `landed_cost_vouchers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `leads`
+--
+
+DROP TABLE IF EXISTS `leads`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leads` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `lead_number` varchar(50) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(50) DEFAULT NULL,
+  `source` varchar(100) DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'new',
+  `company` varchar(255) DEFAULT NULL,
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `first_name` varchar(100) DEFAULT NULL,
+  `last_name` varchar(100) DEFAULT NULL,
+  `assigned_to` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `leads`
+--
+
+LOCK TABLES `leads` WRITE;
+/*!40000 ALTER TABLE `leads` DISABLE KEYS */;
+INSERT INTO `leads` VALUES (1,NULL,'','john.doe@example.com','0912345678','website','new','Example Corp',NULL,'2025-12-09 11:34:09','2025-12-09 11:34:09','John','Doe',2),(2,NULL,'','jane.smith@example.com','0987654321','referral','contacted','Tech Solutions',NULL,'2025-12-09 11:34:09','2025-12-09 11:34:09','Jane','Smith',3);
+/*!40000 ALTER TABLE `leads` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `leave_applications`
+--
+
+DROP TABLE IF EXISTS `leave_applications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leave_applications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint unsigned NOT NULL,
+  `leave_type_id` bigint unsigned NOT NULL,
+  `from_date` date NOT NULL,
+  `to_date` date NOT NULL,
+  `total_days` decimal(10,2) DEFAULT '0.00',
+  `status` varchar(30) DEFAULT 'pending',
+  `reason` text,
+  `approved_by` bigint unsigned DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_leave_employee` (`employee_id`),
+  KEY `idx_leave_status` (`status`),
+  KEY `fk_leave_applications_leave_type_id` (`leave_type_id`),
+  CONSTRAINT `fk_leave_applications_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_leave_applications_leave_type_id` FOREIGN KEY (`leave_type_id`) REFERENCES `leave_types` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `leave_applications`
+--
+
+LOCK TABLES `leave_applications` WRITE;
+/*!40000 ALTER TABLE `leave_applications` DISABLE KEYS */;
+INSERT INTO `leave_applications` VALUES (1,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(2,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:32:12','2025-12-09 11:32:12'),(3,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:34:09','2025-12-09 11:34:09'),(4,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:41:00','2025-12-09 11:41:00'),(5,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:41:50','2025-12-09 11:41:50'),(6,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:45:53','2025-12-09 11:45:53'),(7,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:49:21','2025-12-09 11:49:21'),(8,3,1,'2025-12-14','2025-12-15',0.00,'pending','Personal matters',NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24');
+/*!40000 ALTER TABLE `leave_applications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `leave_types`
+--
+
+DROP TABLE IF EXISTS `leave_types`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `leave_types` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `leave_name` varchar(150) NOT NULL,
+  `default_allocation` decimal(10,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_leave_name` (`leave_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `leave_types`
+--
+
+LOCK TABLES `leave_types` WRITE;
+/*!40000 ALTER TABLE `leave_types` DISABLE KEYS */;
+INSERT INTO `leave_types` VALUES (1,'Annual Leave',12.00,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(2,'Sick Leave',10.00,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(3,'Unpaid Leave',0.00,'2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `leave_types` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `login_attempts`
+--
+
+DROP TABLE IF EXISTS `login_attempts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `login_attempts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `user_agent` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `success` tinyint(1) NOT NULL DEFAULT '0',
+  `failure_reason` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `attempted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `login_attempts`
+--
+
+LOCK TABLES `login_attempts` WRITE;
+/*!40000 ALTER TABLE `login_attempts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `login_attempts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `loyalty_programs`
+--
+
+DROP TABLE IF EXISTS `loyalty_programs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `loyalty_programs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `customer_group_id` bigint unsigned DEFAULT NULL,
+  `earn_rate` decimal(12,4) DEFAULT '0.0000',
+  `redeem_rate` decimal(12,4) DEFAULT '0.0000',
+  `expiry_days` int DEFAULT '365',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_loyalty_programs_customer_group` (`customer_group_id`),
+  CONSTRAINT `fk_loyalty_programs_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `loyalty_programs`
+--
+
+LOCK TABLES `loyalty_programs` WRITE;
+/*!40000 ALTER TABLE `loyalty_programs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `loyalty_programs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `loyalty_transactions`
+--
+
+DROP TABLE IF EXISTS `loyalty_transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `loyalty_transactions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `wallet_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `points_delta` decimal(14,2) NOT NULL,
+  `reason` varchar(120) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_loyalty_tx_wallet` (`wallet_id`),
+  KEY `idx_loyalty_tx_order` (`order_id`),
+  CONSTRAINT `fk_loyalty_transactions_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_loyalty_transactions_wallet_id` FOREIGN KEY (`wallet_id`) REFERENCES `loyalty_wallets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `loyalty_transactions`
+--
+
+LOCK TABLES `loyalty_transactions` WRITE;
+/*!40000 ALTER TABLE `loyalty_transactions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `loyalty_transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `loyalty_wallets`
+--
+
+DROP TABLE IF EXISTS `loyalty_wallets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `loyalty_wallets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned NOT NULL,
+  `points_balance` decimal(14,2) DEFAULT '0.00',
+  `last_earned_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_loyalty_wallet_customer` (`customer_id`),
+  CONSTRAINT `fk_loyalty_wallets_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `loyalty_wallets`
+--
+
+LOCK TABLES `loyalty_wallets` WRITE;
+/*!40000 ALTER TABLE `loyalty_wallets` DISABLE KEYS */;
+/*!40000 ALTER TABLE `loyalty_wallets` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `maintenance_schedules`
+--
+
+DROP TABLE IF EXISTS `maintenance_schedules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `maintenance_schedules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `asset_id` bigint unsigned NOT NULL,
+  `schedule_name` varchar(150) NOT NULL,
+  `frequency` varchar(50) DEFAULT 'monthly',
+  `next_due_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_maint_asset` (`asset_id`),
+  CONSTRAINT `fk_maintenance_schedule_asset_id` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `maintenance_schedules`
+--
+
+LOCK TABLES `maintenance_schedules` WRITE;
+/*!40000 ALTER TABLE `maintenance_schedules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `maintenance_schedules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `maintenance_work_orders`
+--
+
+DROP TABLE IF EXISTS `maintenance_work_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `maintenance_work_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `work_order_number` varchar(60) NOT NULL,
+  `asset_id` bigint unsigned NOT NULL,
+  `schedule_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'open',
+  `description` text,
+  `planned_date` date DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_maint_wo_number` (`work_order_number`),
+  KEY `idx_maint_wo_asset` (`asset_id`),
+  KEY `idx_maint_wo_status` (`status`),
+  KEY `fk_maintenance_work_ord_schedule_id` (`schedule_id`),
+  CONSTRAINT `fk_maintenance_work_ord_asset_id` FOREIGN KEY (`asset_id`) REFERENCES `assets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_maintenance_work_ord_schedule_id` FOREIGN KEY (`schedule_id`) REFERENCES `maintenance_schedules` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `maintenance_work_orders`
+--
+
+LOCK TABLES `maintenance_work_orders` WRITE;
+/*!40000 ALTER TABLE `maintenance_work_orders` DISABLE KEYS */;
+/*!40000 ALTER TABLE `maintenance_work_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `migrations`
+--
+
+DROP TABLE IF EXISTS `migrations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `migrations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `version` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `class` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `group` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `namespace` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `time` int NOT NULL,
+  `batch` int unsigned NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=31 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `migrations`
+--
+
+LOCK TABLES `migrations` WRITE;
+/*!40000 ALTER TABLE `migrations` DISABLE KEYS */;
+INSERT INTO `migrations` VALUES (1,'2025-12-05-000000','App\\Database\\Migrations\\BaselineSchema','tests','App',1765279807,9),(2,'2025-12-05-150000','App\\Database\\Migrations\\AddMissingForeignKeys','tests','App',1765279807,9),(3,'2025-12-05-160000','App\\Database\\Migrations\\CleanupDuplicateTables','tests','App',1765279807,9),(22,'2025-12-05-170000','App\\Database\\Migrations\\CreateSupplierDebtTransactions','default','App',1765280438,12),(23,'2025-12-06-000000','App\\Database\\Migrations\\CreateLocationTables','default','App',1765280438,12),(24,'2025-12-06-000001','App\\Database\\Migrations\\CreateBankAccountsTable','default','App',1765280438,12),(25,'2025-12-06-000002','App\\Database\\Migrations\\CreateSalesChannelsTable','default','App',1765280438,12),(26,'2025-12-06-151800','App\\Database\\Migrations\\CreateStockTransfersTables','default','App',1765280438,12),(27,'2025-12-07-000000','App\\Database\\Migrations\\CreateStockDisposalsTables','default','App',1765280438,12),(28,'2025-12-09-000000','App\\Database\\Migrations\\CreatePurchaseReturnsTables','default','App',1765280438,12),(29,'2025-12-09-060000','App\\Database\\Migrations\\CreateCustomerAddressesAndDebtTables','default','App',1765280438,12),(30,'2025-12-08-000000','App\\Database\\Migrations\\AddDeletedAtToInvoices','default','App',1765280502,13);
+/*!40000 ALTER TABLE `migrations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `model_has_permissions`
+--
+
+DROP TABLE IF EXISTS `model_has_permissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `model_has_permissions` (
+  `permission_id` bigint unsigned NOT NULL,
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`permission_id`,`model_id`,`model_type`),
+  KEY `model_has_permissions_model_id_model_type_index` (`model_id`,`model_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `model_has_permissions`
+--
+
+LOCK TABLES `model_has_permissions` WRITE;
+/*!40000 ALTER TABLE `model_has_permissions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `model_has_permissions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `model_has_roles`
+--
+
+DROP TABLE IF EXISTS `model_has_roles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `model_has_roles` (
+  `role_id` bigint unsigned NOT NULL,
+  `model_type` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `model_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`role_id`,`model_id`,`model_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `model_has_roles`
+--
+
+LOCK TABLES `model_has_roles` WRITE;
+/*!40000 ALTER TABLE `model_has_roles` DISABLE KEYS */;
+INSERT INTO `model_has_roles` VALUES (1,'App\\Models\\User',1),(1,'App\\Models\\User',10),(2,'App\\Models\\User',2),(2,'App\\Models\\User',11),(2,'App\\Models\\User',12),(3,'App\\Models\\User',2),(3,'App\\Models\\User',3),(3,'App\\Models\\User',13),(3,'App\\Models\\User',14),(3,'App\\Models\\User',15),(4,'App\\Models\\User',3);
+/*!40000 ALTER TABLE `model_has_roles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notification_rules`
+--
+
+DROP TABLE IF EXISTS `notification_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notification_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `event_type` varchar(80) NOT NULL,
+  `channel` varchar(50) DEFAULT 'email',
+  `template` text NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_notification_rule_event` (`event_type`,`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notification_rules`
+--
+
+LOCK TABLES `notification_rules` WRITE;
+/*!40000 ALTER TABLE `notification_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notification_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `notifications`
+--
+
+DROP TABLE IF EXISTS `notifications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `notifications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `rule_id` bigint unsigned DEFAULT NULL,
+  `event_type` varchar(80) NOT NULL,
+  `entity_type` varchar(80) DEFAULT NULL,
+  `entity_id` bigint unsigned DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'queued',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_notification_rule` (`rule_id`),
+  KEY `idx_notification_event` (`event_type`),
+  CONSTRAINT `fk_notifications_rule_id` FOREIGN KEY (`rule_id`) REFERENCES `notification_rules` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `notifications`
+--
+
+LOCK TABLES `notifications` WRITE;
+/*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `opportunities`
+--
+
+DROP TABLE IF EXISTS `opportunities`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `opportunities` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `lead_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `stage` varchar(50) DEFAULT 'qualification',
+  `probability` int DEFAULT '10',
+  `expected_value` decimal(14,2) DEFAULT '0.00',
+  `closing_date` date DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'open',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `close_date` date DEFAULT NULL,
+  `assigned_to` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_opportunities_customer_id` (`customer_id`),
+  KEY `fk_opportunities_lead_id` (`lead_id`),
+  CONSTRAINT `fk_opportunities_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_opportunities_lead_id` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `opportunities`
+--
+
+LOCK TABLES `opportunities` WRITE;
+/*!40000 ALTER TABLE `opportunities` DISABLE KEYS */;
+/*!40000 ALTER TABLE `opportunities` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `opportunity_items`
+--
+
+DROP TABLE IF EXISTS `opportunity_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `opportunity_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `opportunity_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `quantity` decimal(14,2) DEFAULT '1.00',
+  `price` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_opp_items_opp` (`opportunity_id`),
+  KEY `fk_opportunity_items_product_id` (`product_id`),
+  CONSTRAINT `fk_opportunity_items_opportunity_id` FOREIGN KEY (`opportunity_id`) REFERENCES `opportunities` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_opportunity_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `opportunity_items`
+--
+
+LOCK TABLES `opportunity_items` WRITE;
+/*!40000 ALTER TABLE `opportunity_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `opportunity_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_approval_rules`
+--
+
+DROP TABLE IF EXISTS `order_approval_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_approval_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `condition_type` varchar(50) DEFAULT 'amount',
+  `threshold_amount` decimal(14,2) DEFAULT '0.00',
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `custom_condition` text,
+  `approver_ids` text NOT NULL,
+  `priority` int DEFAULT '100',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_rule_condition` (`condition_type`,`customer_id`),
+  KEY `idx_rule_priority` (`priority`),
+  KEY `fk_order_approval_rules_customer_id` (`customer_id`),
+  CONSTRAINT `fk_order_approval_rules_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_approval_rules`
+--
+
+LOCK TABLES `order_approval_rules` WRITE;
+/*!40000 ALTER TABLE `order_approval_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_approval_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_items`
+--
+
+DROP TABLE IF EXISTS `order_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_numbers` text,
+  `quantity` decimal(14,3) DEFAULT '0.000',
+  `base_price` decimal(14,2) DEFAULT '0.00',
+  `final_price` decimal(14,2) DEFAULT '0.00',
+  `price_list_id` bigint unsigned DEFAULT NULL,
+  `price_list_name` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_order_items_order_id` (`order_id`),
+  KEY `fk_order_items_product_id` (`product_id`),
+  KEY `fk_order_items_variant_id` (`variant_id`),
+  KEY `fk_order_items_price_list_id` (`price_list_id`),
+  KEY `fk_order_items_batch_id` (`batch_id`),
+  CONSTRAINT `fk_order_items_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_items_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_items_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=587 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_items`
+--
+
+LOCK TABLES `order_items` WRITE;
+/*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
+INSERT INTO `order_items` VALUES (521,281,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-10 10:00:00','2025-11-10 10:00:00',NULL),(522,281,502,50201,NULL,NULL,1.000,214000.00,214000.00,NULL,NULL,'2025-11-10 10:00:00','2025-11-10 10:00:00',NULL),(523,282,503,50301,NULL,NULL,2.000,216000.00,216000.00,NULL,NULL,'2025-11-11 10:00:00','2025-11-11 10:00:00',NULL),(524,283,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-12 10:00:00','2025-11-12 10:00:00',NULL),(525,283,503,50302,NULL,NULL,1.000,226000.00,226000.00,NULL,NULL,'2025-11-12 10:00:00','2025-11-12 10:00:00',NULL),(526,284,502,50202,NULL,NULL,2.000,224000.00,224000.00,NULL,NULL,'2025-11-13 10:00:00','2025-11-13 10:00:00',NULL),(527,285,501,50102,NULL,NULL,1.000,222000.00,155400.00,3,'Flash Sale 30%','2025-11-14 10:00:00','2025-11-14 10:00:00',NULL),(528,285,502,50201,NULL,NULL,1.000,214000.00,214000.00,NULL,NULL,'2025-11-14 10:00:00','2025-11-14 10:00:00',NULL),(529,286,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-15 10:00:00','2025-11-15 10:00:00',NULL),(530,286,503,50301,NULL,NULL,1.000,216000.00,216000.00,NULL,NULL,'2025-11-15 10:00:00','2025-11-15 10:00:00',NULL),(531,287,502,50202,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-11-16 10:00:00','2025-11-16 10:00:00',NULL),(532,287,503,50301,NULL,NULL,1.000,216000.00,216000.00,NULL,NULL,'2025-11-16 10:00:00','2025-11-16 10:00:00',NULL),(533,288,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-17 10:00:00','2025-11-17 10:00:00',NULL),(534,288,502,50201,NULL,NULL,1.000,214000.00,214000.00,NULL,NULL,'2025-11-17 10:00:00','2025-11-17 10:00:00',NULL),(535,289,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-18 10:00:00','2025-11-18 10:00:00',NULL),(536,289,502,50202,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-11-18 10:00:00','2025-11-18 10:00:00',NULL),(537,290,503,50302,NULL,NULL,2.000,226000.00,226000.00,NULL,NULL,'2025-11-19 10:00:00','2025-11-19 10:00:00',NULL),(538,290,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-19 10:00:00','2025-11-19 10:00:00',NULL),(539,291,502,50201,NULL,NULL,1.000,214000.00,214000.00,NULL,NULL,'2025-11-20 10:00:00','2025-11-20 10:00:00',NULL),(540,291,501,50102,NULL,NULL,1.000,222000.00,155400.00,3,'Flash Sale 30%','2025-11-20 10:00:00','2025-11-20 10:00:00',NULL),(541,292,503,50301,NULL,NULL,1.000,216000.00,216000.00,NULL,NULL,'2025-11-21 10:00:00','2025-11-21 10:00:00',NULL),(542,292,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-21 10:00:00','2025-11-21 10:00:00',NULL),(543,293,502,50202,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-11-22 10:00:00','2025-11-22 10:00:00',NULL),(544,293,503,50302,NULL,NULL,1.000,226000.00,226000.00,NULL,NULL,'2025-11-22 10:00:00','2025-11-22 10:00:00',NULL),(545,293,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-22 10:00:00','2025-11-22 10:00:00',NULL),(546,294,502,50201,NULL,NULL,2.000,214000.00,214000.00,NULL,NULL,'2025-11-23 10:00:00','2025-11-23 10:00:00',NULL),(547,295,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-24 10:00:00','2025-11-24 10:00:00',NULL),(548,295,503,50301,NULL,NULL,1.000,216000.00,216000.00,NULL,NULL,'2025-11-24 10:00:00','2025-11-24 10:00:00',NULL),(549,296,502,50202,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-11-25 10:00:00','2025-11-25 10:00:00',NULL),(550,296,501,50101,NULL,NULL,1.000,212000.00,212000.00,NULL,NULL,'2025-11-25 10:00:00','2025-11-25 10:00:00',NULL),(551,297,503,50302,NULL,NULL,2.000,226000.00,226000.00,NULL,NULL,'2025-11-26 10:00:00','2025-11-26 10:00:00',NULL),(552,298,501,50101,NULL,NULL,1.000,212000.00,169600.00,1,'VIP 20%','2025-11-27 10:00:00','2025-11-27 10:00:00',NULL),(553,298,502,50201,NULL,NULL,1.000,214000.00,214000.00,NULL,NULL,'2025-11-27 10:00:00','2025-11-27 10:00:00',NULL),(554,299,502,50202,NULL,NULL,1.000,224000.00,224000.00,NULL,NULL,'2025-11-28 10:00:00','2025-11-28 10:00:00',NULL),(555,300,503,50301,NULL,NULL,1.000,216000.00,216000.00,NULL,NULL,'2025-11-29 10:00:00','2025-11-29 10:00:00',NULL),(556,301,524,52402,NULL,NULL,2.000,268000.00,268000.00,NULL,NULL,'2025-11-30 10:00:00','2025-11-30 10:00:00',NULL),(557,302,512,NULL,NULL,NULL,4.000,224000.00,224000.00,NULL,NULL,'2025-12-01 10:00:00','2025-12-01 10:00:00',NULL),(558,302,512,51201,NULL,NULL,2.000,234000.00,234000.00,NULL,NULL,'2025-12-01 10:00:00','2025-12-01 10:00:00',NULL),(559,302,502,NULL,NULL,NULL,4.000,204000.00,204000.00,NULL,NULL,'2025-12-01 10:00:00','2025-12-01 10:00:00',NULL),(560,303,516,51602,NULL,NULL,1.000,252000.00,252000.00,NULL,NULL,'2025-12-02 10:00:00','2025-12-02 10:00:00',NULL),(561,304,509,50902,NULL,NULL,4.000,238000.00,238000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(562,304,525,52501,NULL,NULL,2.000,260000.00,260000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(563,304,525,NULL,NULL,NULL,2.000,250000.00,250000.00,NULL,NULL,'2025-12-03 10:00:00','2025-12-03 10:00:00',NULL),(564,305,526,NULL,NULL,NULL,1.000,252000.00,252000.00,NULL,NULL,'2025-12-04 10:00:00','2025-12-04 10:00:00',NULL),(565,305,526,NULL,NULL,NULL,4.000,252000.00,252000.00,NULL,NULL,'2025-12-04 10:00:00','2025-12-04 10:00:00',NULL),(566,306,518,51802,NULL,NULL,2.000,256000.00,256000.00,NULL,NULL,'2025-12-05 10:00:00','2025-12-05 10:00:00',NULL),(567,306,507,50702,NULL,NULL,3.000,234000.00,234000.00,NULL,NULL,'2025-12-05 10:00:00','2025-12-05 10:00:00',NULL),(568,307,520,NULL,NULL,NULL,3.000,240000.00,240000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(569,307,527,NULL,NULL,NULL,1.000,254000.00,254000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(570,307,514,NULL,NULL,NULL,5.000,228000.00,228000.00,NULL,NULL,'2025-12-06 10:00:00','2025-12-06 10:00:00',NULL),(571,308,508,50801,NULL,NULL,2.000,226000.00,226000.00,NULL,NULL,'2025-12-07 10:00:00','2025-12-07 10:00:00',NULL),(572,308,502,NULL,NULL,NULL,3.000,204000.00,204000.00,NULL,NULL,'2025-12-07 10:00:00','2025-12-07 10:00:00',NULL),(573,309,508,50801,NULL,NULL,3.000,226000.00,226000.00,NULL,NULL,'2025-12-08 10:00:00','2025-12-08 10:00:00',NULL),(574,310,509,50902,NULL,NULL,4.000,238000.00,238000.00,NULL,NULL,'2025-12-09 10:00:00','2025-12-09 10:00:00',NULL),(575,310,507,50702,NULL,NULL,1.000,234000.00,234000.00,NULL,NULL,'2025-12-09 10:00:00','2025-12-09 10:00:00',NULL),(576,311,526,52602,NULL,NULL,4.000,272000.00,272000.00,NULL,NULL,'2025-12-10 10:00:00','2025-12-10 10:00:00',NULL),(577,312,502,NULL,NULL,NULL,1.000,204000.00,204000.00,NULL,NULL,'2025-12-11 10:00:00','2025-12-11 10:00:00',NULL),(578,313,516,NULL,NULL,NULL,3.000,232000.00,232000.00,NULL,NULL,'2025-12-12 10:00:00','2025-12-12 10:00:00',NULL),(579,313,511,51102,NULL,NULL,5.000,242000.00,242000.00,NULL,NULL,'2025-12-12 10:00:00','2025-12-12 10:00:00',NULL),(580,313,501,NULL,NULL,NULL,1.000,202000.00,202000.00,NULL,NULL,'2025-12-12 10:00:00','2025-12-12 10:00:00',NULL),(581,314,503,50302,NULL,NULL,2.000,226000.00,226000.00,NULL,NULL,'2025-12-13 10:00:00','2025-12-13 10:00:00',NULL),(582,314,520,NULL,NULL,NULL,5.000,240000.00,240000.00,NULL,NULL,'2025-12-13 10:00:00','2025-12-13 10:00:00',NULL),(583,314,509,50902,NULL,NULL,1.000,238000.00,238000.00,NULL,NULL,'2025-12-13 10:00:00','2025-12-13 10:00:00',NULL),(584,315,514,NULL,NULL,NULL,1.000,228000.00,228000.00,NULL,NULL,'2025-12-14 10:00:00','2025-12-14 10:00:00',NULL),(585,315,505,NULL,NULL,NULL,5.000,210000.00,210000.00,NULL,NULL,'2025-12-14 10:00:00','2025-12-14 10:00:00',NULL),(586,315,515,51502,NULL,NULL,1.000,250000.00,250000.00,NULL,NULL,'2025-12-14 10:00:00','2025-12-14 10:00:00',NULL);
+/*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_payments`
+--
+
+DROP TABLE IF EXISTS `order_payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_payments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `payment_method` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `paid_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_order_payments_order` (`order_id`),
+  KEY `fk_order_payments_method` (`payment_method`),
+  CONSTRAINT `fk_order_payments_method` FOREIGN KEY (`payment_method`) REFERENCES `payment_methods` (`code`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_payments_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=316 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_payments`
+--
+
+LOCK TABLES `order_payments` WRITE;
+/*!40000 ALTER TABLE `order_payments` DISABLE KEYS */;
+INSERT INTO `order_payments` VALUES (281,281,'CASH',0.00,NULL,'2025-11-10 12:00:00','2025-11-10 12:00:00'),(282,282,'BANK_TRANSFER',173460.00,'2025-11-11 12:00:00','2025-11-11 12:00:00','2025-11-11 12:00:00'),(283,283,'COD',189464.00,'2025-11-12 12:00:00','2025-11-12 12:00:00','2025-11-12 12:00:00'),(284,284,'CASH',224000.00,'2025-11-13 12:00:00','2025-11-13 12:00:00','2025-11-13 12:00:00'),(285,285,'EWALLET',87024.00,'2025-11-14 12:00:00','2025-11-14 12:00:00','2025-11-14 12:00:00'),(286,286,'COD',298980.00,'2025-11-15 12:00:00','2025-11-15 12:00:00','2025-11-15 12:00:00'),(287,287,'BANK_TRANSFER',230000.00,'2025-11-16 12:00:00','2025-11-16 12:00:00','2025-11-16 12:00:00'),(288,288,'CASH',281946.00,'2025-11-17 12:00:00','2025-11-17 12:00:00','2025-11-17 12:00:00'),(289,289,'BANK_TRANSFER',479600.00,'2025-11-18 12:00:00','2025-11-18 12:00:00','2025-11-18 12:00:00'),(290,290,'BANK_TRANSFER',651600.00,'2025-11-19 12:00:00','2025-11-19 12:00:00','2025-11-19 12:00:00'),(291,291,'CASH',408870.00,'2025-11-20 12:00:00','2025-11-20 12:00:00','2025-11-20 12:00:00'),(292,292,'COD',470800.00,'2025-11-21 12:00:00','2025-11-21 12:00:00','2025-11-21 12:00:00'),(293,293,'BANK_TRANSFER',634600.00,'2025-11-22 12:00:00','2025-11-22 12:00:00','2025-11-22 12:00:00'),(294,294,'CASH',449400.00,'2025-11-23 12:00:00','2025-11-23 12:00:00','2025-11-23 12:00:00'),(295,295,'EWALLET',498300.00,'2025-11-24 12:00:00','2025-11-24 12:00:00','2025-11-24 12:00:00'),(296,296,'CASH',436000.00,'2025-11-25 12:00:00','2025-11-25 12:00:00','2025-11-25 12:00:00'),(297,297,'BANK_TRANSFER',516600.00,'2025-11-26 12:00:00','2025-11-26 12:00:00','2025-11-26 12:00:00'),(298,298,'CASH',421960.00,'2025-11-27 12:00:00','2025-11-27 12:00:00','2025-11-27 12:00:00'),(299,299,'CASH',0.00,NULL,'2025-11-28 12:00:00','2025-11-28 12:00:00'),(300,300,'COD',37170.00,'2025-11-29 12:00:00','2025-11-29 12:00:00','2025-11-29 12:00:00'),(301,301,'BANK_TRANSFER',611600.00,'2025-11-30 12:00:00','2025-11-30 12:00:00','2025-11-30 12:00:00'),(302,302,'COD',2220000.00,'2025-12-01 12:00:00','2025-12-01 12:00:00','2025-12-01 12:00:00'),(303,303,'EWALLET',285600.00,'2025-12-02 12:00:00','2025-12-02 12:00:00','2025-12-02 12:00:00'),(304,304,'BANK_TRANSFER',1106600.00,'2025-12-03 12:00:00','2025-12-03 12:00:00','2025-12-03 12:00:00'),(305,305,'EWALLET',645000.00,'2025-12-04 12:00:00','2025-12-04 12:00:00','2025-12-04 12:00:00'),(306,306,'EWALLET',1295700.00,'2025-12-05 12:00:00','2025-12-05 12:00:00','2025-12-05 12:00:00'),(307,307,'COD',1168200.00,'2025-12-06 12:00:00','2025-12-06 12:00:00','2025-12-06 12:00:00'),(308,308,'BANK_TRANSFER',0.00,NULL,'2025-12-07 12:00:00','2025-12-07 12:00:00'),(309,309,'EWALLET',0.00,NULL,'2025-12-08 12:00:00','2025-12-08 12:00:00'),(310,310,'CASH',652300.00,'2025-12-09 12:00:00','2025-12-09 12:00:00','2025-12-09 12:00:00'),(311,311,'CASH',1118000.00,'2025-12-10 12:00:00','2025-12-10 12:00:00','2025-12-10 12:00:00'),(312,312,'COD',256200.00,'2025-12-11 12:00:00','2025-12-11 12:00:00','2025-12-11 12:00:00'),(313,313,'BANK_TRANSFER',2351800.00,'2025-12-12 12:00:00','2025-12-12 12:00:00','2025-12-12 12:00:00'),(314,314,'EWALLET',1890000.00,'2025-12-13 12:00:00','2025-12-13 12:00:00','2025-12-13 12:00:00'),(315,315,'CASH',1604400.00,'2025-12-14 12:00:00','2025-12-14 12:00:00','2025-12-14 12:00:00');
+/*!40000 ALTER TABLE `order_payments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_sequences`
+--
+
+DROP TABLE IF EXISTS `order_sequences`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_sequences` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `sequence_number` int DEFAULT '1',
+  `prefix` varchar(20) DEFAULT 'ORD',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_order_sequences_branch_id` (`branch_id`),
+  CONSTRAINT `fk_order_sequences_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_sequences`
+--
+
+LOCK TABLES `order_sequences` WRITE;
+/*!40000 ALTER TABLE `order_sequences` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_sequences` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_status_logs`
+--
+
+DROP TABLE IF EXISTS `order_status_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_status_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned NOT NULL,
+  `from_status` varchar(50) DEFAULT NULL,
+  `to_status` varchar(50) NOT NULL,
+  `changed_by` int DEFAULT NULL,
+  `notes` text,
+  `changed_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_order_status_logs_order_id` (`order_id`),
+  CONSTRAINT `fk_order_status_logs_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=1339 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_status_logs`
+--
+
+LOCK TABLES `order_status_logs` WRITE;
+/*!40000 ALTER TABLE `order_status_logs` DISABLE KEYS */;
+INSERT INTO `order_status_logs` VALUES (1181,281,NULL,'created',1,'Auto demo log','2025-11-10 10:00:00','2025-11-10 10:00:00','2025-11-10 10:00:00'),(1182,282,NULL,'created',1,'Auto demo log','2025-11-11 10:00:00','2025-11-11 10:00:00','2025-11-11 10:00:00'),(1183,283,NULL,'created',1,'Auto demo log','2025-11-12 10:00:00','2025-11-12 10:00:00','2025-11-12 10:00:00'),(1184,283,'created','confirmed',1,'Auto demo log','2025-11-12 11:00:00','2025-11-12 11:00:00','2025-11-12 11:00:00'),(1185,283,'confirmed','processing',1,'Auto demo log','2025-11-12 12:00:00','2025-11-12 12:00:00','2025-11-12 12:00:00'),(1186,284,NULL,'created',1,'Auto demo log','2025-11-13 10:00:00','2025-11-13 10:00:00','2025-11-13 10:00:00'),(1187,284,'created','confirmed',1,'Auto demo log','2025-11-13 11:00:00','2025-11-13 11:00:00','2025-11-13 11:00:00'),(1188,284,'confirmed','processing',1,'Auto demo log','2025-11-13 12:00:00','2025-11-13 12:00:00','2025-11-13 12:00:00'),(1189,285,NULL,'created',1,'Auto demo log','2025-11-14 10:00:00','2025-11-14 10:00:00','2025-11-14 10:00:00'),(1190,285,'created','confirmed',1,'Auto demo log','2025-11-14 11:00:00','2025-11-14 11:00:00','2025-11-14 11:00:00'),(1191,285,'confirmed','processing',1,'Auto demo log','2025-11-14 12:00:00','2025-11-14 12:00:00','2025-11-14 12:00:00'),(1192,286,NULL,'created',1,'Auto demo log','2025-11-15 10:00:00','2025-11-15 10:00:00','2025-11-15 10:00:00'),(1193,286,'created','confirmed',1,'Auto demo log','2025-11-15 11:00:00','2025-11-15 11:00:00','2025-11-15 11:00:00'),(1194,286,'confirmed','processing',1,'Auto demo log','2025-11-15 12:00:00','2025-11-15 12:00:00','2025-11-15 12:00:00'),(1195,286,'processing','shipping',1,'Auto demo log','2025-11-15 13:00:00','2025-11-15 13:00:00','2025-11-15 13:00:00'),(1196,287,NULL,'created',1,'Auto demo log','2025-11-16 10:00:00','2025-11-16 10:00:00','2025-11-16 10:00:00'),(1197,287,'created','confirmed',1,'Auto demo log','2025-11-16 11:00:00','2025-11-16 11:00:00','2025-11-16 11:00:00'),(1198,287,'confirmed','processing',1,'Auto demo log','2025-11-16 12:00:00','2025-11-16 12:00:00','2025-11-16 12:00:00'),(1199,287,'processing','shipping',1,'Auto demo log','2025-11-16 13:00:00','2025-11-16 13:00:00','2025-11-16 13:00:00'),(1200,288,NULL,'created',1,'Auto demo log','2025-11-17 10:00:00','2025-11-17 10:00:00','2025-11-17 10:00:00'),(1201,288,'created','confirmed',1,'Auto demo log','2025-11-17 11:00:00','2025-11-17 11:00:00','2025-11-17 11:00:00'),(1202,288,'confirmed','processing',1,'Auto demo log','2025-11-17 12:00:00','2025-11-17 12:00:00','2025-11-17 12:00:00'),(1203,288,'processing','shipping',1,'Auto demo log','2025-11-17 13:00:00','2025-11-17 13:00:00','2025-11-17 13:00:00'),(1204,289,NULL,'created',1,'Auto demo log','2025-11-18 10:00:00','2025-11-18 10:00:00','2025-11-18 10:00:00'),(1205,289,'created','confirmed',1,'Auto demo log','2025-11-18 11:00:00','2025-11-18 11:00:00','2025-11-18 11:00:00'),(1206,289,'confirmed','processing',1,'Auto demo log','2025-11-18 12:00:00','2025-11-18 12:00:00','2025-11-18 12:00:00'),(1207,289,'processing','shipping',1,'Auto demo log','2025-11-18 13:00:00','2025-11-18 13:00:00','2025-11-18 13:00:00'),(1208,289,'shipping','delivered',1,'Auto demo log','2025-11-18 14:00:00','2025-11-18 14:00:00','2025-11-18 14:00:00'),(1209,289,'delivered','completed',1,'Auto demo log','2025-11-18 15:00:00','2025-11-18 15:00:00','2025-11-18 15:00:00'),(1210,290,NULL,'created',1,'Auto demo log','2025-11-19 10:00:00','2025-11-19 10:00:00','2025-11-19 10:00:00'),(1211,290,'created','confirmed',1,'Auto demo log','2025-11-19 11:00:00','2025-11-19 11:00:00','2025-11-19 11:00:00'),(1212,290,'confirmed','processing',1,'Auto demo log','2025-11-19 12:00:00','2025-11-19 12:00:00','2025-11-19 12:00:00'),(1213,290,'processing','shipping',1,'Auto demo log','2025-11-19 13:00:00','2025-11-19 13:00:00','2025-11-19 13:00:00'),(1214,290,'shipping','delivered',1,'Auto demo log','2025-11-19 14:00:00','2025-11-19 14:00:00','2025-11-19 14:00:00'),(1215,290,'delivered','completed',1,'Auto demo log','2025-11-19 15:00:00','2025-11-19 15:00:00','2025-11-19 15:00:00'),(1216,291,NULL,'created',1,'Auto demo log','2025-11-20 10:00:00','2025-11-20 10:00:00','2025-11-20 10:00:00'),(1217,291,'created','confirmed',1,'Auto demo log','2025-11-20 11:00:00','2025-11-20 11:00:00','2025-11-20 11:00:00'),(1218,291,'confirmed','processing',1,'Auto demo log','2025-11-20 12:00:00','2025-11-20 12:00:00','2025-11-20 12:00:00'),(1219,291,'processing','shipping',1,'Auto demo log','2025-11-20 13:00:00','2025-11-20 13:00:00','2025-11-20 13:00:00'),(1220,291,'shipping','delivered',1,'Auto demo log','2025-11-20 14:00:00','2025-11-20 14:00:00','2025-11-20 14:00:00'),(1221,291,'delivered','completed',1,'Auto demo log','2025-11-20 15:00:00','2025-11-20 15:00:00','2025-11-20 15:00:00'),(1222,292,NULL,'created',1,'Auto demo log','2025-11-21 10:00:00','2025-11-21 10:00:00','2025-11-21 10:00:00'),(1223,292,'created','confirmed',1,'Auto demo log','2025-11-21 11:00:00','2025-11-21 11:00:00','2025-11-21 11:00:00'),(1224,292,'confirmed','processing',1,'Auto demo log','2025-11-21 12:00:00','2025-11-21 12:00:00','2025-11-21 12:00:00'),(1225,292,'processing','shipping',1,'Auto demo log','2025-11-21 13:00:00','2025-11-21 13:00:00','2025-11-21 13:00:00'),(1226,292,'shipping','delivered',1,'Auto demo log','2025-11-21 14:00:00','2025-11-21 14:00:00','2025-11-21 14:00:00'),(1227,292,'delivered','completed',1,'Auto demo log','2025-11-21 15:00:00','2025-11-21 15:00:00','2025-11-21 15:00:00'),(1228,293,NULL,'created',1,'Auto demo log','2025-11-22 10:00:00','2025-11-22 10:00:00','2025-11-22 10:00:00'),(1229,293,'created','confirmed',1,'Auto demo log','2025-11-22 11:00:00','2025-11-22 11:00:00','2025-11-22 11:00:00'),(1230,293,'confirmed','processing',1,'Auto demo log','2025-11-22 12:00:00','2025-11-22 12:00:00','2025-11-22 12:00:00'),(1231,293,'processing','shipping',1,'Auto demo log','2025-11-22 13:00:00','2025-11-22 13:00:00','2025-11-22 13:00:00'),(1232,293,'shipping','delivered',1,'Auto demo log','2025-11-22 14:00:00','2025-11-22 14:00:00','2025-11-22 14:00:00'),(1233,293,'delivered','completed',1,'Auto demo log','2025-11-22 15:00:00','2025-11-22 15:00:00','2025-11-22 15:00:00'),(1234,294,NULL,'created',1,'Auto demo log','2025-11-23 10:00:00','2025-11-23 10:00:00','2025-11-23 10:00:00'),(1235,294,'created','confirmed',1,'Auto demo log','2025-11-23 11:00:00','2025-11-23 11:00:00','2025-11-23 11:00:00'),(1236,294,'confirmed','processing',1,'Auto demo log','2025-11-23 12:00:00','2025-11-23 12:00:00','2025-11-23 12:00:00'),(1237,294,'processing','shipping',1,'Auto demo log','2025-11-23 13:00:00','2025-11-23 13:00:00','2025-11-23 13:00:00'),(1238,294,'shipping','delivered',1,'Auto demo log','2025-11-23 14:00:00','2025-11-23 14:00:00','2025-11-23 14:00:00'),(1239,294,'delivered','completed',1,'Auto demo log','2025-11-23 15:00:00','2025-11-23 15:00:00','2025-11-23 15:00:00'),(1240,295,NULL,'created',1,'Auto demo log','2025-11-24 10:00:00','2025-11-24 10:00:00','2025-11-24 10:00:00'),(1241,295,'created','confirmed',1,'Auto demo log','2025-11-24 11:00:00','2025-11-24 11:00:00','2025-11-24 11:00:00'),(1242,295,'confirmed','processing',1,'Auto demo log','2025-11-24 12:00:00','2025-11-24 12:00:00','2025-11-24 12:00:00'),(1243,295,'processing','shipping',1,'Auto demo log','2025-11-24 13:00:00','2025-11-24 13:00:00','2025-11-24 13:00:00'),(1244,295,'shipping','delivered',1,'Auto demo log','2025-11-24 14:00:00','2025-11-24 14:00:00','2025-11-24 14:00:00'),(1245,295,'delivered','completed',1,'Auto demo log','2025-11-24 15:00:00','2025-11-24 15:00:00','2025-11-24 15:00:00'),(1246,296,NULL,'created',1,'Auto demo log','2025-11-25 10:00:00','2025-11-25 10:00:00','2025-11-25 10:00:00'),(1247,296,'created','confirmed',1,'Auto demo log','2025-11-25 11:00:00','2025-11-25 11:00:00','2025-11-25 11:00:00'),(1248,296,'confirmed','processing',1,'Auto demo log','2025-11-25 12:00:00','2025-11-25 12:00:00','2025-11-25 12:00:00'),(1249,296,'processing','shipping',1,'Auto demo log','2025-11-25 13:00:00','2025-11-25 13:00:00','2025-11-25 13:00:00'),(1250,296,'shipping','delivered',1,'Auto demo log','2025-11-25 14:00:00','2025-11-25 14:00:00','2025-11-25 14:00:00'),(1251,296,'delivered','completed',1,'Auto demo log','2025-11-25 15:00:00','2025-11-25 15:00:00','2025-11-25 15:00:00'),(1252,297,NULL,'created',1,'Auto demo log','2025-11-26 10:00:00','2025-11-26 10:00:00','2025-11-26 10:00:00'),(1253,297,'created','confirmed',1,'Auto demo log','2025-11-26 11:00:00','2025-11-26 11:00:00','2025-11-26 11:00:00'),(1254,297,'confirmed','processing',1,'Auto demo log','2025-11-26 12:00:00','2025-11-26 12:00:00','2025-11-26 12:00:00'),(1255,297,'processing','shipping',1,'Auto demo log','2025-11-26 13:00:00','2025-11-26 13:00:00','2025-11-26 13:00:00'),(1256,297,'shipping','delivered',1,'Auto demo log','2025-11-26 14:00:00','2025-11-26 14:00:00','2025-11-26 14:00:00'),(1257,297,'delivered','completed',1,'Auto demo log','2025-11-26 15:00:00','2025-11-26 15:00:00','2025-11-26 15:00:00'),(1258,298,NULL,'created',1,'Auto demo log','2025-11-27 10:00:00','2025-11-27 10:00:00','2025-11-27 10:00:00'),(1259,298,'created','confirmed',1,'Auto demo log','2025-11-27 11:00:00','2025-11-27 11:00:00','2025-11-27 11:00:00'),(1260,298,'confirmed','processing',1,'Auto demo log','2025-11-27 12:00:00','2025-11-27 12:00:00','2025-11-27 12:00:00'),(1261,298,'processing','shipping',1,'Auto demo log','2025-11-27 13:00:00','2025-11-27 13:00:00','2025-11-27 13:00:00'),(1262,298,'shipping','delivered',1,'Auto demo log','2025-11-27 14:00:00','2025-11-27 14:00:00','2025-11-27 14:00:00'),(1263,298,'delivered','completed',1,'Auto demo log','2025-11-27 15:00:00','2025-11-27 15:00:00','2025-11-27 15:00:00'),(1264,299,NULL,'created',1,'Auto demo log','2025-11-28 10:00:00','2025-11-28 10:00:00','2025-11-28 10:00:00'),(1265,299,'created','cancelled',1,'Auto demo log','2025-11-28 11:00:00','2025-11-28 11:00:00','2025-11-28 11:00:00'),(1266,300,NULL,'created',1,'Auto demo log','2025-11-29 10:00:00','2025-11-29 10:00:00','2025-11-29 10:00:00'),(1267,300,'created','cancelled',1,'Auto demo log','2025-11-29 11:00:00','2025-11-29 11:00:00','2025-11-29 11:00:00'),(1268,301,NULL,'created',1,'Auto demo log','2025-11-30 10:00:00','2025-11-30 10:00:00','2025-11-30 10:00:00'),(1269,301,'created','confirmed',1,'Auto demo log','2025-11-30 11:00:00','2025-11-30 11:00:00','2025-11-30 11:00:00'),(1270,301,'confirmed','processing',1,'Auto demo log','2025-11-30 12:00:00','2025-11-30 12:00:00','2025-11-30 12:00:00'),(1271,301,'processing','shipping',1,'Auto demo log','2025-11-30 13:00:00','2025-11-30 13:00:00','2025-11-30 13:00:00'),(1272,301,'shipping','delivered',1,'Auto demo log','2025-11-30 14:00:00','2025-11-30 14:00:00','2025-11-30 14:00:00'),(1273,301,'delivered','completed',1,'Auto demo log','2025-11-30 15:00:00','2025-11-30 15:00:00','2025-11-30 15:00:00'),(1274,302,NULL,'created',1,'Auto demo log','2025-12-01 10:00:00','2025-12-01 10:00:00','2025-12-01 10:00:00'),(1275,302,'created','confirmed',1,'Auto demo log','2025-12-01 11:00:00','2025-12-01 11:00:00','2025-12-01 11:00:00'),(1276,302,'confirmed','processing',1,'Auto demo log','2025-12-01 12:00:00','2025-12-01 12:00:00','2025-12-01 12:00:00'),(1277,302,'processing','shipping',1,'Auto demo log','2025-12-01 13:00:00','2025-12-01 13:00:00','2025-12-01 13:00:00'),(1278,302,'shipping','delivered',1,'Auto demo log','2025-12-01 14:00:00','2025-12-01 14:00:00','2025-12-01 14:00:00'),(1279,302,'delivered','completed',1,'Auto demo log','2025-12-01 15:00:00','2025-12-01 15:00:00','2025-12-01 15:00:00'),(1280,303,NULL,'created',1,'Auto demo log','2025-12-02 10:00:00','2025-12-02 10:00:00','2025-12-02 10:00:00'),(1281,303,'created','confirmed',1,'Auto demo log','2025-12-02 11:00:00','2025-12-02 11:00:00','2025-12-02 11:00:00'),(1282,303,'confirmed','processing',1,'Auto demo log','2025-12-02 12:00:00','2025-12-02 12:00:00','2025-12-02 12:00:00'),(1283,303,'processing','shipping',1,'Auto demo log','2025-12-02 13:00:00','2025-12-02 13:00:00','2025-12-02 13:00:00'),(1284,303,'shipping','delivered',1,'Auto demo log','2025-12-02 14:00:00','2025-12-02 14:00:00','2025-12-02 14:00:00'),(1285,303,'delivered','completed',1,'Auto demo log','2025-12-02 15:00:00','2025-12-02 15:00:00','2025-12-02 15:00:00'),(1286,304,NULL,'created',1,'Auto demo log','2025-12-03 10:00:00','2025-12-03 10:00:00','2025-12-03 10:00:00'),(1287,304,'created','confirmed',1,'Auto demo log','2025-12-03 11:00:00','2025-12-03 11:00:00','2025-12-03 11:00:00'),(1288,304,'confirmed','processing',1,'Auto demo log','2025-12-03 12:00:00','2025-12-03 12:00:00','2025-12-03 12:00:00'),(1289,305,NULL,'created',1,'Auto demo log','2025-12-04 10:00:00','2025-12-04 10:00:00','2025-12-04 10:00:00'),(1290,305,'created','confirmed',1,'Auto demo log','2025-12-04 11:00:00','2025-12-04 11:00:00','2025-12-04 11:00:00'),(1291,305,'confirmed','processing',1,'Auto demo log','2025-12-04 12:00:00','2025-12-04 12:00:00','2025-12-04 12:00:00'),(1292,305,'processing','shipping',1,'Auto demo log','2025-12-04 13:00:00','2025-12-04 13:00:00','2025-12-04 13:00:00'),(1293,306,NULL,'created',1,'Auto demo log','2025-12-05 10:00:00','2025-12-05 10:00:00','2025-12-05 10:00:00'),(1294,306,'created','confirmed',1,'Auto demo log','2025-12-05 11:00:00','2025-12-05 11:00:00','2025-12-05 11:00:00'),(1295,306,'confirmed','processing',1,'Auto demo log','2025-12-05 12:00:00','2025-12-05 12:00:00','2025-12-05 12:00:00'),(1296,306,'processing','shipping',1,'Auto demo log','2025-12-05 13:00:00','2025-12-05 13:00:00','2025-12-05 13:00:00'),(1297,306,'shipping','delivered',1,'Auto demo log','2025-12-05 14:00:00','2025-12-05 14:00:00','2025-12-05 14:00:00'),(1298,306,'delivered','completed',1,'Auto demo log','2025-12-05 15:00:00','2025-12-05 15:00:00','2025-12-05 15:00:00'),(1299,307,NULL,'created',1,'Auto demo log','2025-12-06 10:00:00','2025-12-06 10:00:00','2025-12-06 10:00:00'),(1300,307,'created','confirmed',1,'Auto demo log','2025-12-06 11:00:00','2025-12-06 11:00:00','2025-12-06 11:00:00'),(1301,307,'confirmed','processing',1,'Auto demo log','2025-12-06 12:00:00','2025-12-06 12:00:00','2025-12-06 12:00:00'),(1302,307,'processing','shipping',1,'Auto demo log','2025-12-06 13:00:00','2025-12-06 13:00:00','2025-12-06 13:00:00'),(1303,308,NULL,'created',1,'Auto demo log','2025-12-07 10:00:00','2025-12-07 10:00:00','2025-12-07 10:00:00'),(1304,308,'created','cancelled',1,'Auto demo log','2025-12-07 11:00:00','2025-12-07 11:00:00','2025-12-07 11:00:00'),(1305,309,NULL,'created',1,'Auto demo log','2025-12-08 10:00:00','2025-12-08 10:00:00','2025-12-08 10:00:00'),(1306,310,NULL,'created',1,'Auto demo log','2025-12-09 10:00:00','2025-12-09 10:00:00','2025-12-09 10:00:00'),(1307,310,'created','confirmed',1,'Auto demo log','2025-12-09 11:00:00','2025-12-09 11:00:00','2025-12-09 11:00:00'),(1308,310,'confirmed','processing',1,'Auto demo log','2025-12-09 12:00:00','2025-12-09 12:00:00','2025-12-09 12:00:00'),(1309,311,NULL,'created',1,'Auto demo log','2025-12-10 10:00:00','2025-12-10 10:00:00','2025-12-10 10:00:00'),(1310,311,'created','confirmed',1,'Auto demo log','2025-12-10 11:00:00','2025-12-10 11:00:00','2025-12-10 11:00:00'),(1311,311,'confirmed','processing',1,'Auto demo log','2025-12-10 12:00:00','2025-12-10 12:00:00','2025-12-10 12:00:00'),(1312,311,'processing','shipping',1,'Auto demo log','2025-12-10 13:00:00','2025-12-10 13:00:00','2025-12-10 13:00:00'),(1313,311,'shipping','delivered',1,'Auto demo log','2025-12-10 14:00:00','2025-12-10 14:00:00','2025-12-10 14:00:00'),(1314,311,'delivered','completed',1,'Auto demo log','2025-12-10 15:00:00','2025-12-10 15:00:00','2025-12-10 15:00:00'),(1315,312,NULL,'created',1,'Auto demo log','2025-12-11 10:00:00','2025-12-11 10:00:00','2025-12-11 10:00:00'),(1316,312,'created','confirmed',1,'Auto demo log','2025-12-11 11:00:00','2025-12-11 11:00:00','2025-12-11 11:00:00'),(1317,312,'confirmed','processing',1,'Auto demo log','2025-12-11 12:00:00','2025-12-11 12:00:00','2025-12-11 12:00:00'),(1318,312,'processing','shipping',1,'Auto demo log','2025-12-11 13:00:00','2025-12-11 13:00:00','2025-12-11 13:00:00'),(1319,312,'shipping','delivered',1,'Auto demo log','2025-12-11 14:00:00','2025-12-11 14:00:00','2025-12-11 14:00:00'),(1320,312,'delivered','completed',1,'Auto demo log','2025-12-11 15:00:00','2025-12-11 15:00:00','2025-12-11 15:00:00'),(1321,313,NULL,'created',1,'Auto demo log','2025-12-12 10:00:00','2025-12-12 10:00:00','2025-12-12 10:00:00'),(1322,313,'created','confirmed',1,'Auto demo log','2025-12-12 11:00:00','2025-12-12 11:00:00','2025-12-12 11:00:00'),(1323,313,'confirmed','processing',1,'Auto demo log','2025-12-12 12:00:00','2025-12-12 12:00:00','2025-12-12 12:00:00'),(1324,313,'processing','shipping',1,'Auto demo log','2025-12-12 13:00:00','2025-12-12 13:00:00','2025-12-12 13:00:00'),(1325,313,'shipping','delivered',1,'Auto demo log','2025-12-12 14:00:00','2025-12-12 14:00:00','2025-12-12 14:00:00'),(1326,313,'delivered','completed',1,'Auto demo log','2025-12-12 15:00:00','2025-12-12 15:00:00','2025-12-12 15:00:00'),(1327,314,NULL,'created',1,'Auto demo log','2025-12-13 10:00:00','2025-12-13 10:00:00','2025-12-13 10:00:00'),(1328,314,'created','confirmed',1,'Auto demo log','2025-12-13 11:00:00','2025-12-13 11:00:00','2025-12-13 11:00:00'),(1329,314,'confirmed','processing',1,'Auto demo log','2025-12-13 12:00:00','2025-12-13 12:00:00','2025-12-13 12:00:00'),(1330,314,'processing','shipping',1,'Auto demo log','2025-12-13 13:00:00','2025-12-13 13:00:00','2025-12-13 13:00:00'),(1331,314,'shipping','delivered',1,'Auto demo log','2025-12-13 14:00:00','2025-12-13 14:00:00','2025-12-13 14:00:00'),(1332,314,'delivered','completed',1,'Auto demo log','2025-12-13 15:00:00','2025-12-13 15:00:00','2025-12-13 15:00:00'),(1333,315,NULL,'created',1,'Auto demo log','2025-12-14 10:00:00','2025-12-14 10:00:00','2025-12-14 10:00:00'),(1334,315,'created','confirmed',1,'Auto demo log','2025-12-14 11:00:00','2025-12-14 11:00:00','2025-12-14 11:00:00'),(1335,315,'confirmed','processing',1,'Auto demo log','2025-12-14 12:00:00','2025-12-14 12:00:00','2025-12-14 12:00:00'),(1336,315,'processing','shipping',1,'Auto demo log','2025-12-14 13:00:00','2025-12-14 13:00:00','2025-12-14 13:00:00'),(1337,315,'shipping','delivered',1,'Auto demo log','2025-12-14 14:00:00','2025-12-14 14:00:00','2025-12-14 14:00:00'),(1338,315,'delivered','completed',1,'Auto demo log','2025-12-14 15:00:00','2025-12-14 15:00:00','2025-12-14 15:00:00');
+/*!40000 ALTER TABLE `order_status_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_subscriptions`
+--
+
+DROP TABLE IF EXISTS `order_subscriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_subscriptions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `template_id` bigint unsigned NOT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `order_type` varchar(20) DEFAULT 'shipping',
+  `next_run_at` datetime DEFAULT NULL,
+  `last_run_at` datetime DEFAULT NULL,
+  `frequency_interval` int DEFAULT '7',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_order_subscription_template` (`template_id`),
+  KEY `idx_order_subscription_next` (`next_run_at`),
+  KEY `idx_order_subscription_status` (`status`),
+  KEY `fk_order_subscriptions_branch_id` (`branch_id`),
+  CONSTRAINT `fk_order_subscriptions_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_subscriptions_template_id` FOREIGN KEY (`template_id`) REFERENCES `order_templates` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_subscriptions`
+--
+
+LOCK TABLES `order_subscriptions` WRITE;
+/*!40000 ALTER TABLE `order_subscriptions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_subscriptions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_template_items`
+--
+
+DROP TABLE IF EXISTS `order_template_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_template_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `template_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `quantity` decimal(12,3) DEFAULT '0.000',
+  `price` decimal(14,2) DEFAULT NULL,
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_template_item_template` (`template_id`),
+  KEY `idx_template_item_product` (`product_id`,`variant_id`),
+  KEY `fk_order_template_items_variant_id` (`variant_id`),
+  CONSTRAINT `fk_order_template_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_template_items_template_id` FOREIGN KEY (`template_id`) REFERENCES `order_templates` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_order_template_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_template_items`
+--
+
+LOCK TABLES `order_template_items` WRITE;
+/*!40000 ALTER TABLE `order_template_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_template_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_templates`
+--
+
+DROP TABLE IF EXISTS `order_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_templates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `frequency` varchar(50) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_order_template_name` (`name`),
+  KEY `idx_order_template_customer` (`customer_id`),
+  KEY `idx_order_template_active` (`is_active`),
+  CONSTRAINT `fk_order_templates_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_templates`
+--
+
+LOCK TABLES `order_templates` WRITE;
+/*!40000 ALTER TABLE `order_templates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_templates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `orders`
+--
+
+DROP TABLE IF EXISTS `orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) DEFAULT NULL,
+  `order_number` varchar(50) NOT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `customer_group_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `order_date` date DEFAULT NULL,
+  `order_type` varchar(50) DEFAULT 'online',
+  `pos_profile_id` bigint unsigned DEFAULT NULL,
+  `pos_shift_id` bigint unsigned DEFAULT NULL,
+  `tax_template_id` bigint unsigned DEFAULT NULL,
+  `tax_total` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `rounding_adjustment` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `payment_method` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'draft',
+  `coupon_code` varchar(120) DEFAULT NULL,
+  `coupon_discount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `loyalty_points_redeemed` int DEFAULT '0',
+  `loyalty_discount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `loyalty_points_earned` int DEFAULT '0',
+  `subtotal` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `discount_total` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `shipping_fee` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `paid_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `debt_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `payment_status` varchar(20) DEFAULT NULL,
+  `is_paid` tinyint(1) DEFAULT '0',
+  `applied_price_list_id` bigint unsigned DEFAULT NULL,
+  `shipping_name` varchar(255) DEFAULT NULL,
+  `shipping_phone` varchar(50) DEFAULT NULL,
+  `shipping_address` text,
+  `shipping_ward` varchar(100) DEFAULT NULL,
+  `shipping_district` varchar(100) DEFAULT NULL,
+  `shipping_city` varchar(100) DEFAULT NULL,
+  `notes` text,
+  `confirmed_at` datetime DEFAULT NULL,
+  `processing_at` datetime DEFAULT NULL,
+  `shipping_at` datetime DEFAULT NULL,
+  `delivered_at` datetime DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `cancelled_at` datetime DEFAULT NULL,
+  `cancellation_reason` text,
+  `cod_collected` tinyint(1) DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_orders_customer` (`customer_id`),
+  KEY `fk_orders_branch` (`branch_id`),
+  KEY `fk_orders_payment_method` (`payment_method`),
+  KEY `fk_orders_applied_price_list_i` (`applied_price_list_id`),
+  KEY `idx_customer_group_id` (`customer_group_id`),
+  KEY `idx_warehouse_id` (`warehouse_id`),
+  KEY `idx_pos_profile_id` (`pos_profile_id`),
+  KEY `idx_pos_shift_id` (`pos_shift_id`),
+  KEY `idx_tax_template_id` (`tax_template_id`),
+  CONSTRAINT `fk_orders_applied_price_list_i` FOREIGN KEY (`applied_price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_payment_method` FOREIGN KEY (`payment_method`) REFERENCES `payment_methods` (`code`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_pos_profile_id` FOREIGN KEY (`pos_profile_id`) REFERENCES `pos_profiles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_pos_shift_id` FOREIGN KEY (`pos_shift_id`) REFERENCES `pos_shifts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_tax_template_id` FOREIGN KEY (`tax_template_id`) REFERENCES `tax_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_orders_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `chk_orders_total` CHECK ((`total` >= 0))
+) ENGINE=InnoDB AUTO_INCREMENT=316 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `orders`
+--
+
+LOCK TABLES `orders` WRITE;
+/*!40000 ALTER TABLE `orders` DISABLE KEYS */;
+INSERT INTO `orders` VALUES (281,NULL,'DH-DEMO-001',2001,NULL,1,NULL,'2025-11-10','offline',NULL,NULL,9001,0.00,0.00,'CASH','draft',NULL,0.00,0,0.00,0,426000.00,0.00,30000.00,456000.00,0.00,456000.00,'unpaid',0,NULL,'Nguyễn Minh An','0912000001','12 Trần Hưng Đạo, Hà Nội','Hàng Bài','Hoàn Kiếm','Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-11-10 13:07:00','2025-11-10 10:00:00',NULL),(282,NULL,'DH-DEMO-002',2002,NULL,2,NULL,'2025-11-11','online',NULL,NULL,9002,23600.00,0.00,'BANK_TRANSFER','draft',NULL,0.00,0,0.00,0,432000.00,0.00,40000.00,495600.00,173460.00,322140.00,'partial',0,NULL,'Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội','Cửa Nam','Hoàn Kiếm','Hà Nội',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-11-11 16:58:00','2025-11-11 10:00:00',NULL),(283,NULL,'DH-DEMO-003',2003,NULL,3,NULL,'2025-11-12','online',NULL,NULL,9003,43060.00,0.00,'COD','processing',NULL,0.00,0,0.00,0,438000.00,42400.00,35000.00,473660.00,189464.00,284196.00,'partial',0,NULL,'Phạm Gia Bảo','0912000003','22 Nguyễn Huệ, HCM','Bến Nghé','Quận 1','Hồ Chí Minh',NULL,'2025-11-12 11:00:00','2025-11-12 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-12 10:01:00','2025-11-12 12:00:00',NULL),(284,NULL,'DH-DEMO-004',2004,NULL,4,NULL,'2025-11-13','offline',NULL,NULL,9001,0.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,448000.00,0.00,0.00,448000.00,224000.00,224000.00,'partial',0,NULL,'Lê Hồng Nhung','0912000004','35 Hai Bà Trưng, HCM','Bến Thành','Quận 1','Hồ Chí Minh',NULL,'2025-11-13 11:00:00','2025-11-13 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-13 14:56:00','2025-11-13 12:00:00',NULL),(285,NULL,'DH-DEMO-005',2005,NULL,5,NULL,'2025-11-14','online',NULL,NULL,9002,20720.00,0.00,'EWALLET','processing',NULL,0.00,0,0.00,0,436000.00,66600.00,45000.00,435120.00,87024.00,348096.00,'partial',0,NULL,'Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng','Thạch Thang','Hải Châu','Đà Nẵng',NULL,'2025-11-14 11:00:00','2025-11-14 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-11-14 08:32:00','2025-11-14 12:00:00',NULL),(286,NULL,'DH-DEMO-006',2006,NULL,1,NULL,'2025-11-15','online',NULL,NULL,9003,45300.00,0.00,'COD','shipping',NULL,0.00,0,0.00,0,428000.00,0.00,25000.00,498300.00,298980.00,199320.00,'partial',0,NULL,'Đặng Bích Trâm','0912000006','101 Võ Văn Tần, HCM','6','Quận 3','Hồ Chí Minh',NULL,'2025-11-15 11:00:00','2025-11-15 12:00:00','2025-11-15 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-15 12:28:00','2025-11-15 13:00:00',NULL),(287,NULL,'DH-DEMO-007',2007,NULL,2,NULL,'2025-11-16','online',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','shipping',NULL,0.00,0,0.00,0,440000.00,0.00,20000.00,460000.00,230000.00,230000.00,'partial',0,NULL,'Huỳnh Tuấn Kiệt','0912000007','45 Trần Phú, Nha Trang','Lộc Thọ','Nha Trang','Khánh Hòa',NULL,'2025-11-16 11:00:00','2025-11-16 12:00:00','2025-11-16 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-16 08:14:00','2025-11-16 13:00:00',NULL),(288,NULL,'DH-DEMO-008',2008,NULL,3,NULL,'2025-11-17','offline',NULL,NULL,9002,19180.00,0.00,'CASH','shipping',NULL,0.00,0,0.00,0,426000.00,42400.00,0.00,402780.00,281946.00,120834.00,'partial',0,NULL,'Lý Thu Uyên','0912000008','68 Lê Lợi, Huế','Phú Hội','Huế','Thừa Thiên Huế',NULL,'2025-11-17 11:00:00','2025-11-17 12:00:00','2025-11-17 13:00:00',NULL,NULL,NULL,NULL,0,'2025-11-17 11:31:00','2025-11-17 13:00:00',NULL),(289,NULL,'DH-DEMO-009',2011,NULL,1,NULL,'2025-11-18','offline',NULL,NULL,9003,43600.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,436000.00,0.00,0.00,479600.00,479600.00,0.00,'paid',1,NULL,'Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội','Dịch Vọng','Cầu Giấy','Hà Nội',NULL,'2025-11-18 11:00:00','2025-11-18 12:00:00','2025-11-18 13:00:00','2025-11-18 14:00:00','2025-11-18 15:00:00',NULL,NULL,0,'2025-11-18 11:59:00','2025-11-18 15:00:00',NULL),(290,NULL,'DH-DEMO-010',2012,NULL,2,NULL,'2025-11-19','online',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,664000.00,42400.00,30000.00,651600.00,651600.00,0.00,'paid',1,NULL,'CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM','Bến Nghé','Quận 1','Hồ Chí Minh',NULL,'2025-11-19 11:00:00','2025-11-19 12:00:00','2025-11-19 13:00:00','2025-11-19 14:00:00','2025-11-19 15:00:00',NULL,NULL,0,'2025-11-19 10:07:00','2025-11-19 15:00:00',NULL),(291,NULL,'DH-DEMO-011',2013,NULL,3,NULL,'2025-11-20','offline',NULL,NULL,9002,19470.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,436000.00,66600.00,20000.00,408870.00,408870.00,0.00,'paid',1,NULL,'Hộ KD Minh Quân','0912000013','22 Trần Phú, Nha Trang','Vạn Thạnh','Nha Trang','Khánh Hòa',NULL,'2025-11-20 11:00:00','2025-11-20 12:00:00','2025-11-20 13:00:00','2025-11-20 14:00:00','2025-11-20 15:00:00',NULL,NULL,0,'2025-11-20 10:01:00','2025-11-20 15:00:00',NULL),(292,NULL,'DH-DEMO-012',2014,NULL,4,NULL,'2025-11-21','online',NULL,NULL,9003,42800.00,0.00,'COD','completed',NULL,0.00,0,0.00,0,428000.00,0.00,0.00,470800.00,470800.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội',NULL,'2025-11-21 11:00:00','2025-11-21 12:00:00','2025-11-21 13:00:00','2025-11-21 14:00:00','2025-11-21 15:00:00',NULL,NULL,0,'2025-11-21 08:33:00','2025-11-21 15:00:00',NULL),(293,NULL,'DH-DEMO-013',2015,NULL,5,NULL,'2025-11-22','offline',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,662000.00,42400.00,15000.00,634600.00,634600.00,0.00,'paid',1,NULL,'CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM','7','Quận 5','Hồ Chí Minh',NULL,'2025-11-22 11:00:00','2025-11-22 12:00:00','2025-11-22 13:00:00','2025-11-22 14:00:00','2025-11-22 15:00:00',NULL,NULL,0,'2025-11-22 08:59:00','2025-11-22 15:00:00',NULL),(294,NULL,'DH-DEMO-014',2016,NULL,1,NULL,'2025-11-23','offline',NULL,NULL,9002,21400.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,428000.00,0.00,0.00,449400.00,449400.00,0.00,'paid',1,NULL,'Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội','Điện Biên','Ba Đình','Hà Nội',NULL,'2025-11-23 11:00:00','2025-11-23 12:00:00','2025-11-23 13:00:00','2025-11-23 14:00:00','2025-11-23 15:00:00',NULL,NULL,0,'2025-11-23 12:26:00','2025-11-23 15:00:00',NULL),(295,NULL,'DH-DEMO-015',2017,NULL,2,NULL,'2025-11-24','online',NULL,NULL,9003,45300.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,428000.00,0.00,25000.00,498300.00,498300.00,0.00,'paid',1,NULL,'Đỗ Hồng Ngọc','0912000017','7 Nguyễn Văn Cừ, Hạ Long','Bạch Đằng','Hạ Long','Quảng Ninh',NULL,'2025-11-24 11:00:00','2025-11-24 12:00:00','2025-11-24 13:00:00','2025-11-24 14:00:00','2025-11-24 15:00:00',NULL,NULL,0,'2025-11-24 12:34:00','2025-11-24 15:00:00',NULL),(296,NULL,'DH-DEMO-016',2018,NULL,3,NULL,'2025-11-25','offline',NULL,NULL,9001,0.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,436000.00,0.00,0.00,436000.00,436000.00,0.00,'paid',1,NULL,'La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng','Lạch Tray','Ngô Quyền','Hải Phòng',NULL,'2025-11-25 11:00:00','2025-11-25 12:00:00','2025-11-25 13:00:00','2025-11-25 14:00:00','2025-11-25 15:00:00',NULL,NULL,0,'2025-11-25 16:41:00','2025-11-25 15:00:00',NULL),(297,NULL,'DH-DEMO-017',2019,NULL,4,NULL,'2025-11-26','online',NULL,NULL,9002,24600.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,452000.00,0.00,40000.00,516600.00,516600.00,0.00,'paid',1,NULL,'Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh','Hưng Bình','Vinh','Nghệ An',NULL,'2025-11-26 11:00:00','2025-11-26 12:00:00','2025-11-26 13:00:00','2025-11-26 14:00:00','2025-11-26 15:00:00',NULL,NULL,0,'2025-11-26 14:35:00','2025-11-26 15:00:00',NULL),(298,NULL,'DH-DEMO-018',2020,NULL,5,NULL,'2025-11-27','offline',NULL,NULL,9003,38360.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,426000.00,42400.00,0.00,421960.00,421960.00,0.00,'paid',1,NULL,'Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế','Phú Nhuận','Huế','Thừa Thiên Huế',NULL,'2025-11-27 11:00:00','2025-11-27 12:00:00','2025-11-27 13:00:00','2025-11-27 14:00:00','2025-11-27 15:00:00',NULL,NULL,0,'2025-11-27 15:17:00','2025-11-27 15:00:00',NULL),(299,NULL,'DH-DEMO-019',2009,NULL,5,NULL,'2025-11-28','offline',NULL,NULL,9001,0.00,0.00,'CASH','cancelled',NULL,0.00,0,0.00,0,224000.00,0.00,0.00,224000.00,0.00,224000.00,'unpaid',0,NULL,'Ngô Nhật Anh','0912000009','12 Nguyễn Văn Linh, Đà Nẵng','Nam Dương','Hải Châu','Đà Nẵng',NULL,NULL,NULL,NULL,NULL,NULL,'2025-11-28 11:00:00','Khách đổi ý',0,'2025-11-28 17:01:00','2025-11-28 11:00:00',NULL),(300,NULL,'DH-DEMO-020',2010,NULL,2,NULL,'2025-11-29','online',NULL,NULL,9002,11800.00,0.00,'COD','cancelled',NULL,0.00,0,0.00,0,216000.00,0.00,20000.00,247800.00,37170.00,210630.00,'partial',0,NULL,'Tạ Kim Yến','0912000010','99 Phan Chu Trinh, Đà Nẵng','Hải Châu 1','Hải Châu','Đà Nẵng',NULL,NULL,NULL,NULL,NULL,NULL,'2025-11-29 11:00:00','Hết hàng',0,'2025-11-29 10:37:00','2025-11-29 11:00:00',NULL),(301,NULL,'DH-DEMO-021',2005,NULL,5,NULL,'2025-11-30','offline',NULL,NULL,9003,55600.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,536000.00,0.00,20000.00,611600.00,611600.00,0.00,'paid',1,NULL,'Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng','Thạch Thang','Hải Châu','Đà Nẵng','Auto-generated demo order #21','2025-11-30 11:00:00','2025-11-30 12:00:00','2025-11-30 13:00:00','2025-11-30 14:00:00','2025-11-30 15:00:00',NULL,NULL,0,'2025-11-30 16:58:00','2025-11-30 15:00:00',NULL),(302,NULL,'DH-DEMO-022',2016,NULL,3,NULL,'2025-12-01','online',NULL,NULL,9001,0.00,0.00,'COD','completed',NULL,0.00,0,0.00,0,2180000.00,0.00,40000.00,2220000.00,2220000.00,0.00,'paid',1,NULL,'Trịnh Quốc Thái','0912000016','14 Lê Duẩn, Hà Nội','Điện Biên','Ba Đình','Hà Nội','Auto-generated demo order #22','2025-12-01 11:00:00','2025-12-01 12:00:00','2025-12-01 13:00:00','2025-12-01 14:00:00','2025-12-01 15:00:00',NULL,NULL,0,'2025-12-01 11:47:00','2025-12-01 15:00:00',NULL),(303,NULL,'DH-DEMO-023',2005,NULL,3,NULL,'2025-12-02','offline',NULL,NULL,9002,13600.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,252000.00,0.00,20000.00,285600.00,285600.00,0.00,'paid',1,NULL,'Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng','Thạch Thang','Hải Châu','Đà Nẵng','Auto-generated demo order #23','2025-12-02 11:00:00','2025-12-02 12:00:00','2025-12-02 13:00:00','2025-12-02 14:00:00','2025-12-02 15:00:00',NULL,NULL,0,'2025-12-02 10:00:00','2025-12-02 15:00:00',NULL),(304,NULL,'DH-DEMO-024',2019,NULL,5,NULL,'2025-12-03','offline',NULL,NULL,9003,201200.00,0.00,'BANK_TRANSFER','processing',NULL,0.00,0,0.00,0,1972000.00,0.00,40000.00,2213200.00,1106600.00,1106600.00,'partial',0,NULL,'Đinh Mạnh Cường','0912000019','18 Lê Lợi, Vinh','Hưng Bình','Vinh','Nghệ An','Auto-generated demo order #24','2025-12-03 11:00:00','2025-12-03 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-12-03 15:39:00','2025-12-03 12:00:00',NULL),(305,NULL,'DH-DEMO-025',2020,NULL,3,NULL,'2025-12-04','offline',NULL,NULL,9001,0.00,0.00,'EWALLET','shipping',NULL,0.00,0,0.00,0,1260000.00,0.00,30000.00,1290000.00,645000.00,645000.00,'partial',0,NULL,'Phùng Thanh Mai','0912000020','3 Hùng Vương, Huế','Phú Nhuận','Huế','Thừa Thiên Huế','Auto-generated demo order #25','2025-12-04 11:00:00','2025-12-04 12:00:00','2025-12-04 13:00:00',NULL,NULL,NULL,NULL,0,'2025-12-04 11:04:00','2025-12-04 13:00:00',NULL),(306,NULL,'DH-DEMO-026',2012,NULL,3,NULL,'2025-12-05','offline',NULL,NULL,9002,61700.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,1214000.00,0.00,20000.00,1295700.00,1295700.00,0.00,'paid',1,NULL,'CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM','Bến Nghé','Quận 1','Hồ Chí Minh','Auto-generated demo order #26','2025-12-05 11:00:00','2025-12-05 12:00:00','2025-12-05 13:00:00','2025-12-05 14:00:00','2025-12-05 15:00:00',NULL,NULL,0,'2025-12-05 13:13:00','2025-12-05 15:00:00',NULL),(307,NULL,'DH-DEMO-027',2002,NULL,3,NULL,'2025-12-06','offline',NULL,NULL,9003,212400.00,0.00,'COD','shipping',NULL,0.00,0,0.00,0,2114000.00,0.00,10000.00,2336400.00,1168200.00,1168200.00,'partial',0,NULL,'Trần Thu Hà','0912000002','89 Lý Thường Kiệt, Hà Nội','Cửa Nam','Hoàn Kiếm','Hà Nội','Auto-generated demo order #27','2025-12-06 11:00:00','2025-12-06 12:00:00','2025-12-06 13:00:00',NULL,NULL,NULL,NULL,0,'2025-12-06 12:50:00','2025-12-06 13:00:00',NULL),(308,NULL,'DH-DEMO-028',2009,NULL,1,NULL,'2025-12-07','offline',NULL,NULL,9001,0.00,0.00,'BANK_TRANSFER','cancelled',NULL,0.00,0,0.00,0,1064000.00,0.00,30000.00,1094000.00,0.00,1094000.00,'unpaid',0,NULL,'Ngô Nhật Anh','0912000009','12 Nguyễn Văn Linh, Đà Nẵng','Nam Dương','Hải Châu','Đà Nẵng','Auto-generated demo order #28',NULL,NULL,NULL,NULL,NULL,'2025-12-07 11:00:00',NULL,0,'2025-12-07 10:54:00','2025-12-07 11:00:00',NULL),(309,NULL,'DH-DEMO-029',2005,NULL,4,NULL,'2025-12-08','offline',NULL,NULL,9002,34400.00,0.00,'EWALLET','draft',NULL,0.00,0,0.00,0,678000.00,0.00,10000.00,722400.00,0.00,722400.00,'unpaid',0,NULL,'Vũ Hoàng Long','0912000005','15 Nguyễn Tri Phương, Đà Nẵng','Thạch Thang','Hải Châu','Đà Nẵng','Auto-generated demo order #29',NULL,NULL,NULL,NULL,NULL,NULL,NULL,0,'2025-12-08 09:02:00','2025-12-08 10:00:00',NULL),(310,NULL,'DH-DEMO-030',2018,NULL,1,NULL,'2025-12-09','offline',NULL,NULL,9003,118600.00,0.00,'CASH','processing',NULL,0.00,0,0.00,0,1186000.00,0.00,0.00,1304600.00,652300.00,652300.00,'partial',0,NULL,'La Mỹ Duyên','0912000018','155 Lạch Tray, Hải Phòng','Lạch Tray','Ngô Quyền','Hải Phòng','Auto-generated demo order #30','2025-12-09 11:00:00','2025-12-09 12:00:00',NULL,NULL,NULL,NULL,NULL,0,'2025-12-09 08:39:00','2025-12-09 12:00:00',NULL),(311,NULL,'DH-DEMO-031',2015,NULL,4,NULL,'2025-12-10','offline',NULL,NULL,9001,0.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,1088000.00,0.00,30000.00,1118000.00,1118000.00,0.00,'paid',1,NULL,'CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM','7','Quận 5','Hồ Chí Minh','Auto-generated demo order #31','2025-12-10 11:00:00','2025-12-10 12:00:00','2025-12-10 13:00:00','2025-12-10 14:00:00','2025-12-10 15:00:00',NULL,NULL,0,'2025-12-10 12:31:00','2025-12-10 15:00:00',NULL),(312,NULL,'DH-DEMO-032',2015,NULL,5,NULL,'2025-12-11','online',NULL,NULL,9002,12200.00,0.00,'COD','completed',NULL,0.00,0,0.00,0,204000.00,0.00,40000.00,256200.00,256200.00,0.00,'paid',1,NULL,'CTY Thiết Kế Mộc','0912000015','12 Nguyễn Trãi, Quận 5, HCM','7','Quận 5','Hồ Chí Minh','Auto-generated demo order #32','2025-12-11 11:00:00','2025-12-11 12:00:00','2025-12-11 13:00:00','2025-12-11 14:00:00','2025-12-11 15:00:00',NULL,NULL,0,'2025-12-11 09:29:00','2025-12-11 15:00:00',NULL),(313,NULL,'DH-DEMO-033',2014,NULL,4,NULL,'2025-12-12','online',NULL,NULL,9003,213800.00,0.00,'BANK_TRANSFER','completed',NULL,0.00,0,0.00,0,2108000.00,0.00,30000.00,2351800.00,2351800.00,0.00,'paid',1,NULL,'Công ty Vận Tải Nhanh','0912000014','88 Kim Mã, Ba Đình, Hà Nội','Kim Mã','Ba Đình','Hà Nội','Auto-generated demo order #33','2025-12-12 11:00:00','2025-12-12 12:00:00','2025-12-12 13:00:00','2025-12-12 14:00:00','2025-12-12 15:00:00',NULL,NULL,0,'2025-12-12 11:58:00','2025-12-12 15:00:00',NULL),(314,NULL,'DH-DEMO-034',2012,NULL,3,NULL,'2025-12-13','offline',NULL,NULL,9001,0.00,0.00,'EWALLET','completed',NULL,0.00,0,0.00,0,1890000.00,0.00,0.00,1890000.00,1890000.00,0.00,'paid',1,NULL,'CTCP Gỗ Xanh','0912000012','45 Pasteur, Quận 1, HCM','Bến Nghé','Quận 1','Hồ Chí Minh','Auto-generated demo order #34','2025-12-13 11:00:00','2025-12-13 12:00:00','2025-12-13 13:00:00','2025-12-13 14:00:00','2025-12-13 15:00:00',NULL,NULL,0,'2025-12-13 11:13:00','2025-12-13 15:00:00',NULL),(315,NULL,'DH-DEMO-035',2011,NULL,2,NULL,'2025-12-14','online',NULL,NULL,9002,76400.00,0.00,'CASH','completed',NULL,0.00,0,0.00,0,1528000.00,0.00,0.00,1604400.00,1604400.00,0.00,'paid',1,NULL,'Công ty Ánh Dương','0912000011','11 Duy Tân, Cầu Giấy, Hà Nội','Dịch Vọng','Cầu Giấy','Hà Nội','Auto-generated demo order #35','2025-12-14 11:00:00','2025-12-14 12:00:00','2025-12-14 13:00:00','2025-12-14 14:00:00','2025-12-14 15:00:00',NULL,NULL,0,'2025-12-14 10:02:00','2025-12-14 15:00:00',NULL);
+/*!40000 ALTER TABLE `orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `organizations`
+--
+
+DROP TABLE IF EXISTS `organizations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `organizations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_vi` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_en` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tax_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_organization_code` (`code`),
+  KEY `organizations_parent_id_foreign` (`parent_id`),
+  KEY `organizations_branch_id_foreign` (`branch_id`),
+  CONSTRAINT `organizations_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `organizations_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `organizations` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `organizations`
+--
+
+LOCK TABLES `organizations` WRITE;
+/*!40000 ALTER TABLE `organizations` DISABLE KEYS */;
+INSERT INTO `organizations` VALUES (1,'ORG-001','Tổ chức Demo 1',NULL,'0303030303',NULL,NULL,NULL,'active',NULL,NULL,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `organizations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `packing_slip_items`
+--
+
+DROP TABLE IF EXISTS `packing_slip_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `packing_slip_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `packing_slip_id` bigint unsigned NOT NULL,
+  `pick_list_item_id` bigint unsigned DEFAULT NULL,
+  `stock_entry_item_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `qty` decimal(12,3) DEFAULT '0.000',
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_packing_slip_item` (`packing_slip_id`),
+  KEY `fk_packing_slip_items_product_id` (`product_id`),
+  KEY `fk_packing_slip_items_stock_entry_item_id` (`stock_entry_item_id`),
+  KEY `fk_packing_slip_items_pick_list_item_id` (`pick_list_item_id`),
+  KEY `fk_packing_slip_items_batch_id` (`batch_id`),
+  CONSTRAINT `fk_packing_slip_items_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slip_items_packing_slip_id` FOREIGN KEY (`packing_slip_id`) REFERENCES `packing_slips` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slip_items_pick_list_item_id` FOREIGN KEY (`pick_list_item_id`) REFERENCES `pick_list_items` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slip_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slip_items_stock_entry_item_id` FOREIGN KEY (`stock_entry_item_id`) REFERENCES `stock_entry_items` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `packing_slip_items`
+--
+
+LOCK TABLES `packing_slip_items` WRITE;
+/*!40000 ALTER TABLE `packing_slip_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `packing_slip_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `packing_slips`
+--
+
+DROP TABLE IF EXISTS `packing_slips`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `packing_slips` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `packing_slip_number` varchar(60) NOT NULL,
+  `pick_list_id` bigint unsigned DEFAULT NULL,
+  `stock_entry_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'packed',
+  `source_warehouse_id` bigint unsigned DEFAULT NULL,
+  `target_warehouse_id` bigint unsigned DEFAULT NULL,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_packing_slip_number` (`packing_slip_number`),
+  KEY `idx_packing_slip_pick` (`pick_list_id`),
+  KEY `fk_packing_slips_source_warehouse_id` (`source_warehouse_id`),
+  KEY `fk_packing_slips_target_warehouse_id` (`target_warehouse_id`),
+  KEY `fk_packing_slips_stock_entry_id` (`stock_entry_id`),
+  CONSTRAINT `fk_packing_slips_pick_list_id` FOREIGN KEY (`pick_list_id`) REFERENCES `pick_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slips_source_warehouse_id` FOREIGN KEY (`source_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slips_stock_entry_id` FOREIGN KEY (`stock_entry_id`) REFERENCES `stock_entries` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_packing_slips_target_warehouse_id` FOREIGN KEY (`target_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `packing_slips`
+--
+
+LOCK TABLES `packing_slips` WRITE;
+/*!40000 ALTER TABLE `packing_slips` DISABLE KEYS */;
+/*!40000 ALTER TABLE `packing_slips` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `partners`
+--
+
+DROP TABLE IF EXISTS `partners`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `partners` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `type` enum('supplier','vendor','distributor','manufacturer') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `contact_person` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `address` text CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `city` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `tax_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `bank_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `credit_limit` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `debt_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_purchased` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` enum('active','inactive') CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `partners`
+--
+
+LOCK TABLES `partners` WRITE;
+/*!40000 ALTER TABLE `partners` DISABLE KEYS */;
+INSERT INTO `partners` VALUES (1,'SUP-001','Công ty TNHH Da Giày Việt Nam','supplier',NULL,'contact@dagiay.vn','024-3888-9999','123 Đường Láng, Hà Nội',NULL,'0123456789',NULL,NULL,0.00,0.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'SUP-002','Xưởng Sản Xuất Túi Xách Hồng Hà','supplier',NULL,'hongha@tuixach.vn','024-3777-8888','456 Phố Huế, Hà Nội',NULL,'0987654321',NULL,NULL,0.00,0.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(3,'SUP-003','Công ty CP Phụ Kiện Thời Trang','supplier',NULL,'info@phukien.com.vn','028-3666-7777','789 Nguyễn Huệ, HCM',NULL,'0111222333',NULL,NULL,0.00,22500000.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(4,'SUP-004','Nhà Máy Dệt May Tân Tiến','supplier',NULL,'sales@tantien.vn','0236-3555-6666','321 Lê Duẩn, Đà Nẵng',NULL,'0444555666',NULL,NULL,0.00,30000000.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(5,'SUP-005','Xưởng Gia Công Đồng Phát','supplier',NULL,'dongphat@workshop.vn','0292-3444-5555','654 Đường 3/2, Cần Thơ',NULL,'0777888999',NULL,NULL,0.00,25000000.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(6,'SUP-006','Công ty TNHH Vải Cao Cấp','supplier',NULL,'premium@fabric.vn','024-3333-4444','987 Trần Hưng Đạo, Hà Nội',NULL,'0222333444',NULL,NULL,0.00,40000000.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(7,'SUP-007','Nhà Cung Cấp Phụ Liệu Minh Anh','supplier',NULL,'minhanh@materials.vn','028-3222-3333','147 Lê Lợi, HCM',NULL,'0555666777',NULL,NULL,0.00,0.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(8,'SUP-008','Xưởng Thêu Ren Hoa Mai','supplier',NULL,'hoamai@embroidery.vn','0225-3111-2222','258 Lạch Tray, Hải Phòng',NULL,'0888999000',NULL,NULL,0.00,0.00,0.00,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `partners` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `payment_entries`
+--
+
+DROP TABLE IF EXISTS `payment_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payment_entries` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `mode_of_payment` varchar(50) DEFAULT NULL,
+  `party_type` varchar(50) DEFAULT NULL,
+  `party_id` bigint unsigned DEFAULT NULL,
+  `reference_type` varchar(120) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `debit_account_id` bigint unsigned DEFAULT NULL,
+  `credit_account_id` bigint unsigned DEFAULT NULL,
+  `amount` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `currency` varchar(10) DEFAULT 'VND',
+  `exchange_rate` decimal(12,4) DEFAULT '1.0000',
+  `reference` varchar(120) DEFAULT NULL,
+  `reference_no` varchar(120) DEFAULT NULL,
+  `reference_date` date DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'posted',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_payment_entry_order` (`order_id`,`payment_method`,`reference`),
+  KEY `idx_payment_party` (`party_type`,`party_id`),
+  KEY `idx_payment_ref` (`reference_type`,`reference_id`),
+  KEY `fk_payment_entries_credit_account_id` (`credit_account_id`),
+  KEY `fk_payment_entries_debit_account_id` (`debit_account_id`),
+  CONSTRAINT `fk_payment_entries_credit_account_id` FOREIGN KEY (`credit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_payment_entries_debit_account_id` FOREIGN KEY (`debit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_payment_entries_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payment_entries`
+--
+
+LOCK TABLES `payment_entries` WRITE;
+/*!40000 ALTER TABLE `payment_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `payment_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `payment_entry_allocations`
+--
+
+DROP TABLE IF EXISTS `payment_entry_allocations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payment_entry_allocations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `payment_entry_id` bigint unsigned NOT NULL,
+  `reference_type` varchar(120) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `allocated_amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_payment_alloc_entry` (`payment_entry_id`),
+  CONSTRAINT `fk_payment_entry_alloca_payment_entry_id` FOREIGN KEY (`payment_entry_id`) REFERENCES `payment_entries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payment_entry_allocations`
+--
+
+LOCK TABLES `payment_entry_allocations` WRITE;
+/*!40000 ALTER TABLE `payment_entry_allocations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `payment_entry_allocations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `payment_methods`
+--
+
+DROP TABLE IF EXISTS `payment_methods`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payment_methods` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `name_translations` json DEFAULT NULL,
+  `description` text,
+  `is_active` tinyint(1) DEFAULT '1',
+  `display_order` int DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`)
+) ENGINE=InnoDB AUTO_INCREMENT=42 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payment_methods`
+--
+
+LOCK TABLES `payment_methods` WRITE;
+/*!40000 ALTER TABLE `payment_methods` DISABLE KEYS */;
+INSERT INTO `payment_methods` VALUES (1,'CASH','Tiền mặt',NULL,'Thanh toán bằng tiền mặt tại cửa hàng',1,1,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'BANK_TRANSFER','Chuyển khoản ngân hàng',NULL,'Chuyển khoản qua tài khoản ngân hàng',1,2,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(3,'CARD','Thẻ tín dụng/ghi nợ',NULL,'Thanh toán bằng thẻ Visa/Mastercard/JCB',1,3,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(4,'COD','Thu hộ (COD)',NULL,'Thanh toán khi nhận hàng. Phí COD: 15,000đ',1,4,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(5,'EWALLET','Ví điện tử',NULL,'Thanh toán qua MoMo, ZaloPay, VNPay',1,5,'2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `payment_methods` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `payment_schedules`
+--
+
+DROP TABLE IF EXISTS `payment_schedules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payment_schedules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `due_date` date NOT NULL,
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(20) DEFAULT 'pending',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_payment_schedule_invoice` (`invoice_id`),
+  CONSTRAINT `fk_payment_schedules_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `sales_invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payment_schedules`
+--
+
+LOCK TABLES `payment_schedules` WRITE;
+/*!40000 ALTER TABLE `payment_schedules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `payment_schedules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `payroll_entries`
+--
+
+DROP TABLE IF EXISTS `payroll_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `payroll_entries` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `payroll_number` varchar(60) NOT NULL,
+  `period_start` date NOT NULL,
+  `period_end` date NOT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_payroll_number` (`payroll_number`),
+  KEY `idx_payroll_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `payroll_entries`
+--
+
+LOCK TABLES `payroll_entries` WRITE;
+/*!40000 ALTER TABLE `payroll_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `payroll_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `permissions`
+--
+
+DROP TABLE IF EXISTS `permissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `permissions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `display_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `module` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `module_group` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `guard_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `name` (`name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `permissions`
+--
+
+LOCK TABLES `permissions` WRITE;
+/*!40000 ALTER TABLE `permissions` DISABLE KEYS */;
+INSERT INTO `permissions` VALUES (1,'users.view','Xem người dùng',NULL,'users','admin','api','2025-12-09 11:31:02',NULL,NULL),(2,'users.manage','Quản lý người dùng',NULL,'users','admin','api','2025-12-09 11:31:02',NULL,NULL),(3,'products.view','Xem sản phẩm',NULL,'products','catalog','api','2025-12-09 11:31:02',NULL,NULL),(4,'products.manage','Quản lý sản phẩm',NULL,'products','catalog','api','2025-12-09 11:31:02',NULL,NULL);
+/*!40000 ALTER TABLE `permissions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pick_list_items`
+--
+
+DROP TABLE IF EXISTS `pick_list_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pick_list_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `pick_list_id` bigint unsigned NOT NULL,
+  `stock_entry_item_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `qty` decimal(12,3) DEFAULT '0.000',
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `source_warehouse_id` bigint unsigned DEFAULT NULL,
+  `target_warehouse_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pick_list_item_list` (`pick_list_id`),
+  KEY `fk_pick_list_items_product_id` (`product_id`),
+  KEY `fk_pick_list_items_stock_entry_item_id` (`stock_entry_item_id`),
+  KEY `fk_pick_list_items_source_warehouse_id` (`source_warehouse_id`),
+  KEY `fk_pick_list_items_target_warehouse_id` (`target_warehouse_id`),
+  KEY `fk_pick_list_items_batch_id` (`batch_id`),
+  CONSTRAINT `fk_pick_list_items_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_list_items_pick_list_id` FOREIGN KEY (`pick_list_id`) REFERENCES `pick_lists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_list_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_list_items_source_warehouse_id` FOREIGN KEY (`source_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_list_items_stock_entry_item_id` FOREIGN KEY (`stock_entry_item_id`) REFERENCES `stock_entry_items` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_list_items_target_warehouse_id` FOREIGN KEY (`target_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pick_list_items`
+--
+
+LOCK TABLES `pick_list_items` WRITE;
+/*!40000 ALTER TABLE `pick_list_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pick_list_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pick_lists`
+--
+
+DROP TABLE IF EXISTS `pick_lists`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pick_lists` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `pick_list_number` varchar(60) NOT NULL,
+  `stock_entry_id` bigint unsigned DEFAULT NULL,
+  `source_warehouse_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'open',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_pick_list_number` (`pick_list_number`),
+  KEY `idx_pick_list_entry` (`stock_entry_id`),
+  KEY `fk_pick_lists_source_warehouse_id` (`source_warehouse_id`),
+  CONSTRAINT `fk_pick_lists_source_warehouse_id` FOREIGN KEY (`source_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pick_lists_stock_entry_id` FOREIGN KEY (`stock_entry_id`) REFERENCES `stock_entries` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pick_lists`
+--
+
+LOCK TABLES `pick_lists` WRITE;
+/*!40000 ALTER TABLE `pick_lists` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pick_lists` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `portal_access_tokens`
+--
+
+DROP TABLE IF EXISTS `portal_access_tokens`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `portal_access_tokens` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `portal_user_id` bigint unsigned NOT NULL,
+  `token` varchar(120) NOT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_portal_token` (`token`),
+  KEY `idx_portal_token_user` (`portal_user_id`),
+  CONSTRAINT `fk_portal_access_tokens_portal_user_id` FOREIGN KEY (`portal_user_id`) REFERENCES `portal_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `portal_access_tokens`
+--
+
+LOCK TABLES `portal_access_tokens` WRITE;
+/*!40000 ALTER TABLE `portal_access_tokens` DISABLE KEYS */;
+/*!40000 ALTER TABLE `portal_access_tokens` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `portal_users`
+--
+
+DROP TABLE IF EXISTS `portal_users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `portal_users` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `email` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `status` varchar(30) DEFAULT 'active',
+  `last_login_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_portal_email` (`email`),
+  KEY `fk_portal_users_customer_id` (`customer_id`),
+  CONSTRAINT `fk_portal_users_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `portal_users`
+--
+
+LOCK TABLES `portal_users` WRITE;
+/*!40000 ALTER TABLE `portal_users` DISABLE KEYS */;
+/*!40000 ALTER TABLE `portal_users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_offline_queue`
+--
+
+DROP TABLE IF EXISTS `pos_offline_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_offline_queue` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `temp_id` bigint unsigned DEFAULT NULL,
+  `device_id` bigint unsigned DEFAULT NULL,
+  `idempotency_key` varchar(200) NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'pending',
+  `order_id` bigint unsigned DEFAULT NULL,
+  `error_message` text,
+  `created_at` datetime DEFAULT NULL,
+  `synced_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_pos_offline_key` (`device_id`,`temp_id`),
+  KEY `idx_pos_offline_status` (`status`),
+  KEY `idx_pos_offline_idem` (`idempotency_key`),
+  KEY `fk_pos_offline_queue_branch_id` (`branch_id`),
+  KEY `fk_pos_offline_queue_order_id` (`order_id`),
+  KEY `fk_pos_offline_queue_user_id` (`user_id`),
+  KEY `fk_pos_offline_queue_temp` (`temp_id`),
+  CONSTRAINT `fk_pos_offline_queue_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_offline_queue_device` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_offline_queue_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_offline_queue_temp` FOREIGN KEY (`temp_id`) REFERENCES `temp_queue` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_offline_queue_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_offline_queue`
+--
+
+LOCK TABLES `pos_offline_queue` WRITE;
+/*!40000 ALTER TABLE `pos_offline_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_offline_queue` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_payment_methods`
+--
+
+DROP TABLE IF EXISTS `pos_payment_methods`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_payment_methods` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `profile_id` bigint unsigned NOT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `is_allowed` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_profile_method` (`profile_id`,`payment_method`),
+  KEY `idx_pos_payment_profile` (`profile_id`),
+  CONSTRAINT `fk_pos_payment_methods_profile_id` FOREIGN KEY (`profile_id`) REFERENCES `pos_profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_payment_methods`
+--
+
+LOCK TABLES `pos_payment_methods` WRITE;
+/*!40000 ALTER TABLE `pos_payment_methods` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_payment_methods` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_profiles`
+--
+
+DROP TABLE IF EXISTS `pos_profiles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_profiles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `role_id` bigint unsigned DEFAULT NULL,
+  `price_list_id` bigint unsigned DEFAULT NULL,
+  `tax_template_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `company` varchar(150) DEFAULT NULL,
+  `allow_offline` tinyint(1) DEFAULT '0',
+  `require_shift` tinyint(1) DEFAULT '1',
+  `credit_limit` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pos_profile_user_branch` (`user_id`,`branch_id`),
+  KEY `idx_pos_profile_role` (`role_id`),
+  KEY `fk_pos_profiles_branch_id` (`branch_id`),
+  KEY `fk_pos_profiles_warehouse_id` (`warehouse_id`),
+  KEY `fk_pos_profiles_price_list_id` (`price_list_id`),
+  KEY `fk_pos_profiles_tax_template_id` (`tax_template_id`),
+  CONSTRAINT `fk_pos_profiles_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_profiles_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_profiles_role_id` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_profiles_tax_template_id` FOREIGN KEY (`tax_template_id`) REFERENCES `tax_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_profiles_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_profiles_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_profiles`
+--
+
+LOCK TABLES `pos_profiles` WRITE;
+/*!40000 ALTER TABLE `pos_profiles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_profiles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_shift_logs`
+--
+
+DROP TABLE IF EXISTS `pos_shift_logs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_shift_logs` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `shift_id` bigint unsigned NOT NULL,
+  `action` varchar(50) NOT NULL,
+  `message` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pos_shift_log` (`shift_id`),
+  CONSTRAINT `fk_pos_shift_logs_shift_id` FOREIGN KEY (`shift_id`) REFERENCES `pos_shifts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_shift_logs`
+--
+
+LOCK TABLES `pos_shift_logs` WRITE;
+/*!40000 ALTER TABLE `pos_shift_logs` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_shift_logs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_shift_payments`
+--
+
+DROP TABLE IF EXISTS `pos_shift_payments`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_shift_payments` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `shift_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `payment_method` varchar(50) NOT NULL,
+  `amount` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `reference_type` varchar(50) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pos_shift_payment` (`shift_id`),
+  KEY `idx_pos_shift_payment_method` (`shift_id`,`payment_method`),
+  KEY `fk_pos_shift_payments_order_id` (`order_id`),
+  CONSTRAINT `fk_pos_shift_payments_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_shift_payments_shift_id` FOREIGN KEY (`shift_id`) REFERENCES `pos_shifts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_shift_payments`
+--
+
+LOCK TABLES `pos_shift_payments` WRITE;
+/*!40000 ALTER TABLE `pos_shift_payments` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_shift_payments` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pos_shifts`
+--
+
+DROP TABLE IF EXISTS `pos_shifts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pos_shifts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `profile_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `opening_balance` decimal(14,2) DEFAULT '0.00',
+  `expected_total` decimal(14,2) DEFAULT '0.00',
+  `expected_cash` decimal(14,2) DEFAULT '0.00',
+  `expected_card` decimal(14,2) DEFAULT '0.00',
+  `actual_total` decimal(14,2) DEFAULT '0.00',
+  `actual_cash` decimal(14,2) DEFAULT '0.00',
+  `actual_card` decimal(14,2) DEFAULT '0.00',
+  `discrepancy` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(20) DEFAULT 'open',
+  `opened_at` datetime DEFAULT NULL,
+  `closed_at` datetime DEFAULT NULL,
+  `closing_note` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pos_shift_user_status` (`user_id`,`status`),
+  KEY `idx_pos_shift_profile` (`profile_id`),
+  KEY `fk_pos_shifts_branch_id` (`branch_id`),
+  CONSTRAINT `fk_pos_shifts_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_shifts_profile_id` FOREIGN KEY (`profile_id`) REFERENCES `pos_profiles` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_pos_shifts_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pos_shifts`
+--
+
+LOCK TABLES `pos_shifts` WRITE;
+/*!40000 ALTER TABLE `pos_shifts` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pos_shifts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `positions`
+--
+
+DROP TABLE IF EXISTS `positions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `positions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `code` varchar(50) NOT NULL,
+  `department_id` bigint unsigned DEFAULT NULL,
+  `level` int DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_positions_department_id` (`department_id`),
+  CONSTRAINT `fk_positions_department` FOREIGN KEY (`department_id`) REFERENCES `departments` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `positions`
+--
+
+LOCK TABLES `positions` WRITE;
+/*!40000 ALTER TABLE `positions` DISABLE KEYS */;
+INSERT INTO `positions` VALUES (1,'Giám Đốc','CEO',1,1,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(2,'Trưởng Phòng','MGR',2,2,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(3,'Nhân Viên','STAFF',2,3,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(4,'Kế Toán Trưởng','ACC_MGR',3,2,'2025-12-09 11:31:02','2025-12-09 11:31:02'),(5,'Thủ Kho','WH_KEEPER',5,3,'2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `positions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `price_history`
+--
+
+DROP TABLE IF EXISTS `price_history`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `price_history` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `source_type` varchar(50) NOT NULL,
+  `source_id` bigint unsigned DEFAULT NULL,
+  `old_price` decimal(14,4) DEFAULT '0.0000',
+  `new_price` decimal(14,4) DEFAULT '0.0000',
+  `changed_by` bigint unsigned DEFAULT NULL,
+  `changed_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_price_history` (`product_id`,`variant_id`),
+  KEY `fk_price_history_variant_id` (`variant_id`),
+  CONSTRAINT `fk_price_history_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_price_history_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `price_history`
+--
+
+LOCK TABLES `price_history` WRITE;
+/*!40000 ALTER TABLE `price_history` DISABLE KEYS */;
+/*!40000 ALTER TABLE `price_history` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `price_list_items`
+--
+
+DROP TABLE IF EXISTS `price_list_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `price_list_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `price_list_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `discount_percent` decimal(5,2) DEFAULT '0.00',
+  `discount_amount` decimal(10,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_price_list_items_price_list_id` (`price_list_id`),
+  KEY `fk_price_list_items_product_id` (`product_id`),
+  KEY `fk_price_list_items_variant_id` (`variant_id`),
+  CONSTRAINT `fk_price_list_items_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_price_list_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_price_list_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `price_list_items`
+--
+
+LOCK TABLES `price_list_items` WRITE;
+/*!40000 ALTER TABLE `price_list_items` DISABLE KEYS */;
+INSERT INTO `price_list_items` VALUES (1,1,501,NULL,202000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(2,2,501,NULL,181800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(3,1,502,NULL,204000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(4,2,502,NULL,183600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(5,1,503,NULL,206000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(6,2,503,NULL,185400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(7,1,504,NULL,208000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(8,2,504,NULL,187200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(9,1,505,NULL,210000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(10,2,505,NULL,189000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(11,1,506,NULL,212000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(12,2,506,NULL,190800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(13,1,507,NULL,214000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(14,2,507,NULL,192600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(15,1,508,NULL,216000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(16,2,508,NULL,194400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(17,1,509,NULL,218000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(18,2,509,NULL,196200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(19,1,510,NULL,220000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(20,2,510,NULL,198000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(21,1,511,NULL,222000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(22,2,511,NULL,199800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(23,1,512,NULL,224000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(24,2,512,NULL,201600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(25,1,513,NULL,226000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(26,2,513,NULL,203400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(27,1,514,NULL,228000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(28,2,514,NULL,205200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(29,1,515,NULL,230000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(30,2,515,NULL,207000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(31,1,516,NULL,232000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(32,2,516,NULL,208800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(33,1,517,NULL,234000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(34,2,517,NULL,210600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(35,1,518,NULL,236000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(36,2,518,NULL,212400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(37,1,519,NULL,238000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(38,2,519,NULL,214200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(39,1,520,NULL,240000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(40,2,520,NULL,216000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(41,1,521,NULL,242000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(42,2,521,NULL,217800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(43,1,522,NULL,244000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(44,2,522,NULL,219600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(45,1,523,NULL,246000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(46,2,523,NULL,221400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(47,1,524,NULL,248000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(48,2,524,NULL,223200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(49,1,525,NULL,250000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(50,2,525,NULL,225000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(51,1,526,NULL,252000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(52,2,526,NULL,226800.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(53,1,527,NULL,254000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(54,2,527,NULL,228600.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(55,1,528,NULL,256000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(56,2,528,NULL,230400.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(57,1,529,NULL,258000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(58,2,529,NULL,232200.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(59,1,530,NULL,260000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(60,2,530,NULL,234000.00,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL);
+/*!40000 ALTER TABLE `price_list_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `price_lists`
+--
+
+DROP TABLE IF EXISTS `price_lists`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `price_lists` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `type` varchar(50) DEFAULT 'custom',
+  `description` text,
+  `apply_to_groups` json DEFAULT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `priority` int DEFAULT '0',
+  `is_active` tinyint(1) DEFAULT '1',
+  `is_system` tinyint(1) DEFAULT '0',
+  `formula` text,
+  `base_price_list_id` bigint unsigned DEFAULT NULL,
+  `auto_update` tinyint(1) DEFAULT '0',
+  `rounding_rule` varchar(50) DEFAULT 'none',
+  `config` json DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_price_lists_base_price_list_id` (`base_price_list_id`),
+  CONSTRAINT `fk_price_lists_base_price_list_id` FOREIGN KEY (`base_price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `price_lists`
+--
+
+LOCK TABLES `price_lists` WRITE;
+/*!40000 ALTER TABLE `price_lists` DISABLE KEYS */;
+INSERT INTO `price_lists` VALUES (1,'Bảng giá chung','default',NULL,NULL,'2025-12-09',NULL,0,1,1,NULL,NULL,0,'none',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL),(2,'Bảng giá VIP (Giảm 10%)','normal',NULL,NULL,'2025-12-09',NULL,0,1,0,NULL,NULL,0,'none',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL);
+/*!40000 ALTER TABLE `price_lists` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `pricing_rules`
+--
+
+DROP TABLE IF EXISTS `pricing_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `pricing_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `condition_type` varchar(50) DEFAULT 'amount',
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `project_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `min_qty` decimal(12,3) DEFAULT '0.000',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `price` decimal(14,4) DEFAULT '0.0000',
+  `discount_percent` decimal(6,3) DEFAULT '0.000',
+  `priority` int DEFAULT '100',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_pricing_rule` (`condition_type`,`customer_id`,`project_id`),
+  KEY `idx_pricing_priority` (`priority`),
+  KEY `fk_pricing_rules_customer_id` (`customer_id`),
+  KEY `fk_pricing_rules_product_id` (`product_id`),
+  KEY `fk_pricing_rules_variant_id` (`variant_id`),
+  KEY `fk_pricing_rules_project_id` (`project_id`),
+  CONSTRAINT `fk_pricing_rules_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pricing_rules_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pricing_rules_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_pricing_rules_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `pricing_rules`
+--
+
+LOCK TABLES `pricing_rules` WRITE;
+/*!40000 ALTER TABLE `pricing_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pricing_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_attribute_options`
+--
+
+DROP TABLE IF EXISTS `product_attribute_options`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_attribute_options` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `attribute_id` bigint unsigned DEFAULT NULL,
+  `option_name` varchar(255) DEFAULT NULL,
+  `color_code` varchar(50) DEFAULT NULL,
+  `sort_order` int DEFAULT '0',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_product_attribute_op_attribute_id` (`attribute_id`),
+  CONSTRAINT `fk_product_attribute_op_attribute_id` FOREIGN KEY (`attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=306 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_attribute_options`
+--
+
+LOCK TABLES `product_attribute_options` WRITE;
+/*!40000 ALTER TABLE `product_attribute_options` DISABLE KEYS */;
+INSERT INTO `product_attribute_options` VALUES (301,201,'Đen','#000000',1,'active','2025-12-09 11:31:02',NULL,NULL),(302,201,'Nâu','#5b3a29',2,'active','2025-12-09 11:31:02',NULL,NULL),(303,202,'M',NULL,1,'active','2025-12-09 11:31:02',NULL,NULL),(304,202,'L',NULL,2,'active','2025-12-09 11:31:02',NULL,NULL),(305,201,'Xanh rêu','#556b2f',3,'active','2025-12-09 11:31:02',NULL,NULL);
+/*!40000 ALTER TABLE `product_attribute_options` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_attribute_values`
+--
+
+DROP TABLE IF EXISTS `product_attribute_values`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_attribute_values` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `attribute_id` bigint unsigned DEFAULT NULL,
+  `option_id` bigint unsigned DEFAULT NULL,
+  `value_text` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_product_attribute_va_attribute_id` (`attribute_id`),
+  KEY `fk_product_attribute_va_option_id` (`option_id`),
+  KEY `fk_product_attribute_va_product_id` (`product_id`),
+  KEY `fk_product_attribute_va_variant_id` (`variant_id`),
+  CONSTRAINT `fk_product_attribute_va_attribute_id` FOREIGN KEY (`attribute_id`) REFERENCES `product_attributes` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_attribute_va_option_id` FOREIGN KEY (`option_id`) REFERENCES `product_attribute_options` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_attribute_va_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_attribute_va_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_attribute_values`
+--
+
+LOCK TABLES `product_attribute_values` WRITE;
+/*!40000 ALTER TABLE `product_attribute_values` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_attribute_values` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_attributes`
+--
+
+DROP TABLE IF EXISTS `product_attributes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_attributes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) DEFAULT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `attribute_key` varchar(100) DEFAULT NULL,
+  `type` varchar(50) DEFAULT NULL,
+  `is_required` tinyint DEFAULT '0',
+  `is_filterable` tinyint DEFAULT '0',
+  `sort_order` int DEFAULT '0',
+  `status` varchar(20) DEFAULT 'active',
+  `is_visible` tinyint DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=203 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_attributes`
+--
+
+LOCK TABLES `product_attributes` WRITE;
+/*!40000 ALTER TABLE `product_attributes` DISABLE KEYS */;
+INSERT INTO `product_attributes` VALUES (201,'Màu sắc','mau-sac','color','select',0,1,1,'active',1,'2025-12-09 11:31:02',NULL,NULL),(202,'Kích thước','size','size','select',0,1,2,'active',1,'2025-12-09 11:31:02',NULL,NULL);
+/*!40000 ALTER TABLE `product_attributes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_batches`
+--
+
+DROP TABLE IF EXISTS `product_batches`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_batches` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `batch_number` varchar(120) NOT NULL,
+  `manufacture_date` date DEFAULT NULL,
+  `expiry_date` date DEFAULT NULL,
+  `initial_quantity` decimal(12,3) DEFAULT '0.000',
+  `current_quantity` decimal(12,3) DEFAULT '0.000',
+  `cost_per_unit` decimal(14,4) DEFAULT '0.0000',
+  `supplier_name` varchar(255) DEFAULT NULL,
+  `reference_document` varchar(160) DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_product_batch_number` (`product_id`,`batch_number`),
+  KEY `idx_product_batch_expiry` (`expiry_date`),
+  KEY `idx_product_batch_product` (`product_id`,`variant_id`),
+  KEY `fk_product_batches_branch_id` (`branch_id`),
+  KEY `fk_product_batches_variant_id` (`variant_id`),
+  KEY `fk_product_batches_warehouse_id` (`warehouse_id`),
+  CONSTRAINT `fk_product_batches_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_batches_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_batches_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_batches_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_batches`
+--
+
+LOCK TABLES `product_batches` WRITE;
+/*!40000 ALTER TABLE `product_batches` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_batches` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_bundles`
+--
+
+DROP TABLE IF EXISTS `product_bundles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_bundles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_product_id` bigint unsigned NOT NULL,
+  `child_product_id` bigint unsigned NOT NULL,
+  `quantity` decimal(12,3) NOT NULL DEFAULT '1.000',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `product_bundles_parent_product_id_foreign` (`parent_product_id`),
+  KEY `product_bundles_child_product_id_foreign` (`child_product_id`),
+  CONSTRAINT `product_bundles_child_product_id_foreign` FOREIGN KEY (`child_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `product_bundles_parent_product_id_foreign` FOREIGN KEY (`parent_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_bundles`
+--
+
+LOCK TABLES `product_bundles` WRITE;
+/*!40000 ALTER TABLE `product_bundles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_bundles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_categories`
+--
+
+DROP TABLE IF EXISTS `product_categories`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_categories` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT '0',
+  `level` tinyint DEFAULT '1',
+  `is_variant_group` tinyint DEFAULT '0',
+  `code` varchar(50) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `description` text,
+  `image` varchar(255) DEFAULT NULL,
+  `sort_order` int DEFAULT '0',
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_product_categories_parent_id` (`parent_id`),
+  CONSTRAINT `fk_product_categories_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_categories`
+--
+
+LOCK TABLES `product_categories` WRITE;
+/*!40000 ALTER TABLE `product_categories` DISABLE KEYS */;
+INSERT INTO `product_categories` VALUES (10,NULL,0,1,0,'CAT_MEN','Thời trang Nam','thoi-trang-nam',NULL,NULL,1,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(11,10,0,2,0,'CAT_MEN_TSHIRT','Áo Thun Nam','ao-thun-nam',NULL,NULL,4,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(12,10,0,2,0,'CAT_MEN_SHIRT','Áo Sơ mi Nam','ao-somi-nam',NULL,NULL,5,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(13,10,0,2,0,'CAT_MEN_JEANS','Quần Jeans Nam','quan-jeans-nam',NULL,NULL,6,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(20,NULL,0,1,0,'CAT_WOMEN','Thời trang Nữ','thoi-trang-nu',NULL,NULL,2,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(21,20,0,2,0,'CAT_WOMEN_DRESS','Đầm Váy','dam-vay',NULL,NULL,7,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(22,20,0,2,0,'CAT_WOMEN_TOP','Áo Kiểu','ao-kieu',NULL,NULL,8,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(30,NULL,0,1,0,'CAT_ACCESSORIES','Phụ kiện','phu-kien',NULL,NULL,3,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(31,30,0,2,0,'CAT_BAGS','Túi xách','tui-xach',NULL,NULL,9,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(32,30,0,2,0,'CAT_SHOES','Giày dép','giay-dep',NULL,NULL,10,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL),(33,30,0,2,0,'CAT_WATCHES','Đồng hồ','dong-ho',NULL,NULL,11,'active','2025-12-09 11:53:27','2025-12-09 11:53:27',NULL);
+/*!40000 ALTER TABLE `product_categories` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_category_links`
+--
+
+DROP TABLE IF EXISTS `product_category_links`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_category_links` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `category_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_product_category_links` (`product_id`,`category_id`),
+  KEY `fk_product_category_lin_category_id` (`category_id`),
+  CONSTRAINT `fk_product_category_lin_category_id` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_category_lin_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_category_links`
+--
+
+LOCK TABLES `product_category_links` WRITE;
+/*!40000 ALTER TABLE `product_category_links` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_category_links` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_channels`
+--
+
+DROP TABLE IF EXISTS `product_channels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_channels` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `channel` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `channel_product_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'disconnected',
+  `sync_status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'synced',
+  `last_sync_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `product_id_channel` (`product_id`,`channel`),
+  CONSTRAINT `product_channels_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_channels`
+--
+
+LOCK TABLES `product_channels` WRITE;
+/*!40000 ALTER TABLE `product_channels` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_channels` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_images`
+--
+
+DROP TABLE IF EXISTS `product_images`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_images` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `image_path` varchar(255) DEFAULT NULL,
+  `image_url` varchar(255) DEFAULT NULL,
+  `is_primary` tinyint DEFAULT '0',
+  `sort_order` int DEFAULT '0',
+  `file_name` varchar(255) DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_product_images_product_id` (`product_id`),
+  KEY `fk_product_images_variant_id` (`variant_id`),
+  CONSTRAINT `fk_product_images_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_product_images_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_images_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_images_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=481 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_images`
+--
+
+LOCK TABLES `product_images` WRITE;
+/*!40000 ALTER TABLE `product_images` DISABLE KEYS */;
+INSERT INTO `product_images` VALUES (421,501,50101,'/uploads/products/PROD-001-V1.jpg','https://picsum.photos/seed/PROD-001-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(422,501,50102,'/uploads/products/PROD-001-V2.jpg','https://picsum.photos/seed/PROD-001-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(423,502,50201,'/uploads/products/PROD-002-V1.jpg','https://picsum.photos/seed/PROD-002-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(424,502,50202,'/uploads/products/PROD-002-V2.jpg','https://picsum.photos/seed/PROD-002-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(425,503,50301,'/uploads/products/PROD-003-V1.jpg','https://picsum.photos/seed/PROD-003-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(426,503,50302,'/uploads/products/PROD-003-V2.jpg','https://picsum.photos/seed/PROD-003-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(427,504,50401,'/uploads/products/PROD-004-V1.jpg','https://picsum.photos/seed/PROD-004-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(428,504,50402,'/uploads/products/PROD-004-V2.jpg','https://picsum.photos/seed/PROD-004-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(429,505,50501,'/uploads/products/PROD-005-V1.jpg','https://picsum.photos/seed/PROD-005-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(430,505,50502,'/uploads/products/PROD-005-V2.jpg','https://picsum.photos/seed/PROD-005-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(431,506,50601,'/uploads/products/PROD-006-V1.jpg','https://picsum.photos/seed/PROD-006-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(432,506,50602,'/uploads/products/PROD-006-V2.jpg','https://picsum.photos/seed/PROD-006-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(433,507,50701,'/uploads/products/PROD-007-V1.jpg','https://picsum.photos/seed/PROD-007-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(434,507,50702,'/uploads/products/PROD-007-V2.jpg','https://picsum.photos/seed/PROD-007-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(435,508,50801,'/uploads/products/PROD-008-V1.jpg','https://picsum.photos/seed/PROD-008-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(436,508,50802,'/uploads/products/PROD-008-V2.jpg','https://picsum.photos/seed/PROD-008-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(437,509,50901,'/uploads/products/PROD-009-V1.jpg','https://picsum.photos/seed/PROD-009-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(438,509,50902,'/uploads/products/PROD-009-V2.jpg','https://picsum.photos/seed/PROD-009-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(439,510,51001,'/uploads/products/PROD-010-V1.jpg','https://picsum.photos/seed/PROD-010-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(440,510,51002,'/uploads/products/PROD-010-V2.jpg','https://picsum.photos/seed/PROD-010-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(441,511,51101,'/uploads/products/PROD-011-V1.jpg','https://picsum.photos/seed/PROD-011-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(442,511,51102,'/uploads/products/PROD-011-V2.jpg','https://picsum.photos/seed/PROD-011-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(443,512,51201,'/uploads/products/PROD-012-V1.jpg','https://picsum.photos/seed/PROD-012-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(444,512,51202,'/uploads/products/PROD-012-V2.jpg','https://picsum.photos/seed/PROD-012-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(445,513,51301,'/uploads/products/PROD-013-V1.jpg','https://picsum.photos/seed/PROD-013-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(446,513,51302,'/uploads/products/PROD-013-V2.jpg','https://picsum.photos/seed/PROD-013-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(447,514,51401,'/uploads/products/PROD-014-V1.jpg','https://picsum.photos/seed/PROD-014-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(448,514,51402,'/uploads/products/PROD-014-V2.jpg','https://picsum.photos/seed/PROD-014-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(449,515,51501,'/uploads/products/PROD-015-V1.jpg','https://picsum.photos/seed/PROD-015-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(450,515,51502,'/uploads/products/PROD-015-V2.jpg','https://picsum.photos/seed/PROD-015-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(451,516,51601,'/uploads/products/PROD-016-V1.jpg','https://picsum.photos/seed/PROD-016-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(452,516,51602,'/uploads/products/PROD-016-V2.jpg','https://picsum.photos/seed/PROD-016-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(453,517,51701,'/uploads/products/PROD-017-V1.jpg','https://picsum.photos/seed/PROD-017-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(454,517,51702,'/uploads/products/PROD-017-V2.jpg','https://picsum.photos/seed/PROD-017-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(455,518,51801,'/uploads/products/PROD-018-V1.jpg','https://picsum.photos/seed/PROD-018-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(456,518,51802,'/uploads/products/PROD-018-V2.jpg','https://picsum.photos/seed/PROD-018-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(457,519,51901,'/uploads/products/PROD-019-V1.jpg','https://picsum.photos/seed/PROD-019-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(458,519,51902,'/uploads/products/PROD-019-V2.jpg','https://picsum.photos/seed/PROD-019-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(459,520,52001,'/uploads/products/PROD-020-V1.jpg','https://picsum.photos/seed/PROD-020-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(460,520,52002,'/uploads/products/PROD-020-V2.jpg','https://picsum.photos/seed/PROD-020-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(461,521,52101,'/uploads/products/PROD-021-V1.jpg','https://picsum.photos/seed/PROD-021-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(462,521,52102,'/uploads/products/PROD-021-V2.jpg','https://picsum.photos/seed/PROD-021-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(463,522,52201,'/uploads/products/PROD-022-V1.jpg','https://picsum.photos/seed/PROD-022-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(464,522,52202,'/uploads/products/PROD-022-V2.jpg','https://picsum.photos/seed/PROD-022-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(465,523,52301,'/uploads/products/PROD-023-V1.jpg','https://picsum.photos/seed/PROD-023-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(466,523,52302,'/uploads/products/PROD-023-V2.jpg','https://picsum.photos/seed/PROD-023-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(467,524,52401,'/uploads/products/PROD-024-V1.jpg','https://picsum.photos/seed/PROD-024-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(468,524,52402,'/uploads/products/PROD-024-V2.jpg','https://picsum.photos/seed/PROD-024-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(469,525,52501,'/uploads/products/PROD-025-V1.jpg','https://picsum.photos/seed/PROD-025-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(470,525,52502,'/uploads/products/PROD-025-V2.jpg','https://picsum.photos/seed/PROD-025-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(471,526,52601,'/uploads/products/PROD-026-V1.jpg','https://picsum.photos/seed/PROD-026-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(472,526,52602,'/uploads/products/PROD-026-V2.jpg','https://picsum.photos/seed/PROD-026-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(473,527,52701,'/uploads/products/PROD-027-V1.jpg','https://picsum.photos/seed/PROD-027-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(474,527,52702,'/uploads/products/PROD-027-V2.jpg','https://picsum.photos/seed/PROD-027-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(475,528,52801,'/uploads/products/PROD-028-V1.jpg','https://picsum.photos/seed/PROD-028-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(476,528,52802,'/uploads/products/PROD-028-V2.jpg','https://picsum.photos/seed/PROD-028-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(477,529,52901,'/uploads/products/PROD-029-V1.jpg','https://picsum.photos/seed/PROD-029-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(478,529,52902,'/uploads/products/PROD-029-V2.jpg','https://picsum.photos/seed/PROD-029-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(479,530,53001,'/uploads/products/PROD-030-V1.jpg','https://picsum.photos/seed/PROD-030-V1/500/500',1,1,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(480,530,53002,'/uploads/products/PROD-030-V2.jpg','https://picsum.photos/seed/PROD-030-V2/500/500',0,2,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24');
+/*!40000 ALTER TABLE `product_images` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_prices`
+--
+
+DROP TABLE IF EXISTS `product_prices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_prices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `customer_group_id` bigint unsigned DEFAULT NULL COMMENT 'NULL = giá chung',
+  `price_type` enum('retail','wholesale','special') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'retail',
+  `price` decimal(15,2) NOT NULL,
+  `min_quantity` int DEFAULT '1' COMMENT 'SL tối thiểu',
+  `valid_from` date DEFAULT NULL,
+  `valid_to` date DEFAULT NULL,
+  `status` enum('active','inactive') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `product_id` (`product_id`),
+  KEY `variant_id` (`variant_id`),
+  KEY `customer_group_id` (`customer_group_id`),
+  KEY `price_type` (`price_type`),
+  KEY `status` (`status`),
+  CONSTRAINT `fk_product_prices_customer_group` FOREIGN KEY (`customer_group_id`) REFERENCES `customer_groups` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_prices_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_product_prices_variant` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=721 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_prices`
+--
+
+LOCK TABLES `product_prices` WRITE;
+/*!40000 ALTER TABLE `product_prices` DISABLE KEYS */;
+INSERT INTO `product_prices` VALUES (631,501,NULL,NULL,'retail',202000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(632,501,50101,NULL,'retail',212000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(633,501,50102,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(634,502,NULL,NULL,'retail',204000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(635,502,50201,NULL,'retail',214000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(636,502,50202,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(637,503,NULL,NULL,'retail',206000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(638,503,50301,NULL,'retail',216000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(639,503,50302,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(640,504,NULL,NULL,'retail',208000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(641,504,50401,NULL,'retail',218000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(642,504,50402,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(643,505,NULL,NULL,'retail',210000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(644,505,50501,NULL,'retail',220000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(645,505,50502,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(646,506,NULL,NULL,'retail',212000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(647,506,50601,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(648,506,50602,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(649,507,NULL,NULL,'retail',214000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(650,507,50701,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(651,507,50702,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(652,508,NULL,NULL,'retail',216000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(653,508,50801,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(654,508,50802,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(655,509,NULL,NULL,'retail',218000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(656,509,50901,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(657,509,50902,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(658,510,NULL,NULL,'retail',220000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(659,510,51001,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(660,510,51002,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(661,511,NULL,NULL,'retail',222000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(662,511,51101,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(663,511,51102,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(664,512,NULL,NULL,'retail',224000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(665,512,51201,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(666,512,51202,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(667,513,NULL,NULL,'retail',226000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(668,513,51301,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(669,513,51302,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(670,514,NULL,NULL,'retail',228000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(671,514,51401,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(672,514,51402,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(673,515,NULL,NULL,'retail',230000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(674,515,51501,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(675,515,51502,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(676,516,NULL,NULL,'retail',232000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(677,516,51601,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(678,516,51602,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(679,517,NULL,NULL,'retail',234000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(680,517,51701,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(681,517,51702,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(682,518,NULL,NULL,'retail',236000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(683,518,51801,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(684,518,51802,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(685,519,NULL,NULL,'retail',238000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(686,519,51901,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(687,519,51902,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(688,520,NULL,NULL,'retail',240000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(689,520,52001,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(690,520,52002,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(691,521,NULL,NULL,'retail',242000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(692,521,52101,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(693,521,52102,NULL,'retail',262000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(694,522,NULL,NULL,'retail',244000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(695,522,52201,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(696,522,52202,NULL,'retail',264000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(697,523,NULL,NULL,'retail',246000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(698,523,52301,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(699,523,52302,NULL,'retail',266000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(700,524,NULL,NULL,'retail',248000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(701,524,52401,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(702,524,52402,NULL,'retail',268000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(703,525,NULL,NULL,'retail',250000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(704,525,52501,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(705,525,52502,NULL,'retail',270000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(706,526,NULL,NULL,'retail',252000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(707,526,52601,NULL,'retail',262000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(708,526,52602,NULL,'retail',272000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(709,527,NULL,NULL,'retail',254000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(710,527,52701,NULL,'retail',264000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(711,527,52702,NULL,'retail',274000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(712,528,NULL,NULL,'retail',256000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(713,528,52801,NULL,'retail',266000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(714,528,52802,NULL,'retail',276000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(715,529,NULL,NULL,'retail',258000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(716,529,52901,NULL,'retail',268000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(717,529,52902,NULL,'retail',278000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(718,530,NULL,NULL,'retail',260000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(719,530,53001,NULL,'retail',270000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24'),(720,530,53002,NULL,'retail',280000.00,1,NULL,NULL,'active',NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24');
+/*!40000 ALTER TABLE `product_prices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_serial_numbers`
+--
+
+DROP TABLE IF EXISTS `product_serial_numbers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_serial_numbers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) NOT NULL,
+  `status` varchar(30) DEFAULT 'available',
+  `warranty_expiry_date` date DEFAULT NULL,
+  `reserved_for_order_id` bigint unsigned DEFAULT NULL,
+  `reserved_at` datetime DEFAULT NULL,
+  `sold_to_order_id` bigint unsigned DEFAULT NULL,
+  `sold_date` datetime DEFAULT NULL,
+  `returned_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_serial_number` (`serial_number`),
+  KEY `idx_serial_status_product` (`status`,`product_id`),
+  KEY `idx_serial_reserved` (`reserved_for_order_id`),
+  KEY `fk_product_serial_numbe_product_id` (`product_id`),
+  KEY `fk_product_serial_numbe_variant_id` (`variant_id`),
+  KEY `fk_product_serial_numbe_batch_id` (`batch_id`),
+  KEY `fk_product_serial_numbe_sold_to_order_id` (`sold_to_order_id`),
+  CONSTRAINT `fk_product_serial_numbe_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_serial_numbe_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_serial_numbe_reserved_for_order_i` FOREIGN KEY (`reserved_for_order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_serial_numbe_sold_to_order_id` FOREIGN KEY (`sold_to_order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_product_serial_numbe_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_serial_numbers`
+--
+
+LOCK TABLES `product_serial_numbers` WRITE;
+/*!40000 ALTER TABLE `product_serial_numbers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product_serial_numbers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_stock_by_branch`
+--
+
+DROP TABLE IF EXISTS `product_stock_by_branch`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_stock_by_branch` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `stock_quantity` int DEFAULT '0' COMMENT 'Số lượng tồn',
+  `alert_stock` int DEFAULT '10' COMMENT 'Ngưỡng cảnh báo',
+  `reserved_stock` int DEFAULT '0' COMMENT 'Hàng đang giữ',
+  `available_stock` int DEFAULT '0' COMMENT 'Có thể bán',
+  `expiry_days` int DEFAULT NULL COMMENT 'Dự kiến hết hàng (ngày)',
+  `last_stock_date` datetime DEFAULT NULL COMMENT 'Lần cập nhật tồn cuối',
+  `status` enum('in_stock','low_stock','out_of_stock') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'in_stock',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_product_branch` (`product_id`,`branch_id`),
+  KEY `idx_branch` (`branch_id`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `fk_psbb_branch` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_psbb_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=151 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_stock_by_branch`
+--
+
+LOCK TABLES `product_stock_by_branch` WRITE;
+/*!40000 ALTER TABLE `product_stock_by_branch` DISABLE KEYS */;
+INSERT INTO `product_stock_by_branch` VALUES (1,501,1,40,10,7,33,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(2,501,2,33,10,1,32,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(3,501,3,60,10,6,54,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(4,501,4,87,10,3,84,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(5,501,5,136,10,6,130,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(6,502,1,36,10,7,29,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(7,502,2,39,10,1,38,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(8,502,3,34,10,0,34,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(9,502,4,55,10,4,51,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(10,502,5,41,10,5,36,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(11,503,1,57,10,2,55,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(12,503,2,50,10,4,46,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(13,503,3,85,10,9,76,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(14,503,4,80,10,6,74,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(15,503,5,115,10,4,111,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(16,504,1,87,10,3,84,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(17,504,2,52,10,10,42,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(18,504,3,59,10,9,50,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(19,504,4,57,10,1,56,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(20,504,5,130,10,9,121,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(21,505,1,112,10,9,103,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(22,505,2,43,10,6,37,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(23,505,3,45,10,3,42,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(24,505,4,48,10,9,39,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(25,505,5,35,10,5,30,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(26,506,1,57,10,7,50,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(27,506,2,47,10,8,39,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(28,506,3,108,10,6,102,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(29,506,4,130,10,4,126,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(30,506,5,113,10,4,109,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(31,507,1,26,10,7,19,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(32,507,2,40,10,8,32,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(33,507,3,59,10,0,59,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(34,507,4,91,10,10,81,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(35,507,5,101,10,3,98,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(36,508,1,149,10,6,143,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(37,508,2,63,10,7,56,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(38,508,3,96,10,3,93,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(39,508,4,54,10,5,49,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(40,508,5,116,10,10,106,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(41,509,1,102,10,10,92,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(42,509,2,60,10,7,53,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(43,509,3,136,10,9,127,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(44,509,4,59,10,7,52,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(45,509,5,29,10,2,27,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(46,510,1,33,10,1,32,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(47,510,2,107,10,2,105,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(48,510,3,112,10,10,102,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(49,510,4,133,10,1,132,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(50,510,5,123,10,1,122,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(51,511,1,133,10,1,132,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(52,511,2,111,10,0,111,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(53,511,3,146,10,5,141,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(54,511,4,85,10,7,78,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(55,511,5,111,10,0,111,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(56,512,1,88,10,4,84,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(57,512,2,121,10,2,119,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(58,512,3,55,10,9,46,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(59,512,4,46,10,8,38,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(60,512,5,45,10,5,40,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(61,513,1,128,10,2,126,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(62,513,2,130,10,2,128,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(63,513,3,98,10,5,93,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(64,513,4,147,10,7,140,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(65,513,5,53,10,4,49,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(66,514,1,52,10,8,44,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(67,514,2,140,10,5,135,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(68,514,3,119,10,5,114,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(69,514,4,38,10,1,37,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(70,514,5,146,10,1,145,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(71,515,1,95,10,1,94,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(72,515,2,108,10,9,99,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(73,515,3,101,10,3,98,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(74,515,4,122,10,10,112,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(75,515,5,121,10,4,117,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(76,516,1,20,10,8,12,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(77,516,2,21,10,3,18,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(78,516,3,54,10,10,44,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(79,516,4,126,10,8,118,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(80,516,5,65,10,4,61,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(81,517,1,78,10,0,78,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(82,517,2,66,10,0,66,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(83,517,3,116,10,0,116,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(84,517,4,103,10,8,95,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(85,517,5,45,10,10,35,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(86,518,1,122,10,2,120,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(87,518,2,38,10,5,33,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(88,518,3,91,10,0,91,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(89,518,4,43,10,7,36,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(90,518,5,33,10,0,33,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(91,519,1,77,10,10,67,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(92,519,2,38,10,10,28,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(93,519,3,32,10,6,26,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(94,519,4,121,10,6,115,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(95,519,5,36,10,5,31,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(96,520,1,88,10,3,85,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(97,520,2,113,10,1,112,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(98,520,3,81,10,5,76,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(99,520,4,103,10,8,95,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(100,520,5,108,10,9,99,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(101,521,1,25,10,0,25,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(102,521,2,98,10,7,91,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(103,521,3,86,10,8,78,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(104,521,4,126,10,8,118,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(105,521,5,73,10,5,68,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(106,522,1,131,10,0,131,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(107,522,2,100,10,2,98,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(108,522,3,129,10,2,127,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(109,522,4,106,10,5,101,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(110,522,5,69,10,9,60,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(111,523,1,75,10,2,73,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(112,523,2,97,10,7,90,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(113,523,3,142,10,0,142,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(114,523,4,43,10,6,37,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(115,523,5,91,10,0,91,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(116,524,1,75,10,8,67,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(117,524,2,21,10,2,19,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(118,524,3,110,10,4,106,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(119,524,4,105,10,2,103,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(120,524,5,27,10,2,25,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(121,525,1,29,10,1,28,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(122,525,2,40,10,2,38,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(123,525,3,54,10,1,53,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(124,525,4,110,10,6,104,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(125,525,5,84,10,8,76,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(126,526,1,44,10,0,44,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(127,526,2,69,10,10,59,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(128,526,3,79,10,8,71,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(129,526,4,34,10,3,31,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(130,526,5,96,10,7,89,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(131,527,1,99,10,7,92,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(132,527,2,149,10,6,143,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(133,527,3,103,10,5,98,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(134,527,4,150,10,6,144,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(135,527,5,113,10,2,111,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(136,528,1,129,10,10,119,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(137,528,2,21,10,0,21,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(138,528,3,54,10,10,44,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(139,528,4,26,10,2,24,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(140,528,5,73,10,3,70,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(141,529,1,71,10,5,66,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(142,529,2,34,10,2,32,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(143,529,3,60,10,6,54,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(144,529,4,46,10,2,44,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(145,529,5,80,10,0,80,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(146,530,1,58,10,9,49,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(147,530,2,64,10,1,63,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(148,530,3,129,10,1,128,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(149,530,4,57,10,2,55,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25'),(150,530,5,132,10,4,128,NULL,NULL,'in_stock','2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `product_stock_by_branch` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_variants_v2`
+--
+
+DROP TABLE IF EXISTS `product_variants_v2`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_variants_v2` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_name` varchar(255) DEFAULT NULL,
+  `variant_signature` varchar(255) DEFAULT NULL,
+  `sku` varchar(100) DEFAULT NULL,
+  `barcode` varchar(100) DEFAULT NULL,
+  `price` decimal(15,2) DEFAULT '0.00',
+  `cost_price` decimal(15,2) DEFAULT '0.00',
+  `stock_quantity` decimal(10,2) DEFAULT '0.00',
+  `min_stock` decimal(10,2) DEFAULT '0.00',
+  `max_stock` decimal(10,2) DEFAULT '0.00',
+  `image_url` varchar(255) DEFAULT NULL,
+  `attributes` text,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_variants_sku_deleted_at` (`sku`,`deleted_at`),
+  KEY `fk_product_variants_v2_product_id` (`product_id`),
+  CONSTRAINT `fk_product_variants_v2_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=53003 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_variants_v2`
+--
+
+LOCK TABLES `product_variants_v2` WRITE;
+/*!40000 ALTER TABLE `product_variants_v2` DISABLE KEYS */;
+INSERT INTO `product_variants_v2` VALUES (50101,501,'Variant 1','PROD-001-V1','PROD-001-V1','PROD-001-V1-BAR',212000.00,101000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50102,501,'Variant 2','PROD-001-V2','PROD-001-V2','PROD-001-V2-BAR',222000.00,101000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50201,502,'Variant 1','PROD-002-V1','PROD-002-V1','PROD-002-V1-BAR',214000.00,102000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50202,502,'Variant 2','PROD-002-V2','PROD-002-V2','PROD-002-V2-BAR',224000.00,102000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50301,503,'Variant 1','PROD-003-V1','PROD-003-V1','PROD-003-V1-BAR',216000.00,103000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50302,503,'Variant 2','PROD-003-V2','PROD-003-V2','PROD-003-V2-BAR',226000.00,103000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50401,504,'Variant 1','PROD-004-V1','PROD-004-V1','PROD-004-V1-BAR',218000.00,104000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50402,504,'Variant 2','PROD-004-V2','PROD-004-V2','PROD-004-V2-BAR',228000.00,104000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50501,505,'Variant 1','PROD-005-V1','PROD-005-V1','PROD-005-V1-BAR',220000.00,105000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50502,505,'Variant 2','PROD-005-V2','PROD-005-V2','PROD-005-V2-BAR',230000.00,105000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50601,506,'Variant 1','PROD-006-V1','PROD-006-V1','PROD-006-V1-BAR',222000.00,106000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50602,506,'Variant 2','PROD-006-V2','PROD-006-V2','PROD-006-V2-BAR',232000.00,106000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50701,507,'Variant 1','PROD-007-V1','PROD-007-V1','PROD-007-V1-BAR',224000.00,107000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50702,507,'Variant 2','PROD-007-V2','PROD-007-V2','PROD-007-V2-BAR',234000.00,107000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50801,508,'Variant 1','PROD-008-V1','PROD-008-V1','PROD-008-V1-BAR',226000.00,108000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50802,508,'Variant 2','PROD-008-V2','PROD-008-V2','PROD-008-V2-BAR',236000.00,108000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50901,509,'Variant 1','PROD-009-V1','PROD-009-V1','PROD-009-V1-BAR',228000.00,109000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(50902,509,'Variant 2','PROD-009-V2','PROD-009-V2','PROD-009-V2-BAR',238000.00,109000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51001,510,'Variant 1','PROD-010-V1','PROD-010-V1','PROD-010-V1-BAR',230000.00,110000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51002,510,'Variant 2','PROD-010-V2','PROD-010-V2','PROD-010-V2-BAR',240000.00,110000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51101,511,'Variant 1','PROD-011-V1','PROD-011-V1','PROD-011-V1-BAR',232000.00,111000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51102,511,'Variant 2','PROD-011-V2','PROD-011-V2','PROD-011-V2-BAR',242000.00,111000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51201,512,'Variant 1','PROD-012-V1','PROD-012-V1','PROD-012-V1-BAR',234000.00,112000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51202,512,'Variant 2','PROD-012-V2','PROD-012-V2','PROD-012-V2-BAR',244000.00,112000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51301,513,'Variant 1','PROD-013-V1','PROD-013-V1','PROD-013-V1-BAR',236000.00,113000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51302,513,'Variant 2','PROD-013-V2','PROD-013-V2','PROD-013-V2-BAR',246000.00,113000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51401,514,'Variant 1','PROD-014-V1','PROD-014-V1','PROD-014-V1-BAR',238000.00,114000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51402,514,'Variant 2','PROD-014-V2','PROD-014-V2','PROD-014-V2-BAR',248000.00,114000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51501,515,'Variant 1','PROD-015-V1','PROD-015-V1','PROD-015-V1-BAR',240000.00,115000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51502,515,'Variant 2','PROD-015-V2','PROD-015-V2','PROD-015-V2-BAR',250000.00,115000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51601,516,'Variant 1','PROD-016-V1','PROD-016-V1','PROD-016-V1-BAR',242000.00,116000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51602,516,'Variant 2','PROD-016-V2','PROD-016-V2','PROD-016-V2-BAR',252000.00,116000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51701,517,'Variant 1','PROD-017-V1','PROD-017-V1','PROD-017-V1-BAR',244000.00,117000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51702,517,'Variant 2','PROD-017-V2','PROD-017-V2','PROD-017-V2-BAR',254000.00,117000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51801,518,'Variant 1','PROD-018-V1','PROD-018-V1','PROD-018-V1-BAR',246000.00,118000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51802,518,'Variant 2','PROD-018-V2','PROD-018-V2','PROD-018-V2-BAR',256000.00,118000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51901,519,'Variant 1','PROD-019-V1','PROD-019-V1','PROD-019-V1-BAR',248000.00,119000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(51902,519,'Variant 2','PROD-019-V2','PROD-019-V2','PROD-019-V2-BAR',258000.00,119000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52001,520,'Variant 1','PROD-020-V1','PROD-020-V1','PROD-020-V1-BAR',250000.00,120000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52002,520,'Variant 2','PROD-020-V2','PROD-020-V2','PROD-020-V2-BAR',260000.00,120000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52101,521,'Variant 1','PROD-021-V1','PROD-021-V1','PROD-021-V1-BAR',252000.00,121000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52102,521,'Variant 2','PROD-021-V2','PROD-021-V2','PROD-021-V2-BAR',262000.00,121000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52201,522,'Variant 1','PROD-022-V1','PROD-022-V1','PROD-022-V1-BAR',254000.00,122000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52202,522,'Variant 2','PROD-022-V2','PROD-022-V2','PROD-022-V2-BAR',264000.00,122000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52301,523,'Variant 1','PROD-023-V1','PROD-023-V1','PROD-023-V1-BAR',256000.00,123000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52302,523,'Variant 2','PROD-023-V2','PROD-023-V2','PROD-023-V2-BAR',266000.00,123000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52401,524,'Variant 1','PROD-024-V1','PROD-024-V1','PROD-024-V1-BAR',258000.00,124000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52402,524,'Variant 2','PROD-024-V2','PROD-024-V2','PROD-024-V2-BAR',268000.00,124000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52501,525,'Variant 1','PROD-025-V1','PROD-025-V1','PROD-025-V1-BAR',260000.00,125000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52502,525,'Variant 2','PROD-025-V2','PROD-025-V2','PROD-025-V2-BAR',270000.00,125000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52601,526,'Variant 1','PROD-026-V1','PROD-026-V1','PROD-026-V1-BAR',262000.00,126000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52602,526,'Variant 2','PROD-026-V2','PROD-026-V2','PROD-026-V2-BAR',272000.00,126000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52701,527,'Variant 1','PROD-027-V1','PROD-027-V1','PROD-027-V1-BAR',264000.00,127000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52702,527,'Variant 2','PROD-027-V2','PROD-027-V2','PROD-027-V2-BAR',274000.00,127000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52801,528,'Variant 1','PROD-028-V1','PROD-028-V1','PROD-028-V1-BAR',266000.00,128000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52802,528,'Variant 2','PROD-028-V2','PROD-028-V2','PROD-028-V2-BAR',276000.00,128000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52901,529,'Variant 1','PROD-029-V1','PROD-029-V1','PROD-029-V1-BAR',268000.00,129000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(52902,529,'Variant 2','PROD-029-V2','PROD-029-V2','PROD-029-V2-BAR',278000.00,129000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(53001,530,'Variant 1','PROD-030-V1','PROD-030-V1','PROD-030-V1-BAR',270000.00,130000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"M\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(53002,530,'Variant 2','PROD-030-V2','PROD-030-V2','PROD-030-V2-BAR',280000.00,130000.00,50.00,5.00,500.00,NULL,'{\"Size\":\"L\"}','active','2025-12-09 11:52:24','2025-12-09 11:52:24',NULL);
+/*!40000 ALTER TABLE `product_variants_v2` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product_warranties`
+--
+
+DROP TABLE IF EXISTS `product_warranties`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product_warranties` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'Số serial',
+  `warranty_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'Mã phiếu BH',
+  `start_date` date NOT NULL,
+  `end_date` date NOT NULL,
+  `status` enum('active','expired','claimed','cancelled') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'active',
+  `note` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `warranty_code` (`warranty_code`),
+  KEY `idx_product` (`product_id`),
+  KEY `idx_order` (`order_id`),
+  KEY `idx_customer` (`customer_id`),
+  KEY `idx_status` (`status`),
+  CONSTRAINT `fk_warranty_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_warranty_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_warranty_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=161 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product_warranties`
+--
+
+LOCK TABLES `product_warranties` WRITE;
+/*!40000 ALTER TABLE `product_warranties` DISABLE KEYS */;
+INSERT INTO `product_warranties` VALUES (141,510,NULL,NULL,'SN-000001','WAR-000001','2025-12-09','2026-12-09','active','Demo warranty 1',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(142,510,NULL,NULL,'SN-000002','WAR-000002','2025-12-09','2026-12-09','active','Demo warranty 2',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(143,510,NULL,NULL,'SN-000003','WAR-000003','2025-12-09','2026-12-09','active','Demo warranty 3',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(144,510,NULL,NULL,'SN-000004','WAR-000004','2025-12-09','2026-12-09','active','Demo warranty 4',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(145,510,NULL,NULL,'SN-000005','WAR-000005','2025-12-09','2026-12-09','active','Demo warranty 5',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(146,510,NULL,NULL,'SN-000006','WAR-000006','2025-12-09','2026-12-09','active','Demo warranty 6',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(147,510,NULL,NULL,'SN-000007','WAR-000007','2025-12-09','2026-12-09','active','Demo warranty 7',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(148,510,NULL,NULL,'SN-000008','WAR-000008','2025-12-09','2026-12-09','active','Demo warranty 8',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(149,510,NULL,NULL,'SN-000009','WAR-000009','2025-12-09','2026-12-09','active','Demo warranty 9',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(150,510,NULL,NULL,'SN-000010','WAR-000010','2025-12-09','2026-12-09','active','Demo warranty 10',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(151,510,NULL,NULL,'SN-000011','WAR-000011','2025-12-09','2026-12-09','active','Demo warranty 11',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(152,510,NULL,NULL,'SN-000012','WAR-000012','2025-12-09','2026-12-09','active','Demo warranty 12',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(153,510,NULL,NULL,'SN-000013','WAR-000013','2025-12-09','2026-12-09','active','Demo warranty 13',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(154,510,NULL,NULL,'SN-000014','WAR-000014','2025-12-09','2026-12-09','active','Demo warranty 14',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(155,510,NULL,NULL,'SN-000015','WAR-000015','2025-12-09','2026-12-09','active','Demo warranty 15',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(156,510,NULL,NULL,'SN-000016','WAR-000016','2025-12-09','2026-12-09','active','Demo warranty 16',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(157,510,NULL,NULL,'SN-000017','WAR-000017','2025-12-09','2026-12-09','active','Demo warranty 17',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(158,510,NULL,NULL,'SN-000018','WAR-000018','2025-12-09','2026-12-09','active','Demo warranty 18',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(159,510,NULL,NULL,'SN-000019','WAR-000019','2025-12-09','2026-12-09','active','Demo warranty 19',1,'2025-12-09 11:52:25','2025-12-09 11:52:25'),(160,510,NULL,NULL,'SN-000020','WAR-000020','2025-12-09','2026-12-09','active','Demo warranty 20',1,'2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `product_warranties` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `products`
+--
+
+DROP TABLE IF EXISTS `products`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `products` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_type` varchar(50) DEFAULT NULL,
+  `code` varchar(100) NOT NULL,
+  `barcode` varchar(100) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `brand` varchar(255) DEFAULT NULL,
+  `warehouse_location` varchar(100) DEFAULT NULL,
+  `unit` varchar(50) DEFAULT NULL,
+  `base_unit_code` varchar(50) DEFAULT NULL,
+  `unit_conversion` decimal(10,2) DEFAULT '1.00',
+  `has_variants` tinyint(1) DEFAULT '0',
+  `related_product_codes` text,
+  `image` varchar(255) DEFAULT NULL,
+  `images` text,
+  `image_count` int DEFAULT '0',
+  `weight` decimal(10,2) DEFAULT NULL,
+  `dimensions` varchar(100) DEFAULT NULL,
+  `description` text,
+  `content` text,
+  `is_active` tinyint(1) DEFAULT '1',
+  `is_available_online` tinyint(1) DEFAULT '0',
+  `is_featured` tinyint(1) DEFAULT '0',
+  `status` enum('active','inactive') DEFAULT 'active',
+  `selling_price` decimal(10,2) DEFAULT '0.00',
+  `commission_percent` decimal(5,2) DEFAULT '0.00',
+  `commission_amount` decimal(15,2) DEFAULT '0.00',
+  `wholesale_price` decimal(10,2) DEFAULT '0.00',
+  `purchase_price` decimal(10,2) DEFAULT '0.00',
+  `stock_quantity` int DEFAULT '0',
+  `alert_stock` int DEFAULT '0',
+  `expiry_days` int DEFAULT NULL,
+  `customer_ordered` int DEFAULT '0',
+  `expected_out_date` varchar(50) DEFAULT NULL,
+  `min_stock_alert` int DEFAULT '0',
+  `max_stock_alert` int DEFAULT '0',
+  `meta_title` varchar(255) DEFAULT NULL,
+  `meta_description` varchar(500) DEFAULT NULL,
+  `meta_keywords` varchar(500) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_products_code_deleted_at` (`code`,`deleted_at`)
+) ENGINE=InnoDB AUTO_INCREMENT=531 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `products`
+--
+
+LOCK TABLES `products` WRITE;
+/*!40000 ALTER TABLE `products` DISABLE KEYS */;
+INSERT INTO `products` VALUES (501,'goods','PROD-001','PROD-001-BAR','Sản phẩm Demo 1','san-pham-demo-1','Lano','A-1','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-001/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 1',NULL,1,1,0,'active',202000.00,5.00,0.00,181800.00,101000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(502,'goods','PROD-002','PROD-002-BAR','Sản phẩm Demo 2','san-pham-demo-2','Lano','A-2','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-002/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 2',NULL,1,1,0,'active',204000.00,5.00,0.00,183600.00,102000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(503,'goods','PROD-003','PROD-003-BAR','Sản phẩm Demo 3','san-pham-demo-3','Lano','A-3','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-003/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 3',NULL,1,1,0,'active',206000.00,5.00,0.00,185400.00,103000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(504,'goods','PROD-004','PROD-004-BAR','Sản phẩm Demo 4','san-pham-demo-4','Lano','A-4','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-004/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 4',NULL,1,1,0,'active',208000.00,5.00,0.00,187200.00,104000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(505,'goods','PROD-005','PROD-005-BAR','Sản phẩm Demo 5','san-pham-demo-5','Lano','A-5','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-005/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 5',NULL,1,1,1,'active',210000.00,5.00,0.00,189000.00,105000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(506,'goods','PROD-006','PROD-006-BAR','Sản phẩm Demo 6','san-pham-demo-6','Lano','A-6','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-006/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 6',NULL,1,1,0,'active',212000.00,5.00,0.00,190800.00,106000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(507,'goods','PROD-007','PROD-007-BAR','Sản phẩm Demo 7','san-pham-demo-7','Lano','A-7','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-007/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 7',NULL,1,1,0,'active',214000.00,5.00,0.00,192600.00,107000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(508,'goods','PROD-008','PROD-008-BAR','Sản phẩm Demo 8','san-pham-demo-8','Lano','A-8','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-008/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 8',NULL,1,1,0,'active',216000.00,5.00,0.00,194400.00,108000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(509,'goods','PROD-009','PROD-009-BAR','Sản phẩm Demo 9','san-pham-demo-9','Lano','A-9','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-009/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 9',NULL,1,1,0,'active',218000.00,5.00,0.00,196200.00,109000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(510,'goods','PROD-010','PROD-010-BAR','Sản phẩm Demo 10','san-pham-demo-10','Lano','A-10','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-010/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 10',NULL,1,1,1,'active',220000.00,5.00,0.00,198000.00,110000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(511,'goods','PROD-011','PROD-011-BAR','Sản phẩm Demo 11','san-pham-demo-11','Lano','A-11','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-011/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 11',NULL,1,1,0,'active',222000.00,5.00,0.00,199800.00,111000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(512,'goods','PROD-012','PROD-012-BAR','Sản phẩm Demo 12','san-pham-demo-12','Lano','A-12','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-012/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 12',NULL,1,1,0,'active',224000.00,5.00,0.00,201600.00,112000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(513,'goods','PROD-013','PROD-013-BAR','Sản phẩm Demo 13','san-pham-demo-13','Lano','A-13','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-013/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 13',NULL,1,1,0,'active',226000.00,5.00,0.00,203400.00,113000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(514,'goods','PROD-014','PROD-014-BAR','Sản phẩm Demo 14','san-pham-demo-14','Lano','A-14','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-014/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 14',NULL,1,1,0,'active',228000.00,5.00,0.00,205200.00,114000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(515,'goods','PROD-015','PROD-015-BAR','Sản phẩm Demo 15','san-pham-demo-15','Lano','A-15','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-015/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 15',NULL,1,1,1,'active',230000.00,5.00,0.00,207000.00,115000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(516,'goods','PROD-016','PROD-016-BAR','Sản phẩm Demo 16','san-pham-demo-16','Lano','A-16','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-016/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 16',NULL,1,1,0,'active',232000.00,5.00,0.00,208800.00,116000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(517,'goods','PROD-017','PROD-017-BAR','Sản phẩm Demo 17','san-pham-demo-17','Lano','A-17','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-017/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 17',NULL,1,1,0,'active',234000.00,5.00,0.00,210600.00,117000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(518,'goods','PROD-018','PROD-018-BAR','Sản phẩm Demo 18','san-pham-demo-18','Lano','A-18','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-018/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 18',NULL,1,1,0,'active',236000.00,5.00,0.00,212400.00,118000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(519,'goods','PROD-019','PROD-019-BAR','Sản phẩm Demo 19','san-pham-demo-19','Lano','A-19','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-019/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 19',NULL,1,1,0,'active',238000.00,5.00,0.00,214200.00,119000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(520,'goods','PROD-020','PROD-020-BAR','Sản phẩm Demo 20','san-pham-demo-20','Lano','A-20','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-020/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 20',NULL,1,1,1,'active',240000.00,5.00,0.00,216000.00,120000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(521,'goods','PROD-021','PROD-021-BAR','Sản phẩm Demo 21','san-pham-demo-21','Lano','A-21','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-021/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 21',NULL,1,1,0,'active',242000.00,5.00,0.00,217800.00,121000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(522,'goods','PROD-022','PROD-022-BAR','Sản phẩm Demo 22','san-pham-demo-22','Lano','A-22','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-022/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 22',NULL,1,1,0,'active',244000.00,5.00,0.00,219600.00,122000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(523,'goods','PROD-023','PROD-023-BAR','Sản phẩm Demo 23','san-pham-demo-23','Lano','A-23','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-023/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 23',NULL,1,1,0,'active',246000.00,5.00,0.00,221400.00,123000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(524,'goods','PROD-024','PROD-024-BAR','Sản phẩm Demo 24','san-pham-demo-24','Lano','A-24','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-024/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 24',NULL,1,1,0,'active',248000.00,5.00,0.00,223200.00,124000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(525,'goods','PROD-025','PROD-025-BAR','Sản phẩm Demo 25','san-pham-demo-25','Lano','A-25','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-025/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 25',NULL,1,1,1,'active',250000.00,5.00,0.00,225000.00,125000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(526,'goods','PROD-026','PROD-026-BAR','Sản phẩm Demo 26','san-pham-demo-26','Lano','A-26','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-026/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 26',NULL,1,1,0,'active',252000.00,5.00,0.00,226800.00,126000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(527,'goods','PROD-027','PROD-027-BAR','Sản phẩm Demo 27','san-pham-demo-27','Lano','A-27','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-027/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 27',NULL,1,1,0,'active',254000.00,5.00,0.00,228600.00,127000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(528,'goods','PROD-028','PROD-028-BAR','Sản phẩm Demo 28','san-pham-demo-28','Lano','A-28','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-028/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 28',NULL,1,1,0,'active',256000.00,5.00,0.00,230400.00,128000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(529,'goods','PROD-029','PROD-029-BAR','Sản phẩm Demo 29','san-pham-demo-29','Lano','A-29','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-029/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 29',NULL,1,1,0,'active',258000.00,5.00,0.00,232200.00,129000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL),(530,'goods','PROD-030','PROD-030-BAR','Sản phẩm Demo 30','san-pham-demo-30','Lano','A-30','Cái',NULL,1.00,1,NULL,'https://picsum.photos/seed/PROD-030/600/600','[]',1,0.50,'10x10x10','Mô tả sản phẩm demo 30',NULL,1,1,1,'active',260000.00,5.00,0.00,234000.00,130000.00,100,10,365,0,NULL,5,1000,NULL,NULL,NULL,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL);
+/*!40000 ALTER TABLE `products` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `project_price_lists`
+--
+
+DROP TABLE IF EXISTS `project_price_lists`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `project_price_lists` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `project_id` bigint unsigned NOT NULL,
+  `price_list_id` bigint unsigned DEFAULT NULL,
+  `valid_from` date DEFAULT NULL,
+  `valid_to` date DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ppl_project` (`project_id`,`price_list_id`),
+  KEY `fk_project_price_lists_price_list_id` (`price_list_id`),
+  CONSTRAINT `fk_project_price_lists_price_list_id` FOREIGN KEY (`price_list_id`) REFERENCES `price_lists` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_project_price_lists_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `project_price_lists`
+--
+
+LOCK TABLES `project_price_lists` WRITE;
+/*!40000 ALTER TABLE `project_price_lists` DISABLE KEYS */;
+/*!40000 ALTER TABLE `project_price_lists` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `projects`
+--
+
+DROP TABLE IF EXISTS `projects`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `projects` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `project_name` varchar(255) NOT NULL,
+  `project_code` varchar(80) DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'open',
+  `progress` decimal(5,2) DEFAULT '0.00',
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `description` text,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_project_code` (`project_code`),
+  KEY `idx_project_status` (`status`),
+  KEY `fk_projects_customer_id` (`customer_id`),
+  CONSTRAINT `fk_projects_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `projects`
+--
+
+LOCK TABLES `projects` WRITE;
+/*!40000 ALTER TABLE `projects` DISABLE KEYS */;
+/*!40000 ALTER TABLE `projects` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `provinces`
+--
+
+DROP TABLE IF EXISTS `provinces`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `provinces` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name_en` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name_en` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `code_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_province_code` (`code`),
+  KEY `idx_province_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `provinces`
+--
+
+LOCK TABLES `provinces` WRITE;
+/*!40000 ALTER TABLE `provinces` DISABLE KEYS */;
+/*!40000 ALTER TABLE `provinces` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_invoice_items`
+--
+
+DROP TABLE IF EXISTS `purchase_invoice_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_invoice_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `quantity` decimal(12,2) DEFAULT '0.00',
+  `rate` decimal(14,2) DEFAULT '0.00',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_purchase_invoice_item_invoice` (`invoice_id`),
+  KEY `fk_purchase_invoice_ite_product_id` (`product_id`),
+  CONSTRAINT `fk_purchase_invoice_ite_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `purchase_invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_invoice_ite_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_invoice_items`
+--
+
+LOCK TABLES `purchase_invoice_items` WRITE;
+/*!40000 ALTER TABLE `purchase_invoice_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_invoice_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_invoice_taxes`
+--
+
+DROP TABLE IF EXISTS `purchase_invoice_taxes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_invoice_taxes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `tax_name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `template_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_purchase_invoice_tax_invoice` (`invoice_id`),
+  KEY `fk_purchase_invoice_tax_template_id` (`template_id`),
+  CONSTRAINT `fk_purchase_invoice_tax_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `purchase_invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_invoice_tax_template_id` FOREIGN KEY (`template_id`) REFERENCES `tax_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_invoice_taxes`
+--
+
+LOCK TABLES `purchase_invoice_taxes` WRITE;
+/*!40000 ALTER TABLE `purchase_invoice_taxes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_invoice_taxes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_invoices`
+--
+
+DROP TABLE IF EXISTS `purchase_invoices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_invoices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_number` varchar(50) NOT NULL,
+  `supplier_id` bigint unsigned DEFAULT NULL,
+  `posting_date` date NOT NULL,
+  `due_date` date DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'draft',
+  `currency` varchar(10) DEFAULT 'VND',
+  `exchange_rate` decimal(12,4) DEFAULT '1.0000',
+  `total` decimal(14,2) DEFAULT '0.00',
+  `taxes_total` decimal(14,2) DEFAULT '0.00',
+  `grand_total` decimal(14,2) DEFAULT '0.00',
+  `rounding_adjustment` decimal(12,2) DEFAULT '0.00',
+  `debit_account_id` bigint unsigned DEFAULT NULL,
+  `credit_account_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_purchase_invoice_number` (`invoice_number`),
+  KEY `idx_purchase_invoice_supplier` (`supplier_id`),
+  KEY `fk_purchase_invoices_credit_account_id` (`credit_account_id`),
+  KEY `fk_purchase_invoices_debit_account_id` (`debit_account_id`),
+  CONSTRAINT `fk_purchase_invoices_credit_account_id` FOREIGN KEY (`credit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_invoices_debit_account_id` FOREIGN KEY (`debit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_invoices_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_invoices`
+--
+
+LOCK TABLES `purchase_invoices` WRITE;
+/*!40000 ALTER TABLE `purchase_invoices` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_invoices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_order_items`
+--
+
+DROP TABLE IF EXISTS `purchase_order_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_order_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `purchase_order_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `quantity` decimal(14,3) DEFAULT '0.000',
+  `received_quantity` decimal(14,3) DEFAULT '0.000',
+  `rate` decimal(14,2) DEFAULT '0.00',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `unit_price` decimal(14,2) DEFAULT NULL,
+  `total_price` decimal(14,2) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_po_item_po` (`purchase_order_id`),
+  KEY `fk_purchase_order_items_product_id` (`product_id`),
+  CONSTRAINT `fk_purchase_order_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_order_items_purchase_order_id` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=51 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_order_items`
+--
+
+LOCK TABLES `purchase_order_items` WRITE;
+/*!40000 ALTER TABLE `purchase_order_items` DISABLE KEYS */;
+INSERT INTO `purchase_order_items` VALUES (41,33,501,100.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',400000.00,40000000.00),(42,33,502,20.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',500000.00,10000000.00),(43,34,503,50.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',450000.00,22500000.00),(44,34,501,25.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',500000.00,12500000.00),(45,35,502,30.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',1500000.00,45000000.00),(46,36,501,150.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',400000.00,60000000.00),(47,37,502,50.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',500000.00,25000000.00),(48,38,503,80.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',500000.00,40000000.00),(49,39,501,110.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',500000.00,55000000.00),(50,40,502,20.000,0.000,0.00,0.00,'2025-12-09 11:52:25','2025-12-09 11:52:25',1500000.00,30000000.00);
+/*!40000 ALTER TABLE `purchase_order_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_orders`
+--
+
+DROP TABLE IF EXISTS `purchase_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `po_number` varchar(50) DEFAULT NULL,
+  `code` varchar(50) DEFAULT NULL,
+  `supplier_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `partner_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `user_id` bigint unsigned DEFAULT NULL,
+  `order_number` varchar(50) DEFAULT NULL,
+  `order_date` datetime DEFAULT NULL,
+  `expected_date` datetime DEFAULT NULL,
+  `received_date` datetime DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `total` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `subtotal` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `tax_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `shipping_fee` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `status` varchar(50) DEFAULT 'draft',
+  `received_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `total_amount` decimal(14,2) DEFAULT '0.00',
+  `paid_amount` decimal(14,2) DEFAULT '0.00',
+  `payment_status` varchar(50) DEFAULT 'unpaid',
+  `notes` text,
+  `created_by` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_purchase_orders_branch_id` (`branch_id`),
+  KEY `purchase_orders_partner_id_foreign` (`partner_id`),
+  KEY `purchase_orders_supplier_id_foreign` (`supplier_id`),
+  KEY `purchase_orders_warehouse_id_foreign` (`warehouse_id`),
+  KEY `purchase_orders_user_id_foreign` (`user_id`),
+  KEY `purchase_orders_created_by_foreign` (`created_by`),
+  CONSTRAINT `fk_purchase_orders_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `purchase_orders_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `purchase_orders_partner_id_foreign` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `purchase_orders_supplier_id_foreign` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `purchase_orders_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `purchase_orders_warehouse_id_foreign` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_orders`
+--
+
+LOCK TABLES `purchase_orders` WRITE;
+/*!40000 ALTER TABLE `purchase_orders` DISABLE KEYS */;
+INSERT INTO `purchase_orders` VALUES (33,NULL,NULL,1,1,1,NULL,1,'PO-2024-001','2025-11-09 11:52:25','2025-11-16 11:52:25',NULL,NULL,50000000.00,0.00,0.00,0.00,'completed',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,50000000.00,'paid','Đơn hàng đầu tiên trong tháng',1),(34,NULL,NULL,2,1,2,NULL,2,'PO-2024-002','2025-11-14 11:52:25','2025-11-21 11:52:25',NULL,NULL,35000000.00,0.00,0.00,0.00,'completed',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,35000000.00,'paid','Nhập hàng túi xách',2),(35,NULL,NULL,3,2,3,NULL,1,'PO-2024-003','2025-11-19 11:52:25','2025-11-26 11:52:25',NULL,NULL,45000000.00,0.00,0.00,0.00,'received',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,22500000.00,'partial','Đã nhận hàng, chờ thanh toán phần còn lại',1),(36,NULL,NULL,4,1,4,NULL,2,'PO-2024-004','2025-11-24 11:52:25','2025-12-01 11:52:25',NULL,NULL,60000000.00,0.00,0.00,0.00,'in_transit',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,30000000.00,'partial','Hàng đang trên đường về kho',2),(37,NULL,NULL,5,2,5,NULL,1,'PO-2024-005','2025-11-29 11:52:25','2025-12-06 11:52:25',NULL,NULL,25000000.00,0.00,0.00,0.00,'confirmed',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,0.00,'unpaid','Nhà cung cấp đã xác nhận đơn',1),(38,NULL,NULL,6,1,6,NULL,2,'PO-2024-006','2025-12-02 11:52:25','2025-12-16 11:52:25',NULL,NULL,40000000.00,0.00,0.00,0.00,'pending',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,0.00,'unpaid','Chờ nhà cung cấp xác nhận',2),(39,NULL,NULL,7,2,7,NULL,1,'PO-2024-007','2025-12-04 11:52:25','2025-12-19 11:52:25',NULL,NULL,55000000.00,0.00,0.00,0.00,'draft',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,0.00,'unpaid','Đơn nháp, chưa gửi cho nhà cung cấp',1),(40,NULL,NULL,8,1,8,NULL,2,'PO-2024-008','2025-12-06 11:52:25','2025-12-21 11:52:25',NULL,NULL,30000000.00,0.00,0.00,0.00,'cancelled',NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25',NULL,0.00,0.00,'unpaid','Hủy do nhà cung cấp không đủ hàng',2);
+/*!40000 ALTER TABLE `purchase_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_return_items`
+--
+
+DROP TABLE IF EXISTS `purchase_return_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_return_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `purchase_return_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `product_code` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `quantity` decimal(12,3) NOT NULL DEFAULT '0.000',
+  `import_price` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Original purchase price',
+  `return_price` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Return price (may differ from import)',
+  `discount_per_item` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `purchase_return_id` (`purchase_return_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `purchase_return_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `purchase_return_items_purchase_return_id_foreign` FOREIGN KEY (`purchase_return_id`) REFERENCES `purchase_returns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_return_items`
+--
+
+LOCK TABLES `purchase_return_items` WRITE;
+/*!40000 ALTER TABLE `purchase_return_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_return_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_returns`
+--
+
+DROP TABLE IF EXISTS `purchase_returns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_returns` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `return_number` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `purchase_order_id` bigint unsigned DEFAULT NULL,
+  `partner_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `return_date` datetime DEFAULT NULL,
+  `total_quantity` int NOT NULL DEFAULT '0',
+  `total_amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `discount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `ncc_can_tra` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Amount supplier needs to pay back',
+  `ncc_da_tra` decimal(15,2) NOT NULL DEFAULT '0.00' COMMENT 'Amount supplier already paid back',
+  `status` varchar(30) COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `returned_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `return_number` (`return_number`),
+  KEY `purchase_returns_created_by_foreign` (`created_by`),
+  KEY `purchase_returns_returned_by_foreign` (`returned_by`),
+  KEY `purchase_order_id` (`purchase_order_id`),
+  KEY `partner_id` (`partner_id`),
+  KEY `branch_id` (`branch_id`),
+  KEY `status` (`status`),
+  KEY `return_date` (`return_date`),
+  CONSTRAINT `purchase_returns_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `purchase_returns_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `purchase_returns_partner_id_foreign` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `purchase_returns_purchase_order_id_foreign` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `purchase_returns_returned_by_foreign` FOREIGN KEY (`returned_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_returns`
+--
+
+LOCK TABLES `purchase_returns` WRITE;
+/*!40000 ALTER TABLE `purchase_returns` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_returns` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `purchase_suggestions`
+--
+
+DROP TABLE IF EXISTS `purchase_suggestions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `purchase_suggestions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `reorder_level_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `generated_for_date` date NOT NULL,
+  `suggested_qty` decimal(12,3) DEFAULT '0.000',
+  `on_hand_qty` decimal(12,3) DEFAULT '0.000',
+  `reserved_qty` decimal(12,3) DEFAULT '0.000',
+  `available_qty` decimal(12,3) DEFAULT '0.000',
+  `min_level` decimal(12,3) DEFAULT '0.000',
+  `max_level` decimal(12,3) DEFAULT '0.000',
+  `safety_stock` decimal(12,3) DEFAULT '0.000',
+  `status` varchar(30) DEFAULT 'pending',
+  `reason` varchar(255) DEFAULT NULL,
+  `purchase_order_id` bigint unsigned DEFAULT NULL,
+  `acknowledged_by` bigint unsigned DEFAULT NULL,
+  `acknowledged_at` datetime DEFAULT NULL,
+  `converted_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_purchase_suggestion_day` (`product_id`,`variant_id`,`branch_id`,`generated_for_date`),
+  KEY `idx_purchase_suggestion_status` (`branch_id`,`status`),
+  KEY `fk_purchase_suggestions_purchase_order_id` (`purchase_order_id`),
+  KEY `fk_purchase_suggestions_reorder_level_id` (`reorder_level_id`),
+  KEY `fk_purchase_suggestions_variant_id` (`variant_id`),
+  CONSTRAINT `fk_purchase_suggestions_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_suggestions_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_suggestions_purchase_order_id` FOREIGN KEY (`purchase_order_id`) REFERENCES `purchase_orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_suggestions_reorder_level_id` FOREIGN KEY (`reorder_level_id`) REFERENCES `reorder_levels` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_purchase_suggestions_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `purchase_suggestions`
+--
+
+LOCK TABLES `purchase_suggestions` WRITE;
+/*!40000 ALTER TABLE `purchase_suggestions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `purchase_suggestions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quality_inspection_items`
+--
+
+DROP TABLE IF EXISTS `quality_inspection_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `quality_inspection_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `inspection_id` bigint unsigned NOT NULL,
+  `parameter_id` bigint unsigned NOT NULL,
+  `parameter_name` varchar(150) NOT NULL,
+  `uom` varchar(50) DEFAULT NULL,
+  `value_numeric` decimal(14,4) DEFAULT NULL,
+  `value_text` varchar(255) DEFAULT NULL,
+  `pass_flag` tinyint(1) DEFAULT NULL,
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_quality_item_inspection` (`inspection_id`),
+  KEY `idx_quality_item_parameter` (`parameter_id`),
+  CONSTRAINT `fk_quality_inspection_i_inspection_id` FOREIGN KEY (`inspection_id`) REFERENCES `quality_inspections` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_quality_inspection_i_parameter_id` FOREIGN KEY (`parameter_id`) REFERENCES `quality_parameters` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quality_inspection_items`
+--
+
+LOCK TABLES `quality_inspection_items` WRITE;
+/*!40000 ALTER TABLE `quality_inspection_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quality_inspection_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quality_inspections`
+--
+
+DROP TABLE IF EXISTS `quality_inspections`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `quality_inspections` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `reference_type` varchar(80) NOT NULL,
+  `reference_id` bigint unsigned NOT NULL,
+  `status` varchar(20) DEFAULT 'draft',
+  `result` varchar(20) DEFAULT 'pending',
+  `inspected_by` bigint unsigned DEFAULT NULL,
+  `inspected_at` datetime DEFAULT NULL,
+  `submitted_at` datetime DEFAULT NULL,
+  `approved_by` bigint unsigned DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `rejected_by` bigint unsigned DEFAULT NULL,
+  `rejected_at` datetime DEFAULT NULL,
+  `notes` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_quality_reference` (`reference_type`,`reference_id`),
+  KEY `idx_quality_status` (`status`),
+  KEY `idx_quality_result` (`result`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quality_inspections`
+--
+
+LOCK TABLES `quality_inspections` WRITE;
+/*!40000 ALTER TABLE `quality_inspections` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quality_inspections` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quality_parameters`
+--
+
+DROP TABLE IF EXISTS `quality_parameters`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `quality_parameters` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `uom` varchar(50) DEFAULT NULL,
+  `min_value` decimal(14,4) DEFAULT NULL,
+  `max_value` decimal(14,4) DEFAULT NULL,
+  `specification` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_quality_parameter_name` (`name`),
+  KEY `idx_quality_parameter_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quality_parameters`
+--
+
+LOCK TABLES `quality_parameters` WRITE;
+/*!40000 ALTER TABLE `quality_parameters` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quality_parameters` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quotation_items`
+--
+
+DROP TABLE IF EXISTS `quotation_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `quotation_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `quotation_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `quantity` decimal(14,2) DEFAULT '1.00',
+  `price` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_quote_items_quote` (`quotation_id`),
+  KEY `fk_quotation_items_product_id` (`product_id`),
+  CONSTRAINT `fk_quotation_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_quotation_items_quotation_id` FOREIGN KEY (`quotation_id`) REFERENCES `quotations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quotation_items`
+--
+
+LOCK TABLES `quotation_items` WRITE;
+/*!40000 ALTER TABLE `quotation_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quotation_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `quotations`
+--
+
+DROP TABLE IF EXISTS `quotations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `quotations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `quote_number` varchar(50) DEFAULT NULL,
+  `opportunity_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `lead_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(50) DEFAULT 'draft',
+  `validity_date` date DEFAULT NULL,
+  `subtotal` decimal(14,2) DEFAULT '0.00',
+  `discount_total` decimal(14,2) DEFAULT '0.00',
+  `tax_total` decimal(14,2) DEFAULT '0.00',
+  `total` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_quotations_customer_id` (`customer_id`),
+  KEY `fk_quotations_lead_id` (`lead_id`),
+  KEY `fk_quotations_opportunity_id` (`opportunity_id`),
+  CONSTRAINT `fk_quotations_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_quotations_lead_id` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_quotations_opportunity_id` FOREIGN KEY (`opportunity_id`) REFERENCES `opportunities` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `quotations`
+--
+
+LOCK TABLES `quotations` WRITE;
+/*!40000 ALTER TABLE `quotations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `quotations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `regional_tax_rules`
+--
+
+DROP TABLE IF EXISTS `regional_tax_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `regional_tax_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `country` varchar(5) NOT NULL,
+  `rule_json` json NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_region_country` (`country`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `regional_tax_rules`
+--
+
+LOCK TABLES `regional_tax_rules` WRITE;
+/*!40000 ALTER TABLE `regional_tax_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `regional_tax_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `reorder_levels`
+--
+
+DROP TABLE IF EXISTS `reorder_levels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reorder_levels` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `min_level` decimal(12,3) DEFAULT '0.000',
+  `max_level` decimal(12,3) DEFAULT '0.000',
+  `safety_stock` decimal(12,3) DEFAULT '0.000',
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_reorder_level` (`product_id`,`variant_id`,`branch_id`),
+  KEY `idx_reorder_branch` (`branch_id`,`product_id`),
+  KEY `fk_reorder_levels_variant_id` (`variant_id`),
+  CONSTRAINT `fk_reorder_levels_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_reorder_levels_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_reorder_levels_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `reorder_levels`
+--
+
+LOCK TABLES `reorder_levels` WRITE;
+/*!40000 ALTER TABLE `reorder_levels` DISABLE KEYS */;
+/*!40000 ALTER TABLE `reorder_levels` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `return_items`
+--
+
+DROP TABLE IF EXISTS `return_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `return_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `return_id` bigint unsigned DEFAULT NULL,
+  `order_item_id` bigint unsigned DEFAULT NULL,
+  `quantity_returned` decimal(14,3) DEFAULT NULL,
+  `item_condition` varchar(50) DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_return_items_return` (`return_id`),
+  KEY `idx_return_items_order_item` (`order_item_id`),
+  CONSTRAINT `fk_return_items_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_items` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_return_items_return` FOREIGN KEY (`return_id`) REFERENCES `returns` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `return_items`
+--
+
+LOCK TABLES `return_items` WRITE;
+/*!40000 ALTER TABLE `return_items` DISABLE KEYS */;
+INSERT INTO `return_items` VALUES (35,35,537,1.000,'damaged','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(36,36,540,1.000,'used','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(37,37,543,1.000,'new','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(38,38,548,1.000,'new','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(39,39,560,1.000,'used','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(40,40,577,1.000,'opened','2025-12-10 10:19:05','2025-12-10 10:19:05',NULL);
+/*!40000 ALTER TABLE `return_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `returns`
+--
+
+DROP TABLE IF EXISTS `returns`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `returns` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `return_number` varchar(50) DEFAULT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `return_amount` decimal(14,2) DEFAULT NULL,
+  `refund_shipping_fee` tinyint(1) DEFAULT NULL,
+  `refund_amount` decimal(14,2) DEFAULT NULL,
+  `refund_method` varchar(50) DEFAULT NULL,
+  `reason` varchar(50) DEFAULT NULL,
+  `reason_detail` text,
+  `status` varchar(50) DEFAULT NULL,
+  `approved_by` bigint unsigned DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `rejected_by` bigint unsigned DEFAULT NULL,
+  `rejected_at` datetime DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `notes` text,
+  `lock_version` int DEFAULT '0',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `return_number` (`return_number`),
+  KEY `idx_returns_order` (`order_id`),
+  KEY `idx_returns_customer` (`customer_id`),
+  CONSTRAINT `fk_returns_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_returns_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `returns`
+--
+
+LOCK TABLES `returns` WRITE;
+/*!40000 ALTER TABLE `returns` DISABLE KEYS */;
+INSERT INTO `returns` VALUES (35,'RET-DEMO-001',290,2012,226000.00,0,226000.00,'cash','defective',NULL,'approved',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(36,'RET-DEMO-002',291,2013,155400.00,0,155400.00,'bank_transfer','not_satisfied',NULL,'completed',NULL,NULL,NULL,NULL,NULL,NULL,0,2,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(37,'RET-DEMO-003',293,2015,224000.00,0,0.00,NULL,'wrong_item',NULL,'pending',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(38,'RET-DEMO-004',295,2017,216000.00,0,0.00,NULL,'other','Không phù hợp với nhu cầu','rejected',NULL,NULL,NULL,NULL,NULL,NULL,0,2,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(39,'RET-DEMO-023',303,2005,252000.00,0,0.00,'cash','other',NULL,'pending',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL),(40,'RET-DEMO-032',312,2015,204000.00,0,0.00,'cash','other',NULL,'rejected',NULL,NULL,NULL,NULL,NULL,NULL,0,1,'2025-12-10 10:19:05','2025-12-10 10:19:05',NULL);
+/*!40000 ALTER TABLE `returns` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `role_has_permissions`
+--
+
+DROP TABLE IF EXISTS `role_has_permissions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `role_has_permissions` (
+  `permission_id` bigint unsigned NOT NULL,
+  `role_id` bigint unsigned NOT NULL,
+  PRIMARY KEY (`permission_id`,`role_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `role_has_permissions`
+--
+
+LOCK TABLES `role_has_permissions` WRITE;
+/*!40000 ALTER TABLE `role_has_permissions` DISABLE KEYS */;
+INSERT INTO `role_has_permissions` VALUES (1,1),(1,2),(1,3),(2,1),(3,1),(3,2),(3,3),(4,1),(4,2);
+/*!40000 ALTER TABLE `role_has_permissions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `roles`
+--
+
+DROP TABLE IF EXISTS `roles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `roles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `guard_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `is_system` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `roles`
+--
+
+LOCK TABLES `roles` WRITE;
+/*!40000 ALTER TABLE `roles` DISABLE KEYS */;
+INSERT INTO `roles` VALUES (1,'super-admin','api','Super Admin',1,'2025-12-09 11:31:02',NULL,NULL),(2,'manager','api','Quản lý',0,'2025-12-09 11:31:02',NULL,NULL),(3,'viewer','api','Xem chỉ đọc',0,'2025-12-09 11:31:02',NULL,NULL);
+/*!40000 ALTER TABLE `roles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `salary_components`
+--
+
+DROP TABLE IF EXISTS `salary_components`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `salary_components` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `salary_slip_id` bigint unsigned NOT NULL,
+  `component_name` varchar(150) NOT NULL,
+  `component_type` varchar(20) DEFAULT 'earning',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_salary_component_slip` (`salary_slip_id`),
+  CONSTRAINT `fk_salary_components_salary_slip_id` FOREIGN KEY (`salary_slip_id`) REFERENCES `salary_slips` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `salary_components`
+--
+
+LOCK TABLES `salary_components` WRITE;
+/*!40000 ALTER TABLE `salary_components` DISABLE KEYS */;
+/*!40000 ALTER TABLE `salary_components` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `salary_slips`
+--
+
+DROP TABLE IF EXISTS `salary_slips`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `salary_slips` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `payroll_entry_id` bigint unsigned NOT NULL,
+  `employee_id` bigint unsigned NOT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `period_start` date DEFAULT NULL,
+  `period_end` date DEFAULT NULL,
+  `total_earnings` decimal(14,2) DEFAULT '0.00',
+  `total_deductions` decimal(14,2) DEFAULT '0.00',
+  `net_pay` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_salary_slip` (`payroll_entry_id`,`employee_id`),
+  KEY `fk_salary_slips_employee_id` (`employee_id`),
+  CONSTRAINT `fk_salary_slips_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_salary_slips_payroll_entry_id` FOREIGN KEY (`payroll_entry_id`) REFERENCES `payroll_entries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `salary_slips`
+--
+
+LOCK TABLES `salary_slips` WRITE;
+/*!40000 ALTER TABLE `salary_slips` DISABLE KEYS */;
+/*!40000 ALTER TABLE `salary_slips` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sales_channels`
+--
+
+DROP TABLE IF EXISTS `sales_channels`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sales_channels` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `description` text COLLATE utf8mb4_general_ci,
+  `icon` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `color` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `is_default` tinyint(1) NOT NULL DEFAULT '0',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `settings` json DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sales_channel_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sales_channels`
+--
+
+LOCK TABLES `sales_channels` WRITE;
+/*!40000 ALTER TABLE `sales_channels` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sales_channels` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sales_invoice_items`
+--
+
+DROP TABLE IF EXISTS `sales_invoice_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sales_invoice_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `description` varchar(255) DEFAULT NULL,
+  `quantity` decimal(12,2) DEFAULT '0.00',
+  `rate` decimal(14,2) DEFAULT '0.00',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_sales_invoice_item_invoice` (`invoice_id`),
+  KEY `fk_sales_invoice_items_product_id` (`product_id`),
+  CONSTRAINT `fk_sales_invoice_items_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `sales_invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sales_invoice_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sales_invoice_items`
+--
+
+LOCK TABLES `sales_invoice_items` WRITE;
+/*!40000 ALTER TABLE `sales_invoice_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sales_invoice_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sales_invoice_taxes`
+--
+
+DROP TABLE IF EXISTS `sales_invoice_taxes`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sales_invoice_taxes` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_id` bigint unsigned NOT NULL,
+  `tax_name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `amount` decimal(14,2) DEFAULT '0.00',
+  `template_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_sales_invoice_tax_invoice` (`invoice_id`),
+  KEY `fk_sales_invoice_taxes_template_id` (`template_id`),
+  CONSTRAINT `fk_sales_invoice_taxes_invoice_id` FOREIGN KEY (`invoice_id`) REFERENCES `sales_invoices` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sales_invoice_taxes_template_id` FOREIGN KEY (`template_id`) REFERENCES `tax_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sales_invoice_taxes`
+--
+
+LOCK TABLES `sales_invoice_taxes` WRITE;
+/*!40000 ALTER TABLE `sales_invoice_taxes` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sales_invoice_taxes` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sales_invoices`
+--
+
+DROP TABLE IF EXISTS `sales_invoices`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sales_invoices` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `invoice_number` varchar(50) NOT NULL,
+  `customer_id` bigint unsigned NOT NULL,
+  `posting_date` date NOT NULL,
+  `due_date` date DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'draft',
+  `currency` varchar(10) DEFAULT 'VND',
+  `exchange_rate` decimal(12,4) DEFAULT '1.0000',
+  `total` decimal(14,2) DEFAULT '0.00',
+  `taxes_total` decimal(14,2) DEFAULT '0.00',
+  `grand_total` decimal(14,2) DEFAULT '0.00',
+  `rounding_adjustment` decimal(12,2) DEFAULT '0.00',
+  `debit_account_id` bigint unsigned DEFAULT NULL,
+  `credit_account_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_sales_invoice_number` (`invoice_number`),
+  KEY `idx_sales_invoice_customer` (`customer_id`),
+  KEY `fk_sales_invoices_credit_account_id` (`credit_account_id`),
+  KEY `fk_sales_invoices_debit_account_id` (`debit_account_id`),
+  CONSTRAINT `fk_sales_invoices_credit_account_id` FOREIGN KEY (`credit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_sales_invoices_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_sales_invoices_debit_account_id` FOREIGN KEY (`debit_account_id`) REFERENCES `chart_of_accounts` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sales_invoices`
+--
+
+LOCK TABLES `sales_invoices` WRITE;
+/*!40000 ALTER TABLE `sales_invoices` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sales_invoices` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `scheduler_rules`
+--
+
+DROP TABLE IF EXISTS `scheduler_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `scheduler_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `cron_expression` varchar(60) NOT NULL,
+  `handler` varchar(120) NOT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `last_run_at` datetime DEFAULT NULL,
+  `next_run_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_scheduler_name` (`name`),
+  KEY `idx_scheduler_active` (`is_active`,`next_run_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `scheduler_rules`
+--
+
+LOCK TABLES `scheduler_rules` WRITE;
+/*!40000 ALTER TABLE `scheduler_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `scheduler_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sessions`
+--
+
+DROP TABLE IF EXISTS `sessions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `sessions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `user_id` bigint unsigned NOT NULL,
+  `token` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `device_info` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `ip_address` varchar(45) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `last_activity` datetime DEFAULT NULL,
+  `expires_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `token` (`token`),
+  KEY `fk_sessions_user_id` (`user_id`),
+  CONSTRAINT `fk_sessions_user_id` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sessions`
+--
+
+LOCK TABLES `sessions` WRITE;
+/*!40000 ALTER TABLE `sessions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sessions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shipping_rates`
+--
+
+DROP TABLE IF EXISTS `shipping_rates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shipping_rates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `zone_id` bigint unsigned NOT NULL,
+  `delivery_partner_id` bigint unsigned DEFAULT NULL,
+  `min_weight` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `max_weight` decimal(10,2) NOT NULL DEFAULT '999999.00',
+  `min_value` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `max_value` decimal(14,2) NOT NULL DEFAULT '999999999.00',
+  `base_fee` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `per_kg_fee` decimal(14,2) NOT NULL DEFAULT '0.00',
+  `free_shipping_threshold` decimal(14,2) DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_shipping_rate_zone` (`zone_id`),
+  KEY `idx_shipping_rate_partner` (`delivery_partner_id`),
+  CONSTRAINT `shipping_rates_zone_id_foreign` FOREIGN KEY (`zone_id`) REFERENCES `shipping_zones` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `shipping_rates`
+--
+
+LOCK TABLES `shipping_rates` WRITE;
+/*!40000 ALTER TABLE `shipping_rates` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shipping_rates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shipping_zones`
+--
+
+DROP TABLE IF EXISTS `shipping_zones`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shipping_zones` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `province_ids` json DEFAULT NULL COMMENT 'Array of province IDs',
+  `district_ids` json DEFAULT NULL COMMENT 'Array of district IDs',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `sort_order` int NOT NULL DEFAULT '0',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `shipping_zones`
+--
+
+LOCK TABLES `shipping_zones` WRITE;
+/*!40000 ALTER TABLE `shipping_zones` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shipping_zones` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_bins`
+--
+
+DROP TABLE IF EXISTS `stock_bins`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_bins` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `on_hand_qty` decimal(12,3) DEFAULT '0.000',
+  `reserved_qty` decimal(12,3) DEFAULT '0.000',
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_stock_bin` (`product_id`,`variant_id`,`branch_id`,`batch_id`),
+  KEY `fk_stock_bins_variant_id` (`variant_id`),
+  KEY `fk_stock_bins_branch_id` (`branch_id`),
+  KEY `fk_stock_bins_batch_id` (`batch_id`),
+  CONSTRAINT `fk_stock_bins_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_bins_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_bins_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_bins_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_bins`
+--
+
+LOCK TABLES `stock_bins` WRITE;
+/*!40000 ALTER TABLE `stock_bins` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_bins` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_disposal_items`
+--
+
+DROP TABLE IF EXISTS `stock_disposal_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_disposal_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `disposal_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `sku` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `quantity` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `cost_price` decimal(18,4) NOT NULL DEFAULT '0.0000',
+  `disposal_value` decimal(18,4) NOT NULL DEFAULT '0.0000',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `disposal_id` (`disposal_id`),
+  KEY `product_id` (`product_id`),
+  KEY `variant_id` (`variant_id`),
+  CONSTRAINT `stock_disposal_items_disposal_id_foreign` FOREIGN KEY (`disposal_id`) REFERENCES `stock_disposals` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `stock_disposal_items_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `stock_disposal_items_variant_id_foreign` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_disposal_items`
+--
+
+LOCK TABLES `stock_disposal_items` WRITE;
+/*!40000 ALTER TABLE `stock_disposal_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_disposal_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_disposals`
+--
+
+DROP TABLE IF EXISTS `stock_disposals`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_disposals` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `status` enum('draft','completed','cancelled') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+  `disposed_at` datetime DEFAULT NULL,
+  `total_quantity` decimal(15,4) NOT NULL DEFAULT '0.0000',
+  `total_value` decimal(18,4) NOT NULL DEFAULT '0.0000',
+  `notes` text COLLATE utf8mb4_general_ci,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `executor_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `branch_id` (`branch_id`),
+  KEY `status` (`status`),
+  KEY `disposed_at` (`disposed_at`),
+  KEY `created_by` (`created_by`),
+  KEY `executor_id` (`executor_id`),
+  CONSTRAINT `stock_disposals_branch_id_foreign` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `stock_disposals_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `stock_disposals_executor_id_foreign` FOREIGN KEY (`executor_id`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_disposals`
+--
+
+LOCK TABLES `stock_disposals` WRITE;
+/*!40000 ALTER TABLE `stock_disposals` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_disposals` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_entries`
+--
+
+DROP TABLE IF EXISTS `stock_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_entries` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `entry_number` varchar(60) NOT NULL,
+  `type` varchar(20) NOT NULL,
+  `status` varchar(20) DEFAULT 'draft',
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `source_warehouse_id` bigint unsigned DEFAULT NULL,
+  `target_warehouse_id` bigint unsigned DEFAULT NULL,
+  `reference_type` varchar(80) DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `return_reason` varchar(255) DEFAULT NULL,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `submitted_by` bigint unsigned DEFAULT NULL,
+  `cancelled_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `submitted_at` datetime DEFAULT NULL,
+  `cancelled_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_stock_entry_number` (`entry_number`),
+  KEY `idx_stock_entry_type_status` (`type`,`status`),
+  KEY `fk_stock_entries_branch_id` (`branch_id`),
+  KEY `fk_stock_entries_source_warehouse_id` (`source_warehouse_id`),
+  KEY `fk_stock_entries_target_warehouse_id` (`target_warehouse_id`),
+  CONSTRAINT `fk_stock_entries_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entries_source_warehouse_id` FOREIGN KEY (`source_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entries_target_warehouse_id` FOREIGN KEY (`target_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_entries`
+--
+
+LOCK TABLES `stock_entries` WRITE;
+/*!40000 ALTER TABLE `stock_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_entry_items`
+--
+
+DROP TABLE IF EXISTS `stock_entry_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_entry_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `stock_entry_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `qty` decimal(12,3) DEFAULT '0.000',
+  `uom` varchar(50) DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `source_warehouse_id` bigint unsigned DEFAULT NULL,
+  `target_warehouse_id` bigint unsigned DEFAULT NULL,
+  `source_branch_id` bigint unsigned DEFAULT NULL,
+  `target_branch_id` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_stock_entry_item_entry` (`stock_entry_id`),
+  KEY `idx_stock_entry_item_product` (`product_id`),
+  KEY `fk_stock_entry_items_variant_id` (`variant_id`),
+  KEY `fk_stock_entry_items_source_branch_id` (`source_branch_id`),
+  KEY `fk_stock_entry_items_target_branch_id` (`target_branch_id`),
+  KEY `fk_stock_entry_items_source_warehouse_id` (`source_warehouse_id`),
+  KEY `fk_stock_entry_items_target_warehouse_id` (`target_warehouse_id`),
+  KEY `fk_stock_entry_items_batch_id` (`batch_id`),
+  CONSTRAINT `fk_stock_entry_items_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_source_branch_id` FOREIGN KEY (`source_branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_source_warehouse_id` FOREIGN KEY (`source_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_stock_entry_id` FOREIGN KEY (`stock_entry_id`) REFERENCES `stock_entries` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_target_branch_id` FOREIGN KEY (`target_branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_target_warehouse_id` FOREIGN KEY (`target_warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_entry_items_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_entry_items`
+--
+
+LOCK TABLES `stock_entry_items` WRITE;
+/*!40000 ALTER TABLE `stock_entry_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_entry_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_ledgers`
+--
+
+DROP TABLE IF EXISTS `stock_ledgers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_ledgers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `warehouse_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `serial_number` varchar(160) DEFAULT NULL,
+  `movement_date` datetime NOT NULL,
+  `reference_type` varchar(80) NOT NULL,
+  `reference_id` bigint unsigned NOT NULL,
+  `reference_seq` int unsigned DEFAULT '1',
+  `qty_delta` decimal(12,3) DEFAULT '0.000',
+  `unit_cost` decimal(14,4) DEFAULT '0.0000',
+  `total_cost` decimal(14,4) DEFAULT '0.0000',
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ledger_ref_seq` (`reference_type`,`reference_id`,`reference_seq`),
+  KEY `idx_ledger_product` (`product_id`,`branch_id`),
+  KEY `fk_stock_ledgers_variant_id` (`variant_id`),
+  KEY `fk_stock_ledgers_branch_id` (`branch_id`),
+  KEY `fk_stock_ledgers_warehouse_id` (`warehouse_id`),
+  KEY `fk_stock_ledgers_batch_id` (`batch_id`),
+  CONSTRAINT `fk_stock_ledgers_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_ledgers_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_ledgers_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_ledgers_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_ledgers_warehouse_id` FOREIGN KEY (`warehouse_id`) REFERENCES `warehouses` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_ledgers`
+--
+
+LOCK TABLES `stock_ledgers` WRITE;
+/*!40000 ALTER TABLE `stock_ledgers` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_ledgers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_reconciliation_items`
+--
+
+DROP TABLE IF EXISTS `stock_reconciliation_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_reconciliation_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `reconciliation_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `batch_id` bigint unsigned DEFAULT NULL,
+  `counted_qty` decimal(12,3) DEFAULT '0.000',
+  `current_qty` decimal(12,3) DEFAULT '0.000',
+  `variance_qty` decimal(12,3) DEFAULT '0.000',
+  `unit_cost` decimal(14,4) DEFAULT '0.0000',
+  `remarks` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_recon_item` (`reconciliation_id`),
+  KEY `idx_recon_product` (`product_id`,`batch_id`),
+  KEY `fk_stock_reconciliation_variant_id` (`variant_id`),
+  KEY `fk_stock_reconciliation_batch_id` (`batch_id`),
+  CONSTRAINT `fk_stock_reconciliation_batch_id` FOREIGN KEY (`batch_id`) REFERENCES `product_batches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_reconciliation_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_reconciliation_reconciliation_id` FOREIGN KEY (`reconciliation_id`) REFERENCES `stock_reconciliations` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_stock_reconciliation_variant_id` FOREIGN KEY (`variant_id`) REFERENCES `product_variants_v2` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_reconciliation_items`
+--
+
+LOCK TABLES `stock_reconciliation_items` WRITE;
+/*!40000 ALTER TABLE `stock_reconciliation_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_reconciliation_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_reconciliations`
+--
+
+DROP TABLE IF EXISTS `stock_reconciliations`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_reconciliations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `recon_number` varchar(60) NOT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `status` varchar(20) DEFAULT 'draft',
+  `notes` text,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `approved_by` bigint unsigned DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_recon_number` (`recon_number`),
+  KEY `fk_stock_reconciliation_branch_id` (`branch_id`),
+  CONSTRAINT `fk_stock_reconciliation_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_reconciliations`
+--
+
+LOCK TABLES `stock_reconciliations` WRITE;
+/*!40000 ALTER TABLE `stock_reconciliations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `stock_reconciliations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_transfer_items`
+--
+
+DROP TABLE IF EXISTS `stock_transfer_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_transfer_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `transfer_id` bigint unsigned NOT NULL,
+  `product_id` bigint unsigned NOT NULL,
+  `variant_id` bigint unsigned DEFAULT NULL,
+  `product_code` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `product_name` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `unit` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `quantity_sent` decimal(12,3) NOT NULL DEFAULT '0.000',
+  `quantity_received` decimal(12,3) NOT NULL DEFAULT '0.000',
+  `unit_price` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `total_price` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `notes` varchar(500) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `transfer_id` (`transfer_id`),
+  KEY `product_id` (`product_id`),
+  CONSTRAINT `stock_transfer_items_transfer_id_foreign` FOREIGN KEY (`transfer_id`) REFERENCES `stock_transfers` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_transfer_items`
+--
+
+LOCK TABLES `stock_transfer_items` WRITE;
+/*!40000 ALTER TABLE `stock_transfer_items` DISABLE KEYS */;
+INSERT INTO `stock_transfer_items` VALUES (37,16,501,NULL,'PROD-001','Sản phẩm Demo 1','Cái',2.000,0.000,477825.00,955650.00,NULL,'2025-12-07 11:52:25',NULL),(38,16,502,NULL,'PROD-002','Sản phẩm Demo 2','Cái',3.000,0.000,399640.00,1198920.00,NULL,'2025-12-07 11:52:25',NULL),(39,16,503,NULL,'PROD-003','Sản phẩm Demo 3','Cái',1.000,0.000,227052.00,227052.00,NULL,'2025-12-07 11:52:25',NULL),(40,17,501,NULL,'PROD-001','Sản phẩm Demo 1','Cái',3.000,3.000,420537.00,1261611.00,NULL,'2025-12-04 11:52:25',NULL),(41,17,502,NULL,'PROD-002','Sản phẩm Demo 2','Cái',2.000,2.000,204589.00,409178.00,NULL,'2025-12-04 11:52:25',NULL),(42,18,501,NULL,'PROD-001','Sản phẩm Demo 1','Cái',3.000,0.000,372197.00,1116591.00,NULL,'2025-12-09 11:52:25',NULL),(43,19,501,NULL,'PROD-001','Sản phẩm Demo 1','Cái',2.000,2.000,362337.00,724674.00,NULL,'2025-11-29 11:52:25',NULL),(44,19,502,NULL,'PROD-002','Sản phẩm Demo 2','Cái',3.000,3.000,411615.00,1234845.00,NULL,'2025-11-29 11:52:25',NULL),(45,19,503,NULL,'PROD-003','Sản phẩm Demo 3','Cái',1.000,1.000,306480.00,306480.00,NULL,'2025-11-29 11:52:25',NULL),(46,19,504,NULL,'PROD-004','Sản phẩm Demo 4','Cái',2.000,2.000,348652.00,697304.00,NULL,'2025-11-29 11:52:25',NULL),(47,20,501,NULL,'PROD-001','Sản phẩm Demo 1','Cái',2.000,0.000,221256.00,442512.00,NULL,'2025-12-02 11:52:25',NULL),(48,20,502,NULL,'PROD-002','Sản phẩm Demo 2','Cái',2.000,0.000,300514.00,601028.00,NULL,'2025-12-02 11:52:25',NULL);
+/*!40000 ALTER TABLE `stock_transfer_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `stock_transfers`
+--
+
+DROP TABLE IF EXISTS `stock_transfers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `stock_transfers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
+  `status` enum('draft','in_transit','received','cancelled') COLLATE utf8mb4_general_ci NOT NULL DEFAULT 'draft',
+  `from_branch_id` bigint unsigned NOT NULL,
+  `to_branch_id` bigint unsigned NOT NULL,
+  `transfer_date` datetime DEFAULT NULL,
+  `receive_date` datetime DEFAULT NULL,
+  `notes` text COLLATE utf8mb4_general_ci,
+  `receiving_notes` text COLLATE utf8mb4_general_ci,
+  `total_items` int unsigned NOT NULL DEFAULT '0',
+  `quantity_sent` decimal(12,3) NOT NULL DEFAULT '0.000',
+  `value_sent` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `quantity_received` decimal(12,3) NOT NULL DEFAULT '0.000',
+  `value_received` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `created_by` bigint unsigned DEFAULT NULL,
+  `received_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `code` (`code`),
+  KEY `from_branch_id` (`from_branch_id`),
+  KEY `to_branch_id` (`to_branch_id`),
+  KEY `status` (`status`),
+  KEY `transfer_date` (`transfer_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `stock_transfers`
+--
+
+LOCK TABLES `stock_transfers` WRITE;
+/*!40000 ALTER TABLE `stock_transfers` DISABLE KEYS */;
+INSERT INTO `stock_transfers` VALUES (16,'TRF250001','in_transit',2,1,'2025-12-07 11:52:25',NULL,'Chuyển hàng tháng 12',NULL,3,5.000,1500000.00,0.000,0.00,1,NULL,'2025-12-07 11:52:25',NULL),(17,'TRF250002','received',1,2,'2025-12-04 11:52:25','2025-12-05 11:52:25','Bổ sung hàng HCM',NULL,2,3.000,900000.00,3.000,900000.00,1,1,'2025-12-04 11:52:25',NULL),(18,'TRF250003','draft',2,1,NULL,NULL,'Phiếu nháp',NULL,1,2.000,600000.00,0.000,0.00,1,NULL,'2025-12-09 11:52:25',NULL),(19,'TRF250004','received',2,1,'2025-11-29 11:52:25','2025-11-30 11:52:25','',NULL,4,8.000,2400000.00,8.000,2400000.00,1,1,'2025-11-29 11:52:25',NULL),(20,'TRF250005','cancelled',1,2,NULL,NULL,'Hủy do thay đổi kế hoạch',NULL,2,4.000,1200000.00,0.000,0.00,1,NULL,'2025-12-02 11:52:25',NULL);
+/*!40000 ALTER TABLE `stock_transfers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subcontracting_materials`
+--
+
+DROP TABLE IF EXISTS `subcontracting_materials`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subcontracting_materials` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `subcontracting_order_id` bigint unsigned NOT NULL,
+  `material_product_id` bigint unsigned DEFAULT NULL,
+  `quantity` decimal(14,3) DEFAULT '0.000',
+  `issued_quantity` decimal(14,3) DEFAULT '0.000',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_subcon_material` (`subcontracting_order_id`),
+  KEY `fk_subcontracting_mater_material_product_id` (`material_product_id`),
+  CONSTRAINT `fk_subcontracting_mater_material_product_id` FOREIGN KEY (`material_product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_subcontracting_mater_subcontracting_order` FOREIGN KEY (`subcontracting_order_id`) REFERENCES `subcontracting_orders` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subcontracting_materials`
+--
+
+LOCK TABLES `subcontracting_materials` WRITE;
+/*!40000 ALTER TABLE `subcontracting_materials` DISABLE KEYS */;
+/*!40000 ALTER TABLE `subcontracting_materials` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subcontracting_orders`
+--
+
+DROP TABLE IF EXISTS `subcontracting_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subcontracting_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_number` varchar(50) NOT NULL,
+  `supplier_id` bigint unsigned DEFAULT NULL,
+  `product_id` bigint unsigned DEFAULT NULL,
+  `quantity` decimal(14,3) DEFAULT '0.000',
+  `status` varchar(30) DEFAULT 'draft',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_subcon_order` (`order_number`),
+  KEY `fk_subcontracting_order_product_id` (`product_id`),
+  KEY `fk_subcontracting_orders_supplier` (`supplier_id`),
+  CONSTRAINT `fk_subcontracting_order_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_subcontracting_orders_supplier` FOREIGN KEY (`supplier_id`) REFERENCES `suppliers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subcontracting_orders`
+--
+
+LOCK TABLES `subcontracting_orders` WRITE;
+/*!40000 ALTER TABLE `subcontracting_orders` DISABLE KEYS */;
+/*!40000 ALTER TABLE `subcontracting_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subscription_cycles`
+--
+
+DROP TABLE IF EXISTS `subscription_cycles`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subscription_cycles` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `subscription_id` bigint unsigned NOT NULL,
+  `run_date` date NOT NULL,
+  `order_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'processed',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_subscription_cycle` (`subscription_id`,`run_date`),
+  KEY `idx_cycle_status` (`status`),
+  KEY `fk_subscription_cycles_order_id` (`order_id`),
+  CONSTRAINT `fk_subscription_cycles_order_id` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_subscription_cycles_subscription_id` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subscription_cycles`
+--
+
+LOCK TABLES `subscription_cycles` WRITE;
+/*!40000 ALTER TABLE `subscription_cycles` DISABLE KEYS */;
+/*!40000 ALTER TABLE `subscription_cycles` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `subscriptions`
+--
+
+DROP TABLE IF EXISTS `subscriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `subscriptions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `template_id` bigint unsigned DEFAULT NULL,
+  `plan_name` varchar(150) NOT NULL,
+  `interval_days` int DEFAULT '30',
+  `next_run_at` datetime DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_subscription_status` (`status`),
+  KEY `idx_subscription_next` (`next_run_at`),
+  KEY `fk_subscriptions_customer_id` (`customer_id`),
+  KEY `fk_subscriptions_template_id` (`template_id`),
+  CONSTRAINT `fk_subscriptions_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_subscriptions_template_id` FOREIGN KEY (`template_id`) REFERENCES `order_templates` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `subscriptions`
+--
+
+LOCK TABLES `subscriptions` WRITE;
+/*!40000 ALTER TABLE `subscriptions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `subscriptions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supplier_debt_transactions`
+--
+
+DROP TABLE IF EXISTS `supplier_debt_transactions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supplier_debt_transactions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `partner_id` bigint unsigned NOT NULL,
+  `type` enum('adjust','payment','discount') COLLATE utf8mb4_general_ci NOT NULL,
+  `amount` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `debt_before` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `debt_after` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `payment_method` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `executor_id` bigint unsigned DEFAULT NULL,
+  `note` text COLLATE utf8mb4_general_ci,
+  `reference_type` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `reference_id` bigint unsigned DEFAULT NULL,
+  `transaction_date` datetime NOT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `partner_id` (`partner_id`),
+  KEY `type` (`type`),
+  KEY `transaction_date` (`transaction_date`),
+  CONSTRAINT `supplier_debt_transactions_partner_id_foreign` FOREIGN KEY (`partner_id`) REFERENCES `partners` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supplier_debt_transactions`
+--
+
+LOCK TABLES `supplier_debt_transactions` WRITE;
+/*!40000 ALTER TABLE `supplier_debt_transactions` DISABLE KEYS */;
+INSERT INTO `supplier_debt_transactions` VALUES (25,1,'payment',50000000.00,0.00,-50000000.00,'bank_transfer',1,'Thanh toán đơn PO-2024-001','purchase_order',NULL,'2025-11-09 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(26,2,'payment',35000000.00,0.00,-35000000.00,'bank_transfer',2,'Thanh toán đơn PO-2024-002','purchase_order',NULL,'2025-11-14 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(27,3,'adjust',45000000.00,0.00,45000000.00,NULL,1,'Nhập hàng từ đơn PO-2024-003','purchase_order',NULL,'2025-11-19 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(28,3,'payment',22500000.00,45000000.00,22500000.00,'bank_transfer',1,'Thanh toán đơn PO-2024-003','purchase_order',NULL,'2025-11-19 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(29,4,'adjust',60000000.00,0.00,60000000.00,NULL,2,'Nhập hàng từ đơn PO-2024-004','purchase_order',NULL,'2025-11-24 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(30,4,'payment',30000000.00,60000000.00,30000000.00,'bank_transfer',2,'Thanh toán đơn PO-2024-004','purchase_order',NULL,'2025-11-24 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(31,5,'adjust',25000000.00,0.00,25000000.00,NULL,1,'Nhập hàng từ đơn PO-2024-005','purchase_order',NULL,'2025-11-29 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25'),(32,6,'adjust',40000000.00,0.00,40000000.00,NULL,2,'Nhập hàng từ đơn PO-2024-006','purchase_order',NULL,'2025-12-02 11:52:25','2025-12-09 11:52:25','2025-12-09 11:52:25');
+/*!40000 ALTER TABLE `supplier_debt_transactions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `suppliers`
+--
+
+DROP TABLE IF EXISTS `suppliers`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `suppliers` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name_vi` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name_en` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `tax_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `phone` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `email` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `address` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `region` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'active',
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'company',
+  `payment_terms` int DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_supplier_code` (`code`),
+  KEY `suppliers_parent_id_foreign` (`parent_id`),
+  KEY `suppliers_created_by_foreign` (`created_by`),
+  CONSTRAINT `suppliers_created_by_foreign` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE CASCADE ON UPDATE SET NULL,
+  CONSTRAINT `suppliers_parent_id_foreign` FOREIGN KEY (`parent_id`) REFERENCES `suppliers` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `suppliers`
+--
+
+LOCK TABLES `suppliers` WRITE;
+/*!40000 ALTER TABLE `suppliers` DISABLE KEYS */;
+INSERT INTO `suppliers` VALUES (1,'SUP-001','Công ty TNHH Da Giày Việt Nam','Công ty TNHH Da Giày Việt Nam','Viet Nam Leather Co., Ltd','0123456789','024-3888-9999','contact@dagiay.vn','123 Đường Láng, Hà Nội','Hà Nội','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',30),(2,'SUP-002','Xưởng Sản Xuất Túi Xách Hồng Hà','Xưởng Sản Xuất Túi Xách Hồng Hà','Hong Ha Bag Workshop','0987654321','024-3777-8888','hongha@tuixach.vn','456 Phố Huế, Hà Nội','Hà Nội','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',15),(3,'SUP-003','Công ty CP Phụ Kiện Thời Trang','Công ty CP Phụ Kiện Thời Trang','Fashion Accessories JSC','0111222333','028-3666-7777','info@phukien.com.vn','789 Nguyễn Huệ, HCM','Hồ Chí Minh','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',30),(4,'SUP-004','Nhà Máy Dệt May Tân Tiến','Nhà Máy Dệt May Tân Tiến','Tan Tien Textile Factory','0444555666','0236-3555-6666','sales@tantien.vn','321 Lê Duẩn, Đà Nẵng','Đà Nẵng','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',45),(5,'SUP-005','Xưởng Gia Công Đồng Phát','Xưởng Gia Công Đồng Phát','Dong Phat Workshop','0777888999','0292-3444-5555','dongphat@workshop.vn','654 Đường 3/2, Cần Thơ','Cần Thơ','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'individual',7),(6,'SUP-006','Công ty TNHH Vải Cao Cấp','Công ty TNHH Vải Cao Cấp','Premium Fabric Co., Ltd','0222333444','024-3333-4444','premium@fabric.vn','987 Trần Hưng Đạo, Hà Nội','Hà Nội','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',30),(7,'SUP-007','Nhà Cung Cấp Phụ Liệu Minh Anh','Nhà Cung Cấp Phụ Liệu Minh Anh','Minh Anh Materials','0555666777','028-3222-3333','minhanh@materials.vn','147 Lê Lợi, HCM','Hồ Chí Minh','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'individual',14),(8,'SUP-008','Xưởng Thêu Ren Hoa Mai','Xưởng Thêu Ren Hoa Mai','Hoa Mai Embroidery','0888999000','0225-3111-2222','hoamai@embroidery.vn','258 Lạch Tray, Hải Phòng','Hải Phòng','active',NULL,1,'2025-12-09 11:52:24','2025-12-09 11:52:24',NULL,'company',30);
+/*!40000 ALTER TABLE `suppliers` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `support_tickets`
+--
+
+DROP TABLE IF EXISTS `support_tickets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `support_tickets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `subject` varchar(255) NOT NULL,
+  `customer_id` bigint unsigned DEFAULT NULL,
+  `lead_id` bigint unsigned DEFAULT NULL,
+  `priority` varchar(20) DEFAULT 'medium',
+  `status` varchar(30) DEFAULT 'open',
+  `assigned_to` bigint unsigned DEFAULT NULL,
+  `description` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_support_ticket_status` (`status`),
+  KEY `idx_support_ticket_customer` (`customer_id`),
+  KEY `idx_support_ticket_lead` (`lead_id`),
+  CONSTRAINT `fk_support_tickets_customer_id` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_support_tickets_lead_id` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `support_tickets`
+--
+
+LOCK TABLES `support_tickets` WRITE;
+/*!40000 ALTER TABLE `support_tickets` DISABLE KEYS */;
+/*!40000 ALTER TABLE `support_tickets` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tasks`
+--
+
+DROP TABLE IF EXISTS `tasks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tasks` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `project_id` bigint unsigned DEFAULT NULL,
+  `parent_id` bigint unsigned DEFAULT NULL,
+  `task_name` varchar(255) NOT NULL,
+  `status` varchar(30) DEFAULT 'open',
+  `progress` decimal(5,2) DEFAULT '0.00',
+  `estimated_hours` decimal(10,2) DEFAULT '0.00',
+  `actual_hours` decimal(10,2) DEFAULT '0.00',
+  `start_date` date DEFAULT NULL,
+  `due_date` date DEFAULT NULL,
+  `assigned_to` bigint unsigned DEFAULT NULL,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `subject` varchar(255) DEFAULT NULL,
+  `description` text,
+  `priority` varchar(20) DEFAULT NULL,
+  `related_to_type` varchar(50) DEFAULT NULL,
+  `related_to_id` bigint unsigned DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_task_project` (`project_id`),
+  KEY `idx_task_parent` (`parent_id`),
+  KEY `idx_task_status` (`status`),
+  CONSTRAINT `fk_tasks_parent_id` FOREIGN KEY (`parent_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_tasks_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tasks`
+--
+
+LOCK TABLES `tasks` WRITE;
+/*!40000 ALTER TABLE `tasks` DISABLE KEYS */;
+INSERT INTO `tasks` VALUES (1,NULL,NULL,'','pending',0.00,0.00,0.00,NULL,'2025-12-10',2,NULL,'2025-12-09 11:34:09','2025-12-09 11:34:09','Call John Doe','Follow up on proposal','high','lead',1),(2,NULL,NULL,'','in_progress',0.00,0.00,0.00,NULL,'2025-12-11',3,NULL,'2025-12-09 11:34:09','2025-12-09 11:34:09','Prepare Contract','Draft service agreement for Tech Solutions','medium','opportunity',2),(3,NULL,NULL,'','pending',0.00,0.00,0.00,NULL,'2025-12-10',2,NULL,'2025-12-09 11:41:50','2025-12-09 11:41:50','Call John Doe','Follow up on proposal','high','lead',1),(4,NULL,NULL,'','in_progress',0.00,0.00,0.00,NULL,'2025-12-11',3,NULL,'2025-12-09 11:41:50','2025-12-09 11:41:50','Prepare Contract','Draft service agreement for Tech Solutions','medium','opportunity',2),(5,NULL,NULL,'','pending',0.00,0.00,0.00,NULL,'2025-12-10',2,NULL,'2025-12-09 11:45:53','2025-12-09 11:45:53','Call John Doe','Follow up on proposal','high','lead',1),(6,NULL,NULL,'','in_progress',0.00,0.00,0.00,NULL,'2025-12-11',3,NULL,'2025-12-09 11:45:53','2025-12-09 11:45:53','Prepare Contract','Draft service agreement for Tech Solutions','medium','opportunity',2),(7,NULL,NULL,'','pending',0.00,0.00,0.00,NULL,'2025-12-10',2,NULL,'2025-12-09 11:49:22','2025-12-09 11:49:22','Call John Doe','Follow up on proposal','high','lead',1),(8,NULL,NULL,'','in_progress',0.00,0.00,0.00,NULL,'2025-12-11',3,NULL,'2025-12-09 11:49:22','2025-12-09 11:49:22','Prepare Contract','Draft service agreement for Tech Solutions','medium','opportunity',2),(9,NULL,NULL,'','pending',0.00,0.00,0.00,NULL,'2025-12-10',2,NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25','Call John Doe','Follow up on proposal','high','lead',1),(10,NULL,NULL,'','in_progress',0.00,0.00,0.00,NULL,'2025-12-11',3,NULL,'2025-12-09 11:52:25','2025-12-09 11:52:25','Prepare Contract','Draft service agreement for Tech Solutions','medium','opportunity',2);
+/*!40000 ALTER TABLE `tasks` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tax_certificate_records`
+--
+
+DROP TABLE IF EXISTS `tax_certificate_records`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tax_certificate_records` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `certificate_number` varchar(80) NOT NULL,
+  `country` varchar(5) NOT NULL,
+  `party_type` varchar(60) DEFAULT NULL,
+  `party_id` bigint unsigned DEFAULT NULL,
+  `base_amount` decimal(14,2) DEFAULT '0.00',
+  `withheld_amount` decimal(14,2) DEFAULT '0.00',
+  `issue_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_tax_certificate` (`certificate_number`),
+  KEY `fk_tax_certificate_reco_party_id` (`party_id`),
+  CONSTRAINT `fk_tax_certificate_reco_party_id` FOREIGN KEY (`party_id`) REFERENCES `customers` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tax_certificate_records`
+--
+
+LOCK TABLES `tax_certificate_records` WRITE;
+/*!40000 ALTER TABLE `tax_certificate_records` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tax_certificate_records` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tax_charges`
+--
+
+DROP TABLE IF EXISTS `tax_charges`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tax_charges` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `template_id` bigint unsigned DEFAULT NULL,
+  `name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `charge_type` varchar(20) DEFAULT 'on_net_total',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_tax_charges_template` (`template_id`),
+  CONSTRAINT `fk_tax_charges_template_id` FOREIGN KEY (`template_id`) REFERENCES `tax_templates` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tax_charges`
+--
+
+LOCK TABLES `tax_charges` WRITE;
+/*!40000 ALTER TABLE `tax_charges` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tax_charges` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tax_template_items`
+--
+
+DROP TABLE IF EXISTS `tax_template_items`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tax_template_items` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `template_id` bigint unsigned DEFAULT NULL,
+  `tax_name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `charge_type` varchar(30) DEFAULT 'on_net_total',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_tax_template_items` (`template_id`),
+  CONSTRAINT `fk_tax_template_items_template_id` FOREIGN KEY (`template_id`) REFERENCES `tax_templates` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tax_template_items`
+--
+
+LOCK TABLES `tax_template_items` WRITE;
+/*!40000 ALTER TABLE `tax_template_items` DISABLE KEYS */;
+/*!40000 ALTER TABLE `tax_template_items` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `tax_templates`
+--
+
+DROP TABLE IF EXISTS `tax_templates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `tax_templates` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `is_inclusive` tinyint(1) DEFAULT '0',
+  `rounding_rule` varchar(20) DEFAULT 'nearest',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=9004 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `tax_templates`
+--
+
+LOCK TABLES `tax_templates` WRITE;
+/*!40000 ALTER TABLE `tax_templates` DISABLE KEYS */;
+INSERT INTO `tax_templates` VALUES (9001,'VAT 0%',0.000,0,'nearest','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(9002,'VAT 5%',5.000,0,'nearest','active','2025-12-09 11:31:02','2025-12-09 11:31:02'),(9003,'VAT 10%',10.000,0,'nearest','active','2025-12-09 11:31:02','2025-12-09 11:31:02');
+/*!40000 ALTER TABLE `tax_templates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `temp_queue`
+--
+
+DROP TABLE IF EXISTS `temp_queue`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `temp_queue` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `device_id` bigint unsigned DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `status` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'pending',
+  `expired_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `temp_queue_device_id_foreign` (`device_id`),
+  CONSTRAINT `temp_queue_device_id_foreign` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE ON UPDATE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `temp_queue`
+--
+
+LOCK TABLES `temp_queue` WRITE;
+/*!40000 ALTER TABLE `temp_queue` DISABLE KEYS */;
+/*!40000 ALTER TABLE `temp_queue` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ticket_communications`
+--
+
+DROP TABLE IF EXISTS `ticket_communications`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ticket_communications` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `ticket_id` bigint unsigned NOT NULL,
+  `type` varchar(30) DEFAULT 'note',
+  `content` text,
+  `attachments` text,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ticket_comm_ticket` (`ticket_id`),
+  CONSTRAINT `fk_ticket_communication_ticket_id` FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ticket_communications`
+--
+
+LOCK TABLES `ticket_communications` WRITE;
+/*!40000 ALTER TABLE `ticket_communications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ticket_communications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ticket_events`
+--
+
+DROP TABLE IF EXISTS `ticket_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ticket_events` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `ticket_id` bigint unsigned NOT NULL,
+  `event_type` varchar(30) NOT NULL,
+  `from_status` varchar(30) DEFAULT NULL,
+  `to_status` varchar(30) DEFAULT NULL,
+  `description` text,
+  `created_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_ticket_event_ticket` (`ticket_id`),
+  CONSTRAINT `fk_ticket_events_ticket_id` FOREIGN KEY (`ticket_id`) REFERENCES `support_tickets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ticket_events`
+--
+
+LOCK TABLES `ticket_events` WRITE;
+/*!40000 ALTER TABLE `ticket_events` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ticket_events` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `timesheet_details`
+--
+
+DROP TABLE IF EXISTS `timesheet_details`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `timesheet_details` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `timesheet_id` bigint unsigned NOT NULL,
+  `project_id` bigint unsigned DEFAULT NULL,
+  `task_id` bigint unsigned DEFAULT NULL,
+  `activity_type_id` bigint unsigned DEFAULT NULL,
+  `work_date` date DEFAULT NULL,
+  `hours` decimal(10,2) DEFAULT '0.00',
+  `billing_rate` decimal(12,2) DEFAULT '0.00',
+  `cost_rate` decimal(12,2) DEFAULT '0.00',
+  `billable_amount` decimal(14,2) DEFAULT '0.00',
+  `cost_amount` decimal(14,2) DEFAULT '0.00',
+  `description` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_timesheet_detail_header` (`timesheet_id`),
+  KEY `idx_timesheet_detail_task` (`task_id`),
+  KEY `fk_timesheet_details_project_id` (`project_id`),
+  KEY `fk_timesheet_details_activity_type_id` (`activity_type_id`),
+  CONSTRAINT `fk_timesheet_details_activity_type_id` FOREIGN KEY (`activity_type_id`) REFERENCES `activity_types` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_timesheet_details_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_timesheet_details_task_id` FOREIGN KEY (`task_id`) REFERENCES `tasks` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_timesheet_details_timesheet_id` FOREIGN KEY (`timesheet_id`) REFERENCES `timesheets` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `timesheet_details`
+--
+
+LOCK TABLES `timesheet_details` WRITE;
+/*!40000 ALTER TABLE `timesheet_details` DISABLE KEYS */;
+/*!40000 ALTER TABLE `timesheet_details` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `timesheets`
+--
+
+DROP TABLE IF EXISTS `timesheets`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `timesheets` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `timesheet_number` varchar(60) NOT NULL,
+  `project_id` bigint unsigned DEFAULT NULL,
+  `employee_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(30) DEFAULT 'draft',
+  `total_hours` decimal(12,2) DEFAULT '0.00',
+  `total_billable` decimal(14,2) DEFAULT '0.00',
+  `total_cost` decimal(14,2) DEFAULT '0.00',
+  `notes` text,
+  `created_by` bigint unsigned DEFAULT NULL,
+  `submitted_by` bigint unsigned DEFAULT NULL,
+  `submitted_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_timesheet_number` (`timesheet_number`),
+  KEY `idx_timesheet_project` (`project_id`),
+  KEY `idx_timesheet_status` (`status`),
+  KEY `fk_timesheets_employee_id` (`employee_id`),
+  CONSTRAINT `fk_timesheets_employee_id` FOREIGN KEY (`employee_id`) REFERENCES `employees` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_timesheets_project_id` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `timesheets`
+--
+
+LOCK TABLES `timesheets` WRITE;
+/*!40000 ALTER TABLE `timesheets` DISABLE KEYS */;
+/*!40000 ALTER TABLE `timesheets` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `users`
+--
+
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `username` varchar(100) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `full_name` varchar(255) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `avatar` varchar(255) DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `status` enum('active','inactive','suspended') DEFAULT 'active',
+  `last_login_at` datetime DEFAULT NULL,
+  `last_login_ip` varchar(45) DEFAULT NULL,
+  `remember_token` varchar(100) DEFAULT NULL,
+  `two_factor_secret` varchar(255) DEFAULT NULL,
+  `two_factor_enabled` tinyint(1) DEFAULT '0',
+  `password_changed_at` datetime DEFAULT NULL,
+  `failed_login_attempts` int DEFAULT '0',
+  `account_locked_until` datetime DEFAULT NULL,
+  `timezone` varchar(50) DEFAULT 'Asia/Ho_Chi_Minh',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `email` (`email`),
+  KEY `fk_users_branch_id` (`branch_id`),
+  CONSTRAINT `fk_users_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `users`
+--
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+INSERT INTO `users` VALUES (1,'admin.staging','admin@staging.lanocrm.local','$2y$12$7SI9yb1rxz2lzuKynLZLBekiXP8uYoeW6hO4TQWsgKWV.3nEW1o9G','Staging Admin',NULL,NULL,1,'active','2025-12-10 04:49:27','172.18.0.5',NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'manager.staging','manager@staging.lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Staging Manager',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(3,'staff.staging','staff@staging.lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Staging Staff',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(10,'demo.admin','demo.admin@lanocrm.local','$2y$12$7SI9yb1rxz2lzuKynLZLBekiXP8uYoeW6hO4TQWsgKWV.3nEW1o9G','Demo Admin User',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(11,'demo.manager.hn','manager.hn@lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Demo Manager Hanoi',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(12,'demo.manager.hcm','manager.hcm@lanocrm.local','$2y$12$pRDQCai3nUuqKTP3GzRxpuLXm52X56HoEyUv/q4ji5rwQuZDHfxC2','Demo Manager HCM',NULL,NULL,2,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(13,'demo.staff1','staff1@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Staff 1',NULL,NULL,1,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(14,'demo.staff2','staff2@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Staff 2',NULL,NULL,2,'active',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(15,'demo.inactive','inactive@lanocrm.local','$2y$12$3Y1HoAuurcIwSCt7ZYeCCuCs1Hkkd1sKaoFkjJd4z/LhkfKC2ifmu','Demo Inactive User',NULL,NULL,1,'inactive',NULL,NULL,NULL,NULL,0,NULL,0,NULL,'Asia/Ho_Chi_Minh','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `wards`
+--
+
+DROP TABLE IF EXISTS `wards`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `wards` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `district_id` bigint unsigned NOT NULL,
+  `code` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_general_ci NOT NULL,
+  `name_en` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `full_name_en` varchar(150) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `code_name` varchar(100) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `sort_order` int NOT NULL DEFAULT '0',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_ward_code` (`code`),
+  KEY `idx_ward_district` (`district_id`),
+  KEY `idx_ward_active` (`is_active`),
+  CONSTRAINT `fk_ward_district` FOREIGN KEY (`district_id`) REFERENCES `districts` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `wards`
+--
+
+LOCK TABLES `wards` WRITE;
+/*!40000 ALTER TABLE `wards` DISABLE KEYS */;
+/*!40000 ALTER TABLE `wards` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `warehouses`
+--
+
+DROP TABLE IF EXISTS `warehouses`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `warehouses` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `code` varchar(50) DEFAULT NULL,
+  `branch_id` bigint unsigned DEFAULT NULL,
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_warehouses_branch_id` (`branch_id`),
+  CONSTRAINT `fk_warehouses_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `warehouses`
+--
+
+LOCK TABLES `warehouses` WRITE;
+/*!40000 ALTER TABLE `warehouses` DISABLE KEYS */;
+INSERT INTO `warehouses` VALUES (1,'Kho chính Hà Nội','WH-HN-MAIN',1,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(2,'Kho bán lẻ Hà Nội','WH-HN-RETAIL',1,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(3,'Kho chính HCM','WH-HCM-MAIN',2,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(4,'Kho bán lẻ HCM','WH-HCM-RETAIL',2,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(5,'Kho chính Đà Nẵng','WH-DN-MAIN',3,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(6,'Kho chính Cần Thơ','WH-CT-MAIN',4,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL),(7,'Kho chính Hải Phòng','WH-HP-MAIN',5,'active','2025-12-09 11:31:02','2025-12-09 11:31:02',NULL);
+/*!40000 ALTER TABLE `warehouses` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `webhook_events`
+--
+
+DROP TABLE IF EXISTS `webhook_events`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `webhook_events` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `event` varchar(100) DEFAULT NULL,
+  `payload` json DEFAULT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `attempts` int DEFAULT '0',
+  `last_error` text,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `webhook_events`
+--
+
+LOCK TABLES `webhook_events` WRITE;
+/*!40000 ALTER TABLE `webhook_events` DISABLE KEYS */;
+/*!40000 ALTER TABLE `webhook_events` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `webhook_subscriptions`
+--
+
+DROP TABLE IF EXISTS `webhook_subscriptions`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `webhook_subscriptions` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `event` varchar(100) DEFAULT NULL,
+  `target_url` varchar(500) DEFAULT NULL,
+  `secret` varchar(255) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT '1',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `webhook_subscriptions`
+--
+
+LOCK TABLES `webhook_subscriptions` WRITE;
+/*!40000 ALTER TABLE `webhook_subscriptions` DISABLE KEYS */;
+/*!40000 ALTER TABLE `webhook_subscriptions` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `withholding_rules`
+--
+
+DROP TABLE IF EXISTS `withholding_rules`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `withholding_rules` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `name` varchar(150) NOT NULL,
+  `rate_percent` decimal(8,3) DEFAULT '0.000',
+  `apply_threshold` decimal(14,2) DEFAULT '0.00',
+  `status` varchar(20) DEFAULT 'active',
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `withholding_rules`
+--
+
+LOCK TABLES `withholding_rules` WRITE;
+/*!40000 ALTER TABLE `withholding_rules` DISABLE KEYS */;
+/*!40000 ALTER TABLE `withholding_rules` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `work_orders`
+--
+
+DROP TABLE IF EXISTS `work_orders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `work_orders` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `product_id` bigint unsigned NOT NULL,
+  `bom_id` bigint unsigned NOT NULL,
+  `branch_id` bigint unsigned NOT NULL,
+  `quantity` decimal(12,3) DEFAULT '0.000',
+  `status` varchar(30) DEFAULT 'draft',
+  `planned_start` datetime DEFAULT NULL,
+  `planned_end` datetime DEFAULT NULL,
+  `actual_start` datetime DEFAULT NULL,
+  `actual_end` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT NULL,
+  `updated_at` datetime DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_work_order_product` (`product_id`),
+  KEY `idx_work_order_bom` (`bom_id`),
+  KEY `idx_work_order_status` (`status`),
+  KEY `fk_work_orders_branch_id` (`branch_id`),
+  CONSTRAINT `fk_work_orders_bom_id` FOREIGN KEY (`bom_id`) REFERENCES `bill_of_materials` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_work_orders_branch_id` FOREIGN KEY (`branch_id`) REFERENCES `branches` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_work_orders_product_id` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `work_orders`
+--
+
+LOCK TABLES `work_orders` WRITE;
+/*!40000 ALTER TABLE `work_orders` DISABLE KEYS */;
+/*!40000 ALTER TABLE `work_orders` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2025-12-10 10:41:37

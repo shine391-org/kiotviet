@@ -132,7 +132,7 @@ class ReturnRepository
             ')
             ->where('ct.reference_type', 'return')
             ->where('ct.reference_id', $returnId)
-            ->where('ct.deleted_at IS NULL')
+            ->where('ct.deleted_at', null)
             ->orderBy('ct.created_at', 'DESC')
             ->get()
             ->getResultArray();
@@ -262,7 +262,11 @@ class ReturnRepository
             $b->where('r.customer_id', $filters['customer_id']);
         }
         if (! empty($filters['status'])) {
-            $b->where('r.status', $filters['status']);
+            if (is_array($filters['status'])) {
+                $b->whereIn('r.status', $filters['status']);
+            } else {
+                $b->where('r.status', $filters['status']);
+            }
         }
         // return_number: exact field match filter
         // search: multi-field fuzzy match (broader search)
