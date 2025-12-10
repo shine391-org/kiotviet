@@ -173,10 +173,7 @@ class PurchaseReturnService
         $exportsDir = WRITEPATH . 'exports';
         if (!is_dir($exportsDir)) {
             if (!mkdir($exportsDir, 0755, true) && !is_dir($exportsDir)) {
-                throw new \RuntimeException(
-                    'Failed to create exports directory: ' . $exportsDir . 
-                    ' (errno: ' . error_get_last()['message'] . ')'
-                );
+                throw new \RuntimeException('Failed to create exports directory: ' . $exportsDir);
             }
         }
 

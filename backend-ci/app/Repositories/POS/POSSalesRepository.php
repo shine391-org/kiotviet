@@ -160,7 +160,7 @@ class POSSalesRepository
             ->join('products p', 'p.id = oi.product_id', 'left')
             ->where('DATE(o.created_at)', $date)
             ->where('o.status', 'completed')
-            ->groupBy('oi.product_id')
+            ->groupBy('oi.product_id, p.name, p.code')
             ->orderBy('quantity_sold', 'DESC')
             ->limit($limit);
 

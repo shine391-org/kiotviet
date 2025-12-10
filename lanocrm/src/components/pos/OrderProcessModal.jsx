@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, Input, DatePicker, Table, Button, Spin } from 'antd';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Modal, Input, DatePicker, Table, Button, Spin, message } from 'antd';
 import { SearchOutlined } from '@ant-design/icons';
 import posApi from '../../api/posApi';
 import styles from './OrderProcessModal.module.css';
@@ -7,17 +7,42 @@ import styles from './OrderProcessModal.module.css';
 const OrderProcessModal = ({ open, onClose, onSelect }) => {
     const [searchType, setSearchType] = useState('code');
     const [searchValue, setSearchValue] = useState('');
+    const [debouncedSearchValue, setDebouncedSearchValue] = useState('');
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(false);
+    const debounceTimerRef = useRef(null);
+
+    // Debounce search value
+    useEffect(() => {
+        debounceTimerRef.current = setTimeout(() => {
+            setDebouncedSearchValue(searchValue);
+        }, 500);
+
+        return () => {
+            if (debounceTimerRef.current) {
+                clearTimeout(debounceTimerRef.current);
+            }
+        };
+    }, [searchValue]);
 
     const fetchOrders = useCallback(async () => {
         if (!open) return;
+
+        // Validate date range
+        if (fromDate && toDate && fromDate.isAfter(toDate)) {
+            message.error('Ngày bắt đầu không thể sau ngày kết thúc');
+            return;
+        }
+
         setLoading(true);
         try {
             const response = await posApi.getOrders({
-                search: searchValue || undefined,
+                search: debouncedSearchValue || undefined,
+                searchType: searchType,
+                fromDate: fromDate?.format('YYYY-MM-DD'),
+                toDate: toDate?.format('YYYY-MM-DD'),
                 status: 'draft', // Chỉ lấy đơn chưa hoàn thành
                 limit: 20,
             });
@@ -37,7 +62,7 @@ const OrderProcessModal = ({ open, onClose, onSelect }) => {
         } finally {
             setLoading(false);
         }
-    }, [open, searchValue]);
+    }, [open, debouncedSearchValue, searchType, fromDate, toDate]);
 
     useEffect(() => {
         fetchOrders();
@@ -137,6 +162,14 @@ const OrderProcessModal = ({ open, onClose, onSelect }) => {
 
                 {/* Main Content - Table */}
                 <div className={styles.mainContent}>
+                    <Input
+                        placeholder="Tìm kiếm..."
+                        prefix={<SearchOutlined />}
+                        value={searchValue}
+                        onChange={(e) => setSearchValue(e.target.value)}
+                        className={styles.searchInput}
+                        allowClear
+                    />
                     <Spin spinning={loading}>
                         <Table
                             columns={columns}

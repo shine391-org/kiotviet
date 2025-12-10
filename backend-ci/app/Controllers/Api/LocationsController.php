@@ -56,7 +56,8 @@ class LocationsController extends BaseController
         } catch (\RuntimeException $e) {
             return $this->failNotFound($e->getMessage());
         } catch (\Throwable $e) {
-            return $this->failServerError($e->getMessage());
+            log_message('error', '[LocationsController] Unexpected error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('An unexpected error occurred');
         }
     }
 }

@@ -70,6 +70,11 @@ class CouponService
         $update = array_intersect_key($data, array_flip($allowed));
         if (isset($update['code'])) {
             $update['code'] = strtoupper($update['code']);
+            // Check for duplicate code - use InvalidArgumentException for validation errors
+            $existing = $this->repo->findByCode($update['code']);
+            if ($existing && $existing['id'] !== $id) {
+                throw new InvalidArgumentException('Coupon code already in use');
+            }
         }
         $coupon = $this->repo->update($id, $update);
         return ['success' => true, 'data' => $this->transform($coupon), 'message' => 'Coupon updated'];

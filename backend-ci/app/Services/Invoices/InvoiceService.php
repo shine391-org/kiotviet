@@ -262,7 +262,10 @@ class InvoiceService
         $debtAmount = (float) ($order['debt_amount'] ?? 0);
 
         $number = $this->repo->nextNumber($branchId, date('Y-m-d'));
-        $paymentStatus = $debtAmount <= 0.01 ? 'paid' : ($paidAmount > 0 ? 'partial' : 'unpaid');
+        // Use integer cents comparison to avoid floating-point precision issues
+        $debtCents = (int) round($debtAmount * 100);
+        $paidCents = (int) round($paidAmount * 100);
+        $paymentStatus = $debtCents <= 0 ? 'paid' : ($paidCents > 0 ? 'partial' : 'unpaid');
 
         $invoiceRow = [
             'invoice_number' => $number,

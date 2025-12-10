@@ -50,7 +50,9 @@ class ShipmentRepository
     public function count(array $filters): int
     {
         $b = $this->invoices->builder();
-        $b->groupStart()
+        $b->join('customers', 'customers.id = invoices.customer_id', 'left')
+            ->join('branches', 'branches.id = invoices.branch_id', 'left')
+            ->groupStart()
             ->where('invoices.shipment_code IS NOT NULL')
             ->orWhere('invoices.delivery_status IS NOT NULL')
             ->groupEnd();
@@ -62,7 +64,9 @@ class ShipmentRepository
     public function summary(array $filters): array
     {
         $b = $this->invoices->builder();
-        $b->groupStart()
+        $b->join('customers', 'customers.id = invoices.customer_id', 'left')
+            ->join('branches', 'branches.id = invoices.branch_id', 'left')
+            ->groupStart()
             ->where('invoices.shipment_code IS NOT NULL')
             ->orWhere('invoices.delivery_status IS NOT NULL')
             ->groupEnd();

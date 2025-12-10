@@ -46,9 +46,9 @@ class StockLedgersDemoSeeder extends Seeder
             $products[] = ['product_id' => $p['id'], 'variant_id' => null, 'qty' => 1000];
         }
 
-        // Fetch all variants
-        if ($this->db->tableExists('product_variants')) {
-             $allVariants = $this->db->table('product_variants')->select('id, product_id')->get()->getResultArray();
+        // Fetch all variants (using product_variants_v2 - the current schema)
+        if ($this->db->tableExists('product_variants_v2')) {
+             $allVariants = $this->db->table('product_variants_v2')->select('id, product_id')->get()->getResultArray();
              foreach ($allVariants as $v) {
                  $products[] = ['product_id' => $v['product_id'], 'variant_id' => $v['id'], 'qty' => 1000];
              }

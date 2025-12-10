@@ -43,6 +43,13 @@ const ShippingForm = ({
         customerPaid: 0,
     });
 
+    // Sync codAmount when totals.customerPay changes
+    useEffect(() => {
+        if (formData.codEnabled) {
+            setFormData((prev) => ({ ...prev, codAmount: totals.customerPay }));
+        }
+    }, [totals.customerPay, formData.codEnabled]);
+
     // Fetch provinces on mount
     const fetchProvinces = useCallback(async () => {
         setLocationsLoading(true);
@@ -121,6 +128,14 @@ const ShippingForm = ({
     };
 
     const handleInputChange = (field, value) => {
+        // Convert weight to number
+        if (field === 'weight') {
+            value = value === '' || value === null ? 0 : parseFloat(value) || 0;
+        }
+        // Convert customerPaid to number
+        if (field === 'customerPaid') {
+            value = value === '' || value === null ? 0 : parseFloat(String(value).replace(/,/g, '')) || 0;
+        }
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -301,6 +316,7 @@ const ShippingForm = ({
                     <Button type="text" icon={<span>⋮</span>} size="small" />
                     <Input
                         value={formData.customerPaid.toLocaleString('vi-VN')}
+                        onChange={(e) => handleInputChange('customerPaid', e.target.value)}
                         className={styles.paymentInput}
                     />
                 </div>

@@ -8,7 +8,7 @@ use Config\Database;
 
 /**
  * Delivery Partner Repository.
- * Uses partners table with type='delivery'
+ * Uses partners table with type='vendor'
  *
  * @agent-repository: DeliveryPartners
  */

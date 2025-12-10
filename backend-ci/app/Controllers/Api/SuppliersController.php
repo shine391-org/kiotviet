@@ -42,8 +42,8 @@ class SuppliersController extends BaseController
             $total = $this->repo->count($filters);
             $summary = $this->repo->getSummary($filters);
 
-            $limit = (int) ($filters['limit'] ?? 15);
-            $page = (int) ($filters['page'] ?? 1);
+            $limit = max(1, (int) ($filters['limit'] ?? 15));
+            $page = max(1, (int) ($filters['page'] ?? 1));
 
             return $this->respond([
                 'data' => $items,
@@ -234,51 +234,140 @@ class SuppliersController extends BaseController
     }
 
     /**
+     * Execute a debt transaction atomically with row-level locking.
+     * This helper prevents race conditions by reading the supplier's debt
+     * inside the transaction using SELECT FOR UPDATE.
+     *
+     * @param int $partnerId Supplier/partner ID
+     * @param string $type Transaction type: 'adjust', 'payment', 'discount'
+     * @param float $amount Amount for the transaction
+     * @param array $extra Extra fields (note, payment_method, transaction_date)
+     * @param callable|null $computeDebtAfter Custom function to compute debt_after (receives debtBefore, amount)
+     * @return array Result payload with debt_before, debt_after, transaction_id
+     * @throws \RuntimeException
+     */
+    private function executeDebtTransaction(
+        int $partnerId,
+        string $type,
+        float $amount,
+        array $extra = [],
+        ?callable $computeDebtAfter = null
+    ): array {
+        $db = \Config\Database::connect();
+        $db->transBegin();
+
+        try {
+            // Lock the partner row with SELECT FOR UPDATE to prevent race conditions
+            $lockedSupplier = $db->table('partners')
+                ->select('id, debt_amount')
+                ->where('id', $partnerId)
+                ->where('deleted_at IS NULL')
+                ->get()
+                ->getRowArray();
+
+            // Acquire row lock by issuing a FOR UPDATE query
+            // CodeIgniter 4 doesn't have built-in forUpdate, so we use raw query
+            $sql = "SELECT id, debt_amount FROM partners WHERE id = ? AND deleted_at IS NULL FOR UPDATE";
+            $lockedRow = $db->query($sql, [$partnerId])->getRowArray();
+
+            if (!$lockedRow) {
+                throw new \RuntimeException('Supplier not found or deleted');
+            }
+
+            // Read debt_before while holding the lock - cast nullable to float
+            $debtBefore = (float) ($lockedRow['debt_amount'] ?? 0);
+
+            // Compute debt_after based on transaction type
+            if ($computeDebtAfter !== null) {
+                $debtAfter = $computeDebtAfter($debtBefore, $amount);
+            } else {
+                // Default: subtract amount from debt (for payment/discount)
+                $debtAfter = max(0.0, $debtBefore - $amount);
+            }
+
+            // Ensure we have float values
+            $debtAfter = (float) $debtAfter;
+
+            // Build transaction record
+            $transaction = [
+                'partner_id' => $partnerId,
+                'type' => $type,
+                'amount' => $amount,
+                'debt_before' => $debtBefore,
+                'debt_after' => $debtAfter,
+                'note' => $extra['note'] ?? null,
+                'transaction_date' => $extra['transaction_date'] ?? date('Y-m-d H:i:s'),
+            ];
+
+            // Add payment_method if provided
+            if (isset($extra['payment_method'])) {
+                $transaction['payment_method'] = $extra['payment_method'];
+            }
+
+            // Insert debt transaction record
+            $this->debtModel->insert($transaction);
+            $transactionId = $this->debtModel->getInsertID();
+
+            // Update partner's debt_amount
+            $this->partnerModel->update($partnerId, ['debt_amount' => $debtAfter]);
+
+            $db->transCommit();
+
+            return [
+                'debt_before' => $debtBefore,
+                'debt_after' => $debtAfter,
+                'transaction_id' => $transactionId,
+            ];
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
+    }
+
+    /**
      * Adjust supplier debt.
      * POST /api/suppliers/{id}/adjust
      */
     public function adjust($id = null)
     {
         return $this->wrap(function () use ($id) {
+            // Quick check that supplier exists (without locking)
             $supplier = $this->repo->findById((int) $id);
-            
             if (!$supplier) {
                 return $this->failNotFound('Supplier not found');
             }
 
             $data = $this->safeInput();
-            
+
             if (!isset($data['adjust_value']) || !is_numeric($data['adjust_value'])) {
                 return $this->failValidationErrors('Giá trị điều chỉnh là bắt buộc');
             }
 
             $adjustValue = (float) $data['adjust_value'];
-            $debtBefore = (float) ($supplier['current_debt'] ?? $supplier['debt_amount'] ?? 0);
-            $debtAfter = $adjustValue; // Set new debt value
 
-            // Create transaction record
-            $transaction = [
-                'partner_id' => (int) $id,
-                'type' => 'adjust',
-                'amount' => $adjustValue - $debtBefore,
-                'debt_before' => $debtBefore,
-                'debt_after' => $debtAfter,
-                'note' => $data['description'] ?? null,
-                'transaction_date' => $data['adjust_date'] ?? date('Y-m-d H:i:s'),
-            ];
-            $this->debtModel->insert($transaction);
+            // For adjust: set debt to the exact adjust_value, amount = adjustValue - debtBefore
+            $result = $this->executeDebtTransaction(
+                (int) $id,
+                'adjust',
+                0.0, // Will be recalculated inside
+                [
+                    'note' => $data['description'] ?? null,
+                    'transaction_date' => $data['adjust_date'] ?? date('Y-m-d H:i:s'),
+                ],
+                function (float $debtBefore, float $_) use ($adjustValue): float {
+                    return $adjustValue; // Set new debt value directly
+                }
+            );
 
-            // Update supplier debt
-            $this->partnerModel->update((int) $id, ['debt_amount' => $debtAfter]);
+            // For adjust, recalculate amount after getting actual debtBefore
+            // Update the transaction record with correct amount
+            $correctAmount = $result['debt_after'] - $result['debt_before'];
+            $this->debtModel->update($result['transaction_id'], ['amount' => $correctAmount]);
 
             return $this->respond([
                 'success' => true,
                 'message' => 'Điều chỉnh công nợ thành công',
-                'data' => [
-                    'debt_before' => $debtBefore,
-                    'debt_after' => $debtAfter,
-                    'transaction_id' => $this->debtModel->getInsertID(),
-                ],
+                'data' => $result,
             ]);
         });
     }
@@ -290,47 +379,37 @@ class SuppliersController extends BaseController
     public function payment($id = null)
     {
         return $this->wrap(function () use ($id) {
+            // Quick check that supplier exists (without locking)
             $supplier = $this->repo->findById((int) $id);
-            
             if (!$supplier) {
                 return $this->failNotFound('Supplier not found');
             }
 
             $data = $this->safeInput();
-            
+
             if (!isset($data['amount']) || !is_numeric($data['amount']) || $data['amount'] <= 0) {
                 return $this->failValidationErrors('Số tiền thanh toán là bắt buộc và phải lớn hơn 0');
             }
 
             $paymentAmount = (float) $data['amount'];
-            $debtBefore = (float) ($supplier['current_debt'] ?? $supplier['debt_amount'] ?? 0);
-            $debtAfter = max(0, $debtBefore - $paymentAmount);
 
-            // Create transaction record
-            $transaction = [
-                'partner_id' => (int) $id,
-                'type' => 'payment',
-                'amount' => $paymentAmount,
-                'debt_before' => $debtBefore,
-                'debt_after' => $debtAfter,
-                'payment_method' => $data['payment_method'] ?? 'cash',
-                'note' => $data['note'] ?? null,
-                'transaction_date' => $data['payment_date'] ?? date('Y-m-d H:i:s'),
-            ];
-            $this->debtModel->insert($transaction);
-
-            // Update supplier debt
-            $this->partnerModel->update((int) $id, ['debt_amount' => $debtAfter]);
+            // Payment reduces debt: debt_after = max(0, debt_before - amount)
+            $result = $this->executeDebtTransaction(
+                (int) $id,
+                'payment',
+                $paymentAmount,
+                [
+                    'note' => $data['note'] ?? null,
+                    'payment_method' => $data['payment_method'] ?? 'cash',
+                    'transaction_date' => $data['payment_date'] ?? date('Y-m-d H:i:s'),
+                ]
+                // Uses default computeDebtAfter: max(0, debtBefore - amount)
+            );
 
             return $this->respond([
                 'success' => true,
                 'message' => 'Thanh toán thành công',
-                'data' => [
-                    'payment_amount' => $paymentAmount,
-                    'debt_before' => $debtBefore,
-                    'debt_after' => $debtAfter,
-                    'transaction_id' => $this->debtModel->getInsertID(),
-                ],
+                'data' => array_merge(['payment_amount' => $paymentAmount], $result),
             ]);
         });
     }
@@ -342,46 +421,36 @@ class SuppliersController extends BaseController
     public function discount($id = null)
     {
         return $this->wrap(function () use ($id) {
+            // Quick check that supplier exists (without locking)
             $supplier = $this->repo->findById((int) $id);
-            
             if (!$supplier) {
                 return $this->failNotFound('Supplier not found');
             }
 
             $data = $this->safeInput();
-            
+
             if (!isset($data['discount_amount']) || !is_numeric($data['discount_amount']) || $data['discount_amount'] <= 0) {
                 return $this->failValidationErrors('Số tiền chiết khấu là bắt buộc và phải lớn hơn 0');
             }
 
             $discountAmount = (float) $data['discount_amount'];
-            $debtBefore = (float) ($supplier['current_debt'] ?? $supplier['debt_amount'] ?? 0);
-            $debtAfter = max(0, $debtBefore - $discountAmount);
 
-            // Create transaction record
-            $transaction = [
-                'partner_id' => (int) $id,
-                'type' => 'discount',
-                'amount' => $discountAmount,
-                'debt_before' => $debtBefore,
-                'debt_after' => $debtAfter,
-                'note' => $data['note'] ?? null,
-                'transaction_date' => $data['discount_date'] ?? date('Y-m-d H:i:s'),
-            ];
-            $this->debtModel->insert($transaction);
-
-            // Update supplier debt
-            $this->partnerModel->update((int) $id, ['debt_amount' => $debtAfter]);
+            // Discount reduces debt: debt_after = max(0, debt_before - amount)
+            $result = $this->executeDebtTransaction(
+                (int) $id,
+                'discount',
+                $discountAmount,
+                [
+                    'note' => $data['note'] ?? null,
+                    'transaction_date' => $data['discount_date'] ?? date('Y-m-d H:i:s'),
+                ]
+                // Uses default computeDebtAfter: max(0, debtBefore - amount)
+            );
 
             return $this->respond([
                 'success' => true,
                 'message' => 'Tạo chiết khấu thành công',
-                'data' => [
-                    'discount_amount' => $discountAmount,
-                    'debt_before' => $debtBefore,
-                    'debt_after' => $debtAfter,
-                    'transaction_id' => $this->debtModel->getInsertID(),
-                ],
+                'data' => array_merge(['discount_amount' => $discountAmount], $result),
             ]);
         });
     }

@@ -78,6 +78,15 @@ class BankAccountRepository
                 ->groupEnd();
         }
 
+        if (!empty($filters['search'])) {
+            $s = $filters['search'];
+            $builder->groupStart()
+                ->like('bank_name', $s)
+                ->orLike('account_number', $s)
+                ->orLike('account_name', $s)
+                ->groupEnd();
+        }
+
         return $builder->countAllResults();
     }
 
@@ -105,13 +114,17 @@ class BankAccountRepository
     }
 
     /** Update bank account */
-    public function update(int $id, array $data): array
+    public function update(int $id, array $data): ?array
     {
+        $existing = $this->findById($id);
+        if ($existing === null) {
+            return null;
+        }
+
         $data['updated_at'] = date('Y-m-d H:i:s');
 
         // If setting as default, unset others
         if (!empty($data['is_default'])) {
-            $existing = $this->findById($id);
             $this->clearDefaults($existing['branch_id'] ?? null, $id);
         }
 

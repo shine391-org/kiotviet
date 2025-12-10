@@ -52,7 +52,6 @@ const CustomerDetailPanel = ({
     onAdjust,
     onDiscount,
     onCreateQR,
-    loading,
 }) => {
     const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('info');
@@ -405,9 +404,6 @@ const CustomerDetailPanel = ({
                         <Space>
                             <Button icon={<ExportOutlined />} onClick={handleExportDebt} loading={exportingDebt}>
                                 Xuất file công nợ
-                            </Button>
-                            <Button icon={<ExportOutlined />}>
-                                Xuất file
                             </Button>
                         </Space>
                         <Space>

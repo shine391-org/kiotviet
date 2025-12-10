@@ -137,58 +137,106 @@ class CustomerRepository
     }
 
     /**
-     * Find orders for a customer (for "Lịch sử bán/trả hàng" tab).
+     * Find invoices for a customer (for "Lịch sử bán/trả hàng" tab).
+     * Uses invoices table as it represents actual sales transactions.
      */
     public function findOrdersByCustomerId(int $customerId): array
     {
-        $rows = $this->db->table('orders o')
-            ->select('o.code, o.created_at, o.status, o.total, u.name as seller, b.name as branch')
-            ->join('users u', 'u.id = o.created_by', 'left')
-            ->join('branches b', 'b.id = o.branch_id', 'left')
-            ->where('o.customer_id', $customerId)
-            ->where('o.deleted_at', null)
-            ->orderBy('o.created_at', 'DESC')
+        $rows = $this->db->table('invoices i')
+            ->select('i.invoice_number as code, i.created_at, i.invoice_status as status, i.total, u.full_name as seller, b.name as branch')
+            ->join('users u', 'u.id = i.created_by', 'left')
+            ->join('branches b', 'b.id = i.branch_id', 'left')
+            ->where('i.customer_id', $customerId)
+            ->where('i.deleted_at', null)
+            ->orderBy('i.created_at', 'DESC')
             ->limit(50)
             ->get()
             ->getResultArray();
 
         return array_map(function ($row) {
+            $statusMap = [
+                'completed' => 'Hoàn thành',
+                'draft' => 'Nháp',
+                'cancelled' => 'Đã hủy',
+                'pending' => 'Đang xử lý',
+            ];
+            $status = $row['status'] ?? '';
             return [
                 'code' => $row['code'],
                 'created_at' => $row['created_at'],
                 'seller' => $row['seller'] ?? '—',
                 'branch' => $row['branch'] ?? '—',
                 'total' => (float) ($row['total'] ?? 0),
-                'status' => $row['status'] ?? 'Chưa xử lý',
+                'status' => $statusMap[strtolower($status)] ?? $status ?: 'Chưa xử lý',
             ];
         }, $rows);
     }
 
     /**
      * Find debt transactions for a customer (for "Nợ cần thu từ khách" tab).
+     * Uses UNION ALL to combine customer_debt_transactions and unpaid invoices
+     * with database-level ordering and limiting for accurate top-50 results.
      */
     public function findDebtsByCustomerId(int $customerId): array
     {
-        // Get orders with debt as debt transactions
-        $rows = $this->db->table('orders o')
-            ->select('o.code, o.created_at, o.total as value, o.debt_amount as balance')
-            ->where('o.customer_id', $customerId)
-            ->where('o.deleted_at', null)
-            ->where('o.debt_amount >', 0)
-            ->orderBy('o.created_at', 'DESC')
+        $typeMap = [
+            'SALE' => 'Bán hàng',
+            'PAYMENT' => 'Thanh toán',
+            'ADJUSTMENT' => 'Điều chỉnh',
+            'DISCOUNT' => 'Chiết khấu',
+            'REFUND' => 'Hoàn tiền',
+            'INVOICE' => 'Bán hàng',
+        ];
+
+        // Build separate queries to avoid UNION collation issues
+        $results = [];
+
+        // Query 1: customer_debt_transactions (if table exists)
+        if ($this->db->tableExists('customer_debt_transactions')) {
+            $debtRows = $this->db->table('customer_debt_transactions')
+                ->select('code, created_at, type as source_type, value, balance')
+                ->where('customer_id', $customerId)
+                ->where('deleted_at IS NULL')
+                ->orderBy('created_at', 'DESC')
+                ->limit(50)
+                ->get()
+                ->getResultArray();
+            
+            foreach ($debtRows as $row) {
+                $results[] = $row;
+            }
+        }
+
+        // Query 2: unpaid invoices (cod_amount > 0)
+        $invoiceRows = $this->db->table('invoices')
+            ->select('invoice_number as code, created_at, total as value, cod_amount as balance')
+            ->where('customer_id', $customerId)
+            ->where('deleted_at IS NULL')
+            ->where('cod_amount >', 0)
+            ->orderBy('created_at', 'DESC')
             ->limit(50)
             ->get()
             ->getResultArray();
+        
+        foreach ($invoiceRows as $row) {
+            $row['source_type'] = 'INVOICE';
+            $results[] = $row;
+        }
 
-        return array_map(function ($row) {
+        // Sort by created_at DESC and limit to 50
+        usort($results, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
+        $results = array_slice($results, 0, 50);
+
+        return array_map(function ($row) use ($typeMap) {
+            $sourceType = $row['source_type'] ?? 'SALE';
             return [
                 'code' => $row['code'],
                 'created_at' => $row['created_at'],
-                'type' => 'Bán hàng',
+                'type' => $typeMap[$sourceType] ?? $sourceType,
                 'value' => (float) ($row['value'] ?? 0),
                 'balance' => (float) ($row['balance'] ?? 0),
             ];
-        }, $rows);
+        }, $results);
     }
 
     /**

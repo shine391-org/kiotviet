@@ -131,10 +131,9 @@ class DevSeeder extends Seeder
         // Payment methods master data
         $this->call('PaymentMethodSeeder');
 
-        // Gọi seeder sản phẩm/biến thể/ảnh mẫu
-        $this->call('ProductSeeder');
-        
-        // Note: PriceListSeeder được gọi sau ProductVariantsDemoSeeder trong DemoSeeder
-        // vì ProductVariantsDemoSeeder xóa/tạo lại products, làm mất price_list_items do FK cascade
+        // Note: ProductSeeder đã được loại bỏ khỏi đây
+        // ProductVariantsDemoSeeder trong DemoSeeder là source of truth cho products
+        // vì nó tạo đúng variant IDs (50101, 50102...) mà OrdersDemoSeeder cần
+        // PriceListSeeder và InventoryStockSeeder được gọi sau ProductVariantsDemoSeeder
     }
 }

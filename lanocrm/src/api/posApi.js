@@ -78,7 +78,6 @@ const posApi = {
       notes: data.notes || '',
     };
 
-    console.log('🔵 posApi.createSale final payload:', payload);
     const response = await axiosInstance.post('/orders', payload);
     return response.data;
   },

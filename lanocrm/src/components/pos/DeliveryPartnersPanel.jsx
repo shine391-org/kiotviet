@@ -88,7 +88,7 @@ const DeliveryPartnersPanel = ({
 
     // Self-delivery form state
     const [selfDeliveryData, setSelfDeliveryData] = useState({
-        partner: 'haiz',
+        partner: '',
         serviceType: 'standard',
         appliedFee: '',
         trackingCode: '',

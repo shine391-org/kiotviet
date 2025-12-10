@@ -8,14 +8,16 @@ import styles from '../../pages/suppliers/SupplierListPage.module.css';
 
 const { RangePicker } = DatePicker;
 
+const EMPTY_ARRAY = [];
+
 /**
  * PurchaseFilters - Filter sidebar for purchase orders
  * @agent-layer: frontend-component
  * @agent-pattern: filter-sidebar
  */
 const PurchaseFilters = ({ filters, onChange }) => {
-    const branchItems = useSelector((state) => state.branch?.items || []);
-    const users = useSelector((state) => state.user?.items || []);
+    const branchItems = useSelector((state) => state.branch?.items ?? EMPTY_ARRAY);
+    const users = useSelector((state) => state.user?.items ?? EMPTY_ARRAY);
 
     const handleStatusChange = (status, checked) => {
         const current = filters.status || [];
@@ -30,6 +32,8 @@ const PurchaseFilters = ({ filters, onChange }) => {
             onChange({ date_from: start, date_to: end, time_mode: 'month' });
         } else if (mode === 'all') {
             onChange({ date_from: null, date_to: null, time_mode: 'all' });
+        } else if (mode === 'custom') {
+            onChange({ date_from: filters.date_from || null, date_to: filters.date_to || null, time_mode: 'custom' });
         }
     };
 

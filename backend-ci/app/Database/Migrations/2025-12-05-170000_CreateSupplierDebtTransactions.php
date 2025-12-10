@@ -85,11 +85,11 @@ class CreateSupplierDebtTransactions extends Migration
         
         $this->forge->addForeignKey('partner_id', 'partners', 'id', 'CASCADE', 'CASCADE');
 
-        $this->forge->createTable('supplier_debt_transactions');
+        $this->forge->createTable('supplier_debt_transactions', true);
     }
 
     public function down()
     {
-        $this->forge->dropTable('supplier_debt_transactions');
+        $this->forge->dropTable('supplier_debt_transactions', true);
     }
 }

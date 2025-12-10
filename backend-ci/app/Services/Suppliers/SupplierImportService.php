@@ -55,7 +55,8 @@ class SupplierImportService
                 if (!empty($data['code'])) {
                     $existing = $this->repo->findByCode($data['code']);
                     if ($existing) {
-                        // Update existing
+                        // Update existing - ensure type is set to supplier
+                        $data['type'] = 'supplier';
                         $this->repo->update($existing['id'], $data);
                         $success++;
                         continue;

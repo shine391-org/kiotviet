@@ -105,6 +105,16 @@ const CustomerHeader = ({
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
+    // Cleanup search timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+                searchTimeoutRef.current = null;
+            }
+        };
+    }, []);
+
     // Search customers with debounce - also fetches recent customers when keyword is empty
     const searchCustomers = useCallback(async (keyword) => {
         setCustomerLoading(true);

@@ -61,6 +61,13 @@ class POSSalesService
             throw new InvalidArgumentException('At least one item is required for return');
         }
 
+        // Validate user_id if auto_approve is requested
+        $autoApprove = $payload['auto_approve'] ?? false;
+        $userId = $payload['created_by'] ?? null;
+        if ($autoApprove && !$userId) {
+            throw new InvalidArgumentException('created_by is required when auto_approve is true');
+        }
+
         // Create return via ReturnService
         $returnPayload = [
             'order_id' => $orderId,
@@ -70,36 +77,51 @@ class POSSalesService
             'reason_detail' => $payload['notes'] ?? null,
             'refund_method' => $payload['refund_method'] ?? 'cash',
             'refund_shipping_fee' => $payload['refund_shipping_fee'] ?? false,
-            'created_by' => $payload['created_by'] ?? null,
+            'created_by' => $userId,
         ];
 
-        $result = $this->returnService->create($returnPayload);
+        // Wrap multi-step operations in transaction for atomicity
+        $db = \Config\Database::connect();
+        $db->transBegin();
 
-        // Auto-approve if requested
-        if (($payload['auto_approve'] ?? false) && $result['success']) {
-            $returnId = $result['data']['id'] ?? 0;
-            if ($returnId > 0) {
-                $approvePayload = [
-                    'user_id' => $payload['created_by'] ?? 1,
-                    'refund_method' => $payload['refund_method'] ?? 'cash',
-                    'refund_shipping_fee' => $payload['refund_shipping_fee'] ?? false,
-                    'notes' => 'Quick return from POS',
-                    'version' => 1,
-                ];
-                $result = $this->returnService->approve($returnId, $approvePayload);
+        try {
+            $result = $this->returnService->create($returnPayload);
 
-                // Auto-complete after approve
-                if ($result['success']) {
-                    $completePayload = [
-                        'user_id' => $payload['created_by'] ?? 1,
-                        'version' => 2,
+            // Auto-approve if requested
+            if ($autoApprove && $result['success']) {
+                $returnId = $result['data']['id'] ?? 0;
+                if ($returnId > 0) {
+                    $approvePayload = [
+                        'user_id' => (int) $userId,
+                        'refund_method' => $payload['refund_method'] ?? 'cash',
+                        'refund_shipping_fee' => $payload['refund_shipping_fee'] ?? false,
+                        'notes' => 'Quick return from POS',
+                        'version' => 1,
                     ];
-                    $result = $this->returnService->complete($returnId, $completePayload);
+                    $result = $this->returnService->approve($returnId, $approvePayload);
+
+                    // Auto-complete after approve
+                    if ($result['success']) {
+                        $completePayload = [
+                            'user_id' => (int) $userId,
+                            'version' => 2,
+                        ];
+                        $result = $this->returnService->complete($returnId, $completePayload);
+                    }
                 }
             }
-        }
 
-        return $result;
+            if ($db->transStatus() === false) {
+                $db->transRollback();
+                throw new RuntimeException('Transaction failed during quick return');
+            }
+
+            $db->transCommit();
+            return $result;
+        } catch (\Throwable $e) {
+            $db->transRollback();
+            throw $e;
+        }
     }
 
     /**

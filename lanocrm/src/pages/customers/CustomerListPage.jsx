@@ -41,6 +41,12 @@ import {
 import customerApi from '../../api/customerApi';
 import CustomerDetailPanel from './CustomerDetailPanel';
 import CreateCustomerModal from './CreateCustomerModal';
+import CustomerPaymentModal from './CustomerPaymentModal';
+import CustomerAdjustModal from './CustomerAdjustModal';
+import CustomerDiscountModal from './CustomerDiscountModal';
+import CustomerQRModal from './CustomerQRModal';
+import InvoiceDetailModal from '../../components/customers/InvoiceDetailModal';
+import EditReceiptModal from './EditReceiptModal';
 import styles from './CustomerListPage.module.css';
 
 const { RangePicker } = DatePicker;
@@ -105,6 +111,21 @@ const CustomerListPage = () => {
     'total_sales_net',
   ]);
 
+  // Modal states for debt operations
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [adjustModalOpen, setAdjustModalOpen] = useState(false);
+  const [discountModalOpen, setDiscountModalOpen] = useState(false);
+  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [debtTargetCustomer, setDebtTargetCustomer] = useState(null);
+
+  // Invoice detail modal state
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [invoiceCodeToView, setInvoiceCodeToView] = useState(null);
+
+  // Receipt detail modal state
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [receiptCodeToView, setReceiptCodeToView] = useState(null);
+
   // Fetch customer groups
   useEffect(() => {
     const loadGroups = async () => {
@@ -141,12 +162,13 @@ const CustomerListPage = () => {
     return () => clearTimeout(timer);
   }, [searchText]);
 
-  // Calculate summary from items
+  // Calculate summary from current page items only (not all filtered data)
+  // TODO: For accurate totals across all filtered customers, request summary from backend API
   const summaryData = useMemo(() => {
     const totalDebt = items.reduce((sum, item) => sum + (item.current_debt || 0), 0);
     const totalSales = items.reduce((sum, item) => sum + (item.total_sales || 0), 0);
     const totalSalesNet = items.reduce((sum, item) => sum + (item.total_sales_net || 0), 0);
-    return { totalDebt, totalSales, totalSalesNet };
+    return { totalDebt, totalSales, totalSalesNet, isPageOnly: true };
   }, [items]);
 
   const allColumns = useMemo(
@@ -627,28 +649,28 @@ const CustomerListPage = () => {
                         message.info('Chức năng thêm địa chỉ sẽ được cập nhật');
                       }}
                       onOrderClick={(code) => {
-                        // TODO: Open order detail modal
-                        message.info(`Xem chi tiết đơn hàng: ${code}`);
+                        setInvoiceCodeToView(code);
+                        setInvoiceModalOpen(true);
                       }}
                       onReceiptClick={(code) => {
-                        // TODO: Open receipt detail modal
-                        message.info(`Xem chi tiết phiếu: ${code}`);
+                        setReceiptCodeToView(code);
+                        setReceiptModalOpen(true);
                       }}
                       onPayment={(c) => {
-                        // TODO: Open payment modal
-                        message.info('Chức năng thanh toán sẽ được cập nhật');
+                        setDebtTargetCustomer(c);
+                        setPaymentModalOpen(true);
                       }}
                       onAdjust={(c) => {
-                        // TODO: Open adjust debt modal
-                        message.info('Chức năng điều chỉnh sẽ được cập nhật');
+                        setDebtTargetCustomer(c);
+                        setAdjustModalOpen(true);
                       }}
                       onDiscount={(c) => {
-                        // TODO: Open discount modal
-                        message.info('Chức năng chiết khấu sẽ được cập nhật');
+                        setDebtTargetCustomer(c);
+                        setDiscountModalOpen(true);
                       }}
                       onCreateQR={(c) => {
-                        // TODO: Open QR modal
-                        message.info('Chức năng tạo QR sẽ được cập nhật');
+                        setDebtTargetCustomer(c);
+                        setQrModalOpen(true);
                       }}
                     />
                   ),
@@ -682,6 +704,82 @@ const CustomerListPage = () => {
         }}
         onSuccess={handleModalSuccess}
         customerGroups={customerGroups}
+      />
+
+      {/* Debt Operations Modals */}
+      <CustomerPaymentModal
+        open={paymentModalOpen}
+        customer={debtTargetCustomer}
+        onCancel={() => {
+          setPaymentModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+        onSuccess={() => {
+          handleRefresh();
+          setPaymentModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+      />
+
+      <CustomerAdjustModal
+        open={adjustModalOpen}
+        customer={debtTargetCustomer}
+        onCancel={() => {
+          setAdjustModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+        onSuccess={() => {
+          handleRefresh();
+          setAdjustModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+      />
+
+      <CustomerDiscountModal
+        open={discountModalOpen}
+        customer={debtTargetCustomer}
+        onCancel={() => {
+          setDiscountModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+        onSuccess={() => {
+          handleRefresh();
+          setDiscountModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+      />
+
+      <CustomerQRModal
+        open={qrModalOpen}
+        customer={debtTargetCustomer}
+        onCancel={() => {
+          setQrModalOpen(false);
+          setDebtTargetCustomer(null);
+        }}
+      />
+
+      <InvoiceDetailModal
+        open={invoiceModalOpen}
+        invoiceCode={invoiceCodeToView}
+        onClose={() => {
+          setInvoiceModalOpen(false);
+          setInvoiceCodeToView(null);
+        }}
+      />
+
+      <EditReceiptModal
+        open={receiptModalOpen}
+        receiptCode={receiptCodeToView}
+        customer={debtTargetCustomer || current}
+        onCancel={() => {
+          setReceiptModalOpen(false);
+          setReceiptCodeToView(null);
+        }}
+        onSuccess={() => {
+          handleRefresh();
+          setReceiptModalOpen(false);
+          setReceiptCodeToView(null);
+        }}
       />
     </div>
   );

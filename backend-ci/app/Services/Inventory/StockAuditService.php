@@ -3,6 +3,8 @@
 namespace App\Services\Inventory;
 
 use App\Repositories\Inventory\StockReconciliationRepository;
+use App\Repositories\Products\ProductRepository;
+use App\Repositories\Users\UserRepository;
 use App\Validators\StockReconciliationValidator;
 use RuntimeException;
 
@@ -24,6 +26,8 @@ class StockAuditService
     protected StockReconciliationRepository $repo;
     protected StockReconciliationValidator $validator;
     protected StockLedgerService $ledger;
+    protected ProductRepository $productRepo;
+    protected UserRepository $userRepo;
 
     /** Status mapping from backend to frontend */
     protected const STATUS_MAP = [
@@ -43,16 +47,23 @@ class StockAuditService
     public function __construct(
         ?StockReconciliationRepository $repo = null,
         ?StockReconciliationValidator $validator = null,
-        ?StockLedgerService $ledger = null
+        ?StockLedgerService $ledger = null,
+        ?ProductRepository $productRepo = null,
+        ?UserRepository $userRepo = null
     ) {
         $this->repo = $repo ?? new StockReconciliationRepository();
         $this->validator = $validator ?? new StockReconciliationValidator();
         $this->ledger = $ledger ?? new StockLedgerService();
+        $this->productRepo = $productRepo ?? new ProductRepository();
+        $this->userRepo = $userRepo ?? new UserRepository();
     }
 
     /**
      * List stock audits for frontend.
      * @agent-use: GET /api/inventory/stock-audits
+     * 
+     * @todo Refactor to use repository-level pagination (SQL LIMIT/OFFSET) instead of in-memory pagination.
+     * Current implementation fetches all rows then paginates in PHP, which doesn't scale well.
      */
     public function list(array $filters): array
     {
@@ -81,8 +92,20 @@ class StockAuditService
         // Get data from repository
         $rows = $this->repo->list($filters);
         
-        // Transform to frontend format
-        $data = array_map([$this, 'transformToFrontend'], $rows);
+        // Pre-fetch all user names to avoid N+1 queries
+        $userIds = [];
+        foreach ($rows as $row) {
+            if (!empty($row['created_by'])) {
+                $userIds[] = (int) $row['created_by'];
+            }
+            if (!empty($row['approved_by'])) {
+                $userIds[] = (int) $row['approved_by'];
+            }
+        }
+        $userMap = $this->fetchUserNames(array_unique($userIds));
+        
+        // Transform to frontend format with pre-fetched user names
+        $data = array_map(fn($row) => $this->transformToFrontend($row, false, $userMap), $rows);
         
         // Apply pagination
         $page = (int) ($filters['page'] ?? 1);
@@ -170,18 +193,14 @@ class StockAuditService
             return $input;
         }
         
-        $db = \Config\Database::connect();
         $transformedItems = [];
         
         foreach ($input['items'] as $item) {
             $productId = $item['product_id'] ?? null;
             
-            // If product_code is provided, lookup product_id
+            // If product_code is provided, lookup product_id via ProductRepository
             if (!$productId && !empty($item['product_code'])) {
-                $product = $db->table('products')
-                    ->where('code', $item['product_code'])
-                    ->get()
-                    ->getRowArray();
+                $product = $this->productRepo->findByCode($item['product_code']);
                 $productId = $product['id'] ?? null;
             }
             
@@ -275,8 +294,9 @@ class StockAuditService
 
     /**
      * Transform backend reconciliation to frontend audit format.
+     * @param array $userMap Pre-fetched user id => name map to avoid N+1 queries
      */
-    protected function transformToFrontend(array $row, bool $includeItems = false): array
+    protected function transformToFrontend(array $row, bool $includeItems = false, array $userMap = []): array
     {
         $items = $row['items'] ?? [];
         
@@ -310,12 +330,26 @@ class StockAuditService
             }
         }
 
+        // Get user names: prefer userMap (if pre-fetched), fall back to row data
+        $createdById = $row['created_by'] ?? null;
+        $approvedById = $row['approved_by'] ?? null;
+        
+        // creatorName: userMap first, then row['creator_name'] fallback
+        $creatorName = ($createdById && isset($userMap[$createdById]))
+            ? $userMap[$createdById]
+            : ($row['creator_name'] ?? null);
+        
+        // reconciledBy: userMap first, then row['reconciler_name'] fallback
+        $reconciledBy = ($approvedById && isset($userMap[$approvedById]))
+            ? $userMap[$approvedById]
+            : ($row['reconciler_name'] ?? $row['approver_name'] ?? null);
+
         $result = [
             'id' => $row['id'],
             'code' => $row['recon_number'] ?? ('SK' . str_pad($row['id'], 3, '0', STR_PAD_LEFT)),
             'createdTime' => $row['created_at'] ?? null,
-            'creatorName' => $row['creator_name'] ?? $this->getCreatorName($row['created_by'] ?? null),
-            'reconciledBy' => $row['approved_by'] ? $this->getCreatorName($row['approved_by']) : null,
+            'creatorName' => $creatorName,
+            'reconciledBy' => $reconciledBy,
             'reconciledDate' => $row['approved_at'] ?? null,
             'actualQuantity' => $actualQuantity,
             'totalActualValue' => $totalActualValue,
@@ -405,15 +439,16 @@ class StockAuditService
     }
 
     /**
-     * Get creator name from user ID.
+     * Batch fetch user names by IDs.
+     * Returns an associative array of user_id => name.
      */
-    protected function getCreatorName(?int $userId): ?string
+    protected function fetchUserNames(array $userIds): array
     {
-        if (!$userId) return null;
-        
-        $db = \Config\Database::connect();
-        $user = $db->table('users')->where('id', $userId)->get()->getRowArray();
-        return $user['name'] ?? $user['username'] ?? null;
+        if (empty($userIds)) {
+            return [];
+        }
+
+        return $this->userRepo->findByIds($userIds);
     }
 
     /**

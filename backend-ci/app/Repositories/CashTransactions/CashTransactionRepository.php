@@ -50,7 +50,10 @@ class CashTransactionRepository
             throw new \Exception('Validation failed: ' . implode(', ', $errors));
         }
         
-        $this->model->insert($payload);
+        $result = $this->model->insert($payload);
+        if ($result === false) {
+            throw new \Exception('Failed to insert cash transaction');
+        }
         $insertId = $this->model->getInsertID();
         
         // Re-fetch the inserted row to get actual database values

@@ -144,6 +144,7 @@ class InvoiceValidator
             'shipment_code' => 'permit_empty|string|max_length[100]',
             'shipping_partner' => 'permit_empty|string|max_length[50]',
             'delivery_note' => 'permit_empty|string|max_length[500]',
+            'delivery_time' => 'permit_empty|valid_date[Y-m-d H:i:s]',
         ];
         if (! $this->v->setRules($rules)->run($input)) {
             throw new InvalidArgumentException(implode('; ', array_filter($this->v->getErrors())) ?: 'Invalid data');

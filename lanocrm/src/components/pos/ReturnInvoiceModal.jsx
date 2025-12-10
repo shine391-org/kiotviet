@@ -12,6 +12,8 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
     const [invoices, setInvoices] = useState([]);
     const [total, setTotal] = useState(0);
     const [loading, setLoading] = useState(false);
+    const [sortField, setSortField] = useState(null);
+    const [sortOrder, setSortOrder] = useState(null);
     const pageSize = 7;
 
     const fetchInvoices = useCallback(async () => {
@@ -25,6 +27,8 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
                 toDate: toDate ? toDate.format('YYYY-MM-DD') : undefined,
                 page: currentPage,
                 limit: pageSize,
+                sortField: sortField || undefined,
+                sortOrder: sortOrder || undefined,
             });
             if (response.success) {
                 // Map orders data to invoice display format
@@ -43,11 +47,23 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
         } finally {
             setLoading(false);
         }
-    }, [open, searchValue, searchType, fromDate, toDate, currentPage]);
+    }, [open, searchValue, searchType, fromDate, toDate, currentPage, sortField, sortOrder]);
 
     useEffect(() => {
         fetchInvoices();
     }, [fetchInvoices]);
+
+    const handleTableChange = (pagination, filters, sorter) => {
+        if (sorter.field) {
+            setSortField(sorter.field);
+            setSortOrder(sorter.order === 'ascend' ? 'asc' : sorter.order === 'descend' ? 'desc' : null);
+            setCurrentPage(1); // Reset to first page on sort change
+        } else {
+            setSortField(null);
+            setSortOrder(null);
+            setCurrentPage(1); // Reset to first page when sort is cleared
+        }
+    };
 
     const searchOptions = [
         { key: 'code', label: 'Theo mã hóa đơn' },
@@ -154,6 +170,7 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
                             pagination={false}
                             size="small"
                             locale={{ emptyText: 'Không có hóa đơn nào' }}
+                            onChange={handleTableChange}
                         />
                     </Spin>
 
@@ -167,7 +184,7 @@ const ReturnInvoiceModal = ({ open, onClose, onSelect, onQuickReturn }) => {
                             size="small"
                         />
                         <span className={styles.totalText}>
-                            Hiển thị {Math.min((currentPage - 1) * pageSize + 1, total)} - {Math.min(currentPage * pageSize, total)} trên tổng số {total} hóa đơn
+                            Hiển thị {total === 0 ? 0 : Math.min((currentPage - 1) * pageSize + 1, total)} - {total === 0 ? 0 : Math.min(currentPage * pageSize, total)} trên tổng số {total} hóa đơn
                         </span>
                         <Button type="primary" onClick={onQuickReturn} className={styles.quickReturnBtn}>
                             Trả nhanh

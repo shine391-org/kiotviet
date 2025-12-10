@@ -211,6 +211,10 @@ class PurchaseReturnRepository
         }
         $this->db->transComplete();
 
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException('Failed to create purchase return: transaction failed');
+        }
+
         return $this->findById($returnId);
     }
 
@@ -238,6 +242,10 @@ class PurchaseReturnRepository
             }
         }
         $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException('Failed to update purchase return: transaction failed');
+        }
 
         return $this->findById($id);
     }

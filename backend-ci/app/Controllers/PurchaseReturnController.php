@@ -144,6 +144,11 @@ class PurchaseReturnController extends ResourceController
      */
     public function updateStatus($id = null): ResponseInterface
     {
+        $userId = auth()->id();
+        if (!$userId) {
+            return $this->failUnauthorized('Authentication required');
+        }
+
         $data = $this->request->getJSON(true);
         $status = $data['status'] ?? null;
 
@@ -151,10 +156,8 @@ class PurchaseReturnController extends ResourceController
             return $this->fail('Invalid status');
         }
 
-        $userId = auth()->id() ?? null;
-
         try {
-            $updated = $this->service->updateStatus((int)$id, $status, $userId);
+            $updated = $this->service->updateStatus((int)$id, $status, (int)$userId);
             if (!$updated) {
                 return $this->failNotFound('Purchase return not found');
             }
@@ -186,37 +189,18 @@ class PurchaseReturnController extends ResourceController
 
         try {
             $filename = $this->service->export(array_filter($filters));
+            $basename = basename($filename);
 
-            // Set headers before streaming
-            $this->response
-                ->setContentType('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                ->setHeader('Content-Disposition', 'attachment; filename="' . basename($filename) . '"')
-                ->setHeader('Content-Length', (string)filesize($filename));
-
-            // Stream file in chunks to avoid loading into memory
-            $handle = fopen($filename, 'rb');
-            if ($handle === false) {
-                return $this->fail('Failed to open export file');
-            }
-
-            // Send headers
-            $this->response->send();
-
-            // Stream content
-            while (!feof($handle)) {
-                echo fread($handle, 8192);
-                if (ob_get_level() > 0) {
-                    ob_flush();
+            // Register cleanup to delete temp file after response is sent
+            register_shutdown_function(function () use ($filename) {
+                if (file_exists($filename)) {
+                    @unlink($filename);
                 }
-                flush();
-            }
-            fclose($handle);
+            });
 
-            // Clean up temp file
-            unlink($filename);
-
-            // Exit to prevent further output
-            exit;
+            // Use CodeIgniter's download method for streaming
+            // Pass file path as first arg and display name as second arg
+            return $this->response->download($filename, $basename);
         } catch (\Exception $e) {
             return $this->fail('Export failed: ' . $e->getMessage());
         }

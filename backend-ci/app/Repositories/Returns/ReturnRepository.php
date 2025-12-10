@@ -264,11 +264,16 @@ class ReturnRepository
         if (! empty($filters['status'])) {
             $b->where('r.status', $filters['status']);
         }
+        // return_number: exact field match filter
+        // search: multi-field fuzzy match (broader search)
+        // return_number takes precedence if both are provided
         if (! empty($filters['return_number'])) {
-            $b->like('r.return_number', $filters['return_number']);
-        }
-        if (! empty($filters['search'])) {
-            $b->like('r.return_number', $filters['search']);
+            $b->where('r.return_number', $filters['return_number']);
+        } elseif (! empty($filters['search'])) {
+            $b->groupStart()
+                ->like('r.return_number', $filters['search'])
+                ->orLike('r.reason', $filters['search'])
+                ->groupEnd();
         }
     }
 

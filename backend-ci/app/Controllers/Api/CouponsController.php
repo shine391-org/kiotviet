@@ -47,8 +47,13 @@ class CouponsController extends BaseController
     {
         $input = $this->safeInput();
         $code = $input['code'] ?? '';
-        $orderTotal = (float) ($input['order_total'] ?? 0);
         $customerId = $input['customer_id'] ?? null;
+
+        // Validate order_total is provided and numeric
+        if (!isset($input['order_total']) || !is_numeric($input['order_total'])) {
+            return $this->failValidationErrors('order_total is required and must be numeric');
+        }
+        $orderTotal = (float) $input['order_total'];
 
         return $this->wrap(fn () => $this->respond($this->service->apply($code, $orderTotal, $customerId)));
     }

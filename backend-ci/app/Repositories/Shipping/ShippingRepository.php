@@ -33,13 +33,13 @@ class ShippingRepository
         return $this->zoneModel->find($id);
     }
 
-    public function createZone(array $data): array
+    public function createZone(array $data): ?array
     {
         $this->zoneModel->insert($data);
         return $this->findZoneById((int) $this->zoneModel->getInsertID());
     }
 
-    public function updateZone(int $id, array $data): array
+    public function updateZone(int $id, array $data): ?array
     {
         $this->zoneModel->update($id, $data);
         return $this->findZoneById($id);
@@ -102,13 +102,18 @@ class ShippingRepository
         return $builder->orderBy('base_fee', 'ASC')->get()->getRowArray();
     }
 
-    public function createRate(array $data): array
+    public function findRateById(int $id): ?array
+    {
+        return $this->rateModel->find($id);
+    }
+
+    public function createRate(array $data): ?array
     {
         $this->rateModel->insert($data);
         return $this->rateModel->find((int) $this->rateModel->getInsertID());
     }
 
-    public function updateRate(int $id, array $data): array
+    public function updateRate(int $id, array $data): ?array
     {
         $this->rateModel->update($id, $data);
         return $this->rateModel->find($id);

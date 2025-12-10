@@ -68,6 +68,225 @@ class CustomerDebtController extends BaseController
     }
 
     /**
+     * Get single debt transaction by code.
+     * GET /api/customer-debts/{code}
+     */
+    public function show($code = null): \CodeIgniter\HTTP\ResponseInterface
+    {
+        return $this->wrap(function () use ($code) {
+            if (! $code) {
+                return $this->failValidationErrors('Transaction code is required');
+            }
+
+            // Find the debt transaction
+            $transaction = $this->db->table('customer_debt_transactions')
+                ->where('code', $code)
+                ->where('deleted_at', null)
+                ->get()
+                ->getRowArray();
+
+            if (! $transaction) {
+                return $this->failNotFound('Transaction not found');
+            }
+
+            // Get customer info
+            $customer = $this->db->table('customers')
+                ->select('id, code, name, phone, current_debt')
+                ->where('id', $transaction['customer_id'])
+                ->get()
+                ->getRowArray();
+
+            // Get user info for created_by
+            $createdBy = null;
+            if (! empty($transaction['created_by'])) {
+                $user = $this->db->table('users')
+                    ->select('id, full_name, username')
+                    ->where('id', $transaction['created_by'])
+                    ->get()
+                    ->getRowArray();
+                $createdBy = $user ? ($user['full_name'] ?? $user['username']) : null;
+            }
+
+            // Get related invoices (allocations) if this is a payment
+            // NOTE: This is an ESTIMATE - there is no payment_allocations table to track actual 
+            // allocation of payments to specific invoices. The data below shows invoices that
+            // existed at the time of payment but does NOT represent actual payment allocation.
+            // Consumers should NOT treat payment_amount or paid_before as authoritative values.
+            $allocations = [];
+            if ($transaction['type'] === 'PAYMENT') {
+                // Find invoices that were created before this payment for the same customer
+                $invoices = $this->db->table('invoices')
+                    ->select('invoice_number as code, created_at, total as value, cod_amount, invoice_status')
+                    ->where('customer_id', $transaction['customer_id'])
+                    ->where('deleted_at', null)
+                    ->where('created_at <=', $transaction['created_at'])
+                    ->orderBy('created_at', 'DESC')
+                    ->limit(10)
+                    ->get()
+                    ->getResultArray();
+
+                foreach ($invoices as $inv) {
+                    $allocations[] = [
+                        'code' => $inv['code'],
+                        'created_at' => $inv['created_at'],
+                        'value' => (float) $inv['value'],
+                        // These values are ESTIMATES - no actual allocation tracking exists
+                        'paid_before' => null,
+                        'payment_amount' => null,
+                        'status' => $inv['invoice_status'] ?? 'unknown',
+                        'is_estimated' => true, // Flag to indicate this is not authoritative
+                    ];
+                }
+            }
+
+            return $this->respond([
+                'success' => true,
+                'data' => [
+                    'id' => (int) $transaction['id'],
+                    'code' => $transaction['code'],
+                    'customer_id' => (int) $transaction['customer_id'],
+                    'type' => $transaction['type'],
+                    'type_label' => $this->typeLabel($transaction['type']),
+                    'value' => (float) $transaction['value'],
+                    'amount' => abs((float) $transaction['value']),
+                    'balance' => (float) $transaction['balance'],
+                    'notes' => $transaction['notes'],
+                    'payment_method' => $transaction['payment_method'] ?? 'cash',
+                    'account_number' => $transaction['account_number'] ?? '',
+                    'created_at' => $transaction['created_at'],
+                    'created_by' => $transaction['created_by'],
+                    'created_by_name' => $createdBy,
+                    'branch_id' => $transaction['branch_id'],
+                    'customer' => $customer,
+                    'allocations' => $allocations,
+                ],
+            ]);
+        });
+    }
+
+    /**
+     * Update a debt transaction (notes, payment_method only).
+     * PUT /api/customer-debts/{code}
+     */
+    public function update($code = null): \CodeIgniter\HTTP\ResponseInterface
+    {
+        return $this->wrap(function () use ($code) {
+            if (! $code) {
+                return $this->failValidationErrors('Transaction code is required');
+            }
+
+            // Find the debt transaction
+            $transaction = $this->db->table('customer_debt_transactions')
+                ->where('code', $code)
+                ->where('deleted_at', null)
+                ->get()
+                ->getRowArray();
+
+            if (! $transaction) {
+                return $this->failNotFound('Transaction not found');
+            }
+
+            $input = $this->safeInput();
+            $updateData = ['updated_at' => date('Y-m-d H:i:s')];
+
+            // Only allow updating notes and payment_method
+            if (isset($input['notes'])) {
+                $updateData['notes'] = $input['notes'];
+            }
+            if (isset($input['payment_method'])) {
+                $updateData['payment_method'] = $input['payment_method'];
+            }
+            if (isset($input['account_number'])) {
+                $updateData['account_number'] = $input['account_number'];
+            }
+
+            $this->db->table('customer_debt_transactions')
+                ->where('id', $transaction['id'])
+                ->update($updateData);
+
+            return $this->respond([
+                'success' => true,
+                'message' => 'Đã cập nhật phiếu thu',
+            ]);
+        });
+    }
+
+    /**
+     * Delete a debt transaction (soft delete + reverse debt).
+     * DELETE /api/customer-debts/{code}
+     */
+    public function delete($code = null): \CodeIgniter\HTTP\ResponseInterface
+    {
+        return $this->wrap(function () use ($code) {
+            if (! $code) {
+                return $this->failValidationErrors('Transaction code is required');
+            }
+
+            // Find the debt transaction
+            $transaction = $this->db->table('customer_debt_transactions')
+                ->where('code', $code)
+                ->where('deleted_at', null)
+                ->get()
+                ->getRowArray();
+
+            if (! $transaction) {
+                return $this->failNotFound('Không tìm thấy phiếu thu');
+            }
+
+            $this->db->transStart();
+
+            try {
+                // Reverse the debt impact on customer
+                $customerId = (int) $transaction['customer_id'];
+                $transactionValue = (float) $transaction['value'];
+
+                // Get current customer debt
+                $customer = $this->db->table('customers')
+                    ->where('id', $customerId)
+                    ->where('deleted_at', null)
+                    ->get()
+                    ->getRowArray();
+
+                if ($customer) {
+                    $currentDebt = (float) ($customer['current_debt'] ?? 0);
+                    // Reverse the transaction: subtract the value (if +100, debt becomes -100; if -100, debt becomes +100)
+                    $newDebt = max(0, $currentDebt - $transactionValue);
+
+                    // Update customer debt
+                    $this->db->table('customers')
+                        ->where('id', $customerId)
+                        ->update([
+                            'current_debt' => $newDebt,
+                            'updated_at' => date('Y-m-d H:i:s'),
+                        ]);
+                }
+
+                // Soft delete the transaction
+                $this->db->table('customer_debt_transactions')
+                    ->where('id', $transaction['id'])
+                    ->update([
+                        'deleted_at' => date('Y-m-d H:i:s'),
+                        'updated_at' => date('Y-m-d H:i:s'),
+                    ]);
+
+                $this->db->transComplete();
+
+                if ($this->db->transStatus() === false) {
+                    return $this->failServerError('Xóa phiếu thu thất bại');
+                }
+
+                return $this->respond([
+                    'success' => true,
+                    'message' => 'Đã xóa phiếu thu',
+                ]);
+            } catch (\Throwable $e) {
+                $this->db->transRollback();
+                throw $e;
+            }
+        });
+    }
+
+    /**
      * Record a payment from customer (reduces debt).
      * POST /api/customers/{customerId}/debts/payment
      */
@@ -374,7 +593,7 @@ class CustomerDebtController extends BaseController
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
         } catch (\RuntimeException $e) {
-            return $this->failNotFound($e->getMessage());
+            return $this->failServerError($e->getMessage());
         } catch (\Throwable $e) {
             return $this->failServerError($e->getMessage());
         }

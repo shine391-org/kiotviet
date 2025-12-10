@@ -4,6 +4,7 @@ namespace App\Controllers\Api;
 
 use App\Controllers\BaseController;
 use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\PurchaseOrders\PurchaseOrderExportService;
 use CodeIgniter\API\ResponseTrait;
 
 /**
@@ -17,10 +18,12 @@ class PurchaseOrdersController extends BaseController
     use ResponseTrait;
 
     protected PurchaseOrderService $service;
+    protected PurchaseOrderExportService $exportService;
 
     public function __construct()
     {
         $this->service = service('purchaseOrderService');
+        $this->exportService = service('purchaseOrderExportService');
     }
 
     /** @agent-use: GET /api/purchase-orders */
@@ -69,21 +72,37 @@ class PurchaseOrdersController extends BaseController
     {
         return $this->wrap(function () {
             $filters = $this->request->getGet() ?? [];
-            $exportService = new \App\Services\PurchaseOrders\PurchaseOrderExportService();
-            $filepath = $exportService->exportOrders($filters);
+            $filepath = $this->exportService->exportOrders($filters);
+            $filename = basename($filepath);
 
-            return $this->response
+            $response = $this->response
                 ->setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-                ->setHeader('Content-Disposition', 'attachment; filename="purchase_orders_' . date('Ymd_His') . '.xlsx"')
-                ->setBody(file_get_contents($filepath));
+                ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"');
+
+            $response->setBody(file_get_contents($filepath));
+            
+            // Clean up temp file with proper error handling
+            if (file_exists($filepath)) {
+                if (!unlink($filepath)) {
+                    log_message('warning', '[PurchaseOrdersController] Failed to delete temp file: ' . $filepath);
+                }
+            }
+            
+            return $response;
         });
     }
 
     private function wrap(callable $action)
     {
-        try { return $action(); }
-        catch (\InvalidArgumentException $e) { return $this->failValidationErrors($e->getMessage()); }
-        catch (\RuntimeException $e) { return $this->failNotFound($e->getMessage()); }
-        catch (\Throwable $e) { return $this->failServerError($e->getMessage()); }
+        try {
+            return $action();
+        } catch (\InvalidArgumentException $e) {
+            return $this->failValidationErrors($e->getMessage());
+        } catch (\RuntimeException $e) {
+            return $this->failNotFound($e->getMessage());
+        } catch (\Throwable $e) {
+            log_message('error', '[PurchaseOrdersController] Unexpected error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('Internal server error');
+        }
     }
 }

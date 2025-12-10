@@ -117,7 +117,7 @@ const PaymentPanel = ({
     const handleCombinedPayment = (payments) => {
         console.log('Combined payments:', payments);
         // Pass first payment method for combined payments
-        onPayment?.(payments[0]?.payment_method?.toUpperCase() || 'CASH');
+        onPayment?.(payments[0]?.method?.toUpperCase() || 'CASH');
     };
 
     const handlePaymentClick = () => {

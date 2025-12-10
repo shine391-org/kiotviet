@@ -166,6 +166,25 @@ const customerApi = {
     const response = await axiosInstance.post(`${BASE}/${customerId}/debts/discount`, data);
     return response.data;
   },
+
+  // Get receipt/debt transaction by code
+  getReceiptByCode: async (code) => {
+    const response = await axiosInstance.get(`/customer-debts/${code}`);
+    return response.data;
+  },
+
+  // Update receipt/debt transaction (notes, payment_method only)
+  updateReceipt: async (code, data) => {
+    const response = await axiosInstance.put(`/customer-debts/${code}`, data);
+    return response.data;
+  },
+
+  // Delete receipt/debt transaction (soft delete + reverses debt)
+  deleteReceipt: async (code) => {
+    const response = await axiosInstance.delete(`/customer-debts/${code}`);
+    return response.data;
+  },
 };
 
 export default customerApi;
+

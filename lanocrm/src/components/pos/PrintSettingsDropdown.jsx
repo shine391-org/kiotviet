@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, Switch, InputNumber, Select, Popover } from 'antd';
 import styles from './PrintSettingsDropdown.module.css';
 
-const PrintSettingsDropdown = ({ children }) => {
+const PrintSettingsDropdown = ({ children, onSkip = () => {}, onDone = () => {} }) => {
     const [autoprint, setAutoprint] = useState(true);
     const [groupSameType, setGroupSameType] = useState(false);
     const [printCopies, setPrintCopies] = useState(1);
@@ -10,6 +10,16 @@ const PrintSettingsDropdown = ({ children }) => {
     const [autoprintWarranty, setAutoprintWarranty] = useState(true);
     const [warrantyPer, setWarrantyPer] = useState('product');
     const [warrantyCopies, setWarrantyCopies] = useState(1);
+
+    const getSettings = () => ({
+        autoprint,
+        groupSameType,
+        printCopies,
+        printTemplate,
+        autoprintWarranty,
+        warrantyPer,
+        warrantyCopies,
+    });
 
     const content = (
         <div className={styles.content}>
@@ -92,8 +102,8 @@ const PrintSettingsDropdown = ({ children }) => {
 
             {/* Action buttons */}
             <div className={styles.actions}>
-                <Button className={styles.skipBtn}>Bỏ qua</Button>
-                <Button type="primary" className={styles.doneBtn}>Xong</Button>
+                <Button className={styles.skipBtn} onClick={() => onSkip(getSettings())}>Bỏ qua</Button>
+                <Button type="primary" className={styles.doneBtn} onClick={() => onDone(getSettings())}>Xong</Button>
             </div>
         </div>
     );

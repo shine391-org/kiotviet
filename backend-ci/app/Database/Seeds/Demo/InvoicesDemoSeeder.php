@@ -141,6 +141,9 @@ class InvoicesDemoSeeder extends Seeder
 
     private function filterTaxCustomers(array $orders): array
     {
+        // NOTE: Previously filtered for customers with tax_code only.
+        // Removed that restriction so invoices are created for all customers
+        // to ensure customers visible in UI have invoices in their detail panels.
         if (! $this->db->tableExists('customers')) {
             return $orders;
         }
@@ -148,11 +151,11 @@ class InvoicesDemoSeeder extends Seeder
         if (empty($customerIds)) {
             return [];
         }
+        // Return all orders that have a valid customer_id in the customers table
         $customers = $this->db->table('customers')
-            ->select('id, tax_code')
+            ->select('id')
             ->whereIn('id', $customerIds)
-            ->where('tax_code IS NOT NULL', null, false)
-            ->where('tax_code !=', '')
+            ->where('deleted_at', null)
             ->get()
             ->getResultArray();
         $validIds = array_map(static fn ($row) => (int) $row['id'], $customers);

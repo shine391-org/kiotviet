@@ -171,6 +171,9 @@ class ShippingService
     /** Update shipping rate */
     public function updateRate(int $id, array $data): array
     {
+        if (!$this->repo->findRateById($id)) {
+            throw new RuntimeException('Rate not found');
+        }
         $allowed = ['zone_id', 'delivery_partner_id', 'min_weight', 'max_weight', 'min_value', 'max_value', 'base_fee', 'per_kg_fee', 'free_shipping_threshold', 'is_active'];
         $update = array_intersect_key($data, array_flip($allowed));
         $rate = $this->repo->updateRate($id, $update);
@@ -180,6 +183,9 @@ class ShippingService
     /** Delete rate */
     public function deleteRate(int $id): array
     {
+        if (!$this->repo->findRateById($id)) {
+            throw new RuntimeException('Rate not found');
+        }
         $this->repo->deleteRate($id);
         return ['success' => true, 'message' => 'Rate deleted'];
     }

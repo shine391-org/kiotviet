@@ -124,9 +124,9 @@ const PurchaseReturnListPage = () => {
                 dataIndex: 'return_number',
                 width: 150,
                 render: (text) => (
-                    <a onClick={(e) => e.stopPropagation()} style={{ color: '#1890ff' }}>
+                    <Button type="link" onClick={(e) => e.stopPropagation()} style={{ padding: 0 }}>
                         {text || '—'}
-                    </a>
+                    </Button>
                 ),
             },
             {

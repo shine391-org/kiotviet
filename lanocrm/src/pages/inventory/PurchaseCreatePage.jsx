@@ -29,12 +29,15 @@ import {
 import dayjs from 'dayjs';
 import { getProducts } from '../../api/productApi';
 import purchaseApi from '../../api/purchaseApi';
+import supplierApi from '../../api/supplierApi';
 import { fetchBranches } from '../../store/slices/branchSlice';
 import styles from './PurchaseCreatePage.module.css';
 
 const { Title, Text, Link } = Typography;
 
 const currency = (v) => (v === null || v === undefined ? '0' : Number(v).toLocaleString('vi-VN'));
+
+const EMPTY_ARRAY = [];
 
 /**
  * PurchaseCreatePage - Create new purchase order
@@ -47,11 +50,13 @@ const PurchaseCreatePage = () => {
     const { message } = App.useApp();
 
     const { branches } = useSelector((s) => s.branch);
-    const users = useSelector((s) => s.user?.items || []);
+    const users = useSelector((s) => s.user?.items ?? EMPTY_ARRAY);
 
     const [branchId, setBranchId] = useState(null);
     const [supplierId, setSupplierId] = useState(null);
-    const [supplierSearch, setSupplierSearch] = useState('');
+    const [supplierResults, setSupplierResults] = useState([]);
+    const [supplierSearching, setSupplierSearching] = useState(false);
+    const supplierTimerRef = useRef(null);
     const [orderDate, setOrderDate] = useState(dayjs());
     const [notes, setNotes] = useState('');
     const [items, setItems] = useState([]);
@@ -65,6 +70,18 @@ const PurchaseCreatePage = () => {
 
     useEffect(() => {
         dispatch(fetchBranches());
+        
+        // Cleanup search timers on unmount
+        return () => {
+            if (searchTimerRef.current) {
+                clearTimeout(searchTimerRef.current);
+                searchTimerRef.current = null;
+            }
+            if (supplierTimerRef.current) {
+                clearTimeout(supplierTimerRef.current);
+                supplierTimerRef.current = null;
+            }
+        };
     }, [dispatch]);
 
     // Search products
@@ -119,6 +136,33 @@ const PurchaseCreatePage = () => {
         setSearchText('');
         setSearchResults([]);
     };
+
+    // Search suppliers
+    const handleSupplierSearch = useCallback(async (value) => {
+        if (supplierTimerRef.current) clearTimeout(supplierTimerRef.current);
+        if (!value || value.length < 2) {
+            setSupplierResults([]);
+            return;
+        }
+        supplierTimerRef.current = setTimeout(async () => {
+            setSupplierSearching(true);
+            try {
+                const res = await supplierApi.getSuppliers({ search: value, limit: 10 });
+                const suppliers = res?.data || [];
+                setSupplierResults(
+                    suppliers.map((s) => ({
+                        value: s.id,
+                        label: `${s.code || ''} - ${s.name}`.replace(/^- /, ''),
+                        supplier: s,
+                    }))
+                );
+            } catch (err) {
+                console.error('Supplier search error:', err);
+            } finally {
+                setSupplierSearching(false);
+            }
+        }, 300);
+    }, []);
 
     const handleQuantityChange = (key, value) => {
         setItems((prev) =>
@@ -317,7 +361,8 @@ const PurchaseCreatePage = () => {
                     className={styles.search}
                     value={searchText || undefined}
                     onSearch={handleSearch}
-                    onChange={handleProductSelect}
+                    onSelect={handleProductSelect}
+                    onChange={(val) => { if (!val) setSearchText(''); }}
                     options={searchResults}
                     loading={searching}
                     filterOption={false}
@@ -392,11 +437,13 @@ const PurchaseCreatePage = () => {
                             placeholder="Tìm nhà cung cấp"
                             style={{ width: '100%' }}
                             value={supplierId}
-                            onSearch={setSupplierSearch}
+                            onSearch={handleSupplierSearch}
                             onChange={setSupplierId}
+                            options={supplierResults}
+                            loading={supplierSearching}
                             filterOption={false}
                             suffixIcon={<PlusOutlined />}
-                            notFoundContent={supplierSearch ? 'Không tìm thấy' : null}
+                            notFoundContent={supplierSearching ? 'Đang tìm...' : null}
                         />
                     </div>
 

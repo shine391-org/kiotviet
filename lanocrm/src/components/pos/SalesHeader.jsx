@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Input, Button, Tooltip, Dropdown, Badge, AutoComplete } from 'antd';
 import {
     SearchOutlined,
@@ -52,6 +52,8 @@ const SalesHeader = ({
 }) => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const currentUser = useSelector((state) => state.auth?.user || state.user?.currentUser);
+    const userName = currentUser?.name || currentUser?.full_name || currentUser?.username || 'Guest';
     const [searchText, setSearchText] = useState('');
     const [showOrderModal, setShowOrderModal] = useState(false);
     const [showReturnModal, setShowReturnModal] = useState(false);
@@ -372,7 +374,7 @@ const SalesHeader = ({
                     {/* User & Menu */}
                     <Dropdown menu={{ items: burgerMenuItems }} trigger={['click']} placement="bottomRight">
                         <Button type="text" className={styles.userBtn}>
-                            <span className={styles.userName}>trung</span>
+                            <span className={styles.userName}>{userName}</span>
                             <MenuOutlined />
                         </Button>
                     </Dropdown>

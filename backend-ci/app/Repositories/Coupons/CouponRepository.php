@@ -40,6 +40,9 @@ class CouponRepository
         if (!empty($filters['status'])) {
             $builder->where('status', $filters['status']);
         }
+        if (!empty($filters['search'])) {
+            $builder->like('code', $filters['search']);
+        }
         return $builder->countAllResults();
     }
 

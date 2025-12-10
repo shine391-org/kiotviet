@@ -176,18 +176,37 @@ class CashTransactionService
      * Get current balance (real-time).
      *
      * @agent-use: GET /api/cash/balance
-     * @agent-pattern: Real-time balance calculation
+     * @agent-pattern: Real-time balance calculation with opening balance
      */
     public function getBalance(?int $branchId = null, array $filters = []): array
     {
-        // Calculate real-time balance with filters (date range)
-        $balance = $this->repo->calculateBalance($branchId, $filters);
+        // Calculate opening balance (all transactions BEFORE date_from)
+        $openingBalance = 0.0;
+        if (!empty($filters['date_from'])) {
+            $openingBalance = $this->repo->calculateBalance($branchId, [
+                'date_to' => date('Y-m-d', strtotime($filters['date_from'] . ' -1 day')),
+            ]);
+        } else {
+            // If no date_from, opening balance is 0 (start of all time)
+            $openingBalance = 0.0;
+        }
+
+        // Calculate period balance (within the date range)
+        $periodBalance = $this->repo->calculateBalance($branchId, $filters);
+        
+        // Closing balance = opening + period
+        $closingBalance = $openingBalance + $periodBalance;
 
         return [
             'success' => true,
             'data' => [
                 'branch_id' => $branchId,
-                'balance' => $balance,
+                'opening_balance' => $openingBalance,
+                'period_balance' => $periodBalance,
+                'balance' => $closingBalance, // Backward compatibility
+                'closing_balance' => $closingBalance,
+                'date_from' => $filters['date_from'] ?? null,
+                'date_to' => $filters['date_to'] ?? null,
                 'as_of' => date('Y-m-d H:i:s'),
                 'currency' => 'VND',
             ],

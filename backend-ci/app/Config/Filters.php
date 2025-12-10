@@ -113,6 +113,10 @@ class Filters extends BaseFilters
             ],
             'except' => [
                 'api/webhooks/ecommerce/*',
+                'api/debug/*', // TEMP - DELETE AFTER DEBUGGING
+                'api/health',
+                'api/auth/login',
+                'api/users/login',
             ],
         ],
     ];

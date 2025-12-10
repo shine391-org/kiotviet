@@ -34,15 +34,29 @@ class SalesChannelRepository
         return $this->model->where('code', $code)->first();
     }
 
-    public function create(array $data): array
+    public function create(array $data): ?array
     {
-        $this->model->insert($data);
-        return $this->findById((int) $this->model->getInsertID());
+        $result = $this->model->insert($data);
+        if ($result === false) {
+            return null;
+        }
+        $insertId = (int) $this->model->getInsertID();
+        if ($insertId <= 0) {
+            return null;
+        }
+        return $this->findById($insertId);
     }
 
-    public function update(int $id, array $data): array
+    public function update(int $id, array $data): ?array
     {
-        $this->model->update($id, $data);
+        $existing = $this->findById($id);
+        if ($existing === null) {
+            return null;
+        }
+        $result = $this->model->update($id, $data);
+        if ($result === false) {
+            return null;
+        }
         return $this->findById($id);
     }
 

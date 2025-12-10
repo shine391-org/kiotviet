@@ -225,6 +225,8 @@ class InvoiceRepository
     private function applyFilters(array $filters)
     {
         $b = $this->invoices->builder();
+        // Join customers table for search filter on customer name/phone
+        $b->join('customers', 'customers.id = invoices.customer_id', 'left');
         $b->where('invoices.deleted_at', null);
         $this->applyFiltersToBuilder($b, $filters);
         return $b;

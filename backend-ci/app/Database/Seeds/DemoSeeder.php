@@ -6,6 +6,7 @@ use CodeIgniter\Database\Seeder;
 use App\Database\Seeds\DevSeeder;
 use App\Database\Seeds\MasterDataSeeder;
 use CodeIgniter\I18n\Time;
+use Config\Database;
 
 /**
  * DemoSeeder - Unified seeder for Development and Staging environments.
@@ -16,6 +17,40 @@ use CodeIgniter\I18n\Time;
  */
 class DemoSeeder extends Seeder
 {
+    /**
+     * Override call to pass current db connection to child seeders.
+     * This ensures -g tests flag works for all child seeders.
+     */
+    public function call(string $class): void
+    {
+        $class = trim($class);
+        if ($class === '') {
+            return;
+        }
+
+        // Load class if needed
+        if (! str_contains($class, '\\')) {
+            $path = APPPATH . 'Database/Seeds/' . str_replace('.php', '', $class) . '.php';
+            if (is_file($path)) {
+                require_once $path;
+                $class = APP_NAMESPACE . '\Database\Seeds\\' . $class;
+            }
+        }
+
+        if (! class_exists($class)) {
+            echo "⚠️  Seeder not found: {$class}\n";
+            return;
+        }
+
+        // Pass current db connection to child seeder
+        $seeder = new $class(new Database(), $this->db);
+        $seeder->run();
+
+        if (is_cli()) {
+            \CodeIgniter\CLI\CLI::write("Seeded: {$class}", 'green');
+        }
+    }
+
     public function run(): void
     {
         if (ENVIRONMENT === 'production') {
@@ -49,6 +84,7 @@ class DemoSeeder extends Seeder
             'TaxTemplatesDemoSeeder', // VAT templates
             'SuppliersDemoSeeder',  // Suppliers
             'CustomersDemoSeeder',  // Customers
+            'CustomerDetailDemoSeeder', // Customer addresses and debt transactions
             'HRDemoSeeder',         // Employees (needs Users)
             
             // Product Data

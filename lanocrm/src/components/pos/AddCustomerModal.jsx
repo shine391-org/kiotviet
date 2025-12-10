@@ -27,13 +27,14 @@ const AddCustomerModal = ({
     const [wards, setWards] = useState([]);
     const [customerGroups, setCustomerGroups] = useState([]);
     const [locationsLoading, setLocationsLoading] = useState(false);
-    const [formData, setFormData] = useState({
+    const initialFormData = {
         // General Info
         customerCode: '',
         customerName: '',
         phone: '',
         address: '',
-        region: [],
+        province: '',
+        district: '',
         ward: '',
         group: '',
         birthday: null,
@@ -55,7 +56,15 @@ const AddCustomerModal = ({
         invoicePhone: '',
         bankName: '',
         bankAccount: '',
-    });
+    };
+    const [formData, setFormData] = useState(initialFormData);
+
+    const resetForm = useCallback(() => {
+        setFormData(initialFormData);
+        setDistricts([]);
+        setWards([]);
+        setActiveTab('general');
+    }, []);
 
     const handleChange = (field, value) => {
         setFormData((prev) => ({ ...prev, [field]: value }));
@@ -135,10 +144,11 @@ const AddCustomerModal = ({
 
     useEffect(() => {
         if (open) {
+            resetForm();
             fetchProvinces();
             fetchCustomerGroups();
         }
-    }, [open, fetchProvinces, fetchCustomerGroups]);
+    }, [open, fetchProvinces, fetchCustomerGroups, resetForm]);
 
     const handleProvinceChange = (provinceId) => {
         handleChange('province', provinceId);
@@ -169,8 +179,8 @@ const AddCustomerModal = ({
                 phone: formData.phone || undefined,
                 email: formData.email || undefined,
                 address: formData.address || undefined,
-                province: formData.region?.[0] || undefined,
-                district: formData.region?.[1] || undefined,
+                province: formData.province || undefined,
+                district: formData.district || undefined,
                 ward: formData.ward || undefined,
                 gender: formData.gender?.toUpperCase() || undefined,
                 birthday: formData.birthday?.format('YYYY-MM-DD') || undefined,

@@ -263,12 +263,14 @@ const cashSlice = createSlice({
 
       // Balance
       .addCase(fetchCashBalance.fulfilled, (state, action) => {
-        const balance = action.payload?.data?.balance ?? null;
-        state.balance = balance;
-        if (balance !== null) {
-          state.summary.openingBalance = balance;
-          state.summary.closingBalance =
-            balance + (state.summary.net || 0);
+        const data = action.payload?.data || {};
+        const openingBalance = data.opening_balance ?? null;
+        const closingBalance = data.closing_balance ?? data.balance ?? null;
+
+        state.balance = closingBalance;
+        if (openingBalance !== null) {
+          state.summary.openingBalance = openingBalance;
+          state.summary.closingBalance = closingBalance;
         }
       })
 

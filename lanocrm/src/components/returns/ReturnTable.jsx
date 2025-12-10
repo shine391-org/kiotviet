@@ -156,13 +156,18 @@ const ReturnTable = ({
         expandable={{
           expandedRowKeys: selectedRowKey ? [selectedRowKey] : [],
           expandIcon: () => null, // Hide default expand icon
-          expandedRowRender: (record) => (
-            <Spin spinning={detailLoading}>
-              <ReturnDetailPanel
-                data={detailData?.id === record.id ? detailData : record}
-              />
-            </Spin>
-          ),
+          expandedRowRender: (record) => {
+            // Use same key resolution as getRowKey for consistent identity
+            const recordKey = record?.id || record?.return_code;
+            const detailKey = detailData?.id || detailData?.return_code;
+            return (
+              <Spin spinning={detailLoading}>
+                <ReturnDetailPanel
+                  data={detailKey === recordKey ? detailData : record}
+                />
+              </Spin>
+            );
+          },
         }}
         onRow={(record) => ({
           onClick: () => {

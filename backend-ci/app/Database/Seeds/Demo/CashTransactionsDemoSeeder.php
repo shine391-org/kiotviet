@@ -48,13 +48,14 @@ class CashTransactionsDemoSeeder extends Seeder
         $rows = [];
         foreach ($orders as $order) {
             $total = round((float) ($order['total'] ?? 0), 2);
-            $receiptAmount = $total;
-            if ($receiptAmount <= 0) {
+            // Phiếu thu phải dựa trên paid_amount (số đã thanh toán), không phải total
+            $paidAmount = round((float) ($order['paid_amount'] ?? 0), 2);
+            if ($paidAmount <= 0) {
                 continue;
             }
             $rows[] = $this->makeRow([
                 'type' => 'RECEIPT',
-                'amount' => $receiptAmount,
+                'amount' => $paidAmount,
                 'category' => 'sales',
                 'payment_method' => $this->normalizeMethod($order['payment_method'] ?? 'CASH'),
                 'account_name' => 'Quỹ demo',
@@ -71,7 +72,7 @@ class CashTransactionsDemoSeeder extends Seeder
                 'payer_phone' => $customers[$order['customer_id']]['phone'] ?? null,
                 'payer_address' => $customers[$order['customer_id']]['address'] ?? null,
                 'transaction_date' => $order['order_date'] ?? date('Y-m-d'),
-                'note' => $receiptAmount + 0.01 >= $total ? 'Thanh toán đủ' : 'Thanh toán một phần',
+                'note' => $paidAmount + 0.01 >= $total ? 'Thanh toán đủ' : 'Thanh toán một phần',
                 'created_at' => $now,
                 'updated_at' => $now,
             ]);

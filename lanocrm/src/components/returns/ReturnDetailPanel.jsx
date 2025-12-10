@@ -68,12 +68,7 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
             dataIndex: 'receipt_code',
             width: 140,
             render: (code, record) => (
-                <Typography.Link
-                    onClick={() => {
-                        setSelectedReceipt(record);
-                        setEditReceiptOpen(true);
-                    }}
-                >
+                <Typography.Link onClick={() => handleReceiptClick(record)}>
                     {code || '—'}
                 </Typography.Link>
             )
@@ -138,8 +133,8 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                 </Space>
                 <Space>
                     <Typography.Text>{goodsTotal.toLocaleString('vi-VN')}</Typography.Text>
-                    <Typography.Text>{goodsTotal.toLocaleString('vi-VN')}</Typography.Text>
-                    <Typography.Text>{goodsTotal.toLocaleString('vi-VN')}</Typography.Text>
+                    <Typography.Text>{discountTotal.toLocaleString('vi-VN')}</Typography.Text>
+                    <Typography.Text>{needRefund.toLocaleString('vi-VN')}</Typography.Text>
                     <Tag color={statusMeta.color}>{statusMeta.label || data.status || '—'}</Tag>
                 </Space>
             </div>
@@ -237,7 +232,7 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                             columns={itemColumns}
                             size="small"
                             pagination={false}
-                            rowKey={(r) => r.id || r.sku || Math.random()}
+                            rowKey={(r, index) => r.id || r.sku || `item-${index}`}
                             className={styles.itemsTable}
                         />
                     </div>
@@ -299,7 +294,7 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                         columns={paymentColumns}
                         size="small"
                         pagination={false}
-                        rowKey={(r) => r.id || r.receipt_code || Math.random()}
+                        rowKey={(r, index) => r.id || r.receipt_code || `payment-${index}`}
                     />
                 </div>
             )}

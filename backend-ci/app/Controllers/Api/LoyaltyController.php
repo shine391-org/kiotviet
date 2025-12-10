@@ -27,6 +27,12 @@ class LoyaltyController extends BaseController
     public function calculateEarn()
     {
         $input = $this->safeInput();
+
+        $validation = $this->validateLoyaltyInput($input, ['customer_id', 'order_total']);
+        if ($validation !== null) {
+            return $validation;
+        }
+
         return $this->wrap(fn () => $this->respond(
             $this->service->calculateEarnPoints((int) $input['customer_id'], (float) $input['order_total'])
         ));
@@ -36,6 +42,12 @@ class LoyaltyController extends BaseController
     public function redeemPreview()
     {
         $input = $this->safeInput();
+
+        $validation = $this->validateLoyaltyInput($input, ['customer_id', 'points']);
+        if ($validation !== null) {
+            return $validation;
+        }
+
         return $this->wrap(fn () => $this->respond(
             $this->service->redeemPreview((int) $input['customer_id'], (float) $input['points'])
         ));
@@ -45,6 +57,12 @@ class LoyaltyController extends BaseController
     public function earn()
     {
         $input = $this->safeInput();
+
+        $validation = $this->validateLoyaltyInput($input, ['customer_id', 'order_total']);
+        if ($validation !== null) {
+            return $validation;
+        }
+
         return $this->wrap(fn () => $this->respond(
             $this->service->earnPoints((int) $input['customer_id'], (float) $input['order_total'], $input['order_id'] ?? null)
         ));
@@ -54,6 +72,12 @@ class LoyaltyController extends BaseController
     public function redeem()
     {
         $input = $this->safeInput();
+
+        $validation = $this->validateLoyaltyInput($input, ['customer_id', 'points']);
+        if ($validation !== null) {
+            return $validation;
+        }
+
         return $this->wrap(fn () => $this->respond(
             $this->service->redeemPoints((int) $input['customer_id'], (float) $input['points'], $input['order_id'] ?? null)
         ));
@@ -86,5 +110,46 @@ class LoyaltyController extends BaseController
         } catch (\Throwable $e) {}
         $raw = $this->request->getRawInput();
         return is_array($raw) ? $raw : [];
+    }
+
+    /**
+     * Validate loyalty input fields.
+     * @return \CodeIgniter\HTTP\ResponseInterface|null Returns error response or null if valid
+     */
+    private function validateLoyaltyInput(array $input, array $requiredFields): ?\CodeIgniter\HTTP\ResponseInterface
+    {
+        $errors = [];
+
+        if (in_array('customer_id', $requiredFields, true)) {
+            if (!isset($input['customer_id'])) {
+                $errors['customer_id'] = 'customer_id is required';
+            } elseif (!is_numeric($input['customer_id']) || (int) $input['customer_id'] <= 0) {
+                $errors['customer_id'] = 'customer_id must be a positive integer';
+            }
+        }
+
+        if (in_array('order_total', $requiredFields, true)) {
+            if (!isset($input['order_total'])) {
+                $errors['order_total'] = 'order_total is required';
+            } elseif (!is_numeric($input['order_total'])) {
+                $errors['order_total'] = 'order_total must be numeric';
+            } elseif ((float) $input['order_total'] < 0) {
+                $errors['order_total'] = 'order_total must be non-negative';
+            }
+        }
+
+        if (in_array('points', $requiredFields, true)) {
+            if (!isset($input['points'])) {
+                $errors['points'] = 'points is required';
+            } elseif (!is_numeric($input['points']) || (float) $input['points'] <= 0) {
+                $errors['points'] = 'points must be a positive number';
+            }
+        }
+
+        if (!empty($errors)) {
+            return $this->failValidationErrors($errors);
+        }
+
+        return null;
     }
 }

@@ -62,7 +62,21 @@ class CouponSeeder extends Seeder
             ],
         ];
 
-        $this->db->table('coupons')->insertBatch($coupons);
-        echo "CouponSeeder: Seeded " . count($coupons) . " coupons.\n";
+        // Get existing coupon codes to avoid duplicates
+        $existingCodes = $this->db->table('coupons')
+            ->whereIn('code', array_column($coupons, 'code'))
+            ->get()
+            ->getResultArray();
+        $existingCodesMap = array_column($existingCodes, 'code');
+
+        // Filter out coupons that already exist
+        $newCoupons = array_filter($coupons, fn($c) => !in_array($c['code'], $existingCodesMap));
+
+        if (!empty($newCoupons)) {
+            $this->db->table('coupons')->insertBatch(array_values($newCoupons));
+            echo "CouponSeeder: Seeded " . count($newCoupons) . " new coupons.\n";
+        } else {
+            echo "CouponSeeder: All coupons already exist, skipped.\n";
+        }
     }
 }

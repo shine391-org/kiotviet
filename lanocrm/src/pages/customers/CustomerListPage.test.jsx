@@ -153,7 +153,7 @@ describe('CustomerListPage', () => {
       );
     });
 
-    it('shows loading state while fetching', async () => {
+    it('renders table while fetching', async () => {
       renderPage();
       
       // Should show table (loading or with data)

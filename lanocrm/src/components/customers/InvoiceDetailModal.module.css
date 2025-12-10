@@ -1,0 +1,40 @@
+.content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.header a {
+    color: #1890ff;
+    cursor: pointer;
+}
+
+.info {
+    margin-top: 8px;
+}
+
+.itemsTable {
+    margin-top: 12px;
+}
+
+.totals {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.totalRow {
+    display: flex;
+    justify-content: space-between;
+    width: 280px;
+}

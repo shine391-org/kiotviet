@@ -24,6 +24,7 @@ class JwtAuthFilter implements FilterInterface
         'api/health',
         'api/webhooks',
         'api/webhooks/ecommerce',
+        'api/debug', // TEMP - DELETE AFTER DEBUGGING
     ];
 
     public function before(RequestInterface $request, $arguments = null)

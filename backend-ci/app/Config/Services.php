@@ -111,6 +111,7 @@ use App\Services\CRM\QuotationNumberGenerator;
 use App\Services\Contracts\ContractService;
 use App\Services\Appointments\AppointmentService;
 use App\Services\PurchaseOrders\PurchaseOrderService;
+use App\Services\PurchaseOrders\PurchaseOrderExportService;
 use App\Services\Inventory\GoodsReceiptService;
 use App\Services\Accounting\LandedCostService;
 use App\Services\Manufacturing\SubcontractingService;
@@ -2257,6 +2258,12 @@ class Services extends BaseService
             static::purchaseOrderRepository(false),
             static::purchaseOrderValidator(false)
         );
+    }
+
+    public static function purchaseOrderExportService(bool $getShared = true): PurchaseOrderExportService
+    {
+        if ($getShared && ENVIRONMENT !== 'testing') { return static::getSharedInstance('purchaseOrderExportService'); }
+        return new PurchaseOrderExportService();
     }
 
     public static function goodsReceiptService(bool $getShared = true): GoodsReceiptService

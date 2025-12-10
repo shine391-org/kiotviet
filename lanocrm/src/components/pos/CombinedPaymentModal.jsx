@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Input, Button, Select } from 'antd';
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import styles from './CombinedPaymentModal.module.css';
@@ -19,6 +19,14 @@ const CombinedPaymentModal = ({
 }) => {
     const [inputAmount, setInputAmount] = useState(0);
     const [payments, setPayments] = useState([]);
+
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!open) {
+            setInputAmount(0);
+            setPayments([]);
+        }
+    }, [open]);
 
     // Calculate total paid and remaining
     const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);

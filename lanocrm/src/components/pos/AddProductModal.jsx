@@ -39,14 +39,19 @@ const AddProductModal = ({ open, onClose, onSave, initialName = '' }) => {
         }
     }, []);
 
-    // Reset form when modal opens with new initialName
+    // Reset form completely when modal opens
     useEffect(() => {
         if (open) {
-            setFormData(prev => ({
-                ...prev,
-                productName: initialName,
+            setFormData({
                 productCode: '',
-            }));
+                productName: initialName,
+                category: null,
+                costPrice: '',
+                salePrice: '',
+                stock: '',
+                unit: 'Cái',
+                images: [],
+            });
             fetchCategories();
         }
     }, [open, initialName, fetchCategories]);

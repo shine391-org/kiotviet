@@ -8,14 +8,16 @@ import styles from '../../pages/suppliers/SupplierListPage.module.css';
 
 const { RangePicker } = DatePicker;
 
+const EMPTY_ARRAY = [];
+
 /**
  * PurchaseReturnFilters - Filter sidebar for purchase returns (Trả hàng nhập)
  * @agent-layer: frontend-component
  * @agent-pattern: filter-sidebar
  */
 const PurchaseReturnFilters = ({ filters, onChange }) => {
-    const branchItems = useSelector((state) => state.branch?.items || []);
-    const users = useSelector((state) => state.user?.items || []);
+    const branchItems = useSelector((state) => state.branch?.items ?? EMPTY_ARRAY);
+    const users = useSelector((state) => state.user?.items ?? EMPTY_ARRAY);
 
     const handleStatusChange = (status, checked) => {
         const current = filters.status || [];
@@ -103,7 +105,7 @@ const PurchaseReturnFilters = ({ filters, onChange }) => {
                 >
                     <Space direction="vertical">
                         <Radio value="month">Tháng này</Radio>
-                        <Radio value="year">Năm trước (âm lịch)</Radio>
+                        <Radio value="year">Năm trước</Radio>
                         <Radio value="custom">
                             <Space>
                                 Tùy chỉnh

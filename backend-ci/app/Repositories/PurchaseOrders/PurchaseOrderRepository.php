@@ -4,6 +4,7 @@ namespace App\Repositories\PurchaseOrders;
 
 use App\Models\PurchaseOrderModel;
 use App\Models\PurchaseOrderItemModel;
+use CodeIgniter\Database\BaseBuilder;
 use CodeIgniter\Database\BaseConnection;
 
 /**
@@ -35,7 +36,55 @@ class PurchaseOrderRepository
             ->join('users u', 'u.id = po.created_by', 'left')
             ->join('branches b', 'b.id = po.branch_id', 'left');
 
-        // Apply filters
+        $this->applyListFilters($builder, $filters);
+
+        // Count total before pagination
+        $countBuilder = clone $builder;
+        $total = $countBuilder->countAllResults(false);
+
+        // Calculate totals - reset select to avoid mixed columns
+        $totalsBuilder = $this->db->table('purchase_orders po')
+            ->select('SUM(po.total) as total_amount, SUM(po.paid_amount) as total_paid')
+            ->join('partners p', 'p.id = po.partner_id', 'left')
+            ->join('users u', 'u.id = po.created_by', 'left')
+            ->join('branches b', 'b.id = po.branch_id', 'left');
+        
+        $this->applyListFilters($totalsBuilder, $filters);
+        $totalsResult = $totalsBuilder->get()->getRowArray();
+
+        // Pagination
+        $page = max(1, (int)($filters['page'] ?? 1));
+        $limit = max(1, min(100, (int)($filters['limit'] ?? 15)));
+        $offset = ($page - 1) * $limit;
+
+        $builder->orderBy('po.created_at', 'DESC')
+            ->limit($limit, $offset);
+
+        $rows = $builder->get()->getResultArray();
+        $data = array_map(fn($row) => $this->hydrateListRow($row), $rows);
+
+        return [
+            'data' => $data,
+            'pagination' => [
+                'page' => $page,
+                'limit' => $limit,
+                'total' => (int)$total,
+                'total_pages' => (int)ceil($total / $limit),
+            ],
+            'totals' => [
+                'total_amount' => (float)($totalsResult['total_amount'] ?? 0),
+                'total_paid' => (float)($totalsResult['total_paid'] ?? 0),
+                'total_debt' => (float)(($totalsResult['total_amount'] ?? 0) - ($totalsResult['total_paid'] ?? 0)),
+            ],
+        ];
+    }
+
+    /**
+     * Apply list filters to a query builder.
+     * Used by both main query and totals query to ensure consistency.
+     */
+    private function applyListFilters(BaseBuilder $builder, array $filters): void
+    {
         if (!empty($filters['branch_id'])) {
             $builder->where('po.branch_id', $filters['branch_id']);
         }
@@ -69,73 +118,6 @@ class PurchaseOrderRepository
                 ->orLike('p.code', $search)
                 ->groupEnd();
         }
-
-        // Count total before pagination
-        $countBuilder = clone $builder;
-        $total = $countBuilder->countAllResults(false);
-
-        // Calculate totals - reset select to avoid mixed columns
-        $totalsBuilder = $this->db->table('purchase_orders po')
-            ->select('SUM(po.total) as total_amount, SUM(po.paid_amount) as total_paid')
-            ->join('partners p', 'p.id = po.partner_id', 'left')
-            ->join('users u', 'u.id = po.created_by', 'left')
-            ->join('branches b', 'b.id = po.branch_id', 'left');
-        
-        // Re-apply filters for totals
-        if (!empty($filters['branch_id'])) {
-            $totalsBuilder->where('po.branch_id', $filters['branch_id']);
-        }
-        if (!empty($filters['status'])) {
-            if (is_array($filters['status'])) {
-                $totalsBuilder->whereIn('po.status', $filters['status']);
-            } else {
-                $totalsBuilder->where('po.status', $filters['status']);
-            }
-        }
-        if (!empty($filters['supplier_id'])) {
-            $totalsBuilder->where('po.partner_id', $filters['supplier_id']);
-        }
-        if (!empty($filters['date_from'])) {
-            $totalsBuilder->where('po.order_date >=', $filters['date_from'] . ' 00:00:00');
-        }
-        if (!empty($filters['date_to'])) {
-            $totalsBuilder->where('po.order_date <=', $filters['date_to'] . ' 23:59:59');
-        }
-        if (!empty($filters['search'])) {
-            $search = $filters['search'];
-            $totalsBuilder->groupStart()
-                ->like('po.order_number', $search)
-                ->orLike('p.name', $search)
-                ->orLike('p.code', $search)
-                ->groupEnd();
-        }
-        $totalsResult = $totalsBuilder->get()->getRowArray();
-
-        // Pagination
-        $page = max(1, (int)($filters['page'] ?? 1));
-        $limit = max(1, min(100, (int)($filters['limit'] ?? 15)));
-        $offset = ($page - 1) * $limit;
-
-        $builder->orderBy('po.created_at', 'DESC')
-            ->limit($limit, $offset);
-
-        $rows = $builder->get()->getResultArray();
-        $data = array_map(fn($row) => $this->hydrateListRow($row), $rows);
-
-        return [
-            'data' => $data,
-            'pagination' => [
-                'page' => $page,
-                'limit' => $limit,
-                'total' => (int)$total,
-                'total_pages' => (int)ceil($total / $limit),
-            ],
-            'totals' => [
-                'total_amount' => (float)($totalsResult['total_amount'] ?? 0),
-                'total_paid' => (float)($totalsResult['total_paid'] ?? 0),
-                'total_debt' => (float)(($totalsResult['total_amount'] ?? 0) - ($totalsResult['total_paid'] ?? 0)),
-            ],
-        ];
     }
 
     private function hydrateListRow(array $row): array

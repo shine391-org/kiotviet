@@ -53,7 +53,19 @@ class SalesChannelService
             throw new RuntimeException('Sales channel not found');
         }
 
+        // Check for duplicate code if code is being updated
+        if (!empty($data['code'])) {
+            $existing = $this->repo->findByCode($data['code']);
+            // Normalize types for comparison (DB returns string, $id is int)
+            if ($existing && (int)$existing['id'] !== (int)$id) {
+                throw new RuntimeException('Sales channel code already in use');
+            }
+        }
+
         $channel = $this->repo->update($id, $this->sanitize($data));
+        if (!$channel) {
+            throw new RuntimeException('Sales channel not found after update');
+        }
         return ['success' => true, 'data' => $this->transform($channel), 'message' => 'Sales channel updated'];
     }
 

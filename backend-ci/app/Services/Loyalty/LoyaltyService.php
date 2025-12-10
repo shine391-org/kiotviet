@@ -48,6 +48,10 @@ class LoyaltyService
     public function calculateEarnPoints(int $customerId, float $orderTotal): array
     {
         $customer = $this->repo->getCustomerInfo($customerId);
+        if (!$customer) {
+            throw new RuntimeException('Customer not found');
+        }
+
         $program = $this->repo->getActiveProgram($customer['customer_group_id'] ?? null);
 
         if (!$program) {
@@ -113,6 +117,10 @@ class LoyaltyService
     public function earnPoints(int $customerId, float $orderTotal, ?int $orderId = null): array
     {
         $customer = $this->repo->getCustomerInfo($customerId);
+        if (!$customer) {
+            throw new RuntimeException('Customer not found');
+        }
+
         $program = $this->repo->getActiveProgram($customer['customer_group_id'] ?? null);
 
         if (!$program) {
@@ -120,18 +128,20 @@ class LoyaltyService
         }
 
         $wallet = $this->repo->getOrCreateWallet($customerId);
+        $walletId = (int) $wallet['id'];
+        $preEarnBalance = (float) $wallet['points_balance'];
         $earnRate = (float) $program['earn_rate'];
         $pointsToEarn = floor($orderTotal * $earnRate);
 
         if ($pointsToEarn > 0) {
-            $this->repo->addPoints((int) $wallet['id'], $pointsToEarn, $orderId, 'Earned from order');
+            $this->repo->addPoints($walletId, $pointsToEarn, $orderId, 'Earned from order');
         }
 
         return [
             'success' => true,
             'data' => [
                 'points_earned' => $pointsToEarn,
-                'new_balance' => (float) $wallet['points_balance'] + $pointsToEarn,
+                'new_balance' => $preEarnBalance + $pointsToEarn,
             ],
         ];
     }
@@ -154,10 +164,12 @@ class LoyaltyService
             throw new InvalidArgumentException('No active loyalty program');
         }
 
+        $walletId = (int) $wallet['id'];
+        $preRedeemBalance = (float) $wallet['points_balance'];
         $redeemRate = (float) $program['redeem_rate'];
         $discountAmount = $pointsToRedeem * $redeemRate;
 
-        $success = $this->repo->redeemPoints((int) $wallet['id'], $pointsToRedeem, $orderId, 'Redeemed for order');
+        $success = $this->repo->redeemPoints($walletId, $pointsToRedeem, $orderId, 'Redeemed for order');
         if (!$success) {
             throw new RuntimeException('Failed to redeem points');
         }
@@ -167,7 +179,7 @@ class LoyaltyService
             'data' => [
                 'points_redeemed' => $pointsToRedeem,
                 'discount_amount' => round($discountAmount, 0),
-                'new_balance' => (float) $wallet['points_balance'] - $pointsToRedeem,
+                'new_balance' => $preRedeemBalance - $pointsToRedeem,
             ],
         ];
     }

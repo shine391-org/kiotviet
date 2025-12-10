@@ -12,6 +12,14 @@ const invoiceApi = {
     return response.data;
   },
 
+  getInvoiceByCode: async (code) => {
+    const response = await axiosInstance.get('/invoices', { params: { search: code, limit: 1 } });
+    const invoice = response.data?.data?.[0] || null;
+    if (!invoice) return { success: false, message: 'Không tìm thấy hóa đơn' };
+    // Return search result directly - already contains all needed data
+    return { success: true, data: invoice };
+  },
+
   createInvoice: async (data) => {
     const response = await axiosInstance.post('/invoices', data);
     return response.data;

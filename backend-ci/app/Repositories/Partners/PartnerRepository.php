@@ -79,6 +79,7 @@ class PartnerRepository
 
     /**
      * Create partner row.
+     * Uses transaction to prevent race condition when auto-generating code.
      */
     public function create(array $data): array
     {
@@ -87,6 +88,9 @@ class PartnerRepository
             'updated_at' => $this->now(),
         ];
 
+        // Wrap code generation and insert in single transaction to prevent race condition
+        $this->db->transStart();
+
         // Auto-generate code if not provided
         if (empty($payload['code'])) {
             $payload['code'] = $this->generateCode($payload['type'] ?? 'supplier');
@@ -94,6 +98,13 @@ class PartnerRepository
 
         $this->model->insert($payload);
         $payload['id'] = (int) $this->model->getInsertID();
+
+        $this->db->transComplete();
+
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException('Failed to create partner');
+        }
+
         return $this->hydrate($payload);
     }
 
@@ -124,15 +135,14 @@ class PartnerRepository
     }
 
     /**
-     * Generate auto-incrementing code with transaction to prevent race condition.
+     * Generate auto-incrementing code.
+     * Must be called within a transaction (from create()) to prevent race condition.
      */
     private function generateCode(string $type = 'supplier'): string
     {
         $prefix = $type === 'supplier' ? 'NCC' : 'VND';
         
-        // Use transaction to prevent race condition
-        $this->db->transStart();
-        
+        // FOR UPDATE lock ensures no concurrent reads until transaction commits
         $lastRow = $this->db->query(
             "SELECT code FROM partners WHERE type = ? ORDER BY id DESC LIMIT 1 FOR UPDATE",
             [$type]
@@ -143,11 +153,7 @@ class PartnerRepository
             $lastNum = (int) $matches[1];
         }
 
-        $newCode = $prefix . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
-        
-        $this->db->transComplete();
-        
-        return $newCode;
+        return $prefix . str_pad($lastNum + 1, 6, '0', STR_PAD_LEFT);
     }
 
     /**

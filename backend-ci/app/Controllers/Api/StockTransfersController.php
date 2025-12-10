@@ -89,8 +89,8 @@ class StockTransfersController extends BaseController
         } catch (\RuntimeException $e) {
             return $this->failNotFound($e->getMessage());
         } catch (\Throwable $e) {
-            log_message('error', $e->getMessage());
-            return $this->failServerError($e->getMessage());
+            log_message('error', '[StockTransfersController] Unexpected error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('Internal server error');
         }
     }
 }

@@ -24,6 +24,8 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     // Backward-compat alias for legacy FE calling /users/login
     $routes->post('users/login', 'Api\\AuthController::login');
     $routes->get('health', 'Api\\HealthController::index');
+    // TEMP DEBUG - DELETE AFTER DEBUGGING
+    $routes->get('debug/debt-check', 'Api\\DebugController::debtCheck');
     $routes->get('dashboard/kpi-today', 'Api\\DashboardController::kpiToday');
     $routes->get('dashboard/revenue-chart', 'Api\\DashboardController::revenueChart');
     $routes->get('dashboard/top-products', 'Api\\DashboardController::topProducts');
@@ -285,6 +287,11 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('customers/(:num)', 'Api\\CustomersController::show/$1');
     $routes->put('customers/(:num)', 'Api\\CustomersController::update/$1');
     $routes->delete('customers/(:num)', 'Api\\CustomersController::delete/$1');
+    
+    // Customer Debt Transaction by code (for viewing/editing receipts)
+    $routes->get('customer-debts/(:any)', 'Api\\CustomerDebtController::show/$1');
+    $routes->put('customer-debts/(:any)', 'Api\\CustomerDebtController::update/$1');
+    $routes->delete('customer-debts/(:any)', 'Api\\CustomerDebtController::delete/$1');
     
     // Customer Groups
     $routes->get('customer-groups', 'Api\\CustomerGroupsController::index');

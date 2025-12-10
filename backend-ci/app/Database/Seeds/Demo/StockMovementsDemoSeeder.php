@@ -18,42 +18,21 @@ class StockMovementsDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        echo "   → Demo inventory stock...\n";
+        // Production guard - prevent destructive operations in production
+        if (ENVIRONMENT === 'production') {
+            echo "      ⚠️  StockMovementsDemoSeeder skipped in production environment\n";
+            return;
+        }
+
+        echo "   → Demo inventory stock (product_stock_by_branch only)...\n";
         
         $now = Time::now();
         
-        // Seed inventory_stock for all products/variants
-        if ($this->db->tableExists('inventory_stock')) {
-            $products = $this->db->table('products')->select('id')->get()->getResultArray();
-            $warehouses = $this->db->table('warehouses')->select('id, branch_id')->get()->getResultArray();
-            
-            if (!empty($products) && !empty($warehouses)) {
-                $stockData = [];
-                foreach ($products as $product) {
-                    foreach ($warehouses as $wh) {
-                        $stockData[] = [
-                            'product_id' => $product['id'],
-                            'variant_id' => null,
-                            'warehouse_id' => $wh['id'],
-                            'branch_id' => $wh['branch_id'],
-                            'quantity_on_hand' => rand(10, 100),
-                            'quantity_reserved' => rand(0, 5),
-                            'minimum_stock' => 5,
-                            'last_movement_at' => $now,
-                            'created_at' => $now,
-                            'updated_at' => $now,
-                        ];
-                    }
-                }
-                
-                // Clear old data and insert
-                $this->db->table('inventory_stock')->truncate();
-                $this->db->table('inventory_stock')->insertBatch($stockData);
-                echo "      ✓ Created " . count($stockData) . " inventory stock records\n";
-            }
-        }
+        // Note: inventory_stock đã được seed bởi InventoryStockSeeder (gọi sau ProductVariantsDemoSeeder)
+        // Không truncate inventory_stock ở đây để tránh mất dữ liệu đã seed
+        // Seeder này chỉ bổ sung product_stock_by_branch cho FE branch-level stock display
         
-        // Seed product_stock_by_branch
+        // Seed product_stock_by_branch (aggregated view for FE)
         if ($this->db->tableExists('product_stock_by_branch')) {
             $products = $this->db->table('products')->select('id')->get()->getResultArray();
             $branches = $this->db->table('branches')->select('id')->where('status', 'active')->get()->getResultArray();
@@ -78,6 +57,7 @@ class StockMovementsDemoSeeder extends Seeder
                     }
                 }
                 
+                // Clear and insert fresh data for product_stock_by_branch
                 $this->db->table('product_stock_by_branch')->truncate();
                 $this->db->table('product_stock_by_branch')->insertBatch($branchStock);
                 echo "      ✓ Created " . count($branchStock) . " branch stock records\n";

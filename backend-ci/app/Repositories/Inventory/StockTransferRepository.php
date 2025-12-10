@@ -109,10 +109,17 @@ class StockTransferRepository
 
     public function updateItems(int $transferId, array $items): void
     {
-        $this->itemModel->where('transfer_id', $transferId)->delete();
-        foreach ($items as $item) {
-            $item['transfer_id'] = $transferId;
-            $this->itemModel->insert($item);
+        $this->db->transBegin();
+        try {
+            $this->itemModel->where('transfer_id', $transferId)->delete();
+            foreach ($items as $item) {
+                $item['transfer_id'] = $transferId;
+                $this->itemModel->insert($item);
+            }
+            $this->db->transCommit();
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            throw $e;
         }
     }
 
@@ -135,18 +142,25 @@ class StockTransferRepository
         $year = date('y');
         $prefix = "TRF{$year}";
         
-        $last = $this->model->builder()
-            ->like('code', $prefix, 'after')
-            ->orderBy('id', 'DESC')
-            ->limit(1)
-            ->get()
-            ->getRowArray();
+        $this->db->transBegin();
+        try {
+            // Use FOR UPDATE lock to prevent race conditions
+            $sql = "SELECT code FROM {$this->model->table} WHERE code LIKE ? ORDER BY id DESC LIMIT 1 FOR UPDATE";
+            $last = $this->db->query($sql, [$prefix . '%'])->getRowArray();
 
-        if ($last) {
-            $num = (int) substr($last['code'], strlen($prefix));
-            return $prefix . str_pad($num + 1, 4, '0', STR_PAD_LEFT);
+            if ($last) {
+                $num = (int) substr($last['code'], strlen($prefix));
+                $code = $prefix . str_pad($num + 1, 4, '0', STR_PAD_LEFT);
+            } else {
+                $code = $prefix . '0001';
+            }
+            
+            $this->db->transCommit();
+            return $code;
+        } catch (\Throwable $e) {
+            $this->db->transRollback();
+            throw $e;
         }
-        return $prefix . '0001';
     }
 
     public function getSummary(array $filters = []): array
@@ -208,7 +222,14 @@ class StockTransferRepository
     protected function applySort($builder, array $filters): void
     {
         $sort = $filters['sort'] ?? 'transfer_date,desc';
-        [$field, $dir] = explode(',', $sort) + ['transfer_date', 'desc'];
+        $parts = explode(',', $sort, 2);
+        $field = $parts[0] ?? 'transfer_date';
+        $dir = strtolower($parts[1] ?? 'desc');
+        
+        // Validate direction
+        if (!in_array($dir, ['asc', 'desc'], true)) {
+            $dir = 'desc';
+        }
         
         // Map camelCase to snake_case
         $fieldMap = [
@@ -221,7 +242,7 @@ class StockTransferRepository
         $field = $fieldMap[$field] ?? $field;
         
         $allowedFields = ['code', 'transfer_date', 'receive_date', 'created_at', 'status', 'quantity_sent', 'value_sent'];
-        if (in_array($field, $allowedFields)) {
+        if (in_array($field, $allowedFields, true)) {
             $builder->orderBy("stock_transfers.{$field}", $dir);
         } else {
             $builder->orderBy('stock_transfers.transfer_date', 'DESC');

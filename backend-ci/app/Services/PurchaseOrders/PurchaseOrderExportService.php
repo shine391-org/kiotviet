@@ -155,7 +155,10 @@ class PurchaseOrderExportService
     {
         $dir = WRITEPATH . 'exports';
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+            // Attempt to create directory; handle TOCTOU race condition
+            if (!@mkdir($dir, 0755, true) && !is_dir($dir)) {
+                throw new \RuntimeException("Failed to create exports directory: {$dir}");
+            }
         }
         $filepath = $dir . "/{$prefix}_" . date('Ymd_His') . '.xlsx';
         (new Xlsx($spreadsheet))->save($filepath);

@@ -77,8 +77,11 @@ const CartPanel = ({
                                         value={item.quantity}
                                         className={styles.quantityInputSimple}
                                         onChange={(e) => {
-                                            const val = parseInt(e.target.value, 10) || 0;
-                                            const delta = val - item.quantity;
+                                            // Parse existing quantity (may be string or number)
+                                            const parsedOld = parseInt(item.quantity, 10);
+                                            const oldQty = Number.isFinite(parsedOld) ? parsedOld : 0;
+                                            const newVal = parseInt(e.target.value, 10) || 0;
+                                            const delta = newVal - oldQty;
                                             onUpdateQuantity(item.id, delta);
                                         }}
                                     />
@@ -122,7 +125,7 @@ const CartPanel = ({
                 <Input
                     placeholder="Ghi chú đơn hàng"
                     value={orderNote}
-                    onChange={(e) => onNoteChange(e.target.value)}
+                    onChange={(e) => onNoteChange?.(e.target.value)}
                     variant="borderless"
                     className={styles.noteInput}
                 />
