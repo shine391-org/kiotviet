@@ -8,7 +8,7 @@ const todayIso = () => format(new Date(), 'yyyy-MM-dd');
 const defaultFilters = {
   search: '',
   branch_id: null,
-  invoice_types: ['pickup', 'delivery'],
+  invoice_types: ['standard', 'pickup', 'delivery'],
   invoice_status: ['processing', 'completed'],
   e_invoice_status: null,
   delivery_status: null,

@@ -1,6 +1,7 @@
 import { format, startOfMonth } from 'date-fns';
 
 export const INVOICE_TYPES = [
+  { value: 'standard', label: 'Tiêu chuẩn' },
   { value: 'pickup', label: 'Không giao hàng' },
   { value: 'delivery', label: 'Giao hàng' },
 ];
