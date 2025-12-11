@@ -7,16 +7,24 @@ import {
   Space,
   Tooltip,
   Spin,
+  Popover,
+  Checkbox,
+  Row,
+  Col,
+  Dropdown,
 } from 'antd';
 import {
   SearchOutlined,
+  FilterOutlined,
   PlusOutlined,
   DownloadOutlined,
-  ReloadOutlined,
+  MenuOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined,
   MergeCellsOutlined,
 } from '@ant-design/icons';
 import OrderFilters from '../../components/orders/OrderFilters';
-import OrderTable from '../../components/orders/OrderTable';
+import OrderTable, { columnCatalog } from '../../components/orders/OrderTable';
 import OrderSummary from '../../components/orders/OrderSummary';
 import OrderDetail from '../../components/orders/OrderDetail';
 import {
@@ -26,6 +34,7 @@ import {
   setOrderPage,
 } from '../../store/slices/orderSlice';
 import { fetchBranches } from '../../store/slices/branchSlice';
+import MergeOrdersModal from '../../components/orders/MergeOrdersModal';
 import styles from './OrderListPage.module.css';
 
 const OrderListPage = () => {
@@ -36,15 +45,140 @@ const OrderListPage = () => {
 
   const [searchText, setSearchText] = useState(filters.search || '');
   const [visibleColumns, setVisibleColumns] = useState(() => [
+    'tracking_code',
     'order_number',
+    'invoice_code',
     'order_date',
-    'customer_name',
-    'total',
-    'paid_amount',
-    'debt_amount',
-    'status',
+    'created_at',
+    'updated_at',
+    'delivery_date',
+    'waiting_days',
   ]);
   const [selectedId, setSelectedId] = useState(null);
+  const [columnPopoverOpen, setColumnPopoverOpen] = useState(false);
+  const [mergeModalOpen, setMergeModalOpen] = useState(false);
+  const [mergeLoading, setMergeLoading] = useState(false);
+  const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
+  const [productSearch, setProductSearch] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+
+  // Compute mergeable orders: same customer or phone within 7 days
+  const mergeableOrders = useMemo(() => {
+    if (!mergeModalOpen || !items || items.length === 0) return [];
+
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get orders within last 7 days
+    const recentOrders = items.filter((order) => {
+      const orderDate = new Date(order.order_date || order.created_at);
+      return orderDate >= sevenDaysAgo;
+    });
+
+    // Group by customer_id or customer_phone
+    const groups = {};
+    recentOrders.forEach((order) => {
+      const key = order.customer_id
+        ? `customer_${order.customer_id}`
+        : order.customer_phone
+          ? `phone_${order.customer_phone}`
+          : null;
+
+      if (key) {
+        if (!groups[key]) {
+          groups[key] = [];
+        }
+        groups[key].push(order);
+      }
+    });
+
+    // Return orders that have at least 2 orders with same customer/phone (mergeable)
+    const mergeable = [];
+    Object.values(groups).forEach((groupOrders) => {
+      if (groupOrders.length >= 2) {
+        mergeable.push(...groupOrders);
+      }
+    });
+
+    return mergeable;
+  }, [mergeModalOpen, items]);
+
+  // Search filter popover content
+  const searchPopoverContent = (
+    <div style={{ width: 320, padding: 8 }}>
+      <div style={{ marginBottom: 12 }}>
+        <Input
+          placeholder="Theo mã phiếu đặt"
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          style={{ marginBottom: 8 }}
+        />
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <Input
+          placeholder="Theo mã, tên hàng"
+          value={productSearch}
+          onChange={(e) => setProductSearch(e.target.value)}
+          style={{ marginBottom: 8 }}
+        />
+      </div>
+      <div style={{ marginBottom: 12 }}>
+        <Input
+          placeholder="Theo mã, tên, số điện thoại khách hàng"
+          value={customerSearch}
+          onChange={(e) => setCustomerSearch(e.target.value)}
+        />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+        <Button onClick={() => setSearchPopoverOpen(false)}>Mở rộng</Button>
+        <Button type="primary" onClick={() => {
+          dispatch(setOrderFilters({
+            search: searchText,
+            product_search: productSearch,
+            customer_search: customerSearch
+          }));
+          setSearchPopoverOpen(false);
+        }}>Tìm kiếm</Button>
+      </div>
+    </div>
+  );
+
+  // Column popover content for burger menu
+  const columnKeys = Object.keys(columnCatalog);
+  const halfLength = Math.ceil(columnKeys.length / 2);
+  const leftColumnKeys = columnKeys.slice(0, halfLength);
+  const rightColumnKeys = columnKeys.slice(halfLength);
+
+  const columnPopoverContent = (
+    <div style={{ width: 420, padding: 8 }}>
+      <Row gutter={16}>
+        <Col span={12}>
+          {leftColumnKeys.map((key) => (
+            <div key={key} style={{ marginBottom: 8 }}>
+              <Checkbox
+                checked={visibleColumns.includes(key)}
+                onChange={(e) => handleToggleColumn(key, e.target.checked)}
+              >
+                {columnCatalog[key].title}
+              </Checkbox>
+            </div>
+          ))}
+        </Col>
+        <Col span={12}>
+          {rightColumnKeys.map((key) => (
+            <div key={key} style={{ marginBottom: 8 }}>
+              <Checkbox
+                checked={visibleColumns.includes(key)}
+                onChange={(e) => handleToggleColumn(key, e.target.checked)}
+              >
+                {columnCatalog[key].title}
+              </Checkbox>
+            </div>
+          ))}
+        </Col>
+      </Row>
+    </div>
+  );
 
   useEffect(() => {
     dispatch(fetchBranches());
@@ -115,27 +249,48 @@ const OrderListPage = () => {
   return (
     <div className={styles.page}>
       <div className={styles.headerRow}>
-        <Input
-          allowClear
-          prefix={<SearchOutlined />}
-          placeholder="Theo mã phiếu đặt"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className={styles.search}
-        />
+        <Popover
+          content={searchPopoverContent}
+          trigger="click"
+          open={searchPopoverOpen}
+          onOpenChange={setSearchPopoverOpen}
+          placement="bottomLeft"
+        >
+          <Input
+            allowClear
+            prefix={<SearchOutlined />}
+            suffix={<FilterOutlined style={{ cursor: 'pointer', color: '#1890ff' }} />}
+            placeholder="Theo mã phiếu đặt"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            className={styles.search}
+            onClick={() => setSearchPopoverOpen(true)}
+          />
+        </Popover>
         <Space>
-          <Tooltip title="Đặt hàng">
-            <Button type="primary" icon={<PlusOutlined />}>Đặt hàng</Button>
-          </Tooltip>
-          <Tooltip title="Gộp đơn (coming soon)">
-            <Button icon={<MergeCellsOutlined />} disabled>Gộp đơn</Button>
-          </Tooltip>
+          <Button type="primary" icon={<PlusOutlined />}>Đặt hàng</Button>
+          <Button icon={<MergeCellsOutlined />} onClick={() => setMergeModalOpen(true)}>Gộp đơn</Button>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất file</Button>
-          <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchOrders(filters))} />
+          <Popover
+            content={columnPopoverContent}
+            trigger="click"
+            open={columnPopoverOpen}
+            onOpenChange={setColumnPopoverOpen}
+            placement="bottomRight"
+            title="Chọn cột hiển thị"
+          >
+            <Tooltip title="Tùy chọn hiển thị">
+              <Button icon={<MenuOutlined />} />
+            </Tooltip>
+          </Popover>
+          <Tooltip title="Cài đặt">
+            <Button icon={<SettingOutlined />} />
+          </Tooltip>
+          <Tooltip title="Trợ giúp">
+            <Button icon={<QuestionCircleOutlined />} />
+          </Tooltip>
         </Space>
       </div>
-
-      <OrderSummary totals={totals} />
 
       <div className={styles.layout}>
         <OrderFilters
@@ -156,7 +311,6 @@ const OrderListPage = () => {
             onSelectRow={onSelectRow}
             selectedRowKey={selectedId}
             visibleColumns={visibleColumns}
-            onToggleColumn={handleToggleColumn}
           />
           <div className={styles.pageTotals}>
             <span>Tổng trang: </span>
@@ -166,12 +320,16 @@ const OrderListPage = () => {
               <span>Còn nợ: {pageTotals.debt.toLocaleString('vi-VN')} đ</span>
             </Space>
           </div>
-
-          <Spin spinning={detailLoading}>
-            <OrderDetail order={selectedOrder} />
-          </Spin>
         </div>
       </div>
+
+      {/* Merge Orders Modal */}
+      <MergeOrdersModal
+        open={mergeModalOpen}
+        onClose={() => setMergeModalOpen(false)}
+        orders={mergeableOrders}
+        loading={mergeLoading || loading}
+      />
     </div>
   );
 };

@@ -90,6 +90,7 @@ class OrdersDemoSeeder extends Seeder
                 'payment_status' => $this->resolvePaymentStatus($paidAmount, $total),
                 'cancellation_reason' => $config['cancellation_reason'] ?? null,
                 'rounding_adjustment' => 0,
+                'created_at' => $orderDate->setTime(rand(8, 17), rand(0, 59))->format('Y-m-d H:i:s'),
             ] + $timeline;
         }
 

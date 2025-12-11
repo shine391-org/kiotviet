@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
-import { Table, Tag, Dropdown, Checkbox, Button, Space, Typography } from 'antd';
+import React, { useMemo, useState } from 'react';
+import { Table, Tag, Dropdown, Checkbox, Button, Space, Typography, Spin } from 'antd';
 import { SettingOutlined, StarOutlined } from '@ant-design/icons';
 import {
   INVOICE_STATUSES,
   DELIVERY_STATUSES,
   formatDateTime,
 } from '../../constants/invoices';
+import InvoiceDetail from './InvoiceDetail';
 
 const statusMap = INVOICE_STATUSES.reduce((acc, s) => ({ ...acc, [s.value]: s }), {});
 const deliveryStatusMap = DELIVERY_STATUSES.reduce((acc, s) => ({ ...acc, [s.value]: s }), {});
@@ -69,6 +70,8 @@ export const invoiceColumnCatalog = {
   },
 };
 
+const getRowKey = (record) => record.id || record.invoice_code;
+
 const InvoiceTable = ({
   data,
   loading,
@@ -78,7 +81,11 @@ const InvoiceTable = ({
   selectedRowKey,
   visibleColumns,
   onToggleColumn,
+  detailData,
+  detailLoading,
 }) => {
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+
   const columns = useMemo(
     () =>
       visibleColumns
@@ -107,6 +114,19 @@ const InvoiceTable = ({
   const start = total === 0 ? 0 : (currentPage - 1) * pageSize + 1;
   const end = Math.min(total, currentPage * pageSize);
 
+  const handleRowClick = (record) => {
+    const key = getRowKey(record);
+    if (expandedRowKeys.includes(key)) {
+      // Collapse if already expanded
+      setExpandedRowKeys([]);
+      onSelectRow && onSelectRow(null);
+    } else {
+      // Expand this row
+      setExpandedRowKeys([key]);
+      onSelectRow && onSelectRow(record);
+    }
+  };
+
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
@@ -120,17 +140,34 @@ const InvoiceTable = ({
       </div>
 
       <Table
-        rowKey={(record) => record.id || record.invoice_code}
+        rowKey={getRowKey}
         dataSource={data}
         columns={columns}
         loading={loading}
-        rowSelection={{
-          selectedRowKeys: selectedRowKey ? [selectedRowKey] : [],
-          onChange: (_keys, rows) => {
-            if (rows && rows[0]) {
-              onSelectRow && onSelectRow(rows[0]);
+        expandable={{
+          expandedRowKeys,
+          onExpand: (expanded, record) => {
+            const key = getRowKey(record);
+            if (expanded) {
+              setExpandedRowKeys([key]);
+              onSelectRow && onSelectRow(record);
+            } else {
+              setExpandedRowKeys([]);
+              onSelectRow && onSelectRow(null);
             }
           },
+          expandedRowRender: (record) => {
+            const recordKey = getRowKey(record);
+            const detailKey = detailData ? getRowKey(detailData) : null;
+            // Use detailData if it matches this record, otherwise use record data
+            const invoiceToShow = detailKey === recordKey ? detailData : record;
+            return (
+              <Spin spinning={detailLoading}>
+                <InvoiceDetail invoice={invoiceToShow} />
+              </Spin>
+            );
+          },
+          expandRowByClick: true,
         }}
         pagination={{
           current: currentPage,
@@ -141,9 +178,9 @@ const InvoiceTable = ({
           onChange: (page, size) => onPageChange({ page, limit: size }),
         }}
         onRow={(record) => ({
-          onClick: () => onSelectRow && onSelectRow(record),
+          onClick: () => handleRowClick(record),
+          className: getRowKey(record) === selectedRowKey ? 'table-row-selected' : '',
         })}
-        rowClassName={(record) => (record.id === selectedRowKey ? 'table-row-selected' : '')}
         scroll={{ x: 1800 }}
         size="middle"
       />

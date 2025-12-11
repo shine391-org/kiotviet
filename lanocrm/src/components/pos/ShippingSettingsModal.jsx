@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Modal, Tabs, Switch, Radio, Select, Input, Button, Dropdown } from 'antd';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, Tabs, Switch, Radio, Select, Input, Button, Dropdown, App } from 'antd';
 import { MoreOutlined, LinkOutlined } from '@ant-design/icons';
 import styles from './ShippingSettingsModal.module.css';
+
+const STORAGE_KEY = 'pos_shipping_settings';
 
 // Shipping carriers data with placeholder logos
 const SHIPPING_CARRIERS = [
@@ -30,25 +32,48 @@ const DEFAULT_SERVICES = [
     { value: 'same_day', label: 'Giao trong ngày' },
 ];
 
+const DEFAULT_SETTINGS = {
+    fastReconciliation: false,
+    declareValue: false,
+    payer: 'sender',
+    deliveryNote: 'no_view',
+    courierNote: '',
+    weight: 500,
+    weightUnit: 'gram',
+    dimensions: { l: 10, w: 10, h: 10 },
+    dimensionUnit: 'cm',
+    defaultService: null,
+};
+
 const ShippingSettingsModal = ({ open, onClose, onSave }) => {
+    const { message } = App.useApp();
     const [activeTab, setActiveTab] = useState('general');
 
     // General settings state
-    const [settings, setSettings] = useState({
-        fastReconciliation: false,
-        declareValue: false,
-        payer: 'sender',
-        deliveryNote: 'no_view',
-        courierNote: '',
-        weight: 500,
-        weightUnit: 'gram',
-        dimensions: { l: 10, w: 10, h: 10 },
-        dimensionUnit: 'cm',
-        defaultService: null,
-    });
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
     // Carrier states
     const [carriers, setCarriers] = useState(SHIPPING_CARRIERS);
+
+    // Load settings from localStorage when modal opens
+    useEffect(() => {
+        if (open) {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.settings) {
+                        setSettings({ ...DEFAULT_SETTINGS, ...parsed.settings });
+                    }
+                    if (parsed.carriers) {
+                        setCarriers(parsed.carriers);
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load shipping settings:', error);
+            }
+        }
+    }, [open]);
 
     const handleSettingChange = (key, value) => {
         setSettings(prev => ({ ...prev, [key]: value }));
@@ -69,10 +94,17 @@ const ShippingSettingsModal = ({ open, onClose, onSave }) => {
         );
     };
 
-    const handleSave = () => {
-        onSave?.({ settings, carriers });
-        onClose?.();
-    };
+    const handleSave = useCallback(() => {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ settings, carriers }));
+            message.success('Đã lưu thiết lập vận chuyển');
+            onSave?.({ settings, carriers });
+            onClose?.();
+        } catch (error) {
+            console.error('Failed to save shipping settings:', error);
+            message.error('Lỗi khi lưu thiết lập');
+        }
+    }, [settings, carriers, onSave, onClose, message]);
 
     const getCarrierMenuItems = (carrier) => [
         {

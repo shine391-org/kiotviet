@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tabs, Table, Tag, Space, Typography, Button, Select, DatePicker, Input, Tooltip } from 'antd';
-import { EditOutlined, StarOutlined, CopyOutlined, PrinterOutlined, ExportOutlined } from '@ant-design/icons';
+import { EditOutlined, StarOutlined, CopyOutlined, PrinterOutlined, ExportOutlined, CloseOutlined } from '@ant-design/icons';
 import { Link } from 'react-router-dom';
 import dayjs from 'dayjs';
 import { RETURN_STATUSES, formatReturnDate } from '../../constants/returns';
@@ -184,7 +184,10 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                             </div>
                             <div className={styles.infoRow}>
                                 <span className={styles.label}>Mã phiếu chi:</span>
-                                <Typography.Link onClick={() => handleReceiptClick(data.payment_receipt)}>
+                                <Typography.Link
+                                    onClick={() => data.payment_receipt && handleReceiptClick(data.payment_receipt)}
+                                    style={{ cursor: data.payment_receipt ? 'pointer' : 'default' }}
+                                >
                                     {data.payment_receipt?.receipt_code || '—'}
                                 </Typography.Link>
                             </div>
@@ -274,7 +277,7 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                     {/* Action Buttons */}
                     <div className={styles.actions}>
                         <Space>
-                            <Button icon={<CopyOutlined />}>Hủy</Button>
+                            <Button icon={<CloseOutlined />}>Hủy</Button>
                             <Button icon={<CopyOutlined />}>Sao chép</Button>
                             <Button icon={<ExportOutlined />}>Xuất file</Button>
                         </Space>

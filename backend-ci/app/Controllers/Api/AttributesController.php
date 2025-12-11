@@ -50,6 +50,9 @@ class AttributesController extends BaseController
     /** Products by option. @agent-use: GET /api/attributes/options/{optionId}/products @agent-pattern: Delegate read */
     public function productsByOption($optionId) { return $this->wrap(fn () => $this->respond($this->service->productsByOption((int) $optionId))); }
 
+    /** Products by attribute. @agent-use: GET /api/attributes/{id}/products @agent-pattern: Delegate read */
+    public function productsByAttribute($attributeId) { return $this->wrap(fn () => $this->respond($this->service->productsByAttribute((int) $attributeId))); }
+
     /** Shared try/catch wrapper. @agent-use: Controller error handling @agent-pattern: Wrap service calls */
     private function wrap(callable $action)
     {

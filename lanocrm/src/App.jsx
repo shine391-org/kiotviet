@@ -91,9 +91,7 @@ function App() {
             path="/pos"
             element={
               isAuthenticated ? (
-                <AntdApp>
-                  <SalesPage />
-                </AntdApp>
+                <SalesPage />
               ) : (
                 <Navigate to="/login" replace />
               )
@@ -118,17 +116,87 @@ function App() {
                     <Route path="/orders/invoices" element={<InvoiceListPage />} />
                     <Route path="/orders/returns" element={<ReturnListPage />} />
                     <Route path="/returns" element={<ReturnListPage />} />
-                    <Route path="/inventory/transfer" element={<TransferListPage />} />
-                    <Route path="/inventory/transfer/create" element={<TransferCreatePage />} />
-                    <Route path="/inventory/audit" element={<StockAuditListPage />} />
-                    <Route path="/inventory/audit/create" element={<StockAuditCreatePage />} />
-                    <Route path="/inventory/dispose" element={<DisposalListPage />} />
-                    <Route path="/inventory/purchase" element={<PurchaseListPage />} />
-                    <Route path="/inventory/purchase/new" element={<PurchaseCreatePage />} />
-                    <Route path="/inventory/purchase-returns" element={<PurchaseReturnListPage />} />
-                    <Route path="/inventory/purchase-returns/new" element={<PurchaseReturnCreatePage />} />
+                    <Route
+                      path="/inventory/transfer"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.view">
+                          <TransferListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/transfer/create"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.create">
+                          <TransferCreatePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/audit"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.view">
+                          <StockAuditListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/audit/create"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.create">
+                          <StockAuditCreatePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/dispose"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.view">
+                          <DisposalListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/purchase"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.view">
+                          <PurchaseListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/purchase/new"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.create">
+                          <PurchaseCreatePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/purchase-returns"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.view">
+                          <PurchaseReturnListPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/inventory/purchase-returns/new"
+                      element={
+                        <ProtectedRoute requiredPermission="inventory.create">
+                          <PurchaseReturnCreatePage />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
-                    <Route path="/reports/daily" element={<DailyReportPage />} />
+                    <Route
+                      path="/reports/daily"
+                      element={
+                        <ProtectedRoute requiredPermission="reports.view">
+                          <DailyReportPage />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route path="/reports/*" element={<PlaceholderPage title="Báo cáo" />} />
                     <Route path="/online" element={<PlaceholderPage title="Bán online" />} />
 

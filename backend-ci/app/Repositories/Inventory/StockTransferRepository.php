@@ -123,6 +123,14 @@ class StockTransferRepository
         }
     }
 
+    /**
+     * Update a single transfer item by ID.
+     */
+    public function updateItem(int $itemId, array $data): bool
+    {
+        return $this->itemModel->update($itemId, $data);
+    }
+
     public function delete(int $id): bool
     {
         $this->db->transBegin();

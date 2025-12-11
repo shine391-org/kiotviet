@@ -69,11 +69,14 @@ class StockAuditsController extends BaseController
             return $action();
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
-        } catch (\RuntimeException $e) {
+        } catch (\App\Exceptions\NotFoundException $e) {
             return $this->failNotFound($e->getMessage());
-        } catch (\Throwable $e) {
+        } catch (\RuntimeException $e) {
             log_message('error', 'StockAuditsController error: ' . $e->getMessage());
-            return $this->failServerError($e->getMessage());
+            return $this->failServerError('A server error occurred');
+        } catch (\Throwable $e) {
+            log_message('error', 'StockAuditsController error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('An internal server error occurred');
         }
     }
 }

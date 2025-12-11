@@ -32,8 +32,12 @@ class DeliveryPartnerRepository
         $page = $filters['page'] ?? 1;
         $offset = ($page - 1) * $limit;
 
-        $sortBy = $filters['sort_by'] ?? 'created_at';
-        $sortOrder = strtoupper($filters['sort_order'] ?? 'DESC');
+        // Whitelist sortBy columns to prevent SQL injection
+        $allowedSortColumns = ['id', 'name', 'created_at', 'updated_at', 'status', 'code', 'phone', 'email'];
+        $sortBy = in_array($filters['sort_by'] ?? '', $allowedSortColumns, true)
+            ? $filters['sort_by']
+            : 'created_at';
+        $sortOrder = strtoupper($filters['sort_order'] ?? 'DESC') === 'ASC' ? 'ASC' : 'DESC';
 
         return $builder
             ->orderBy($sortBy, $sortOrder)
@@ -155,7 +159,7 @@ class DeliveryPartnerRepository
     {
         $result = $this->db->table('partners')
             ->select('MAX(CAST(SUBSTRING(code, 3) AS UNSIGNED)) as max_num')
-            ->where('type', 'delivery')
+            ->where('type', 'vendor')
             ->like('code', 'DT', 'after')
             ->get()
             ->getRowArray();

@@ -77,10 +77,14 @@ class ShippingController extends BaseController
             return $action();
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
-        } catch (\RuntimeException $e) {
+        } catch (\App\Exceptions\NotFoundException $e) {
             return $this->failNotFound($e->getMessage());
+        } catch (\RuntimeException $e) {
+            log_message('error', 'ShippingController error: ' . $e->getMessage());
+            return $this->failServerError('A server error occurred');
         } catch (\Throwable $e) {
-            return $this->failServerError($e->getMessage());
+            log_message('error', 'ShippingController error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('An internal server error occurred');
         }
     }
 

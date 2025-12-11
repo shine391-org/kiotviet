@@ -83,7 +83,12 @@ class StockDisposalService
      */
     public function create(array $input): array
     {
-        $branchId = (int) ($input['branch_id'] ?? getCurrentBranchId() ?? 1);
+        $branchId = $input['branch_id'] ?? getCurrentBranchId();
+        if (!$branchId || !is_numeric($branchId)) {
+            throw new \InvalidArgumentException('branch_id is required and must be a valid integer');
+        }
+        $branchId = (int) $branchId;
+        
         $code = $this->repo->nextCode();
 
         $data = [

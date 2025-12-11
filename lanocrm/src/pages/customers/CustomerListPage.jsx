@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
 import {
   App,
   Alert,
@@ -83,20 +84,24 @@ const currency = (value) => {
 const CustomerListPage = () => {
   const dispatch = useDispatch();
   const { modal, message } = App.useApp();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const { items, pagination, loading, current, currentLoading, error, saving } = useSelector(
     (state) => state.customer
   );
 
+  // Read code from URL query params
+  const codeFromUrl = searchParams.get('code') || '';
+
   const [filters, setFilters] = useState({
     page: 1,
     limit: 15,
-    search: '',
+    search: codeFromUrl, // Initialize from URL
     customer_type: null,
     gender: null,
     status: null,
   });
-  const [searchText, setSearchText] = useState('');
+  const [searchText, setSearchText] = useState(codeFromUrl); // Initialize from URL
   const [selectedId, setSelectedId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);

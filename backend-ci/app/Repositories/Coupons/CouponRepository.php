@@ -56,13 +56,13 @@ class CouponRepository
         return $this->model->where('code', $code)->first();
     }
 
-    public function create(array $data): array
+    public function create(array $data): ?array
     {
         $this->model->insert($data);
         return $this->findById((int) $this->model->getInsertID());
     }
 
-    public function update(int $id, array $data): array
+    public function update(int $id, array $data): ?array
     {
         $this->model->update($id, $data);
         return $this->findById($id);

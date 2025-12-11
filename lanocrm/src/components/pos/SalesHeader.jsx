@@ -86,16 +86,19 @@ const SalesHeader = ({
             const response = await posApi.searchProducts({ search: text, limit: 5 });
             if (!response.success) return;
 
-            const filtered = response.data.map(p => ({
-                id: p.id,
-                code: p.code,
-                name: p.name,
-                variant: null,
-                price: parseFloat(p.selling_price) || 0,
-                stock: parseInt(p.stock_quantity) || 0,
-                ordered: parseInt(p.customer_ordered) || 0,
-                image: p.image || null,
-            }));
+            // Filter out products with zero stock for POS
+            const filtered = response.data
+                .filter(p => (parseInt(p.stock_quantity) || 0) > 0)
+                .map(p => ({
+                    id: p.id,
+                    code: p.code,
+                    name: p.name,
+                    variant: null,
+                    price: parseFloat(p.selling_price) || 0,
+                    stock: parseInt(p.stock_quantity) || 0,
+                    ordered: parseInt(p.customer_ordered) || 0,
+                    image: p.image || null,
+                }));
 
             // Build options for AutoComplete
             const options = filtered.map(product => ({

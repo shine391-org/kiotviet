@@ -41,7 +41,7 @@ const CartPanel = ({
                                     icon={<DeleteOutlined />}
                                     size="small"
                                     className={styles.deleteBtn}
-                                    onClick={() => onRemoveItem(item.id)}
+                                    onClick={() => onRemoveItem?.(item.id)}
                                 />
                             </Tooltip>
 
@@ -58,7 +58,7 @@ const CartPanel = ({
                                             type="text"
                                             icon={<MinusOutlined />}
                                             size="small"
-                                            onClick={() => onUpdateQuantity(item.id, -1)}
+                                            onClick={() => onUpdateQuantity?.(item.id, -1)}
                                         />
                                         <Input
                                             value={item.quantity}
@@ -69,7 +69,7 @@ const CartPanel = ({
                                             type="text"
                                             icon={<PlusOutlined />}
                                             size="small"
-                                            onClick={() => onUpdateQuantity(item.id, 1)}
+                                            onClick={() => onUpdateQuantity?.(item.id, 1)}
                                         />
                                     </div>
                                 ) : (
@@ -82,7 +82,7 @@ const CartPanel = ({
                                             const oldQty = Number.isFinite(parsedOld) ? parsedOld : 0;
                                             const newVal = parseInt(e.target.value, 10) || 0;
                                             const delta = newVal - oldQty;
-                                            onUpdateQuantity(item.id, delta);
+                                            onUpdateQuantity?.(item.id, delta);
                                         }}
                                     />
                                 )}
@@ -90,13 +90,13 @@ const CartPanel = ({
 
                             <div className={styles.priceSection}>
                                 <span className={styles.unitPrice}>
-                                    {item.unitPrice.toLocaleString('vi-VN')}
+                                    {(item.unitPrice ?? 0).toLocaleString('vi-VN')}
                                 </span>
                             </div>
 
                             <div className={styles.totalSection}>
                                 <span className={styles.itemTotal}>
-                                    {item.total.toLocaleString('vi-VN')}
+                                    {(item.total ?? 0).toLocaleString('vi-VN')}
                                 </span>
                             </div>
 
@@ -105,7 +105,7 @@ const CartPanel = ({
                                 icon={<PlusOutlined />}
                                 size="small"
                                 className={styles.addBtn}
-                                onClick={() => onUpdateQuantity(item.id, 1)}
+                                onClick={() => onUpdateQuantity?.(item.id, 1)}
                             />
 
                             <Button
@@ -137,24 +137,24 @@ const CartPanel = ({
                     <div className={styles.summaryRow}>
                         <span>Tổng tiền hàng</span>
                         <span className={styles.itemCount}>
-                            {totals.itemCount}
+                            {totals.itemCount ?? 0}
                         </span>
                         <span className={styles.summaryTotal}>
-                            {totals.subtotal.toLocaleString('vi-VN')}
+                            {(totals.subtotal ?? 0).toLocaleString('vi-VN')}
                         </span>
                     </div>
                     <div className={styles.summaryRow}>
                         <span>Giảm giá</span>
-                        <span>{totals.discount.toLocaleString('vi-VN')}</span>
+                        <span>{(totals.discount ?? 0).toLocaleString('vi-VN')}</span>
                     </div>
                     <div className={styles.summaryRow}>
                         <span>Thu khác</span>
-                        <span>{totals.otherFees.toLocaleString('vi-VN')}</span>
+                        <span>{(totals.otherFees ?? 0).toLocaleString('vi-VN')}</span>
                     </div>
                     <div className={`${styles.summaryRow} ${styles.customerPay}`}>
                         <span>Khách cần trả</span>
                         <span className={styles.payAmount}>
-                            {totals.customerPay.toLocaleString('vi-VN')}
+                            {(totals.customerPay ?? 0).toLocaleString('vi-VN')}
                         </span>
                     </div>
                 </div>

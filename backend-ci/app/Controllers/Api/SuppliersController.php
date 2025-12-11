@@ -96,8 +96,10 @@ class SuppliersController extends BaseController
             ->select('po.order_number as code, po.order_date as time, po.total, po.status, u.full_name as creator, b.name as branch')
             ->join('users u', 'u.id = po.created_by', 'left')
             ->join('branches b', 'b.id = po.branch_id', 'left')
+            ->groupStart()
             ->where('po.partner_id', $partnerId)
             ->orWhere('po.supplier_id', $partnerId)
+            ->groupEnd()
             ->orderBy('po.order_date', 'DESC')
             ->limit(50)
             ->get()
@@ -257,14 +259,6 @@ class SuppliersController extends BaseController
         $db->transBegin();
 
         try {
-            // Lock the partner row with SELECT FOR UPDATE to prevent race conditions
-            $lockedSupplier = $db->table('partners')
-                ->select('id, debt_amount')
-                ->where('id', $partnerId)
-                ->where('deleted_at IS NULL')
-                ->get()
-                ->getRowArray();
-
             // Acquire row lock by issuing a FOR UPDATE query
             // CodeIgniter 4 doesn't have built-in forUpdate, so we use raw query
             $sql = "SELECT id, debt_amount FROM partners WHERE id = ? AND deleted_at IS NULL FOR UPDATE";
@@ -598,10 +592,14 @@ class SuppliersController extends BaseController
             return $action();
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
-        } catch (\RuntimeException $e) {
+        } catch (\App\Exceptions\NotFoundException $e) {
             return $this->failNotFound($e->getMessage());
+        } catch (\RuntimeException $e) {
+            log_message('error', 'SuppliersController error: ' . $e->getMessage());
+            return $this->failServerError('A server error occurred');
         } catch (\Throwable $e) {
-            return $this->failServerError($e->getMessage());
+            log_message('error', 'SuppliersController error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('An internal server error occurred');
         }
     }
 

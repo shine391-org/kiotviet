@@ -122,6 +122,13 @@ class AttributeService
         return ['success' => true, 'data' => $this->repo->productsByOption($optionId)];
     }
 
+    /** Products by attribute. @agent-use: GET /api/attributes/{id}/products @agent-pattern: Read mapping */
+    public function productsByAttribute(int $attributeId): array
+    {
+        $this->requireAttribute($attributeId);
+        return ['success' => true, 'data' => $this->repo->productsByAttribute($attributeId)];
+    }
+
     private function requireAttribute(int $id): array
     {
         $attr = $this->repo->findById($id);

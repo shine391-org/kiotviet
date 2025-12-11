@@ -73,6 +73,23 @@ class ProductRepository
     /** Map product => category ids. @agent-use: Attach categories @agent-pattern: Batch fetch */
     public function categoryMap(array $productIds): array { if (empty($productIds)) { return []; } $rows = $this->links->select('product_id, category_id')->whereIn('product_id', $productIds)->findAll(); $map = []; foreach ($rows as $row) { $map[$row['product_id']][] = (int) $row['category_id']; } return $map; }
 
+    /** Map product => category names. @agent-use: Display category names @agent-pattern: Batch fetch with join */
+    public function categoryNamesMap(array $productIds): array
+    {
+        if (empty($productIds)) { return []; }
+        $rows = $this->db->table('product_category_links pcl')
+            ->select('pcl.product_id, pc.name')
+            ->join('product_categories pc', 'pc.id = pcl.category_id')
+            ->whereIn('pcl.product_id', $productIds)
+            ->get()
+            ->getResultArray();
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row['product_id']][] = $row['name'];
+        }
+        return $map;
+    }
+
     /** Variants grouped by product with images. @agent-use: Include variants @agent-pattern: Batch fetch */
     public function variantMap(array $productIds): array
     {

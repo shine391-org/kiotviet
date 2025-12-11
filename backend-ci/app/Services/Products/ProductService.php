@@ -30,9 +30,12 @@ class ProductService
         $products = $this->repo->findAll($validated); $total = $this->repo->count($validated);
         $ids = array_column($products, 'id');
         if ($ids) {
-            $categories = $this->repo->categoryMap($ids); $variants = $validated['include_variants'] ? $this->repo->variantMap($ids) : [];
+            $categories = $this->repo->categoryMap($ids); 
+            $categoryNames = $this->repo->categoryNamesMap($ids);
+            $variants = $validated['include_variants'] ? $this->repo->variantMap($ids) : [];
             foreach ($products as &$row) {
                 $row['category_ids'] = $categories[$row['id']] ?? [];
+                $row['category_names'] = $categoryNames[$row['id']] ?? [];
                 if ($validated['include_variants']) {
                     $row['variants'] = $variants[$row['id']] ?? [];
                     $row['variants_v2'] = $row['variants'];
@@ -49,7 +52,12 @@ class ProductService
     public function get(int $id, bool $withVariants = true, bool $withCategories = true, ?int $priceListId = null): array
     {
         $product = $this->requireProduct($id); $ids = [$product['id']];
-        if ($withCategories) { $map = $this->repo->categoryMap($ids); $product['category_ids'] = $map[$id] ?? []; }
+        if ($withCategories) { 
+            $map = $this->repo->categoryMap($ids); 
+            $namesMap = $this->repo->categoryNamesMap($ids);
+            $product['category_ids'] = $map[$id] ?? []; 
+            $product['category_names'] = $namesMap[$id] ?? [];
+        }
         if ($withVariants) { $variants = $this->repo->variantMap($ids); $product['variants'] = $variants[$id] ?? []; $product['variants_v2'] = $product['variants']; }
 
         if ($priceListId) {

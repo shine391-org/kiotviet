@@ -67,13 +67,16 @@ class StockDisposalsController extends BaseController
     {
         try {
             return $action();
+        } catch (\App\Exceptions\NotFoundException $e) {
+            return $this->failNotFound($e->getMessage());
         } catch (\InvalidArgumentException $e) {
             return $this->failValidationErrors($e->getMessage());
         } catch (\RuntimeException $e) {
-            return $this->failNotFound($e->getMessage());
-        } catch (\Throwable $e) {
             log_message('error', 'StockDisposalsController error: ' . $e->getMessage());
-            return $this->failServerError($e->getMessage());
+            return $this->failServerError('A server error occurred');
+        } catch (\Throwable $e) {
+            log_message('error', 'StockDisposalsController error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return $this->failServerError('An internal server error occurred');
         }
     }
 }

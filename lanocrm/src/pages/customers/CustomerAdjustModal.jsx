@@ -13,7 +13,7 @@ const CustomerAdjustModal = ({ open, customer, onCancel, onSuccess }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = React.useState(false);
 
-    const currentDebt = customer?.current_debt || customer?.debt_amount || 0;
+    const currentDebt = customer?.current_debt ?? customer?.debt_amount ?? 0;
 
     const handleSubmit = async () => {
         try {

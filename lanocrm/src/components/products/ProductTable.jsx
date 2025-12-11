@@ -251,7 +251,7 @@ const ProductTable = ({
                         fontWeight: 600,
                         color: '#262626'
                       }}>
-                        {formatCurrency(record.cost_price || 0)}
+                        {formatCurrency(record.purchase_price || record.cost_price || 0)}
                       </div>
                     </div>
                   </Col>
@@ -631,7 +631,7 @@ const ProductTable = ({
                           fontWeight: 600,
                           color: '#262626'
                         }}>
-                          {formatCurrency(selectedVariant.cost_price || 0)}
+                          {formatCurrency(selectedVariant.purchase_price || selectedVariant.cost_price || 0)}
                         </div>
                       </div>
                     </Col>

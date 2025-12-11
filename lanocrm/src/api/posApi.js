@@ -20,6 +20,7 @@ const posApi = {
         page: params.page || 1,
         is_active: 1,
         status: 'active',
+        stock_status: 'in_stock', // Only show products with stock > 0 for POS
       },
     });
     return response.data;
@@ -184,8 +185,16 @@ const posApi = {
    * @returns {Promise<Object>}
    */
   createProduct: async (data) => {
+    // Generate unique code using crypto.randomUUID or fallback to timestamp + random
+    const generateCode = () => {
+      if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+        return 'SP' + crypto.randomUUID().slice(0, 8).toUpperCase();
+      }
+      return `SP${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    };
+
     const response = await axiosInstance.post('/products', {
-      code: data.productCode || `SP${Date.now()}`,
+      code: data.productCode || generateCode(),
       name: data.productName || data.name,
       selling_price: data.salePrice || data.selling_price || 0,
       purchase_price: data.costPrice || data.purchase_price || 0,

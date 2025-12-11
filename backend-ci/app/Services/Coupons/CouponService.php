@@ -90,8 +90,14 @@ class CouponService
     }
 
     /** Validate and apply coupon for POS */
-    public function apply(string $code, float $orderTotal, ?int $customerId = null): array
+    public function apply(string $code, mixed $orderTotal, ?int $customerId = null): array
     {
+        // Validate order_total
+        if ($orderTotal === null || !is_numeric($orderTotal)) {
+            throw new InvalidArgumentException('order_total is required and must be numeric');
+        }
+        $orderTotal = (float) $orderTotal;
+
         $coupon = $this->repo->findByCode(strtoupper($code));
         if (!$coupon) {
             throw new InvalidArgumentException('Coupon not found');

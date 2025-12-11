@@ -86,6 +86,33 @@ class CustomerDebtController extends BaseController
                 ->getRowArray();
 
             if (! $transaction) {
+                // FALLBACK: If code starts with HD, try to find in invoices table
+                if (str_starts_with($code, 'HD')) {
+                    $invoice = $this->db->table('invoices')
+                        ->where('invoice_number', $code)
+                        ->get()
+                        ->getRowArray();
+                    
+                    if ($invoice) {
+                        // Map invoice to transaction structure
+                        $transaction = [
+                            'id' => 0, // Virtual ID
+                            'code' => $invoice['invoice_number'],
+                            'customer_id' => $invoice['customer_id'],
+                            'type' => 'SALE',
+                            'value' => (float)$invoice['customer_payable'], // Debt increases
+                            'balance' => (float)$invoice['customer_payable'] - (float)$invoice['customer_paid'],
+                            'notes' => $invoice['notes'] ?? 'Hóa đơn bán hàng',
+                            'created_at' => $invoice['created_at'],
+                            'created_by' => $invoice['created_by'],
+                            'branch_id' => $invoice['branch_id'] ?? 1,
+                            'payment_method' => 'credit', // recorded as debt
+                        ];
+                    }
+                }
+            }
+
+            if (! $transaction) {
                 return $this->failNotFound('Transaction not found');
             }
 

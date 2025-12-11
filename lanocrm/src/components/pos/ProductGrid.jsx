@@ -34,14 +34,17 @@ const ProductGrid = ({ onAddProduct }) => {
                 limit: pageSize,
             });
             if (response.success) {
-                const productList = response.data.map(p => ({
-                    id: p.id,
-                    sku: p.code,
-                    name: p.name,
-                    price: parseFloat(p.selling_price) || 0,
-                    image: p.image || null,
-                    stock: parseInt(p.stock_quantity) || 0,
-                }));
+                // Filter out products with zero stock for POS
+                const productList = response.data
+                    .filter(p => (parseInt(p.stock_quantity) || 0) > 0)
+                    .map(p => ({
+                        id: p.id,
+                        sku: p.code,
+                        name: p.name,
+                        price: parseFloat(p.selling_price) || 0,
+                        image: p.image || null,
+                        stock: parseInt(p.stock_quantity) || 0,
+                    }));
                 setProducts(productList);
                 setTotal(response.pagination?.total || productList.length);
             } else {

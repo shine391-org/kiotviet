@@ -139,23 +139,131 @@ class InvoiceRepository
 
     public function findById(int $id): ?array
     {
+        // Use standard find first to ensure we match the record
         $row = $this->invoices->find($id);
         if (! $row) {
             return null;
         }
+        
         $row = $this->hydrate($row);
+        
+        // Enrich with Customer data
+        if (!empty($row['customer_id'])) {
+            $customer = $this->db->table('customers')->where('id', $row['customer_id'])->get()->getRowArray();
+            if ($customer) {
+                $row['customer_name'] = $customer['name'] ?? null;
+                $row['customer_code'] = $customer['code'] ?? null;
+                $row['phone'] = $customer['phone'] ?? null;
+                $row['email'] = $customer['email'] ?? null;
+                // Try to handle address safely
+                $row['address'] = $customer['address'] ?? null; 
+                $row['region'] = $customer['province'] ?? null;
+                $row['ward'] = $customer['ward'] ?? null;
+            }
+        }
+        
+        // Fallback for customer name if still empty (from backfilled column)
+        if (empty($row['customer_name']) && !empty($row['customer_name'])) {
+             // Already mapped by hydration but let's be explicit if needed or if find() didn't get it?
+             // find() gets all columns, so $row['customer_name'] should exist if column exists.
+             // But if logic above overwrote it with null?
+             // No, logic above only runs if customer_id is not empty.
+        }
+        
+        // If customer_id was null, $row['customer_name'] holds the backfilled value from DB column.
+        // If customer_id was NOT null but lookup failed, we might want to fallback?
+        if (empty($row['customer_name']) && isset($row['customer_name'])) {
+            // keep it
+        }
+        
+        // Enrich with Creator data
+        if (!empty($row['created_by'])) {
+            $user = $this->db->table('users')->select('full_name')->where('id', $row['created_by'])->get()->getRow();
+            $row['created_by_name'] = $user ? $user->full_name : null;
+        }
+
+        // Enrich with Branch name
+        if (!empty($row['branch_id'])) {
+            $branch = $this->db->table('branches')->select('name')->where('id', $row['branch_id'])->get()->getRow();
+            $row['branch_name'] = $branch ? $branch->name : null;
+        }
+
         $row['orders'] = $this->invoiceOrders
             ->where('invoice_id', $id)
             ->findAll();
-        if ($this->db->tableExists('order_payments')) {
+        
+        // Get order IDs for related queries
+        $orderIds = array_column($row['orders'], 'order_id');
+        
+        // Fetch order items (products) from linked orders
+        if (!empty($orderIds) && $this->db->tableExists('order_items')) {
+            $query = $this->db->table('order_items oi')
+                ->select('oi.*, p.name as product_name, p.sku as product_code')
+                ->join('products p', 'p.id = oi.product_id', 'left')
+                ->whereIn('oi.order_id', $orderIds)
+                ->orderBy('oi.id', 'ASC')
+                ->get();
+            $row['items'] = $query ? $query->getResultArray() : [];
+        } else {
+            $row['items'] = [];
+        }
+        
+        // Fetch payments
+        if (!empty($orderIds) && $this->db->tableExists('order_payments')) {
             $query = $this->db->table('order_payments op')
-                ->select('op.id, op.order_id, op.method, op.amount, op.status, op.ref_code, op.paid_at')
-                ->join('invoice_orders io', 'io.order_id = op.order_id')
-                ->where('io.invoice_id', $id)
+                ->select('op.id, op.order_id, op.method as payment_method, op.amount, op.status, op.ref_code as code, op.paid_at as created_at, u.full_name as creator_name')
+                ->join('users u', 'u.id = op.created_by', 'left')
+                ->whereIn('op.order_id', $orderIds)
                 ->orderBy('op.paid_at', 'DESC')
                 ->get();
             $row['payments'] = $query ? $query->getResultArray() : [];
+        } else {
+            // BACKFILL: For imported invoices with no linked payments, simulate from total
+            if (($row['customer_paid'] ?? 0) > 0) {
+                $row['payments'] = [[
+                    'id' => 0,
+                    'code' => 'TTH-IMP-' . $row['id'],
+                    'created_at' => $row['issue_date'] ?? $row['created_at'],
+                    'creator_name' => $row['created_by_name'] ?? 'System',
+                    'payment_method' => 'Tiền mặt',
+                    'amount' => (float) $row['customer_paid'],
+                    'status' => 'Đã thanh toán',
+                    'cash_amount' => (float) $row['customer_paid']
+                ]];
+            } else {
+                $row['payments'] = [];
+            }
         }
+        
+        // Fetch delivery history/tracking if table exists
+        $deliveryFound = false;
+        if ($this->db->tableExists('delivery_tracking')) {
+            $query = $this->db->table('delivery_tracking dt')
+                ->select('dt.*')
+                ->where('dt.invoice_id', $id)
+                ->orderBy('dt.created_at', 'DESC')
+                ->get();
+            $results = $query ? $query->getResultArray() : [];
+            if (!empty($results)) {
+                $row['delivery_history'] = $results;
+                $deliveryFound = true;
+            }
+        }
+        
+        if (!$deliveryFound) {
+            // BACKFILL: For imported invoices, simulate history from status
+            if (!empty($row['delivery_status'])) {
+                 $row['delivery_history'] = [[
+                    'id' => 0,
+                    'time' => $row['delivery_time'] ?? $row['issue_date'] ?? $row['created_at'],
+                    'location' => 'KiotViet Import',
+                    'message' => 'Trạng thái: ' . ($row['delivery_status'] ?? 'Unknown') . ($row['delivery_note'] ? ' - ' . $row['delivery_note'] : '')
+                ]];
+            } else {
+                $row['delivery_history'] = [];
+            }
+        }
+        
         return $row;
     }
 

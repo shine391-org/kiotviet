@@ -275,13 +275,13 @@ class CustomerRepository
     public function findCustomerGroupName(int $groupId): ?string
     {
         $row = $this->db->table('customer_groups')
-            ->select('name_vi, name')
+            ->select('name_vi, name_en')
             ->where('id', $groupId)
             ->where('deleted_at', null)
             ->get()
             ->getRowArray();
 
-        return $row['name_vi'] ?? $row['name'] ?? null;
+        return $row['name_vi'] ?? $row['name_en'] ?? null;
     }
 
     /**

@@ -73,12 +73,17 @@ class LoyaltyRepository
 
     public function redeemPoints(int $walletId, float $points, ?int $orderId, string $reason): bool
     {
-        $wallet = $this->walletModel->find($walletId);
-        if (!$wallet || $wallet['points_balance'] < $points) {
+        $this->db->transStart();
+
+        // Lock row FOR UPDATE to prevent race conditions
+        $sql = "SELECT id, points_balance FROM loyalty_wallets WHERE id = ? FOR UPDATE";
+        $wallet = $this->db->query($sql, [$walletId])->getRowArray();
+
+        if (!$wallet || (float)$wallet['points_balance'] < $points) {
+            $this->db->transRollback();
+            $this->db->transComplete();
             return false;
         }
-
-        $this->db->transStart();
 
         // Deduct points
         $this->db->table('loyalty_wallets')

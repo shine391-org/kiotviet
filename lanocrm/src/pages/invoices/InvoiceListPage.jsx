@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   App,
@@ -7,7 +7,6 @@ import {
   Space,
   Tooltip,
   Dropdown,
-  Spin,
   Checkbox,
   Drawer,
   Grid,
@@ -24,7 +23,6 @@ import {
 } from '@ant-design/icons';
 import InvoiceFilters from '../../components/invoices/InvoiceFilters';
 import InvoiceTable from '../../components/invoices/InvoiceTable';
-import InvoiceDetail from '../../components/invoices/InvoiceDetail';
 import { invoiceColumnCatalog } from '../../components/invoices/InvoiceTable';
 import {
   fetchInvoices,
@@ -120,13 +118,12 @@ const InvoiceListPage = () => {
   };
 
   const onSelectRow = (record) => {
-    setSelectedId(record.id || record.invoice_code);
+    if (record) {
+      setSelectedId(record.id || record.invoice_code);
+    } else {
+      setSelectedId(null);
+    }
   };
-
-  const selectedInvoice = useMemo(() => {
-    if (current && (current.id === selectedId || current.invoice_code === selectedId)) return current;
-    return items.find((x) => x.id === selectedId || x.invoice_code === selectedId) || null;
-  }, [current, selectedId, items]);
 
   return (
     <div className={styles.page}>
@@ -181,7 +178,7 @@ const InvoiceListPage = () => {
             open={isFilterOpen}
             onClose={() => setIsFilterOpen(false)}
             width="100%"
-            bodyStyle={{ padding: 12 }}
+            styles={{ body: { padding: 12 } }}
           >
             <InvoiceFilters
               filters={filters}
@@ -204,6 +201,8 @@ const InvoiceListPage = () => {
             selectedRowKey={selectedId}
             visibleColumns={visibleColumns}
             onToggleColumn={handleToggleColumn}
+            detailData={current}
+            detailLoading={detailLoading}
           />
 
           <div className={styles.pageTotals}>
@@ -214,10 +213,6 @@ const InvoiceListPage = () => {
               <span>Phí trả ĐTGH: {pageTotals.shipping_fee.toLocaleString('vi-VN')} đ</span>
             </Space>
           </div>
-
-          <Spin spinning={detailLoading}>
-            <InvoiceDetail invoice={selectedInvoice} />
-          </Spin>
         </div>
       </div>
     </div>

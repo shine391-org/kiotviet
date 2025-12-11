@@ -19,7 +19,7 @@ const OrderFilters = ({ filters, onChange, branches = [] }) => {
     if (dateMode === 'month') {
       onChange({ date_from: startOfMonthIso(), date_to: dayjs().format('YYYY-MM-DD') });
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateMode]);
 
   const handleStatusChange = (values) => {
@@ -111,6 +111,51 @@ const OrderFilters = ({ filters, onChange, branches = [] }) => {
             ),
           }))}
           onChange={(v) => onChange({ shipping_partner: v })}
+        />
+      </div>
+
+      <Divider style={{ margin: '12px 0' }} />
+
+      <div className="filter-block">
+        <div className="filter-label">Thời gian giao hàng</div>
+        <Radio.Group
+          value={filters.delivery_time_mode || 'all'}
+          onChange={(e) => onChange({ delivery_time_mode: e.target.value })}
+          style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+        >
+          <Radio value="all">Toàn thời gian</Radio>
+          <Radio value="custom">Tùy chỉnh</Radio>
+        </Radio.Group>
+        {filters.delivery_time_mode === 'custom' && (
+          <RangePicker
+            style={{ width: '100%', marginTop: 8 }}
+            value={filters.delivery_from && filters.delivery_to ? [dayjs(filters.delivery_from), dayjs(filters.delivery_to)] : null}
+            onChange={(dates) => {
+              if (!dates) {
+                onChange({ delivery_from: null, delivery_to: null });
+                return;
+              }
+              onChange({
+                delivery_from: dates[0]?.format('YYYY-MM-DD'),
+                delivery_to: dates[1]?.format('YYYY-MM-DD'),
+              });
+            }}
+            format="DD/MM/YYYY"
+          />
+        )}
+      </div>
+
+      <Divider style={{ margin: '12px 0' }} />
+
+      <div className="filter-block">
+        <div className="filter-label">Khu vực giao hàng</div>
+        <Select
+          allowClear
+          placeholder="Chọn Tỉnh/TP - Quận/Huyện"
+          style={{ width: '100%' }}
+          value={filters.delivery_region}
+          options={[]}
+          onChange={(v) => onChange({ delivery_region: v })}
         />
       </div>
 

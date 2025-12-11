@@ -1,22 +1,16 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { Table, Tag, Dropdown, Checkbox, Space, Button, Tooltip, Descriptions, Typography, Divider, Statistic, Row, Col } from 'antd';
-import { ReloadOutlined, SettingOutlined, DeleteOutlined, ExportOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Table, Tag, Dropdown, Checkbox, Button, Typography } from 'antd';
+import { StarOutlined, StarFilled } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { formatCurrency, formatDate, formatDateOnly } from '../../utils/formatters';
+import { formatCurrency, formatDate } from '../../utils/formatters';
 import { formatTransactionCode } from '../../constants/cash';
+import CashDetailPanel from './CashDetailPanel';
 import styles from '../../pages/cash/CashBookPage.module.css';
 
 const statusColors = {
   approved: 'green',
   pending: 'orange',
   cancelled: 'red',
-};
-
-const paymentMethodMap = {
-  cash: 'Tiền mặt',
-  bank: 'Ngân hàng',
-  bank_transfer: 'Chuyển khoản',
-  ewallet: 'Ví điện tử',
 };
 
 const CashTable = ({
@@ -29,138 +23,105 @@ const CashTable = ({
   onExport,
   branchesMap = {},
   summaryLimited,
-  pageTotals,
+  onEdit,
+  onPrint,
 }) => {
   const [selectedRowKeys, setSelectedRowKeys] = useState([]);
-  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [expandedRowKey, setExpandedRowKey] = useState(null);
+  const [favorites, setFavorites] = useState([]);
   const [visibleCols, setVisibleCols] = useState({
+    favorite: true,
     code: true,
     transaction_date: true,
-    created_at: true,
-    created_by_name: true,
-    staff_name: true,
-    branch: true,
     category: true,
-    payment_method: true,
-    account_name: true,
-    bank_account: false,
+    payer_name: true,
     amount: true,
-    status: true,
   });
 
   const toggleColumn = useCallback((key, checked) => {
     setVisibleCols((prev) => ({ ...prev, [key]: checked }));
   }, []);
 
+  const toggleFavorite = useCallback((id) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
+    );
+  }, []);
+
+  // Handle row click - toggle expand/collapse
+  const handleRowClick = useCallback((record) => {
+    const key = record.id;
+    if (expandedRowKey === key) {
+      // Click same row = collapse
+      setExpandedRowKey(null);
+    } else {
+      // Click different row = expand this one
+      setExpandedRowKey(key);
+    }
+  }, [expandedRowKey]);
+
   const baseColumns = useMemo(() => [
-      {
-        key: 'code',
-        title: 'Mã phiếu',
-        dataIndex: 'id',
-        render: (_, record) => (
-          <Space direction="vertical" size={0}>
-            <Typography.Text strong>{formatTransactionCode(record)}</Typography.Text>
-            <Tag color={record.type === 'RECEIPT' ? 'green' : 'red'}>
-              {record.type === 'RECEIPT' ? 'Thu' : 'Chi'}
-            </Tag>
-          </Space>
-        ),
-      },
-      {
-        key: 'transaction_date',
-        title: 'Thời gian',
-        dataIndex: 'transaction_date',
-        render: (value) => (value ? dayjs(value).format('DD/MM/YYYY') : '—'),
-      },
-      {
-        key: 'created_at',
-        title: 'Thời gian tạo',
-        dataIndex: 'created_at',
-        render: (v) => (v ? formatDate(v) : '—'),
-      },
-      {
-        key: 'created_by_name',
-        title: 'Người tạo',
-        dataIndex: 'created_by_name',
-        render: (v) => v || '—',
-      },
-      {
-        key: 'staff_name',
-        title: 'Nhân viên',
-        dataIndex: 'staff_name',
-        render: (v) => v || '—',
-      },
-      {
-        key: 'branch',
-        title: 'Chi nhánh',
-        dataIndex: 'branch_id',
-        render: (v) => branchesMap[v] || `#${v || '—'}`,
-      },
-      {
-        key: 'category',
-        title: 'Loại thu/chi',
-        dataIndex: 'category',
-        render: (v) => v || '—',
-      },
-      {
-        key: 'payment_method',
-        title: 'Loại sổ quỹ',
-        dataIndex: 'payment_method',
-        render: (v) => (
-          <Tag color="blue">{paymentMethodMap[v] || v || '—'}</Tag>
-        ),
-      },
-      {
-        key: 'account_name',
-        title: 'Tên tài khoản',
-        dataIndex: 'account_name',
-        render: (v) => v || '—',
-      },
-      {
-        key: 'bank_account',
-        title: 'Số tài khoản',
-        dataIndex: 'bank_account',
-        render: (v) => v || '—',
-      },
-      {
-        key: 'amount',
-        title: 'Giá trị',
-        dataIndex: 'amount',
-        align: 'right',
-        render: (_, record) => (
-          <span className={record.type === 'RECEIPT' ? styles.amountReceipt : styles.amountPayment}>
-            {record.type === 'RECEIPT' ? '+' : '-'}{formatCurrency(record.amount)}đ
-          </span>
-        ),
-      },
-      {
-        key: 'status',
-        title: 'Trạng thái',
-        dataIndex: 'status',
-        render: (v) => <Tag color={statusColors[v] || 'default'}>{v || '—'}</Tag>,
-      },
-      {
-        key: 'actions',
-        title: '',
-        render: (_, record) => (
-          <Space>
-            <Tooltip title="Hủy (soft delete)">
-              <Button
-                size="small"
-                danger
-                type="text"
-                icon={<DeleteOutlined />}
-                onClick={() => onDelete(record)}
-              />
-            </Tooltip>
-          </Space>
-        ),
-      },
-    ],
-  [branchesMap, onDelete]);
+    {
+      key: 'favorite',
+      title: '',
+      dataIndex: 'id',
+      width: 40,
+      render: (id) => (
+        <span
+          onClick={(e) => { e.stopPropagation(); toggleFavorite(id); }}
+          style={{ cursor: 'pointer' }}
+        >
+          {favorites.includes(id) ? (
+            <StarFilled style={{ color: '#faad14' }} />
+          ) : (
+            <StarOutlined style={{ color: '#d9d9d9' }} />
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'code',
+      title: 'Mã phiếu',
+      dataIndex: 'id',
+      render: (_, record) => (
+        <Typography.Link style={{ fontWeight: 500 }}>
+          {formatTransactionCode(record)}
+        </Typography.Link>
+      ),
+    },
+    {
+      key: 'transaction_date',
+      title: 'Thời gian',
+      dataIndex: 'transaction_date',
+      render: (value) => (value ? dayjs(value).format('DD/MM/YYYY HH:mm') : '—'),
+    },
+    {
+      key: 'category',
+      title: 'Loại thu chi',
+      dataIndex: 'category',
+      render: (v, record) => v || (record.type === 'RECEIPT' ? 'Thu Tiền khách trả' : 'Chi trả nhà cung cấp'),
+    },
+    {
+      key: 'payer_name',
+      title: 'Người nộp/nhận',
+      dataIndex: 'payer_name',
+      render: (v) => v || '—',
+    },
+    {
+      key: 'amount',
+      title: 'Giá trị',
+      dataIndex: 'amount',
+      align: 'right',
+      render: (_, record) => (
+        <span className={record.type === 'RECEIPT' ? styles.amountReceipt : styles.amountPayment}>
+          {formatCurrency(record.amount)}
+        </span>
+      ),
+    },
+  ], [favorites, toggleFavorite]);
 
   const columns = useMemo(
-    () => baseColumns.filter((col) => col.key === 'actions' || visibleCols[col.key]),
+    () => baseColumns.filter((col) => visibleCols[col.key]),
     [baseColumns, visibleCols]
   );
 
@@ -174,50 +135,26 @@ const CashTable = ({
             checked={visibleCols[key]}
             onChange={(e) => toggleColumn(key, e.target.checked)}
           >
-            {title}
+            {title || key}
           </Checkbox>
         ),
       };
     })
   ), [visibleCols, baseColumns, toggleColumn]);
 
+  // Render expanded row with CashDetailPanel
   const expandedRowRender = (record) => (
-    <div style={{ padding: '8px 6px 4px' }}>
-      <Descriptions bordered size="small" column={2}>
-        <Descriptions.Item label="Người nộp/nhận">{record.payer_name || '—'}</Descriptions.Item>
-        <Descriptions.Item label="SĐT">{record.payer_phone || '—'}</Descriptions.Item>
-        <Descriptions.Item label="Địa chỉ">{record.payer_address || '—'}</Descriptions.Item>
-        <Descriptions.Item label="Mô tả">{record.description || '—'}</Descriptions.Item>
-        <Descriptions.Item label="Ghi chú" span={2}>{record.note || <span className={styles.emptyNote}>Chưa có ghi chú</span>}</Descriptions.Item>
-        <Descriptions.Item label="Tham chiếu" span={2}>
-          {record.reference_type ? `${record.reference_type} #${record.reference_code || record.reference_id || ''}` : '—'}
-        </Descriptions.Item>
-        <Descriptions.Item label="Ngân hàng / Nội dung CK" span={2}>
-          {record.transfer_note || record.bank_account || '—'}
-        </Descriptions.Item>
-      </Descriptions>
-    </div>
+    <CashDetailPanel
+      record={record}
+      branchesMap={branchesMap}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onPrint={onPrint}
+    />
   );
 
   return (
     <div className={styles.tableCard}>
-      <div className={styles.tableHeader}>
-        <Space>
-          <Button icon={<ReloadOutlined />} onClick={onRefresh}>Làm mới</Button>
-          <Dropdown menu={{ items: columnMenuItems }} trigger={['click']} placement="bottomLeft">
-            <Button icon={<SettingOutlined />}>Cột hiển thị</Button>
-          </Dropdown>
-        </Space>
-        <Space>
-          {summaryLimited && (
-            <Tooltip title="Tổng thu/chi chỉ tính trên 500 bản ghi đầu">
-              <Tag color="blue">Tổng ≈</Tag>
-            </Tooltip>
-          )}
-          <Button icon={<ExportOutlined />} onClick={onExport}>Xuất CSV</Button>
-        </Space>
-      </div>
-
       <Table
         size="middle"
         rowKey="id"
@@ -225,14 +162,19 @@ const CashTable = ({
         columns={columns}
         loading={loading}
         expandable={{
-          expandedRowKeys,
-          onExpandedRowsChange: setExpandedRowKeys,
+          expandedRowKeys: expandedRowKey ? [expandedRowKey] : [],
           expandedRowRender,
+          expandIcon: () => null, // Hide default expand icon
+          expandRowByClick: false, // We handle click ourselves
         }}
         rowSelection={{
           selectedRowKeys,
           onChange: setSelectedRowKeys,
         }}
+        onRow={(record) => ({
+          onClick: () => handleRowClick(record),
+          className: expandedRowKey === record.id ? styles.selectedRow : '',
+        })}
         pagination={{
           current: pagination.page,
           pageSize: pagination.limit,
@@ -247,34 +189,6 @@ const CashTable = ({
           })
         }
       />
-
-      <Divider style={{ margin: '8px 0 12px' }} />
-      <Row gutter={12}>
-        <Col span={6}>
-          <Statistic
-            title="Tổng thu (trang)"
-            value={pageTotals.receipt || 0}
-            precision={0}
-            valueStyle={{ color: '#047857' }}
-            suffix="đ"
-          />
-        </Col>
-        <Col span={6}>
-          <Statistic
-            title="Tổng chi (trang)"
-            value={pageTotals.payment || 0}
-            precision={0}
-            valueStyle={{ color: '#b91c1c' }}
-            suffix="đ"
-          />
-        </Col>
-        <Col span={12}>
-          <Space>
-            <InfoCircleOutlined />
-            <span className={styles.warningText}>Số liệu trang dựa trên dữ liệu phân trang hiện tại.</span>
-          </Space>
-        </Col>
-      </Row>
     </div>
   );
 };

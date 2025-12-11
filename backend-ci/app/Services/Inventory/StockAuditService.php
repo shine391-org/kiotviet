@@ -419,6 +419,12 @@ class StockAuditService
             $av = $a[$field] ?? '';
             $bv = $b[$field] ?? '';
             if ($av === $bv) return 0;
+            
+            // Compare numerically if both values are numeric
+            if (is_numeric($av) && is_numeric($bv)) {
+                return ((float)$av <=> (float)$bv) * $direction;
+            }
+            
             return ($av > $bv ? 1 : -1) * $direction;
         });
 

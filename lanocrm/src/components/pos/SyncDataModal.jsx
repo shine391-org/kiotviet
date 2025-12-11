@@ -1,10 +1,99 @@
-import React, { useState } from 'react';
-import { Modal, Select, Table, Button, Empty } from 'antd';
-import { WifiOutlined, InboxOutlined } from '@ant-design/icons';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, Select, Table, Button, Empty, Spin, App } from 'antd';
+import { WifiOutlined, DisconnectOutlined, InboxOutlined, SyncOutlined } from '@ant-design/icons';
+import posApi from '../../api/posApi';
 import styles from './SyncDataModal.module.css';
 
 const SyncDataModal = ({ open, onClose, onSyncAll }) => {
+    const { message } = App.useApp();
     const [docType, setDocType] = useState('all');
+    const [loading, setLoading] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+    const [pendingDocs, setPendingDocs] = useState([]);
+    const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+    // Monitor online status
+    useEffect(() => {
+        const handleOnline = () => setIsOnline(true);
+        const handleOffline = () => setIsOnline(false);
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Fetch pending/draft orders from API
+    const fetchPendingDocs = useCallback(async () => {
+        if (!open) return;
+
+        setLoading(true);
+        try {
+            const response = await posApi.getOrders({
+                status: 'draft,pending',
+                limit: 50,
+            });
+
+            if (response.success && response.data) {
+                const docs = response.data.map(order => ({
+                    id: order.id,
+                    type: order.order_type === 'return' ? 'Trả hàng' :
+                        order.order_type === 'order' ? 'Đặt hàng' : 'Hóa đơn',
+                    typeKey: order.order_type || 'invoice',
+                    code: order.order_number || order.code,
+                    time: order.order_date || order.created_at,
+                    value: parseFloat(order.total) || 0,
+                }));
+                setPendingDocs(docs);
+            }
+        } catch (error) {
+            console.error('Failed to fetch pending documents:', error);
+            // If offline, could show locally stored pending items
+            setPendingDocs([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [open]);
+
+    useEffect(() => {
+        fetchPendingDocs();
+    }, [fetchPendingDocs, docType]);
+
+    // Filter by document type
+    const filteredDocs = docType === 'all'
+        ? pendingDocs
+        : pendingDocs.filter(doc => doc.typeKey === docType);
+
+    const handleSyncAll = async () => {
+        if (!isOnline) {
+            message.warning('Vui lòng kết nối Internet để đồng bộ');
+            return;
+        }
+
+        if (filteredDocs.length === 0) {
+            message.info('Không có phiếu nào cần đồng bộ');
+            return;
+        }
+
+        setSyncing(true);
+        try {
+            // Call parent handler if provided
+            if (onSyncAll) {
+                await onSyncAll(filteredDocs);
+            }
+
+            message.success(`Đã đồng bộ ${filteredDocs.length} phiếu thành công`);
+            await fetchPendingDocs(); // Refresh list
+        } catch (error) {
+            console.error('Sync failed:', error);
+            message.error('Lỗi khi đồng bộ phiếu');
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     const columns = [
         {
@@ -21,17 +110,16 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
             title: 'Thời gian',
             dataIndex: 'time',
             key: 'time',
-            sorter: true,
+            sorter: (a, b) => new Date(a.time) - new Date(b.time),
         },
         {
             title: 'Giá trị',
             dataIndex: 'value',
             key: 'value',
+            align: 'right',
+            render: (val) => val?.toLocaleString('vi-VN') || '0',
         },
     ];
-
-    // Empty data for demonstration
-    const data = [];
 
     return (
         <Modal
@@ -59,30 +147,48 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
                 </div>
                 <div className={styles.connectionStatus}>
                     <span className={styles.label}>Trạng thái kết nối:</span>
-                    <span className={styles.connected}>
-                        Có Internet <WifiOutlined />
-                    </span>
+                    {isOnline ? (
+                        <span className={styles.connected}>
+                            Có Internet <WifiOutlined />
+                        </span>
+                    ) : (
+                        <span className={styles.disconnected}>
+                            Không có kết nối <DisconnectOutlined />
+                        </span>
+                    )}
                 </div>
             </div>
 
-            <Table
-                columns={columns}
-                dataSource={data}
-                rowKey="id"
-                pagination={false}
-                size="small"
-                locale={{
-                    emptyText: (
-                        <Empty
-                            image={<InboxOutlined className={styles.emptyIcon} />}
-                            description="Không tìm thấy kết quả nào phù hợp"
-                        />
-                    ),
-                }}
-            />
+            <Spin spinning={loading}>
+                <Table
+                    columns={columns}
+                    dataSource={filteredDocs}
+                    rowKey="id"
+                    pagination={false}
+                    size="small"
+                    locale={{
+                        emptyText: (
+                            <Empty
+                                image={<InboxOutlined className={styles.emptyIcon} />}
+                                description="Không có phiếu nào cần đồng bộ"
+                            />
+                        ),
+                    }}
+                />
+            </Spin>
 
             <div className={styles.footer}>
-                <Button type="primary" onClick={onSyncAll} className={styles.syncBtn}>
+                <span className={styles.countLabel}>
+                    {filteredDocs.length > 0 && `${filteredDocs.length} phiếu chờ đồng bộ`}
+                </span>
+                <Button
+                    type="primary"
+                    onClick={handleSyncAll}
+                    loading={syncing}
+                    disabled={!isOnline || filteredDocs.length === 0}
+                    icon={<SyncOutlined />}
+                    className={styles.syncBtn}
+                >
                     Đồng bộ tất cả
                 </Button>
             </div>

@@ -258,7 +258,14 @@ class PurchaseReturnRepository
 
     public function delete(int $id): bool
     {
-        return (bool)$this->returns->delete($id);
+        $this->db->transStart();
+        // Delete related items first
+        $this->items->where('purchase_return_id', $id)->delete();
+        // Then delete parent
+        $result = (bool)$this->returns->delete($id);
+        $this->db->transComplete();
+        
+        return $result && $this->db->transStatus();
     }
 
     /**

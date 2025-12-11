@@ -33,6 +33,11 @@ class ProductValidator
             'product_type' => 'permit_empty|string|max_length[50]',
             'include_variants' => 'permit_empty',
             'price_list_id' => 'permit_empty|integer|greater_than[0]',
+            'category_id' => 'permit_empty|integer|greater_than[0]',
+            'stock_status' => 'permit_empty|in_list[all,in_stock,out_of_stock]',
+            'price_condition' => 'permit_empty|in_list[lt,lte,gt,gte]',
+            'price_compare' => 'permit_empty|in_list[cost,purchase]',
+            'price_value' => 'permit_empty|numeric',
         ];
         // Cast boolean-ish flag before validate to tránh lỗi in_list khi mặc định false
         $data['include_variants'] = filter_var($data['include_variants'] ?? false, FILTER_VALIDATE_BOOLEAN);

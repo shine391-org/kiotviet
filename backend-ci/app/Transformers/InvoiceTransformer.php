@@ -79,6 +79,45 @@ class InvoiceTransformer
                 'total' => isset($o['total']) ? (float) $o['total'] : 0.0,
             ], $row['orders']);
         }
+
+        // Transform items (product lines)
+        if (isset($row['items'])) {
+            $row['items'] = array_map(fn ($item) => [
+                'id' => (int) ($item['id'] ?? 0),
+                'product_id' => (int) ($item['product_id'] ?? 0),
+                'product_code' => $item['product_code'] ?? $item['sku'] ?? null,
+                'product_name' => $item['product_name'] ?? $item['name'] ?? null,
+                'quantity' => (int) ($item['quantity'] ?? 0),
+                'unit_price' => (float) ($item['unit_price'] ?? 0),
+                'discount' => (float) ($item['discount'] ?? 0),
+                'final_price' => (float) ($item['final_price'] ?? $item['unit_price'] ?? 0),
+            ], $row['items']);
+        }
+
+        // Transform payments
+        if (isset($row['payments'])) {
+            $row['payments'] = array_map(fn ($p) => [
+                'id' => (int) ($p['id'] ?? 0),
+                'code' => $p['code'] ?? $p['ref_code'] ?? 'TTH' . str_pad($p['id'] ?? 0, 6, '0', STR_PAD_LEFT),
+                'created_at' => $p['created_at'] ?? $p['paid_at'] ?? null,
+                'creator_name' => $p['creator_name'] ?? 'Lano',
+                'amount' => (float) ($p['amount'] ?? 0),
+                'payment_method' => $p['payment_method'] ?? $p['method'] ?? 'Tiền mặt',
+                'status' => $p['status'] ?? 'Đã thanh toán',
+                'cash_amount' => (float) ($p['amount'] ?? 0),
+            ], $row['payments']);
+        }
+
+        // Transform delivery history
+        if (isset($row['delivery_history'])) {
+            $row['delivery_history'] = array_map(fn ($d) => [
+                'id' => (int) ($d['id'] ?? 0),
+                'time' => $d['created_at'] ?? $d['time'] ?? null,
+                'location' => $d['location'] ?? null,
+                'message' => $d['message'] ?? $d['note'] ?? null,
+            ], $row['delivery_history']);
+        }
+
         return $row;
     }
 

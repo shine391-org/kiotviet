@@ -101,10 +101,32 @@ class AttributeRepository
         return (bool) $this->db->table('product_attribute_values')->delete(['id' => $id]);
     }
 
-    /** Products/variants by option. @agent-use: Reporting @agent-pattern: Simple select */
+    /** Products/variants by option. @agent-use: Reporting @agent-pattern: Join with products */
     public function productsByOption(int $optionId): array
     {
-        return $this->db->table('product_attribute_values pav')->select('pav.product_id, pav.variant_id')->where('pav.option_id', $optionId)->where('pav.deleted_at', null)->get()->getResultArray();
+        return $this->db->table('product_attribute_values pav')
+            ->select('pav.product_id, pav.variant_id, p.code, p.name, p.name_vi, p.image_url, p.selling_price, p.purchase_price')
+            ->join('products p', 'p.id = pav.product_id', 'left')
+            ->where('pav.option_id', $optionId)
+            ->where('pav.deleted_at', null)
+            ->where('p.deleted_at', null)
+            ->get()
+            ->getResultArray();
+    }
+
+    /** Products by attribute (all options). @agent-use: Attribute products list @agent-pattern: Join with products */
+    public function productsByAttribute(int $attributeId): array
+    {
+        return $this->db->table('product_attribute_values pav')
+            ->select('pav.product_id, MAX(pav.variant_id) as variant_id, GROUP_CONCAT(DISTINCT pao.option_name SEPARATOR \', \') as option_names, MAX(p.code) as code, MAX(p.name) as name, MAX(p.name_vi) as name_vi, MAX(p.image_url) as image_url, MAX(p.selling_price) as selling_price, MAX(p.purchase_price) as purchase_price')
+            ->join('products p', 'p.id = pav.product_id', 'left')
+            ->join('product_attribute_options pao', 'pao.id = pav.option_id', 'left')
+            ->where('pav.attribute_id', $attributeId)
+            ->where('pav.deleted_at', null)
+            ->where('p.deleted_at', null)
+            ->groupBy('pav.product_id')
+            ->get()
+            ->getResultArray();
     }
 
     private function now(): string { return date('Y-m-d H:i:s'); }

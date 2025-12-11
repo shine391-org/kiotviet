@@ -207,16 +207,28 @@ class StockTransferService
         $quantityReceived = 0;
         $valueReceived = 0;
 
-        if (!empty($receivedItems)) {
-            $items = $this->repo->findItems($id);
-            foreach ($items as $item) {
-                $receivedQty = $receivedItems[$item['id']] ?? $item['quantity_sent'];
-                $quantityReceived += (float) $receivedQty;
-                $valueReceived += (float) $receivedQty * (float) $item['unit_price'];
-            }
-        } else {
-            $quantityReceived = (float) $transfer['quantity_sent'];
-            $valueReceived = (float) $transfer['value_sent'];
+        // Get all transfer items
+        $items = $this->repo->findItems($id);
+        
+        // Collect item updates for batch processing
+        $itemUpdates = [];
+        
+        foreach ($items as $item) {
+            // Omitted items are treated as 0 received
+            $receivedQty = isset($receivedItems[$item['id']]) ? (float)$receivedItems[$item['id']] : 0;
+            $quantityReceived += $receivedQty;
+            $valueReceived += $receivedQty * (float)$item['unit_price'];
+            
+            // Collect update for this item
+            $itemUpdates[] = [
+                'id' => $item['id'],
+                'quantity_received' => $receivedQty,
+            ];
+        }
+        
+        // Batch update all item received quantities
+        foreach ($itemUpdates as $update) {
+            $this->repo->updateItem($update['id'], ['quantity_received' => $update['quantity_received']]);
         }
 
         $updated = $this->repo->update($id, [

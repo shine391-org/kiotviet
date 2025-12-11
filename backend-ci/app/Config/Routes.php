@@ -335,6 +335,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->put('attributes/(:num)', 'Api\\AttributesController::update/$1');
     $routes->delete('attributes/(:num)', 'Api\\AttributesController::delete/$1');
     $routes->get('attributes/(:num)/options', 'Api\\AttributesController::options/$1');
+    $routes->get('attributes/(:num)/products', 'Api\\AttributesController::productsByAttribute/$1');
     $routes->post('attributes/(:num)/options', 'Api\\AttributesController::createOption/$1');
     $routes->put('attributes/options/(:num)', 'Api\\AttributesController::updateOption/$1');
     $routes->delete('attributes/options/(:num)', 'Api\\AttributesController::deleteOption/$1');
@@ -591,6 +592,10 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('webhook-events', 'Api\\WebhookEventsController::index');
     $routes->post('webhook-events/(:num)/retry', 'Api\\WebhookEventsController::retry/$1');
 });
+
+// Debug
+// $routes->get('debug-fk', 'DebugFKController::index');
+// $routes->get('debug-fix', 'DebugFKController::fix');
 
 // Catch-all for frontend build
 $routes->get('.*', 'Home::index');

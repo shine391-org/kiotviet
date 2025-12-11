@@ -77,6 +77,8 @@ const SalesPage = () => {
     }, []);
 
     const handleAddProduct = useCallback((product) => {
+        console.log('🔵 handleAddProduct called with:', product);
+
         // Normalize product structure (SalesHeader uses code/price, ProductGrid uses sku/unitPrice)
         const normalizedProduct = {
             id: product.id,
@@ -86,6 +88,8 @@ const SalesPage = () => {
             variantId: product.variantId || product.variant_id || null,
             image: product.image || null,
         };
+
+        console.log('🔵 Normalized product:', normalizedProduct);
 
         setCartItems((prev) => {
             const existing = prev.find((item) => item.sku === normalizedProduct.sku);

@@ -101,6 +101,12 @@ class PurchaseReturnController extends ResourceController
      */
     public function update($id = null): ResponseInterface
     {
+        // Require authentication
+        $userId = auth()->id();
+        if (!$userId) {
+            return $this->failUnauthorized('Authentication required');
+        }
+
         $data = $this->request->getJSON(true);
 
         if (!$data) {
@@ -127,6 +133,12 @@ class PurchaseReturnController extends ResourceController
      */
     public function delete($id = null): ResponseInterface
     {
+        // Require authentication
+        $userId = auth()->id();
+        if (!$userId) {
+            return $this->failUnauthorized('Authentication required');
+        }
+
         try {
             $deleted = $this->service->delete((int)$id);
             if (!$deleted) {

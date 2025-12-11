@@ -4,12 +4,18 @@ import {
   App,
   Input,
   Button,
-  Alert,
+  Dropdown,
+  Checkbox,
+  Space,
 } from 'antd';
 import {
   SearchOutlined,
   PlusOutlined,
   DownloadOutlined,
+  MenuOutlined,
+  AppstoreOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import styles from './CashBookPage.module.css';
@@ -17,6 +23,7 @@ import CashFilters from '../../components/cash/CashFilters';
 import CashSummary from '../../components/cash/CashSummary';
 import CashTable from '../../components/cash/CashTable';
 import CashTransactionForm from '../../components/cash/CashTransactionForm';
+import EditReceiptModal from '../customers/EditReceiptModal';
 import {
   fetchCashTransactions,
   setCashFilters,
@@ -51,6 +58,10 @@ const CashBookPage = () => {
   const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [exporting, setExporting] = useState(false);
+
+  // Edit receipt modal state
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
 
   useEffect(() => {
     dispatch(fetchBranches());
@@ -214,23 +225,13 @@ const CashBookPage = () => {
           >
             Xuất file
           </Button>
+          <Button icon={<MenuOutlined />} />
+          <Button icon={<AppstoreOutlined />} />
+          <Button icon={<SettingOutlined />} />
+          <Button icon={<QuestionCircleOutlined />} />
         </div>
       </div>
 
-      {error && (
-        <Alert
-          style={{ marginTop: 12 }}
-          type="error"
-          message={error}
-          showIcon
-        />
-      )}
-
-      <CashSummary
-        summary={summary}
-        loading={summaryLoading}
-        summaryLimited={summary.limited}
-      />
       <ErrorAlert error={error} />
 
       <div className={styles.layout}>
@@ -240,18 +241,29 @@ const CashBookPage = () => {
           branches={branches}
           loading={loading || branchLoading}
         />
-        <CashTable
-          data={items}
-          loading={loading}
-          pagination={pagination}
-          onPageChange={(pageInfo) => dispatch(setCashPage(pageInfo))}
-          onDelete={handleDelete}
-          onRefresh={refreshData}
-          onExport={handleExport}
-          branchesMap={branchesMap}
-          summaryLimited={summary.limited}
-          pageTotals={pageTotals}
-        />
+        <div className={styles.mainContent}>
+          <CashSummary
+            summary={summary}
+            loading={summaryLoading}
+            summaryLimited={summary.limited}
+          />
+          <CashTable
+            data={items}
+            loading={loading}
+            pagination={pagination}
+            onPageChange={(pageInfo) => dispatch(setCashPage(pageInfo))}
+            onDelete={handleDelete}
+            onRefresh={refreshData}
+            onExport={handleExport}
+            branchesMap={branchesMap}
+            summaryLimited={summary.limited}
+            onEdit={(record) => {
+              setEditingRecord(record);
+              setEditModalOpen(true);
+            }}
+            onPrint={(record) => message.info(`In phiếu ${record.id}`)}
+          />
+        </div>
       </div>
 
       <CashTransactionForm
@@ -271,7 +283,23 @@ const CashBookPage = () => {
         branches={branches}
         loading={loading}
       />
-    </div>
+
+      {/* Edit Receipt Modal */}
+      <EditReceiptModal
+        open={editModalOpen}
+        receiptCode={editingRecord?.reference_code || (editingRecord ? `TTH${String(editingRecord.id).padStart(6, '0')}` : null)}
+        customer={editingRecord?.payer_name ? { name: editingRecord.payer_name } : null}
+        onCancel={() => {
+          setEditModalOpen(false);
+          setEditingRecord(null);
+        }}
+        onSuccess={() => {
+          setEditModalOpen(false);
+          setEditingRecord(null);
+          refreshData();
+        }}
+      />
+    </div >
   );
 };
 

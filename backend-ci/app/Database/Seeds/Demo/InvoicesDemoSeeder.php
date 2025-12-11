@@ -60,7 +60,7 @@ class InvoicesDemoSeeder extends Seeder
 
             // Shipment data for shipments page
             $shippingPartners = ['GHTK', 'GHN', 'VNPost', 'J&T Express', 'Viettel Post'];
-            $deliveryStatuses = ['pending', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'failed'];
+            $deliveryStatuses = ['pending', 'shipping', 'delivered', 'failed', 'returning'];
             $deliveryStatus = $deliveryStatuses[$idx % count($deliveryStatuses)];
             $shippingPartner = $shippingPartners[$idx % count($shippingPartners)];
             $shipmentCode = sprintf('VĐ-DEMO-%d-%04d', $branchId, $branchCounters[$branchId]);

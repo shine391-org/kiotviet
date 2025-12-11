@@ -15,6 +15,8 @@ class DebugController extends BaseController
 {
     use ResponseTrait;
 
+    private const MAX_DEBUG_ROWS = 1000;
+
     protected $db;
 
     public function __construct()
@@ -76,6 +78,8 @@ class DebugController extends BaseController
                 ->select('customer_id, COUNT(*) as cnt')
                 ->where('deleted_at IS NULL')
                 ->groupBy('customer_id')
+                ->orderBy('cnt', 'DESC')
+                ->limit(self::MAX_DEBUG_ROWS)
                 ->get()
                 ->getResultArray();
 
