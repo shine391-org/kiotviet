@@ -6,21 +6,24 @@ import {
   Button,
   Space,
   Tooltip,
-  Spin,
+  Popover,
+  Checkbox,
+  Row,
+  Col,
 } from 'antd';
 import {
   SearchOutlined,
   FilterOutlined,
   DownloadOutlined,
-  ReloadOutlined,
+  MenuOutlined,
+  SettingOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 import ShipmentFilters from '../../components/shipments/ShipmentFilters';
-import ShipmentTable from '../../components/shipments/ShipmentTable';
-import ShipmentDetail from '../../components/shipments/ShipmentDetail';
+import ShipmentTable, { columnCatalog } from '../../components/shipments/ShipmentTable';
 import styles from './ShipmentListPage.module.css';
 import {
   fetchShipments,
-  fetchShipmentDetail,
   setShipmentFilters,
   setShipmentPage,
 } from '../../store/slices/shipmentSlice';
@@ -32,7 +35,7 @@ const STORAGE_KEY = 'lano_shipment_visible_columns';
 const ShipmentListPage = () => {
   const dispatch = useDispatch();
   const { message } = App.useApp();
-  const { items, pagination, filters, loading, summary, current, detailLoading } = useSelector((s) => s.shipments);
+  const { items, pagination, filters, loading, summary } = useSelector((s) => s.shipments);
   const { branches } = useSelector((s) => s.branch);
 
   const [searchText, setSearchText] = useState(filters.search || '');
@@ -40,7 +43,7 @@ const ShipmentListPage = () => {
     const stored = localStorage.getItem(STORAGE_KEY);
     return stored ? JSON.parse(stored) : DEFAULT_SHIPMENT_COLUMNS;
   });
-  const [showFilters, setShowFilters] = useState(true);
+  const [columnPopoverOpen, setColumnPopoverOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
   useEffect(() => {
@@ -57,11 +60,6 @@ const ShipmentListPage = () => {
     }, 400);
     return () => clearTimeout(timer);
   }, [searchText, dispatch]);
-
-  useEffect(() => {
-    if (!selectedId) return;
-    dispatch(fetchShipmentDetail(selectedId));
-  }, [selectedId, dispatch]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(visibleColumns));
@@ -97,11 +95,6 @@ const ShipmentListPage = () => {
     setSelectedId(record.id);
   };
 
-  const selectedShipment = useMemo(() => {
-    if (current && current.id === selectedId) return current;
-    return items.find((x) => x.id === selectedId) || null;
-  }, [current, selectedId, items]);
-
   const handleFiltersChange = (payload) => {
     dispatch(setShipmentFilters(payload));
   };
@@ -116,7 +109,42 @@ const ShipmentListPage = () => {
     dispatch(fetchShipments({ page, limit }));
   };
 
-  const layoutClass = `${styles.layout} ${selectedShipment ? styles.withDetail : ''}`;
+  // Column popover content for burger menu
+  const columnKeys = Object.keys(columnCatalog);
+  const halfLength = Math.ceil(columnKeys.length / 2);
+  const leftColumnKeys = columnKeys.slice(0, halfLength);
+  const rightColumnKeys = columnKeys.slice(halfLength);
+
+  const columnPopoverContent = (
+    <div style={{ width: 420, padding: 8 }}>
+      <Row gutter={16}>
+        <Col span={12}>
+          {leftColumnKeys.map((key) => (
+            <div key={key} style={{ marginBottom: 8 }}>
+              <Checkbox
+                checked={visibleColumns.includes(key)}
+                onChange={(e) => handleToggleColumn(key, e.target.checked)}
+              >
+                {columnCatalog[key].title}
+              </Checkbox>
+            </div>
+          ))}
+        </Col>
+        <Col span={12}>
+          {rightColumnKeys.map((key) => (
+            <div key={key} style={{ marginBottom: 8 }}>
+              <Checkbox
+                checked={visibleColumns.includes(key)}
+                onChange={(e) => handleToggleColumn(key, e.target.checked)}
+              >
+                {columnCatalog[key].title}
+              </Checkbox>
+            </div>
+          ))}
+        </Col>
+      </Row>
+    </div>
+  );
 
   return (
     <div className={styles.page}>
@@ -124,32 +152,41 @@ const ShipmentListPage = () => {
         <Input
           allowClear
           prefix={<SearchOutlined />}
+          suffix={<FilterOutlined style={{ cursor: 'pointer', color: '#1890ff' }} />}
           placeholder="Theo mã vận đơn"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
           className={styles.search}
         />
         <Space>
-          <Tooltip title="Bật/tắt bộ lọc">
-            <Button icon={<FilterOutlined />} onClick={() => setShowFilters((v) => !v)} />
-          </Tooltip>
           <Button icon={<DownloadOutlined />} onClick={handleExport}>Xuất file</Button>
-          <Button icon={<ReloadOutlined />} onClick={() => dispatch(fetchShipments(filters))} />
+          <Popover
+            content={columnPopoverContent}
+            trigger="click"
+            open={columnPopoverOpen}
+            onOpenChange={setColumnPopoverOpen}
+            placement="bottomRight"
+            title="Chọn cột hiển thị"
+          >
+            <Tooltip title="Tùy chọn hiển thị">
+              <Button icon={<MenuOutlined />} />
+            </Tooltip>
+          </Popover>
+          <Tooltip title="Cài đặt">
+            <Button icon={<SettingOutlined />} />
+          </Tooltip>
+          <Tooltip title="Trợ giúp">
+            <Button icon={<QuestionCircleOutlined />} />
+          </Tooltip>
         </Space>
       </div>
 
-      <div className={styles.summaryBar}>
-        Tổng COD: {(summary?.cod_total || 0).toLocaleString('vi-VN')} đ
-      </div>
-
-      <div className={layoutClass}>
-        {showFilters && (
-          <ShipmentFilters
-            filters={filters}
-            onChange={handleFiltersChange}
-            branches={branches}
-          />
-        )}
+      <div className={styles.layout}>
+        <ShipmentFilters
+          filters={filters}
+          onChange={handleFiltersChange}
+          branches={branches}
+        />
 
         <div className={styles.tableArea}>
           <ShipmentTable
@@ -164,18 +201,6 @@ const ShipmentListPage = () => {
             summary={summary}
           />
         </div>
-
-        {selectedShipment && (
-          <div className={styles.detailDrawer}>
-            <Spin spinning={detailLoading}>
-              <ShipmentDetail
-                shipment={selectedShipment}
-                loading={detailLoading}
-                onClose={() => setSelectedId(null)}
-              />
-            </Spin>
-          </div>
-        )}
       </div>
     </div>
   );

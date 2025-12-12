@@ -52,6 +52,7 @@ import ReturnListPage from './pages/returns/ReturnListPage';
 import DeliveryPartnerPage from './pages/orders/DeliveryPartnerPage';
 import ShipmentListPage from './pages/orders/ShipmentListPage';
 import SupplierListPage from './pages/suppliers/SupplierListPage';
+import VoucherListPage from './pages/customers/vouchers/VoucherListPage';
 
 // POS Sales Page
 import SalesPage from './pages/pos/SalesPage';
@@ -188,7 +189,7 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/customers/vouchers" element={<PlaceholderPage title="Voucher" />} />
+                    <Route path="/customers/vouchers" element={<VoucherListPage />} />
                     <Route
                       path="/reports/daily"
                       element={

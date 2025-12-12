@@ -11,8 +11,10 @@ class CouponModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
     protected $allowedFields = [
-        'code', 'discount_type', 'discount_value', 'min_amount',
-        'expiry_date', 'usage_limit', 'used_count', 'status',
+        'name', 'code', 'discount_type', 'discount_value', 'min_amount',
+        'start_date', 'expiry_date', 'validity_type', 'validity_period',
+        'usage_limit', 'used_count', 'status', 'description',
+        'branch_id', 'customer_group_id', 'creator_id', 'is_combinable',
     ];
     protected $useTimestamps = true;
 }

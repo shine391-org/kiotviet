@@ -1,0 +1,315 @@
+/* VoucherListPage.module.css */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background: #f5f7fb;
+    padding: 12px 16px 20px;
+    min-height: calc(100vh - 120px);
+}
+
+.content {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+/* ========== Filter Sidebar ========== */
+.filterCard {
+    position: sticky;
+    top: 64px;
+    background: #fff;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    width: 220px;
+    flex-shrink: 0;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+.filterCard :global(.ant-card-head) {
+    border-bottom: 1px solid #f0f0f0;
+    min-height: 49px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+}
+
+.filterCard :global(.ant-card-head-title) {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0;
+}
+
+.filterCard :global(.ant-card-body) {
+    padding: 12px !important;
+}
+
+.filterGroup {
+    margin-bottom: 16px;
+}
+
+.filterGroup:last-child {
+    margin-bottom: 0;
+}
+
+.filterLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+/* Status chips - improved visibility */
+.statusChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.statusChips :global(.ant-btn) {
+    border-radius: 6px;
+    font-size: 12px;
+    height: 28px;
+    padding: 0 12px;
+}
+
+.statusChips :global(.ant-btn-default) {
+    border: 1px solid #d9d9d9;
+    background: #fff;
+    color: #374151;
+}
+
+.statusChips :global(.ant-btn-default:hover) {
+    border-color: #1890ff;
+    color: #1890ff;
+}
+
+/* ========== Main Content ========== */
+.contentMain {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.tablePanel {
+    background: #fff;
+    border: 1px solid #e0e6ed;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ========== Toolbar ========== */
+.toolbarRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    min-height: 49px;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fafbfc;
+}
+
+.searchBox {
+    flex: 1;
+    max-width: 360px;
+}
+
+.searchBox :global(.ant-input-affix-wrapper) {
+    border-radius: 6px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-left: auto;
+}
+
+.actions :global(.ant-btn) {
+    border-radius: 6px;
+}
+
+/* ========== Table ========== */
+.tableWrapper {
+    flex: 1;
+    padding: 0;
+    overflow-x: auto;
+}
+
+.tableWrapper :global(.ant-table) {
+    border-radius: 0;
+}
+
+.tableWrapper :global(.ant-table-thead > tr > th) {
+    background: #fafbfc;
+    font-weight: 600;
+    font-size: 13px;
+    color: #374151;
+    padding: 10px 12px;
+}
+
+.tableWrapper :global(.ant-table-tbody > tr > td) {
+    padding: 10px 12px;
+    font-size: 13px;
+}
+
+.tableWrapper :global(.ant-table-pagination) {
+    margin: 12px 16px !important;
+}
+
+/* ========== Selected Row ========== */
+.selectedRow {
+    background-color: #e6f7ff !important;
+}
+
+.selectedRow td {
+    background-color: #e6f7ff !important;
+}
+
+/* ========== Expanded Row (Detail Panel) ========== */
+.tableWrapper :global(.ant-table-expanded-row > td) {
+    padding: 0 !important;
+    background: #fafbfc;
+}
+
+/* ========== Detail Panel ========== */
+.detailPanel {
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #e6f4ff;
+    border-radius: 6px;
+    margin: 12px;
+}
+
+.detailHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.detailTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1890ff;
+    margin: 0;
+}
+
+.detailStatus {
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+.detailStats {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 16px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.detailStatItem {
+    display: flex;
+    flex-direction: column;
+}
+
+.detailStatLabel {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.detailStatValue {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1890ff;
+}
+
+.detailSection {
+    margin-bottom: 16px;
+}
+
+.detailSectionTitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.detailRow {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 8px;
+}
+
+.detailItem {
+    display: flex;
+    flex-direction: column;
+    min-width: 140px;
+}
+
+.detailItemLabel {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.detailItemValue {
+    font-size: 13px;
+    color: #374151;
+}
+
+.detailActions {
+    display: flex;
+    gap: 8px;
+    padding-top: 12px;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* ========== Columns Menu ========== */
+.columnsMenu {
+    min-width: 200px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.columnsMenu :global(.ant-checkbox-wrapper) {
+    display: flex;
+    padding: 6px 12px;
+}
+
+/* ========== Responsive ========== */
+@media (max-width: 1100px) {
+    .content {
+        flex-direction: column;
+    }
+
+    .filterCard {
+        position: relative;
+        top: 0;
+        width: 100%;
+        max-height: none;
+    }
+
+    .toolbarRow {
+        flex-wrap: wrap;
+    }
+
+    .searchBox {
+        max-width: 100%;
+        order: -1;
+        width: 100%;
+    }
+}

@@ -23,8 +23,14 @@ class CouponRepository
         if (!empty($filters['status'])) {
             $builder->where('status', $filters['status']);
         }
+        if (!empty($filters['branch_id'])) {
+            $builder->where('branch_id', $filters['branch_id']);
+        }
         if (!empty($filters['search'])) {
-            $builder->like('code', $filters['search']);
+            $builder->groupStart()
+                ->like('code', $filters['search'])
+                ->orLike('name', $filters['search'])
+                ->groupEnd();
         }
 
         $limit = $filters['limit'] ?? 50;
@@ -40,8 +46,14 @@ class CouponRepository
         if (!empty($filters['status'])) {
             $builder->where('status', $filters['status']);
         }
+        if (!empty($filters['branch_id'])) {
+            $builder->where('branch_id', $filters['branch_id']);
+        }
         if (!empty($filters['search'])) {
-            $builder->like('code', $filters['search']);
+            $builder->groupStart()
+                ->like('code', $filters['search'])
+                ->orLike('name', $filters['search'])
+                ->groupEnd();
         }
         return $builder->countAllResults();
     }

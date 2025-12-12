@@ -49,14 +49,23 @@ class CouponService
         }
 
         $coupon = $this->repo->create([
+            'name' => $data['name'] ?? null,
             'code' => strtoupper($data['code']),
-            'discount_type' => $data['discount_type'] ?? 'percent',
+            'discount_type' => $data['discount_type'] ?? 'fixed',
             'discount_value' => $data['discount_value'] ?? 0,
             'min_amount' => $data['min_amount'] ?? 0,
+            'start_date' => $data['start_date'] ?? null,
             'expiry_date' => $data['expiry_date'] ?? null,
+            'validity_type' => $data['validity_type'] ?? 'date_range',
+            'validity_period' => $data['validity_period'] ?? null,
             'usage_limit' => $data['usage_limit'] ?? 0,
             'used_count' => 0,
             'status' => $data['status'] ?? 'active',
+            'description' => $data['description'] ?? null,
+            'branch_id' => $data['branch_id'] ?? null,
+            'customer_group_id' => $data['customer_group_id'] ?? null,
+            'creator_id' => $data['creator_id'] ?? null,
+            'is_combinable' => $data['is_combinable'] ?? false,
         ]);
         return ['success' => true, 'data' => $this->transform($coupon), 'message' => 'Coupon created'];
     }
@@ -66,7 +75,12 @@ class CouponService
         if (!$this->repo->findById($id)) {
             throw new RuntimeException('Coupon not found');
         }
-        $allowed = ['code', 'discount_type', 'discount_value', 'min_amount', 'expiry_date', 'usage_limit', 'status'];
+        $allowed = [
+            'name', 'code', 'discount_type', 'discount_value', 'min_amount',
+            'start_date', 'expiry_date', 'validity_type', 'validity_period',
+            'usage_limit', 'status', 'description',
+            'branch_id', 'customer_group_id', 'creator_id', 'is_combinable',
+        ];
         $update = array_intersect_key($data, array_flip($allowed));
         if (isset($update['code'])) {
             $update['code'] = strtoupper($update['code']);
@@ -157,16 +171,27 @@ class CouponService
     {
         return [
             'id' => (int) $row['id'],
+            'name' => $row['name'] ?? null,
             'code' => $row['code'],
             'discount_type' => $row['discount_type'],
             'discount_value' => (float) $row['discount_value'],
-            'min_amount' => (float) $row['min_amount'],
-            'expiry_date' => $row['expiry_date'],
-            'usage_limit' => (int) $row['usage_limit'],
-            'used_count' => (int) $row['used_count'],
+            'min_amount' => (float) ($row['min_amount'] ?? 0),
+            'start_date' => $row['start_date'] ?? null,
+            'expiry_date' => $row['expiry_date'] ?? null,
+            'validity_type' => $row['validity_type'] ?? 'date_range',
+            'validity_period' => isset($row['validity_period']) ? (int) $row['validity_period'] : null,
+            'usage_limit' => (int) ($row['usage_limit'] ?? 0),
+            'used_count' => (int) ($row['used_count'] ?? 0),
             'status' => $row['status'],
+            'description' => $row['description'] ?? null,
+            'branch_id' => isset($row['branch_id']) ? (int) $row['branch_id'] : null,
+            'customer_group_id' => isset($row['customer_group_id']) ? (int) $row['customer_group_id'] : null,
+            'creator_id' => isset($row['creator_id']) ? (int) $row['creator_id'] : null,
+            'is_combinable' => (bool) ($row['is_combinable'] ?? false),
             'is_expired' => $row['expiry_date'] && strtotime($row['expiry_date']) < time(),
-            'remaining_uses' => $row['usage_limit'] > 0 ? max(0, $row['usage_limit'] - $row['used_count']) : null,
+            'remaining_uses' => ($row['usage_limit'] ?? 0) > 0 ? max(0, ($row['usage_limit'] ?? 0) - ($row['used_count'] ?? 0)) : null,
+            'created_at' => $row['created_at'] ?? null,
+            'updated_at' => $row['updated_at'] ?? null,
         ];
     }
 }

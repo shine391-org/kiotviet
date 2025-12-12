@@ -19,12 +19,13 @@ export const COD_FILTERS = [
 export const DEFAULT_SHIPMENT_COLUMNS = [
   'code',
   'created_at',
+  'completed_at',
+  'created_by',
   'invoice_code',
   'customer_name',
-  'delivery_partner',
+  'branch_name',
+  'salesperson',
   'delivery_status',
-  'delivery_time',
-  'cod_amount',
 ];
 
 export const DELIVERY_PARTNERS = [

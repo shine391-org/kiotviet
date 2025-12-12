@@ -1,31 +1,66 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Table, Tag, Dropdown, Checkbox, Button, Space, Typography } from 'antd';
 import { DownOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import { SHIPMENT_STATUSES, formatDateTime } from '../../constants/shipments';
+import ShipmentExpandedRow from './ShipmentExpandedRow';
 
 const statusMap = SHIPMENT_STATUSES.reduce((acc, s) => ({ ...acc, [s.value]: s }), {});
 
-const columnCatalog = {
-  code: { title: 'Mã vận đơn', dataIndex: 'code', width: 150 },
+export const columnCatalog = {
+  code: {
+    title: 'Mã vận đơn',
+    dataIndex: 'code',
+    width: 130,
+    render: (v) => <Typography.Link>{v}</Typography.Link>
+  },
   created_at: {
     title: 'Thời gian tạo',
     dataIndex: 'created_at',
+    width: 150,
+    sorter: true,
+    render: (v) => formatDateTime(v),
+  },
+  completed_at: {
+    title: 'Thời gian hoàn thành',
+    dataIndex: 'completed_at',
     width: 170,
     sorter: true,
     render: (v) => formatDateTime(v),
   },
-  invoice_code: { title: 'Mã hóa đơn', dataIndex: 'invoice_code', width: 140 },
-  customer_name: { title: 'Khách hàng', dataIndex: 'customer_name', ellipsis: true },
-  delivery_partner: {
-    title: 'Đối tác giao hàng',
-    dataIndex: 'delivery_partner_name',
-    render: (v, r) => v || r.delivery_partner || '—',
-    width: 150,
+  created_by: {
+    title: 'Người tạo',
+    dataIndex: 'created_by_name',
+    width: 130,
+    render: (v, r) => v || r.created_by || '—',
+  },
+  invoice_code: {
+    title: 'Mã hóa đơn',
+    dataIndex: 'invoice_code',
+    width: 130,
+    render: (v) => <Typography.Link>{v || '—'}</Typography.Link>
+  },
+  customer_name: {
+    title: 'Khách hàng',
+    dataIndex: 'customer_name',
+    width: 130,
+    ellipsis: true
+  },
+  branch_name: {
+    title: 'Chi nhánh',
+    dataIndex: 'branch_name',
+    width: 120,
+    render: (v) => v || '—',
+  },
+  salesperson: {
+    title: 'Nhân viên bán',
+    dataIndex: 'salesperson_name',
+    width: 130,
+    render: (v, r) => v || r.salesperson || '—',
   },
   delivery_status: {
-    title: 'Trạng thái giao',
+    title: 'Ngày',
     dataIndex: 'delivery_status',
-    width: 150,
+    width: 130,
     render: (v, r) => {
       const meta = statusMap[v] || {};
       return (
@@ -35,6 +70,12 @@ const columnCatalog = {
         </Space>
       );
     },
+  },
+  delivery_partner: {
+    title: 'Đối tác giao hàng',
+    dataIndex: 'delivery_partner_name',
+    render: (v, r) => v || r.delivery_partner || '—',
+    width: 150,
   },
   delivery_time: {
     title: 'Thời gian giao hàng',
@@ -64,6 +105,9 @@ const ShipmentTable = ({
   onToggleColumn,
   summary,
 }) => {
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
   const columns = useMemo(() => {
     return visibleColumns
       .map((key) => ({ key, ...columnCatalog[key] }))
@@ -83,6 +127,24 @@ const ShipmentTable = ({
   }));
 
   const menu = { items: columnMenuItems };
+
+  const handleRowClick = (record) => {
+    // Toggle expansion
+    if (expandedRowKeys.includes(record.id)) {
+      setExpandedRowKeys([]);
+    } else {
+      setExpandedRowKeys([record.id]);
+    }
+    // Also call parent handler if provided
+    if (onSelectRow) {
+      onSelectRow(record);
+    }
+  };
+
+  const rowSelection = {
+    selectedRowKeys,
+    onChange: (keys) => setSelectedRowKeys(keys),
+  };
 
   return (
     <div>
@@ -105,6 +167,7 @@ const ShipmentTable = ({
         dataSource={data}
         columns={columns}
         loading={loading}
+        rowSelection={rowSelection}
         pagination={{
           current: pagination?.page || 1,
           pageSize: pagination?.limit || 15,
@@ -121,10 +184,18 @@ const ShipmentTable = ({
           });
         }}
         onRow={(record) => ({
-          onClick: () => onSelectRow && onSelectRow(record),
+          onClick: () => handleRowClick(record),
+          style: { cursor: 'pointer' },
         })}
         rowClassName={(record) => (record.id === selectedRowKey ? 'table-row-selected' : '')}
         size="middle"
+        expandable={{
+          expandedRowKeys,
+          expandedRowRender: (record) => (
+            <ShipmentExpandedRow record={record} />
+          ),
+          expandIcon: () => null, // Hide the default expand icon
+        }}
       />
     </div>
   );
