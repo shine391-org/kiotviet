@@ -184,12 +184,16 @@ const ReturnDetailPanel = ({ data, onEdit, onDelete, onSave }) => {
                             </div>
                             <div className={styles.infoRow}>
                                 <span className={styles.label}>Mã phiếu chi:</span>
-                                <Typography.Link
-                                    onClick={() => data.payment_receipt && handleReceiptClick(data.payment_receipt)}
-                                    style={{ cursor: data.payment_receipt ? 'pointer' : 'default' }}
-                                >
-                                    {data.payment_receipt?.receipt_code || '—'}
-                                </Typography.Link>
+                                {data.payment_receipt ? (
+                                    <Typography.Link
+                                        onClick={() => handleReceiptClick(data.payment_receipt)}
+                                        style={{ cursor: 'pointer' }}
+                                    >
+                                        {data.payment_receipt.receipt_code}
+                                    </Typography.Link>
+                                ) : (
+                                    <Typography.Text type="secondary">—</Typography.Text>
+                                )}
                             </div>
                         </div>
                         <div className={styles.infoCol}>

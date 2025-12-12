@@ -258,14 +258,24 @@ class PurchaseReturnRepository
 
     public function delete(int $id): bool
     {
+        // Check if record exists first
+        $exists = $this->returns->find($id);
+        if (!$exists) {
+            return false; // Not found
+        }
+        
         $this->db->transStart();
         // Delete related items first
         $this->items->where('purchase_return_id', $id)->delete();
         // Then delete parent
-        $result = (bool)$this->returns->delete($id);
+        $this->returns->delete($id);
         $this->db->transComplete();
         
-        return $result && $this->db->transStatus();
+        if ($this->db->transStatus() === false) {
+            throw new \RuntimeException('Failed to delete purchase return: transaction failed');
+        }
+        
+        return true;
     }
 
     /**

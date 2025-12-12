@@ -71,7 +71,21 @@ class ProductRepository
     }
 
     /** Map product => category ids. @agent-use: Attach categories @agent-pattern: Batch fetch */
-    public function categoryMap(array $productIds): array { if (empty($productIds)) { return []; } $rows = $this->links->select('product_id, category_id')->whereIn('product_id', $productIds)->findAll(); $map = []; foreach ($rows as $row) { $map[$row['product_id']][] = (int) $row['category_id']; } return $map; }
+    public function categoryMap(array $productIds): array
+    {
+        if (empty($productIds)) { return []; }
+        $rows = $this->db->table('product_category_links pcl')
+            ->select('pcl.product_id, pcl.category_id')
+            ->join('product_categories pc', 'pc.id = pcl.category_id', 'inner')
+            ->whereIn('pcl.product_id', $productIds)
+            ->where('pcl.deleted_at', null)
+            ->where('pc.deleted_at', null)
+            ->get()
+            ->getResultArray();
+        $map = [];
+        foreach ($rows as $row) { $map[$row['product_id']][] = (int) $row['category_id']; }
+        return $map;
+    }
 
     /** Map product => category names. @agent-use: Display category names @agent-pattern: Batch fetch with join */
     public function categoryNamesMap(array $productIds): array
@@ -81,6 +95,8 @@ class ProductRepository
             ->select('pcl.product_id, pc.name')
             ->join('product_categories pc', 'pc.id = pcl.category_id')
             ->whereIn('pcl.product_id', $productIds)
+            ->where('pcl.deleted_at', null)
+            ->where('pc.deleted_at', null)
             ->get()
             ->getResultArray();
         $map = [];

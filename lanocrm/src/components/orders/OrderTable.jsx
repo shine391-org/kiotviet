@@ -214,7 +214,6 @@ const OrderTable = ({
               onProcess={() => handleProcess(record)}
             />
           ),
-          expandRowByClick: true,
         }}
       />
     </div>

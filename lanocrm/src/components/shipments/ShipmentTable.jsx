@@ -184,7 +184,14 @@ const ShipmentTable = ({
           });
         }}
         onRow={(record) => ({
-          onClick: () => handleRowClick(record),
+          onClick: (event) => {
+            // Ngăn chặn row click khi click vào checkbox hoặc ô selection
+            if (event.target.closest('input[type="checkbox"]') ||
+              event.target.closest('.ant-table-selection-column')) {
+              return;
+            }
+            handleRowClick(record);
+          },
           style: { cursor: 'pointer' },
         })}
         rowClassName={(record) => (record.id === selectedRowKey ? 'table-row-selected' : '')}

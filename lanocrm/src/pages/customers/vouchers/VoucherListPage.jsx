@@ -45,7 +45,7 @@ const VoucherListPage = () => {
 
     const [loading, setLoading] = useState(false);
     const [vouchers, setVouchers] = useState([]);
-    const [pagination, setPagination] = useState({ page: 1, limit: 15, total: 0 });
+    const [total, setTotal] = useState(0);
     const [filters, setFilters] = useState({
         page: 1,
         limit: 15,
@@ -53,6 +53,7 @@ const VoucherListPage = () => {
         status: null,
         branch_id: null,
     });
+    const [branches, setBranches] = useState([]);
     const [searchText, setSearchText] = useState('');
     const [selectedId, setSelectedId] = useState(null);
     const [modalOpen, setModalOpen] = useState(false);
@@ -74,11 +75,7 @@ const VoucherListPage = () => {
             const response = await couponApi.getAll(filters);
             const data = response.data?.data || response.data || [];
             setVouchers(Array.isArray(data) ? data : []);
-            setPagination({
-                page: response.data?.page || filters.page,
-                limit: response.data?.limit || filters.limit,
-                total: response.data?.total || data.length,
-            });
+            setTotal(response.data?.total || response.data?.pagination?.total || data.length);
         } catch (err) {
             message.error('Không thể tải danh sách voucher');
             setVouchers([]);
@@ -86,6 +83,21 @@ const VoucherListPage = () => {
             setLoading(false);
         }
     }, [filters, message]);
+
+    // Load branches for filter dropdown
+    useEffect(() => {
+        const loadBranches = async () => {
+            try {
+                const branchApi = (await import('../../../api/branchApi')).default;
+                const res = await branchApi.getBranches();
+                const data = res?.data || res || [];
+                setBranches(Array.isArray(data) ? data.map(b => ({ value: b.id, label: b.name })) : []);
+            } catch (err) {
+                console.error('Failed to load branches:', err);
+            }
+        };
+        loadBranches();
+    }, []);
 
     useEffect(() => {
         fetchVouchers();
@@ -342,7 +354,7 @@ const VoucherListPage = () => {
                             style={{ width: '100%' }}
                             placeholder="Chọn chi nhánh"
                             allowClear
-                            options={[]}
+                            options={branches}
                             onChange={(value) => setFilters((prev) => ({ ...prev, branch_id: value, page: 1 }))}
                         />
                     </div>
@@ -406,24 +418,21 @@ const VoucherListPage = () => {
                                 dataSource={vouchers}
                                 columns={columns}
                                 pagination={{
-                                    current: pagination.page || 1,
-                                    pageSize: pagination.limit || 15,
-                                    total: pagination.total || 0,
+                                    current: filters.page || 1,
+                                    pageSize: filters.limit || 15,
+                                    total: total || 0,
                                     showSizeChanger: true,
                                     pageSizeOptions: ['15', '20', '50', '100'],
-                                    showTotal: (total, range) =>
-                                        `Hiển thị ${range[0]}-${range[1]} trong ${total} đợt phát hành`,
+                                    showTotal: (t, range) =>
+                                        `Hiển thị ${range[0]}-${range[1]} trong ${t} đợt phát hành`,
                                     onChange: (page, pageSize) =>
                                         setFilters((prev) => ({ ...prev, page, limit: pageSize })),
                                 }}
                                 rowSelection={{
-                                    type: 'checkbox',
+                                    type: 'radio',
                                     selectedRowKeys: selectedId ? [selectedId] : [],
                                     onChange: (keys) => {
-                                        const id = keys[keys.length - 1];
-                                        if (id && id !== selectedId) {
-                                            setSelectedId(id);
-                                        }
+                                        setSelectedId(keys[0] || null);
                                     },
                                 }}
                                 expandable={{

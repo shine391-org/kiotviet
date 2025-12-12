@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Modal, Select, Table, Button, Empty, Spin, App } from 'antd';
+import { Modal, Select, Table, Button, Empty, Spin, App, Alert } from 'antd';
 import { WifiOutlined, DisconnectOutlined, InboxOutlined, SyncOutlined } from '@ant-design/icons';
 import posApi from '../../api/posApi';
 import styles from './SyncDataModal.module.css';
@@ -10,6 +10,7 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
     const [loading, setLoading] = useState(false);
     const [syncing, setSyncing] = useState(false);
     const [pendingDocs, setPendingDocs] = useState([]);
+    const [fetchError, setFetchError] = useState(null);
     const [isOnline, setIsOnline] = useState(navigator.onLine);
 
     // Monitor online status
@@ -31,6 +32,7 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
         if (!open) return;
 
         setLoading(true);
+        setFetchError(null);
         try {
             const response = await posApi.getOrders({
                 status: 'draft,pending',
@@ -51,12 +53,16 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
             }
         } catch (error) {
             console.error('Failed to fetch pending documents:', error);
-            // If offline, could show locally stored pending items
+            const errorMsg = isOnline
+                ? 'Không thể tải danh sách phiếu. Vui lòng thử lại.'
+                : 'Không có kết nối Internet. Vui lòng kiểm tra và thử lại.';
+            setFetchError(errorMsg);
+            message.error(errorMsg);
             setPendingDocs([]);
         } finally {
             setLoading(false);
         }
-    }, [open]);
+    }, [open, isOnline, message]);
 
     useEffect(() => {
         fetchPendingDocs();
@@ -78,13 +84,14 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
             return;
         }
 
+        if (!onSyncAll) {
+            message.warning('Chức năng đồng bộ chưa được cấu hình');
+            return;
+        }
+
         setSyncing(true);
         try {
-            // Call parent handler if provided
-            if (onSyncAll) {
-                await onSyncAll(filteredDocs);
-            }
-
+            await onSyncAll(filteredDocs);
             message.success(`Đã đồng bộ ${filteredDocs.length} phiếu thành công`);
             await fetchPendingDocs(); // Refresh list
         } catch (error) {
@@ -158,6 +165,22 @@ const SyncDataModal = ({ open, onClose, onSyncAll }) => {
                     )}
                 </div>
             </div>
+
+            {fetchError && (
+                <Alert
+                    message={fetchError}
+                    type="error"
+                    showIcon
+                    closable
+                    onClose={() => setFetchError(null)}
+                    action={
+                        <Button size="small" onClick={fetchPendingDocs}>
+                            Thử lại
+                        </Button>
+                    }
+                    style={{ marginBottom: 16 }}
+                />
+            )}
 
             <Spin spinning={loading}>
                 <Table

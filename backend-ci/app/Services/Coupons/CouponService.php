@@ -48,7 +48,16 @@ class CouponService
             throw new InvalidArgumentException('Coupon code already exists');
         }
 
-        $coupon = $this->repo->create([
+        // Separate sensitive fields from normal data
+        $sensitiveFields = [
+            'used_count' => 0,
+            'branch_id' => $data['branch_id'] ?? null,
+            'customer_group_id' => $data['customer_group_id'] ?? null,
+            'creator_id' => $data['creator_id'] ?? null,
+        ];
+
+        // Normal data that goes through model validation
+        $normalData = [
             'name' => $data['name'] ?? null,
             'code' => strtoupper($data['code']),
             'discount_type' => $data['discount_type'] ?? 'fixed',
@@ -59,14 +68,12 @@ class CouponService
             'validity_type' => $data['validity_type'] ?? 'date_range',
             'validity_period' => $data['validity_period'] ?? null,
             'usage_limit' => $data['usage_limit'] ?? 0,
-            'used_count' => 0,
             'status' => $data['status'] ?? 'active',
             'description' => $data['description'] ?? null,
-            'branch_id' => $data['branch_id'] ?? null,
-            'customer_group_id' => $data['customer_group_id'] ?? null,
-            'creator_id' => $data['creator_id'] ?? null,
             'is_combinable' => $data['is_combinable'] ?? false,
-        ]);
+        ];
+
+        $coupon = $this->repo->createWithSensitiveFields($normalData, $sensitiveFields);
         return ['success' => true, 'data' => $this->transform($coupon), 'message' => 'Coupon created'];
     }
 
@@ -188,7 +195,8 @@ class CouponService
             'customer_group_id' => isset($row['customer_group_id']) ? (int) $row['customer_group_id'] : null,
             'creator_id' => isset($row['creator_id']) ? (int) $row['creator_id'] : null,
             'is_combinable' => (bool) ($row['is_combinable'] ?? false),
-            'is_expired' => $row['expiry_date'] && strtotime($row['expiry_date']) < time(),
+            'is_expired' => ($row['expiry_date'] && strtotime($row['expiry_date']) < time()) 
+                          || ($row['start_date'] && strtotime($row['start_date']) > time()),
             'remaining_uses' => ($row['usage_limit'] ?? 0) > 0 ? max(0, ($row['usage_limit'] ?? 0) - ($row['used_count'] ?? 0)) : null,
             'created_at' => $row['created_at'] ?? null,
             'updated_at' => $row['updated_at'] ?? null,

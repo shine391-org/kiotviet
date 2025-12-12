@@ -73,6 +73,43 @@ class CouponRepository
         $this->model->insert($data);
         return $this->findById((int) $this->model->getInsertID());
     }
+    
+    /**
+     * Create coupon with sensitive fields (used_count, branch_id, customer_group_id, creator_id)
+     * These fields are removed from model's allowedFields for security
+     * Only use this method after proper authorization checks in service layer
+     */
+    public function createWithSensitiveFields(array $data, array $sensitiveFields = []): ?array
+    {
+        // First insert using model (validates normal fields)
+        $this->model->insert($data);
+        $id = (int) $this->model->getInsertID();
+        
+        // Then update sensitive fields directly via DB if provided
+        if (!empty($sensitiveFields) && $id > 0) {
+            $allowedSensitive = ['used_count', 'branch_id', 'customer_group_id', 'creator_id'];
+            $updateFields = array_intersect_key($sensitiveFields, array_flip($allowedSensitive));
+            if (!empty($updateFields)) {
+                $this->db->table('coupons')->where('id', $id)->update($updateFields);
+            }
+        }
+        
+        return $this->findById($id);
+    }
+    
+    /**
+     * Update sensitive fields directly (bypassing model's allowedFields)
+     * Only use after proper authorization in service layer
+     */
+    public function updateSensitiveFields(int $id, array $sensitiveFields): bool
+    {
+        $allowedSensitive = ['used_count', 'branch_id', 'customer_group_id', 'creator_id'];
+        $updateFields = array_intersect_key($sensitiveFields, array_flip($allowedSensitive));
+        if (empty($updateFields)) {
+            return true;
+        }
+        return $this->db->table('coupons')->where('id', $id)->update($updateFields);
+    }
 
     public function update(int $id, array $data): ?array
     {

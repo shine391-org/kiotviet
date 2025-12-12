@@ -189,7 +189,14 @@ function App() {
                         </ProtectedRoute>
                       }
                     />
-                    <Route path="/customers/vouchers" element={<VoucherListPage />} />
+                    <Route
+                      path="/customers/vouchers"
+                      element={
+                        <ProtectedRoute requiredPermission="vouchers.view">
+                          <VoucherListPage />
+                        </ProtectedRoute>
+                      }
+                    />
                     <Route
                       path="/reports/daily"
                       element={

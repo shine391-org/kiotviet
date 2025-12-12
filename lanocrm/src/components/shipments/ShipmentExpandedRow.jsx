@@ -66,7 +66,7 @@ const shippingInfoColumns = [
                     {record.created_by_name || record.created_by}
                 </Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                    Siêu tốc
+                    {record?.delivery_service || record?.delivery_service_type || '—'}
                 </Text>
                 <Text type="secondary" style={{ fontSize: 12 }}>
                     {typeof record.dimensions === 'object'
@@ -82,8 +82,8 @@ const shippingInfoColumns = [
         width: 150,
         render: (_, record) => (
             <Space direction="vertical" size={0}>
-                <Text type="secondary">0 g</Text>
-                <Text type="secondary">Giao trong ngày</Text>
+                <Text type="secondary">{record?.weight ? `${record.weight} g` : '—'}</Text>
+                <Text type="secondary">{record?.delivery_time || record?.delivery_label || '—'}</Text>
             </Space>
         )
     },
@@ -93,8 +93,8 @@ const shippingInfoColumns = [
         width: 100,
         render: (_, record) => (
             <Space direction="vertical" size={0}>
-                <Text>Người nhận</Text>
-                <Text>Người nhận</Text>
+                <Text>Người nhận: {record?.recipient || record?.customer_name || '—'}</Text>
+                <Text>Người gửi: {record?.sender || record?.branch_name || '—'}</Text>
             </Space>
         )
     },
@@ -114,12 +114,12 @@ const shippingInfoColumns = [
         dataIndex: 'cod_amount',
         align: 'right',
         width: 100,
-        render: (v) => (
+        render: (v, record) => (
             <Space direction="vertical" size={0} align="end">
-                <Text>0</Text>
-                <Text>{(Number(v || 0)).toLocaleString('vi-VN')}</Text>
-                <Text>{(Number(v || 0)).toLocaleString('vi-VN')}</Text>
-                <Text>0</Text>
+                <Text>{Number(record?.fee || 0).toLocaleString('vi-VN')}</Text>
+                <Text>{Number(record?.insurance || 0).toLocaleString('vi-VN')}</Text>
+                <Text>{Number(record?.shipping_cost || v || 0).toLocaleString('vi-VN')}</Text>
+                <Text>{Number(record?.total_amount || 0).toLocaleString('vi-VN')}</Text>
             </Space>
         )
     },

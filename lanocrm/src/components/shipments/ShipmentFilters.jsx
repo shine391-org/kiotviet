@@ -1,6 +1,5 @@
 import React from 'react';
 import { Card, Select, Radio, DatePicker, Space, Typography, Cascader, Tag, Divider } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import {
   SHIPMENT_STATUSES,

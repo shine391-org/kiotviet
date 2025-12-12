@@ -78,14 +78,17 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
         }, 300);
     }, [fetchUsers]);
 
-    // Load dropdown data on modal open
+    // Cleanup debounce timeout on unmount
     useEffect(() => {
-        if (open) {
-            loadDropdownData();
-        }
-    }, [open]);
+        return () => {
+            if (userSearchDebounceRef.current) {
+                clearTimeout(userSearchDebounceRef.current);
+                userSearchDebounceRef.current = null;
+            }
+        };
+    }, []);
 
-    const loadDropdownData = async () => {
+    const loadDropdownData = useCallback(async () => {
         try {
             // Load branches
             const branchRes = await branchApi.getBranches();
@@ -102,7 +105,14 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
         } catch (err) {
             console.error('Failed to load dropdown data:', err);
         }
-    };
+    }, [fetchUsers]);
+
+    // Load dropdown data on modal open
+    useEffect(() => {
+        if (open) {
+            loadDropdownData();
+        }
+    }, [open, loadDropdownData]);
 
     useEffect(() => {
         if (open) {
@@ -211,7 +221,10 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
                             name="code"
                             label={
                                 <span>
-                                    Mã đợt phát hành <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                                    Mã đợt phát hành{' '}
+                                    <Tooltip title="Mã duy nhất định danh đợt phát hành voucher">
+                                        <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                                    </Tooltip>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Nhập mã đợt phát hành' }]}
@@ -223,7 +236,10 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
                             name="discount_value"
                             label={
                                 <span>
-                                    Mệnh giá <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                                    Mệnh giá{' '}
+                                    <Tooltip title="Giá trị giảm giá cho mỗi voucher">
+                                        <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                                    </Tooltip>
                                 </span>
                             }
                             rules={[{ required: true, message: 'Nhập mệnh giá' }]}
@@ -272,7 +288,20 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
                                 <Radio value="period">
                                     <Space>
                                         <span>Trong</span>
-                                        <Form.Item name="validity_period" noStyle>
+                                        <Form.Item
+                                            name="validity_period"
+                                            noStyle
+                                            rules={[
+                                                {
+                                                    validator: (_, value) => {
+                                                        if (validityType === 'period' && !value) {
+                                                            return Promise.reject('Vui lòng chọn thời hạn');
+                                                        }
+                                                        return Promise.resolve();
+                                                    }
+                                                }
+                                            ]}
+                                        >
                                             <Select
                                                 style={{ width: 100 }}
                                                 placeholder="ngày"
@@ -336,7 +365,9 @@ const CreateVoucherModal = ({ open, voucher, onCancel, onSuccess }) => {
                     <Form.Item name="is_combinable" valuePropName="checked">
                         <Checkbox>
                             Cho phép gộp nhiều voucher trên một hóa đơn{' '}
-                            <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                            <Tooltip title="Cho phép kết hợp nhiều voucher trong một giao dịch">
+                                <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                            </Tooltip>
                         </Checkbox>
                     </Form.Item>
                 </div>

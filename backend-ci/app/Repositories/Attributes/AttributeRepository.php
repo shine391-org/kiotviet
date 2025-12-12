@@ -117,6 +117,9 @@ class AttributeRepository
     /** Products by attribute (all options). @agent-use: Attribute products list @agent-pattern: Join with products */
     public function productsByAttribute(int $attributeId): array
     {
+        // Set a larger group_concat_max_len to avoid truncation of option_names
+        $this->db->query("SET SESSION group_concat_max_len = 1000000");
+        
         return $this->db->table('product_attribute_values pav')
             ->select('pav.product_id, MAX(pav.variant_id) as variant_id, GROUP_CONCAT(DISTINCT pao.option_name SEPARATOR \', \') as option_names, MAX(p.code) as code, MAX(p.name) as name, MAX(p.name_vi) as name_vi, MAX(p.image_url) as image_url, MAX(p.selling_price) as selling_price, MAX(p.purchase_price) as purchase_price')
             ->join('products p', 'p.id = pav.product_id', 'left')

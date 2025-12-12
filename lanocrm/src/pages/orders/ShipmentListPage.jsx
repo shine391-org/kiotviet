@@ -152,7 +152,7 @@ const ShipmentListPage = () => {
         <Input
           allowClear
           prefix={<SearchOutlined />}
-          suffix={<FilterOutlined style={{ cursor: 'pointer', color: '#1890ff' }} />}
+          suffix={<FilterOutlined style={{ color: '#999' }} />}
           placeholder="Theo mã vận đơn"
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
@@ -173,10 +173,10 @@ const ShipmentListPage = () => {
             </Tooltip>
           </Popover>
           <Tooltip title="Cài đặt">
-            <Button icon={<SettingOutlined />} />
+            <Button icon={<SettingOutlined />} onClick={() => message.info('Tính năng đang phát triển')} />
           </Tooltip>
           <Tooltip title="Trợ giúp">
-            <Button icon={<QuestionCircleOutlined />} />
+            <Button icon={<QuestionCircleOutlined />} onClick={() => message.info('Trợ giúp đang được cập nhật')} />
           </Tooltip>
         </Space>
       </div>

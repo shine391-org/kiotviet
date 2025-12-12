@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   App,
@@ -61,6 +61,9 @@ const OrderListPage = () => {
   const [searchPopoverOpen, setSearchPopoverOpen] = useState(false);
   const [productSearch, setProductSearch] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
+
+  // Ref to track debounce timer
+  const searchDebounceRef = useRef(null);
 
   // Compute mergeable orders: same customer or phone within 7 days
   const mergeableOrders = useMemo(() => {
@@ -132,6 +135,11 @@ const OrderListPage = () => {
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
         <Button onClick={() => setSearchPopoverOpen(false)}>Mở rộng</Button>
         <Button type="primary" onClick={() => {
+          // Clear debounce timer to prevent duplicate dispatch
+          if (searchDebounceRef.current) {
+            clearTimeout(searchDebounceRef.current);
+            searchDebounceRef.current = null;
+          }
           dispatch(setOrderFilters({
             search: searchText,
             product_search: productSearch,
@@ -188,11 +196,16 @@ const OrderListPage = () => {
     dispatch(fetchOrders());
   }, [dispatch, filters]);
 
+  // Debounced search - store timer in ref for cleanup
   useEffect(() => {
-    const timer = setTimeout(() => {
+    searchDebounceRef.current = setTimeout(() => {
       dispatch(setOrderFilters({ search: searchText }));
     }, 400);
-    return () => clearTimeout(timer);
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
   }, [searchText, dispatch]);
 
   useEffect(() => {
