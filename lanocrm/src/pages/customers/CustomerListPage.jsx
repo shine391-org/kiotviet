@@ -105,6 +105,7 @@ const CustomerListPage = () => {
   const [selectedId, setSelectedId] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState(null);
+  const [focusSection, setFocusSection] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [customerGroups, setCustomerGroups] = useState([]);
   const [visibleCols, setVisibleCols] = useState([
@@ -250,12 +251,14 @@ const CustomerListPage = () => {
 
   const openCreate = () => {
     setEditingCustomer(null);
+    setFocusSection(null);
     setModalOpen(true);
   };
 
-  const openEdit = (customer) => {
+  const openEdit = (customer, section = null) => {
     if (!customer) return;
     setEditingCustomer(customer);
+    setFocusSection(section);
     setModalOpen(true);
   };
 
@@ -646,8 +649,7 @@ const CustomerListPage = () => {
                       onDelete={handleDelete}
                       onToggleStatus={handleToggleStatus}
                       onInvoiceInfoClick={(c) => {
-                        // TODO: Open invoice info modal
-                        openEdit(c);
+                        openEdit(c, 'invoice');
                       }}
                       onAddAddress={(c) => {
                         // TODO: Open add address modal
@@ -703,9 +705,11 @@ const CustomerListPage = () => {
       <CreateCustomerModal
         open={modalOpen}
         customer={editingCustomer}
+        focusSection={focusSection}
         onCancel={() => {
           setModalOpen(false);
           setEditingCustomer(null);
+          setFocusSection(null);
         }}
         onSuccess={handleModalSuccess}
         customerGroups={customerGroups}
