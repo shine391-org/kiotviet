@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, DatePicker, InputNumber, Table, Checkbox, Space, Button, Typography } from 'antd';
+import { Modal, Form, Input, Select, DatePicker, InputNumber, Table, Checkbox, Space, Button, Typography, message } from 'antd';
 import { ExportOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
+import { updateCashTransaction } from '../../store/slices/cashSlice';
 import dayjs from 'dayjs';
 
 /**
@@ -10,6 +12,7 @@ import dayjs from 'dayjs';
 const EditPaymentReceiptModal = ({ open, receipt, returnData, onCancel, onSuccess }) => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if (open && receipt) {
@@ -31,12 +34,28 @@ const EditPaymentReceiptModal = ({ open, receipt, returnData, onCancel, onSucces
         try {
             const values = await form.validateFields();
             setLoading(true);
-            // TODO: Call API to update payment receipt
-            console.log('Update receipt:', values);
-            setLoading(false);
-            onSuccess();
+
+            const payload = {
+                created_at: values.created_at ? values.created_at.format('YYYY-MM-DD HH:mm:ss') : null,
+                receiver_name: values.receiver_name,
+                payment_method: values.payment_method,
+                account_number: values.account_number,
+                notes: values.notes,
+            };
+
+            const resultAction = await dispatch(updateCashTransaction({ id: receipt.id, data: payload }));
+
+            if (updateCashTransaction.fulfilled.match(resultAction)) {
+                message.success('Cập nhật phiếu chi thành công');
+                setLoading(false);
+                onSuccess();
+            } else {
+                message.error(resultAction.payload || 'Có lỗi xảy ra khi cập nhật');
+                setLoading(false);
+            }
         } catch (err) {
             console.error('Form validation failed:', err);
+            setLoading(false);
         }
     };
 
