@@ -32,6 +32,7 @@ import SyncDataModal from './SyncDataModal';
 import PrintSettingsDropdown from './PrintSettingsDropdown';
 import AddProductModal from './AddProductModal';
 import DisplaySettingsModal from './DisplaySettingsModal';
+import ShortcutsModal from './ShortcutsModal';
 import posApi from '../../api/posApi';
 import { logout } from '../../store/slices/authSlice';
 import styles from './SalesHeader.module.css';
@@ -60,6 +61,7 @@ const SalesHeader = ({
     const [showSyncModal, setShowSyncModal] = useState(false);
     const [showAddProductModal, setShowAddProductModal] = useState(false);
     const [showDisplayModal, setShowDisplayModal] = useState(false);
+    const [showShortcutsModal, setShowShortcutsModal] = useState(false);
     const [searchOptions, setSearchOptions] = useState([]);
     const searchInputRef = useRef(null);
 
@@ -237,7 +239,7 @@ const SalesHeader = ({
             key: 'shortcuts',
             label: 'Phím tắt',
             icon: <QuestionCircleOutlined />,
-            disabled: true, // TODO: Implement shortcuts help modal
+            onClick: () => setShowShortcutsModal(true),
         },
         {
             key: 'admin',
@@ -414,6 +416,11 @@ const SalesHeader = ({
             <DisplaySettingsModal
                 open={showDisplayModal}
                 onClose={() => setShowDisplayModal(false)}
+            />
+
+            <ShortcutsModal
+                open={showShortcutsModal}
+                onClose={() => setShowShortcutsModal(false)}
             />
         </>
     );

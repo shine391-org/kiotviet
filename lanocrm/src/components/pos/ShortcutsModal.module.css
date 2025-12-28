@@ -1,0 +1,52 @@
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 8px 0;
+}
+
+.sectionTitle {
+    font-weight: 600;
+    font-size: 16px;
+    color: #1f1f1f;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.shortcutGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 24px;
+}
+
+.shortcutItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: #fafafa;
+    border-radius: 6px;
+    border: 1px solid #f0f0f0;
+}
+
+.shortcutKey {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 32px;
+    height: 24px;
+    padding: 0 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1890ff;
+    background-color: #e6f7ff;
+    border: 1px solid #91d5ff;
+    border-radius: 4px;
+    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.02);
+}
+
+.shortcutLabel {
+    font-size: 14px;
+    color: #595959;
+}
