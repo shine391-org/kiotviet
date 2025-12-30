@@ -30,6 +30,7 @@ import PurchaseReturnCreatePage from './pages/inventory/PurchaseReturnCreatePage
 
 // Reports Pages
 import DailyReportPage from './pages/reports/DailyReportPage';
+import SalesReportPage from './pages/reports/SalesReportPage';
 
 // 🆕 PRODUCT PAGES
 import ProductListPage from './pages/products/ProductListPage';
@@ -202,6 +203,14 @@ function App() {
                       element={
                         <ProtectedRoute requiredPermission="reports.view">
                           <DailyReportPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/reports/sales"
+                      element={
+                        <ProtectedRoute requiredPermission="reports.view">
+                          <SalesReportPage />
                         </ProtectedRoute>
                       }
                     />

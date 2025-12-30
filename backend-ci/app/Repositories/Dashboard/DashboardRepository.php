@@ -246,6 +246,10 @@ class DashboardRepository
                 date('Y-m-01'), // First day of current month
                 date('Y-m-t')   // Last day of current month
             ],
+            'last_month' => [
+                date('Y-m-01', strtotime('first day of last month')), // First day of last month
+                date('Y-m-t', strtotime('last day of last month'))     // Last day of last month
+            ],
             'year' => [
                 date('Y-01-01'),
                 date('Y-12-31')
@@ -255,5 +259,95 @@ class DashboardRepository
                 date('Y-m-t')
             ]
         };
+    }
+
+    /**
+     * Get daily revenue with invoice details for each day
+     * @agent-pattern: Grouped data with nested details
+     */
+    public function getDailyRevenueWithInvoices(string $range, ?int $branchId = null): array
+    {
+        [$startDate, $endDate] = $this->getDateRangeFromFilter($range);
+        
+        // Step 1: Get daily totals
+        $dailyTotals = [];
+        
+        // Get revenue by day from invoices
+        $revenueBuilder = $this->db->table('invoices')
+            ->select('DATE(issue_date) as date, SUM(total) as revenue')
+            ->where('DATE(issue_date) >=', $startDate)
+            ->where('DATE(issue_date) <=', $endDate)
+            ->groupBy('DATE(issue_date)')
+            ->orderBy('date', 'DESC');
+        
+        if ($branchId) {
+            $revenueBuilder->where('branch_id', $branchId);
+        }
+        
+        $revenueData = $revenueBuilder->get()->getResultArray();
+        
+        foreach ($revenueData as $row) {
+            $dailyTotals[$row['date']] = [
+                'date' => $row['date'],
+                'revenue' => (float)$row['revenue'],
+                'returns' => 0,
+                'invoices' => [],
+            ];
+        }
+        
+        // Step 2: Get returns by day
+        // Note: returns table doesn't have branch_id column, so we can't filter by branch
+        $returnsBuilder = $this->db->table('returns')
+            ->select('DATE(created_at) as date, SUM(return_amount) as returns')
+            ->where('DATE(created_at) >=', $startDate)
+            ->where('DATE(created_at) <=', $endDate)
+            ->where('status', 'completed')
+            ->groupBy('DATE(created_at)');
+        
+        $returnsData = $returnsBuilder->get()->getResultArray();
+        
+        foreach ($returnsData as $row) {
+            if (isset($dailyTotals[$row['date']])) {
+                $dailyTotals[$row['date']]['returns'] = (float)$row['returns'];
+            } else {
+                $dailyTotals[$row['date']] = [
+                    'date' => $row['date'],
+                    'revenue' => 0,
+                    'returns' => (float)$row['returns'],
+                    'invoices' => [],
+                ];
+            }
+        }
+        
+        // Step 3: Get invoices with details for each day
+        $invoiceBuilder = $this->db->table('invoices i')
+            ->select('i.id, i.invoice_number, i.issue_date, i.total, c.name as customer_name')
+            ->select('DATE(i.issue_date) as date')
+            ->join('customers c', 'c.id = i.customer_id', 'left')
+            ->where('DATE(i.issue_date) >=', $startDate)
+            ->where('DATE(i.issue_date) <=', $endDate)
+            ->orderBy('i.issue_date', 'DESC');
+        
+        if ($branchId) {
+            $invoiceBuilder->where('i.branch_id', $branchId);
+        }
+        
+        $invoices = $invoiceBuilder->get()->getResultArray();
+        
+        foreach ($invoices as $invoice) {
+            $date = $invoice['date'];
+            if (isset($dailyTotals[$date])) {
+                $dailyTotals[$date]['invoices'][] = [
+                    'id' => $invoice['invoice_number'] ?: 'HD' . str_pad($invoice['id'], 6, '0', STR_PAD_LEFT),
+                    'time' => date('d/m/Y H:i', strtotime($invoice['issue_date'])),
+                    'customer' => $invoice['customer_name'] ?: 'Khách lẻ',
+                    'revenue' => (float)$invoice['total'],
+                ];
+            }
+        }
+        
+        // Sort by date descending and return as array
+        krsort($dailyTotals);
+        return array_values($dailyTotals);
     }
 }

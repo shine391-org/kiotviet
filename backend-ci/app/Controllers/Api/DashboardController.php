@@ -147,4 +147,30 @@ class DashboardController extends BaseController
             return $this->failServerError('Không thể tải hoạt động gần đây');
         }
     }
+
+    /**
+     * Get sales report table data with invoices
+     * GET /api/dashboard/sales-table?range=month&branch_id=1
+     * @agent-pattern: Report table with expandable rows
+     */
+    public function salesReportTable(): ResponseInterface
+    {
+        try {
+            $filters = [
+                'range' => $this->request->getGet('range') ?? 'month',
+                'branch_id' => $this->request->getGet('branch_id'),
+            ];
+            
+            $data = $this->service->getSalesReportTable($filters);
+            
+            return $this->respond([
+                'success' => true,
+                'data' => $data,
+            ]);
+        } catch (\Exception $e) {
+            log_message('error', 'Sales report table error: ' . $e->getMessage());
+            return $this->failServerError('Không thể tải báo cáo bán hàng');
+        }
+    }
 }
+

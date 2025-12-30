@@ -77,7 +77,7 @@ class DashboardService
         }
         
         // Validate range
-        if (!in_array($range, ['today', 'week', 'month', 'custom'])) {
+        if (!in_array($range, ['today', 'week', 'month', 'last_month', 'custom'])) {
             $range = 'month';
         }
         
@@ -185,6 +185,60 @@ class DashboardService
         
         return [
             'items' => $activities,
+        ];
+    }
+
+    /**
+     * Get sales report table data with invoices for each day
+     * @agent-pattern: Table data with nested invoice details
+     */
+    public function getSalesReportTable(array $filters = []): array
+    {
+        $range = $filters['range'] ?? 'month';
+        $branchId = $filters['branch_id'] ?? null;
+        
+        // Validate range
+        if (!in_array($range, ['today', 'week', 'month', 'last_month', 'custom'])) {
+            $range = 'month';
+        }
+        
+        // Get daily totals with invoices
+        $dailyData = $this->repo->getDailyRevenueWithInvoices($range, $branchId);
+        
+        // Calculate totals
+        $totalRevenue = 0;
+        $totalReturns = 0;
+        $totalNetRevenue = 0;
+        
+        $tableData = [];
+        foreach ($dailyData as $day) {
+            $revenue = (float)($day['revenue'] ?? 0);
+            $returns = (float)($day['returns'] ?? 0);
+            $netRevenue = $revenue - abs($returns);
+            
+            $tableData[] = [
+                'date' => date('d/m/Y', strtotime($day['date'])),
+                'rawDate' => $day['date'],
+                'revenue' => $revenue,
+                'returns' => $returns > 0 ? -$returns : 0,
+                'netRevenue' => $netRevenue,
+                'invoices' => $day['invoices'] ?? [],
+            ];
+            
+            $totalRevenue += $revenue;
+            $totalReturns += $returns;
+            $totalNetRevenue += $netRevenue;
+        }
+        
+        return [
+            'tableData' => $tableData,
+            'totals' => [
+                'revenue' => $totalRevenue,
+                'returns' => $totalReturns > 0 ? -$totalReturns : 0,
+                'netRevenue' => $totalNetRevenue,
+            ],
+            'range' => $range,
+            'branchId' => $branchId,
         ];
     }
 

@@ -31,6 +31,7 @@ $routes->group('api', static function (RouteCollectionInterface $routes) {
     $routes->get('dashboard/top-products', 'Api\\DashboardController::topProducts');
     $routes->get('dashboard/top-customers', 'Api\\DashboardController::topCustomers');
     $routes->get('dashboard/activities', 'Api\\DashboardController::activities');
+    $routes->get('dashboard/sales-table', 'Api\\DashboardController::salesReportTable');
     $routes->get('products', 'Api\\ProductsController::index');
     $routes->get('products/(:num)', 'Api\\ProductsController::show/$1');
     $routes->get('products/(:num)/detail-with-variants', 'Api\\ProductsController::detailWithVariants/$1');
