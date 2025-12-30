@@ -11,8 +11,10 @@ import {
     Col,
     Button,
     Space,
+    message,
 } from 'antd';
 import { CaretRightOutlined } from '@ant-design/icons';
+import supplierApi from '../../api/supplierApi';
 
 const { TextArea } = Input;
 const { Panel } = Collapse;
@@ -31,18 +33,23 @@ const CreateSupplierModal = ({ open, onCancel, onSuccess, supplierGroups = [] })
             const values = await form.validateFields();
             setLoading(true);
 
-            // TODO: Connect to API
-            console.log('Create supplier:', values);
+            // Connect to API
+            await supplierApi.createSupplier(values);
 
-            // Simulate API call
-            setTimeout(() => {
-                setLoading(false);
-                form.resetFields();
-                onSuccess?.(values);
-                onCancel?.();
-            }, 500);
+            message.success('Tạo nhà cung cấp thành công');
+            form.resetFields();
+            onSuccess?.(values);
+            onCancel?.();
         } catch (error) {
-            console.error('Validation failed:', error);
+             console.error('Validation failed:', error);
+            if (error.response?.data?.message) {
+                 message.error(error.response.data.message);
+            } else if (error.message && !error.errorFields) {
+                // If it's not a validation error (which has errorFields)
+                 message.error(error.message);
+            }
+        } finally {
+            setLoading(false);
         }
     };
 
