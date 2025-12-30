@@ -168,7 +168,8 @@ const SalesHeader = ({
 
     const handleAddNewProduct = (productData) => {
         console.log('New product:', productData);
-        // TODO: Save product to backend
+        // Product is already saved in AddProductModal
+        onAddProduct?.(productData);
         setShowAddProductModal(false);
     };
 
