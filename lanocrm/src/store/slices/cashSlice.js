@@ -79,6 +79,17 @@ export const createCashPayment = createAsyncThunk(
   }
 );
 
+export const updateCashTransaction = createAsyncThunk(
+  'cash/updateTransaction',
+  async ({ id, data }, { rejectWithValue }) => {
+    try {
+      return await cashApi.updateTransaction(id, data);
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
 export const deleteCashTransaction = createAsyncThunk(
   'cash/deleteTransaction',
   async (id, { rejectWithValue }) => {
@@ -137,6 +148,7 @@ const initialState = {
   loading: false,
   summaryLoading: false,
   creating: false,
+  updating: false,
   deleting: false,
   balance: null,
   summary: {
@@ -150,6 +162,7 @@ const initialState = {
   pageTotals: { receipt: 0, payment: 0 },
   error: null,
   createSuccess: false,
+  updateSuccess: false,
 };
 
 const cashSlice = createSlice({
@@ -243,6 +256,30 @@ const cashSlice = createSlice({
       })
       .addCase(createCashPayment.rejected, (state, action) => {
         state.creating = false;
+        state.error = action.payload;
+      })
+
+      // Update
+      .addCase(updateCashTransaction.pending, (state) => {
+        state.updating = true;
+        state.error = null;
+        state.updateSuccess = false;
+      })
+      .addCase(updateCashTransaction.fulfilled, (state, action) => {
+        state.updating = false;
+        state.updateSuccess = true;
+        if (action.payload?.data) {
+          const updated = action.payload.data;
+          state.items = state.items.map((tx) =>
+            tx.id === updated.id ? updated : tx
+          );
+          if (state.current?.id === updated.id) {
+            state.current = updated;
+          }
+        }
+      })
+      .addCase(updateCashTransaction.rejected, (state, action) => {
+        state.updating = false;
         state.error = action.payload;
       })
 

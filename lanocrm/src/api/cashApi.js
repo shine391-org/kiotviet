@@ -22,6 +22,11 @@ const cashApi = {
     return response.data;
   },
 
+  updateTransaction: async (id, data) => {
+    const response = await axiosInstance.put(`/cash/transactions/${id}`, data);
+    return response.data;
+  },
+
   deleteTransaction: async (id) => {
     const response = await axiosInstance.delete(`/cash/transactions/${id}`);
     return response.data;
