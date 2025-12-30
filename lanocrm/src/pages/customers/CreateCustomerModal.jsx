@@ -44,6 +44,7 @@ const CreateCustomerModal = ({
     onCancel,
     onSuccess,
     customerGroups = [],
+    focusSection,
 }) => {
     const { message: messageApi } = App.useApp();
     const [form] = Form.useForm();
@@ -51,6 +52,22 @@ const CreateCustomerModal = ({
     const [activeKeys, setActiveKeys] = useState(['address', 'group', 'invoice']);
 
     const isEdit = !!customer?.id;
+
+    // Handle focus section
+    useEffect(() => {
+        if (open && focusSection) {
+            if (!activeKeys.includes(focusSection)) {
+                setActiveKeys((prev) => [...prev, focusSection]);
+            }
+            // Scroll to section
+            setTimeout(() => {
+                const element = document.getElementById(`${focusSection}-section`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }, 300);
+        }
+    }, [open, focusSection, activeKeys]);
 
     // Reset form when modal opens
     useEffect(() => {
@@ -263,6 +280,7 @@ const CreateCustomerModal = ({
 
                     {/* Invoice Info Section */}
                     <Panel header="Thông tin xuất hóa đơn" key="invoice">
+                        <div id="invoice-section">
                         <Form.Item label="Loại khách hàng" name="invoice_customer_type">
                             <Radio.Group>
                                 {CUSTOMER_TYPES.map((t) => (
@@ -341,6 +359,7 @@ const CreateCustomerModal = ({
                                 </Form.Item>
                             </Col>
                         </Row>
+                        </div>
                     </Panel>
                 </Collapse>
             </Form>
