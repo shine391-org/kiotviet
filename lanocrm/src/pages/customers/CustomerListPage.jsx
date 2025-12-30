@@ -46,6 +46,7 @@ import CustomerPaymentModal from './CustomerPaymentModal';
 import CustomerAdjustModal from './CustomerAdjustModal';
 import CustomerDiscountModal from './CustomerDiscountModal';
 import CustomerQRModal from './CustomerQRModal';
+import CustomerAddAddressModal from './CustomerAddAddressModal';
 import InvoiceDetailModal from '../../components/customers/InvoiceDetailModal';
 import EditReceiptModal from './EditReceiptModal';
 import styles from './CustomerListPage.module.css';
@@ -122,6 +123,10 @@ const CustomerListPage = () => {
   const [discountModalOpen, setDiscountModalOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
   const [debtTargetCustomer, setDebtTargetCustomer] = useState(null);
+
+  // Address modal state
+  const [addAddressModalOpen, setAddAddressModalOpen] = useState(false);
+  const [addressTargetCustomer, setAddressTargetCustomer] = useState(null);
 
   // Invoice detail modal state
   const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
@@ -338,6 +343,14 @@ const CustomerListPage = () => {
 
   const handleModalSuccess = () => {
     handleRefresh();
+  };
+
+  const handleAddressSuccess = () => {
+    // If we added an address to the currently selected customer, we need to refresh their details
+    if (selectedId) {
+      dispatch(fetchCustomer(selectedId));
+    }
+    // We don't strictly need to refresh the main list for addresses, but it doesn't hurt
   };
 
   const groupOptions = useMemo(() => {
@@ -650,8 +663,8 @@ const CustomerListPage = () => {
                         openEdit(c);
                       }}
                       onAddAddress={(c) => {
-                        // TODO: Open add address modal
-                        message.info('Chức năng thêm địa chỉ sẽ được cập nhật');
+                        setAddressTargetCustomer(c);
+                        setAddAddressModalOpen(true);
                       }}
                       onOrderClick={(code) => {
                         setInvoiceCodeToView(code);
@@ -761,6 +774,16 @@ const CustomerListPage = () => {
           setQrModalOpen(false);
           setDebtTargetCustomer(null);
         }}
+      />
+
+      <CustomerAddAddressModal
+        open={addAddressModalOpen}
+        customer={addressTargetCustomer}
+        onCancel={() => {
+          setAddAddressModalOpen(false);
+          setAddressTargetCustomer(null);
+        }}
+        onSuccess={handleAddressSuccess}
       />
 
       <InvoiceDetailModal
