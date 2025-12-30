@@ -1,0 +1,256 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - banner [ref=e5]:
+      - generic [ref=e6]:
+        - link "LanoCRM" [ref=e7] [cursor=pointer]:
+          - /url: /dashboard
+          - img "LanoCRM" [ref=e8]
+        - generic [ref=e9]:
+          - button "Notifications" [ref=e10] [cursor=pointer]:
+            - img "bell" [ref=e11]:
+              - img [ref=e12]
+            - generic [ref=e14]: "3"
+          - button "Settings" [ref=e15] [cursor=pointer]:
+            - img "setting" [ref=e16]:
+              - img [ref=e17]
+          - button "User menu" [ref=e20] [cursor=pointer]:
+            - generic [ref=e21]: A
+            - generic [ref=e22]: Admin
+      - navigation [ref=e24]:
+        - list [ref=e26]:
+          - listitem [ref=e27]:
+            - link "appstore Tổng quan" [ref=e28] [cursor=pointer]:
+              - /url: /dashboard
+              - img "appstore" [ref=e30]:
+                - img [ref=e31]
+              - generic [ref=e33]: Tổng quan
+          - listitem [ref=e34]:
+            - button "shopping Hàng hóa" [ref=e36] [cursor=pointer]:
+              - img "shopping" [ref=e38]:
+                - img [ref=e39]
+              - generic [ref=e41]: Hàng hóa
+          - listitem [ref=e42]:
+            - button "file-text Đơn hàng" [ref=e44] [cursor=pointer]:
+              - img "file-text" [ref=e46]:
+                - img [ref=e47]
+              - generic [ref=e49]: Đơn hàng
+          - listitem [ref=e50]:
+            - button "team Khách hàng" [ref=e52] [cursor=pointer]:
+              - img "team" [ref=e54]:
+                - img [ref=e55]
+              - generic [ref=e57]: Khách hàng
+          - listitem [ref=e58]:
+            - link "wallet Sổ quỹ" [ref=e59] [cursor=pointer]:
+              - /url: /cash
+              - img "wallet" [ref=e61]:
+                - img [ref=e62]
+              - generic [ref=e64]: Sổ quỹ
+          - listitem [ref=e65]:
+            - button "bar-chart Báo cáo" [ref=e67] [cursor=pointer]:
+              - img "bar-chart" [ref=e69]:
+                - img [ref=e70]
+              - generic [ref=e72]: Báo cáo
+          - listitem [ref=e73]:
+            - link "shop Bán online" [ref=e74] [cursor=pointer]:
+              - /url: /online
+              - img "shop" [ref=e76]:
+                - img [ref=e77]
+              - generic [ref=e79]: Bán online
+        - link "shopping-cart Bán hàng" [ref=e80] [cursor=pointer]:
+          - /url: /sales
+          - img "shopping-cart" [ref=e81]:
+            - img [ref=e82]
+          - generic [ref=e84]: Bán hàng
+    - main [ref=e85]:
+      - generic [ref=e87]:
+        - generic [ref=e88]:
+          - generic [ref=e89]:
+            - heading "Bảng giá chung" [level=2] [ref=e90]
+            - generic [ref=e91]:
+              - searchbox "Theo mã, tên hàng" [ref=e93]
+              - button "search" [ref=e95] [cursor=pointer]:
+                - img "search" [ref=e97]:
+                  - img [ref=e98]
+          - generic [ref=e100]:
+            - button "plus" [ref=e102] [cursor=pointer]:
+              - img "plus" [ref=e104]:
+                - img [ref=e105]
+            - button [ref=e109] [cursor=pointer]
+            - button [ref=e111] [cursor=pointer]
+            - button "setting" [ref=e113] [cursor=pointer]:
+              - img "setting" [ref=e115]:
+                - img [ref=e116]
+            - link "setting" [ref=e119] [cursor=pointer]:
+              - /url: /man/#/Settings?SettingType=products
+              - img "setting" [ref=e121]:
+                - img [ref=e122]
+            - link "question-circle" [ref=e125] [cursor=pointer]:
+              - /url: "#"
+              - img "question-circle" [ref=e127]:
+                - img [ref=e128]
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - generic [ref=e133]:
+              - generic [ref=e134]:
+                - generic [ref=e135]: Bảng giá
+                - generic [ref=e136] [cursor=pointer]: Tạo mới
+              - generic [ref=e137] [cursor=pointer]:
+                - generic [ref=e138]:
+                  - generic: Chọn bảng giá
+                  - combobox [ref=e139]
+                - img "down" [ref=e141]:
+                  - img [ref=e142]
+              - generic [ref=e144]:
+                - generic [ref=e145]: Bảng giá chung
+                - generic [ref=e146] [cursor=pointer]: ×
+            - generic [ref=e147]:
+              - generic [ref=e148]: Nhóm hàng
+              - generic [ref=e149] [cursor=pointer]:
+                - generic [ref=e150]:
+                  - generic: Chọn nhóm hàng
+                  - combobox [ref=e151]
+                - img "down" [ref=e153]:
+                  - img [ref=e154]
+            - generic [ref=e156]:
+              - generic [ref=e157]: Tồn kho
+              - generic [ref=e158] [cursor=pointer]:
+                - generic [ref=e159]:
+                  - generic: Tất cả
+                  - combobox [ref=e160]
+                - img "down" [ref=e162]:
+                  - img [ref=e163]
+            - generic [ref=e165]:
+              - generic [ref=e166]: Giá bán
+              - generic [ref=e167]:
+                - generic [ref=e169] [cursor=pointer]:
+                  - generic [ref=e170]:
+                    - generic: Chọn điều kiện
+                    - combobox [ref=e171]
+                  - img "down" [ref=e173]:
+                    - img [ref=e174]
+                - generic [ref=e177] [cursor=pointer]:
+                  - generic [ref=e178]:
+                    - generic: Chọn giá so sánh
+                    - combobox [ref=e179]
+                  - img "down" [ref=e181]:
+                    - img [ref=e182]
+          - generic [ref=e187]:
+            - generic [ref=e189]:
+              - table [ref=e191]:
+                - rowgroup [ref=e192]:
+                  - row "Select all Mã hàng Tên hàng Tồn kho Giá vốn Giá nhập cuối Bảng giá chung Thao tác" [ref=e193]:
+                    - columnheader "Select all" [ref=e194]:
+                      - checkbox "Select all" [ref=e198] [cursor=pointer]
+                    - columnheader "Mã hàng" [ref=e200] [cursor=pointer]:
+                      - generic [ref=e201]:
+                        - generic [ref=e203]:
+                          - generic [ref=e204]: Mã hàng
+                          - generic [ref=e206]:
+                            - img [ref=e207]:
+                              - img [ref=e208]
+                            - img [ref=e210]:
+                              - img [ref=e211]
+                        - button [ref=e213]
+                    - columnheader "Tên hàng" [ref=e214] [cursor=pointer]:
+                      - generic [ref=e215]:
+                        - generic [ref=e217]:
+                          - generic [ref=e218]: Tên hàng
+                          - generic [ref=e220]:
+                            - img [ref=e221]:
+                              - img [ref=e222]
+                            - img [ref=e224]:
+                              - img [ref=e225]
+                        - button [ref=e227]
+                    - columnheader "Tồn kho" [ref=e228]
+                    - columnheader "Giá vốn" [ref=e229]
+                    - columnheader "Giá nhập cuối" [ref=e230]
+                    - columnheader "Bảng giá chung" [ref=e231]
+                    - columnheader "Thao tác" [ref=e232]
+                    - columnheader [ref=e233]
+              - table [ref=e235]:
+                - rowgroup [ref=e236]:
+                  - checkbox [ref=e240] [cursor=pointer]
+                  - generic [ref=e242]:
+                    - generic [ref=e244]:
+                      - generic [ref=e245]: Mã hàng
+                      - generic [ref=e247]:
+                        - img [ref=e248]:
+                          - img [ref=e249]
+                        - img [ref=e251]:
+                          - img [ref=e252]
+                    - button [ref=e254] [cursor=pointer]
+                  - generic [ref=e255]:
+                    - generic [ref=e257]:
+                      - generic [ref=e258]: Tên hàng
+                      - generic [ref=e260]:
+                        - img [ref=e261]:
+                          - img [ref=e262]
+                        - img [ref=e264]:
+                          - img [ref=e265]
+                    - button [ref=e267] [cursor=pointer]
+                  - row "SP001 Sản phẩm 1 10 50.000đ 48.000đ 150000 Increase Value Decrease Value đ Lưu Hủy" [ref=e268]:
+                    - cell [ref=e269]:
+                      - checkbox [ref=e272] [cursor=pointer]
+                    - cell "SP001" [ref=e274]
+                    - cell "Sản phẩm 1" [ref=e275]
+                    - cell "10" [ref=e276]
+                    - cell "50.000đ" [ref=e277]
+                    - cell "48.000đ" [ref=e278]
+                    - cell "150000 Increase Value Decrease Value đ" [ref=e279]:
+                      - generic [ref=e280]:
+                        - generic [ref=e281]:
+                          - spinbutton [ref=e282]: 150,000
+                          - generic:
+                            - button "Increase Value" [ref=e283] [cursor=pointer]:
+                              - img "up" [ref=e284]:
+                                - img [ref=e285]
+                            - button "Decrease Value" [ref=e287] [cursor=pointer]:
+                              - img "down" [ref=e288]:
+                                - img [ref=e289]
+                        - generic [ref=e291]: đ
+                    - cell "Lưu Hủy" [ref=e292]:
+                      - generic [ref=e293]:
+                        - button "Lưu" [active] [ref=e295] [cursor=pointer]:
+                          - generic [ref=e298]: Lưu
+                        - button "Hủy" [ref=e300] [cursor=pointer]:
+                          - generic [ref=e301]: Hủy
+                  - row "SP002 Sản phẩm 2 0 20.000đ 18.000đ 40.000đ Sửa" [ref=e302]:
+                    - cell [ref=e303]:
+                      - checkbox [ref=e306] [cursor=pointer]
+                    - cell "SP002" [ref=e308]
+                    - cell "Sản phẩm 2" [ref=e309]
+                    - cell "0" [ref=e310]
+                    - cell "20.000đ" [ref=e311]
+                    - cell "18.000đ" [ref=e312]
+                    - cell "40.000đ" [ref=e313]
+                    - cell "Sửa" [ref=e314]:
+                      - button "Sửa" [ref=e315] [cursor=pointer]:
+                        - generic [ref=e316]: Sửa
+            - list [ref=e317]:
+              - listitem [ref=e318]: Hiển thị 1-2 của 2 mục
+              - listitem "Trang Trước" [ref=e319]:
+                - button "left Trước" [disabled] [ref=e320] [cursor=pointer]:
+                  - generic:
+                    - img "left":
+                      - img
+                  - generic: Trước
+              - listitem "1" [ref=e321] [cursor=pointer]:
+                - button "1" [ref=e322]
+              - listitem "Trang Kế" [ref=e323]:
+                - button "right Sau" [disabled] [ref=e324] [cursor=pointer]:
+                  - generic:
+                    - img "right":
+                      - img
+                  - generic: Sau
+              - listitem [ref=e325]:
+                - generic "kích thước trang" [ref=e326] [cursor=pointer]:
+                  - generic [ref=e327]:
+                    - generic "20 / trang" [ref=e328]
+                    - combobox "kích thước trang" [ref=e329]
+                  - img "down" [ref=e331]:
+                    - img [ref=e332]
+  - region "Notifications Alt+T"
+```

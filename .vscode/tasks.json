@@ -1,0 +1,13 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "test:e2e",
+			"path": "lanocrm",
+			"problemMatcher": [],
+			"label": "npm: test:e2e - lanocrm",
+			"detail": "playwright test"
+		}
+	]
+}

@@ -1,0 +1,101 @@
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.3. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 01:58:42.473704 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 01:58:42.473774 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 02:06:23.766122 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.3. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 02:06:25.677636 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 02:06:25.677728 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 02:48:51.363134 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.6. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 03:43:44.014910 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 03:43:44.015009 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 04:07:40.076780 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 04:18:50.555001 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 04:18:50.555166 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 04:19:46.695419 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 04:20:11.238444 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 04:20:11.238515 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 04:27:26.189948 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 04:56:56.188925 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 04:56:56.189233 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 04:57:34.077254 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 04:57:56.969226 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 04:57:56.969289 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 05:12:39.544565 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 05:14:12.338014 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 05:14:12.338110 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 05:14:33.962681 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 05:14:38.605612 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 05:14:38.605671 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 05:26:24.383779 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 05:26:25.930651 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 05:26:25.930730 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 05:38:04.503151 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Tue Dec 02 05:38:48.939563 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Tue Dec 02 05:38:48.939646 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Tue Dec 02 05:51:50.210728 2025] [php:notice] [pid 115:tid 115] [client 172.18.0.6:33888] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.211071 2025] [php:notice] [pid 115:tid 115] [client 172.18.0.6:33888] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.250276 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:33900] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.250747 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:33900] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.269627 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:33912] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.269693 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:33912] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.510608 2025] [php:notice] [pid 23:tid 23] [client 172.18.0.6:33920] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Tue Dec 02 05:51:50.510717 2025] [php:notice] [pid 23:tid 23] [client 172.18.0.6:33920] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Tue Dec 02 12:23:43.494144 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed Dec 03 03:32:08.503088 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Wed Dec 03 03:32:08.503185 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Wed Dec 03 03:35:54.519815 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed Dec 03 03:37:42.680426 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Wed Dec 03 03:37:42.680599 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Wed Dec 03 03:41:31.626185 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed Dec 03 05:31:26.490804 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Wed Dec 03 05:31:26.490934 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Wed Dec 03 05:32:40.473446 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed Dec 03 05:33:57.264958 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Wed Dec 03 05:33:57.265089 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Wed Dec 03 05:34:47.558488 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Wed Dec 03 05:35:47.713509 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Wed Dec 03 05:35:47.713664 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Wed Dec 03 06:22:28.197070 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:59326] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.197644 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:59326] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.217435 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:59336] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.218338 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:59336] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.233865 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:59344] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.233995 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:59344] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.540233 2025] [php:notice] [pid 24:tid 24] [client 172.18.0.6:59360] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:28.540353 2025] [php:notice] [pid 24:tid 24] [client 172.18.0.6:59360] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/orders/create
+[Wed Dec 03 06:22:33.637917 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:35710] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.638027 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:35710] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.640811 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:35718] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.640924 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:35718] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.646157 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:35720] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.646227 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:35720] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.666868 2025] [php:notice] [pid 23:tid 23] [client 172.18.0.6:35752] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.666936 2025] [php:notice] [pid 56:tid 56] [client 172.18.0.6:35742] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.667067 2025] [php:notice] [pid 23:tid 23] [client 172.18.0.6:35752] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.667077 2025] [php:notice] [pid 56:tid 56] [client 172.18.0.6:35742] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.671554 2025] [php:notice] [pid 31:tid 31] [client 172.18.0.6:35762] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:33.671654 2025] [php:notice] [pid 31:tid 31] [client 172.18.0.6:35762] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.052950 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:35774] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.052974 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:35780] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.053017 2025] [php:notice] [pid 20:tid 20] [client 172.18.0.6:35774] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.053026 2025] [php:notice] [pid 22:tid 22] [client 172.18.0.6:35780] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.054011 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:35796] DEBUG: CashTransactionRepository::__construct() - Connection group: default, referer: http://localhost:3000/cash
+[Wed Dec 03 06:22:34.054074 2025] [php:notice] [pid 21:tid 21] [client 172.18.0.6:35796] DEBUG: CashTransactionRepository::__construct() - Database name: lanocrm_dev, referer: http://localhost:3000/cash
+AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.18.0.5. Set the 'ServerName' directive globally to suppress this message
+[Thu Dec 04 06:43:12.619004 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00163: Apache/2.4.65 (Debian) PHP/8.4.15 configured -- resuming normal operations
+[Thu Dec 04 06:43:12.619418 2025] [core:notice] [pid 1:tid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+[Thu Dec 04 07:18:01.255598 2025] [mpm_prefork:notice] [pid 1:tid 1] AH00170: caught SIGWINCH, shutting down gracefully
